@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% load static %}
+{% load lead_tags %}
+
+{% block title %}Territory Map{% endblock %}
+{% block page_title %}Territory Map{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+{% endblock %}
+
+{% block content %}
+<!-- Map Controls -->
+<div class="map-controls animate-fade-in-up">
+    <div class="map-control-group">
+        <label class="form-label-sm">Time Range</label>
+        <select id="filter-days" class="form-select-sm" onchange="refreshMapData()">
+            <option value="7">Last 7 days</option>
+            <option value="14">Last 14 days</option>
+            <option value="30" selected>Last 30 days</option>
+            <option value="60">Last 60 days</option>
+            <option value="90">Last 90 days</option>
+        </select>
+    </div>
+    <div class="map-control-group">
+        <label class="form-label-sm">Platform</label>
+        <select id="filter-platform" class="form-select-sm" onchange="refreshMapData()">
+            <option value="">All Platforms</option>
+            <option value="craigslist">Craigslist</option>
+            <option value="reddit">Reddit</option>
+            <option value="patch">Patch</option>
+            <option value="houzz">Houzz</option>
+            <option value="google_qna">Google Q&A</option>
+            <option value="yelp_review">Yelp</option>
+            <option value="thumbtack">Thumbtack</option>
+            <option value="local_news">Local News</option>
+            <option value="parent_community">Parent Community</option>
+            <option value="trade_forum">Trade Forum</option>
+        </select>
+    </div>
+    <div class="map-control-group">
+        <label class="form-label-sm">Urgency</label>
+        <select id="filter-urgency" class="form-select-sm" onchange="refreshMapData()">
+            <option value="">All</option>
+            <option value="hot">HOT</option>
+            <option value="warm">WARM</option>
+            <option value="new">NEW</option>
+        </select>
+    </div>
+    <div class="map-control-group" style="margin-left: auto;">
+        <button class="btn-secondary btn-sm" id="toggle-heatmap" onclick="toggleHeatmap()">
+            <i class="bi bi-fire"></i> Heat Map
+        </button>
+    </div>
+    <div class="map-control-group">
+        <div class="map-lead-count">
+            <span class="mono" id="pin-count">0</span> leads
+        </div>
+    </div>
+</div>
+
+<!-- Map Legend -->
+<div class="map-legend animate-fade-in-up" style="animation-delay: 100ms;">
+    <span class="legend-item"><span class="legend-dot" style="background: #FF4757;"></span> HOT</span>
+    <span class="legend-item"><span class="legend-dot" style="background: #F59E0B;"></span> WARM</span>
+    <span class="legend-item"><span class="legend-dot" style="background: #3B82F6;"></span> NEW</span>
+    <span class="legend-item"><span class="legend-dot" style="background: #10B981;"></span> Won</span>
+    <span class="legend-item"><span class="legend-dot" style="background: #6B6B80;"></span> Lost/Stale</span>
+</div>
+
+<!-- Map Container -->
+<div id="territory-map" class="territory-map animate-fade-in-up" style="animation-delay: 150ms;"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script>
+(function() {
+    const CENTER_LAT = {{ center_lat }};
+    const CENTER_LNG = {{ center_lng }};
+
+    // Dark tile layer
+    const darkTiles = L.tileLayer(
+        'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 19,
+        }
+    );
+
+    const map = L.map('territory-map', {
+        center: [CENTER_LAT, CENTER_LNG],
+        zoom: 10,
+        layers: [darkTiles],
+        zoomControl: true,
+    });
+
+    // Marker cluster group
+    const markers = L.markerClusterGroup({
+        maxClusterRadius: 40,
+        iconCreateFunction: function(cluster) {
+            const count = cluster.getChildCount();
+            let size = 'small';
+            if (count > 20) size = 'large';
+            else if (count > 5) size = 'medium';
+            return L.divIcon({
+                html: `<div class="cluster-icon cluster-${size}">${count}</div>`,
+                className: 'custom-cluster',
+                iconSize: L.point(40, 40),
+            });
+        },
+    });
+
+    let heatLayer = null;
+    let heatmapVisible = false;
+
+    function createPinIcon(color) {
+        return L.divIcon({
+            html: `<div class="map-pin" style="background:${color}; box-shadow: 0 0 8px ${color}80;"></div>`,
+            className: 'custom-pin',
+            iconSize: [14, 14],
+            iconAnchor: [7, 7],
+            popupAnchor: [0, -10],
+        });
+    }
+
+    window.refreshMapData = function() {
+        const days = document.getElementById('filter-days').value;
+        const platform = document.getElementById('filter-platform').value;
+        const urgency = document.getElementById('filter-urgency').value;
+
+        let url = `/territory/data/?days=${days}`;
+        if (platform) url += `&platform=${platform}`;
+        if (urgency) url += `&urgency=${urgency}`;
+
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                markers.clearLayers();
+
+                const features = data.geojson.features || [];
+                document.getElementById('pin-count').textContent = features.length;
+
+                features.forEach(f => {
+                    const p = f.properties;
+                    const coords = f.geometry.coordinates;
+                    const icon = createPinIcon(p.color);
+
+                    const marker = L.marker([coords[1], coords[0]], { icon: icon });
+
+                    const popupHtml = `
+                        <div class="map-popup">
+                            <div class="map-popup-header">
+                                <span class="urgency-badge ${p.urgency === 'hot' ? 'urgency-hot' : p.urgency === 'warm' ? 'urgency-warm' : 'urgency-new'}">${p.urgency.toUpperCase()}</span>
+                                <span class="map-popup-platform">${p.platform_display}</span>
+                            </div>
+                            <div class="map-popup-content">${escapeHtml(p.content)}</div>
+                            ${p.location ? `<div class="map-popup-location"><i class="bi bi-geo-alt"></i> ${escapeHtml(p.location)}</div>` : ''}
+                            ${p.service_type ? `<div class="map-popup-service">${escapeHtml(p.service_type)}</div>` : ''}
+                            <a href="${p.detail_url}" class="map-popup-link">View Lead <i class="bi bi-arrow-right"></i></a>
+                        </div>
+                    `;
+                    marker.bindPopup(popupHtml, { maxWidth: 300, className: 'dark-popup' });
+                    markers.addLayer(marker);
+                });
+
+                map.addLayer(markers);
+
+                // Update heatmap data
+                if (heatLayer) {
+                    map.removeLayer(heatLayer);
+                    heatLayer = null;
+                }
+                if (data.heatmap && data.heatmap.length > 0) {
+                    heatLayer = L.heatLayer(data.heatmap, {
+                        radius: 30,
+                        blur: 20,
+                        maxZoom: 14,
+                        gradient: {0.2: '#3B82F6', 0.4: '#10B981', 0.6: '#F59E0B', 0.8: '#FF4757', 1.0: '#FF4757'},
+                    });
+                    if (heatmapVisible) {
+                        heatLayer.addTo(map);
+                    }
+                }
+
+                // Fit bounds if we have points
+                if (features.length > 0) {
+                    const group = L.featureGroup(markers.getLayers());
+                    if (group.getLayers().length > 0) {
+                        map.fitBounds(group.getBounds().pad(0.1));
+                    }
+                }
+            })
+            .catch(err => console.error('Map data error:', err));
+    };
+
+    window.toggleHeatmap = function() {
+        const btn = document.getElementById('toggle-heatmap');
+        heatmapVisible = !heatmapVisible;
+
+        if (heatmapVisible && heatLayer) {
+            heatLayer.addTo(map);
+            markers.remove();
+            btn.classList.add('active');
+        } else {
+            if (heatLayer) heatLayer.remove();
+            map.addLayer(markers);
+            btn.classList.remove('active');
+        }
+    };
+
+    function escapeHtml(s) {
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    // Initial load
+    refreshMapData();
+})();
+</script>
+{% endblock %}

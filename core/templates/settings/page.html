@@ -1,0 +1,507 @@
+{% extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block extra_css %}
+<style>
+/* --- Keywords Section --- */
+.keywords-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+.keywords-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.keywords-title i { color: var(--accent-blue); }
+.keywords-count {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+/* Add keyword form */
+.keyword-add-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+.keyword-add-input {
+    flex: 1;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 0.6rem 1rem;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.keyword-add-input:focus {
+    border-color: var(--accent-blue);
+}
+.keyword-add-input::placeholder {
+    color: var(--text-muted);
+}
+
+/* Keyword grid */
+.keyword-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.keyword-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 0.45rem 0.5rem 0.45rem 0.85rem;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    cursor: default;
+}
+.keyword-chip.inactive {
+    opacity: 0.4;
+    border-color: transparent;
+}
+.keyword-chip.custom {
+    border-color: rgba(59, 130, 246, 0.3);
+}
+.keyword-chip.custom.inactive {
+    border-color: transparent;
+}
+
+/* Toggle switch */
+.kw-toggle {
+    position: relative;
+    width: 32px;
+    height: 18px;
+    flex-shrink: 0;
+}
+.kw-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.kw-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--bg-hover);
+    border-radius: 9px;
+    transition: background 0.2s;
+}
+.kw-toggle-slider::before {
+    content: '';
+    position: absolute;
+    height: 14px;
+    width: 14px;
+    left: 2px;
+    bottom: 2px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+}
+.kw-toggle input:checked + .kw-toggle-slider {
+    background: var(--accent-blue);
+}
+.kw-toggle input:checked + .kw-toggle-slider::before {
+    transform: translateX(14px);
+    background: #fff;
+}
+
+/* Delete button */
+.kw-delete {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 0.15rem;
+    border-radius: 4px;
+    transition: color 0.2s, background 0.2s;
+    display: flex;
+    align-items: center;
+}
+.kw-delete:hover {
+    color: var(--accent-coral);
+    background: rgba(255,71,87,0.1);
+}
+
+/* Source badge */
+.kw-source {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    background: var(--bg-base);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+}
+.kw-source.custom {
+    color: var(--accent-blue);
+    background: rgba(59,130,246,0.1);
+}
+
+/* Section card */
+.settings-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Reset button */
+.btn-reset {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-reset:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* Toast */
+.kw-toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--accent-blue);
+    color: var(--text-primary);
+    padding: 0.75rem 1.25rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    z-index: 999;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+.kw-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+    .keywords-header { flex-direction: column; align-items: flex-start; }
+    .keyword-add-form { flex-direction: column; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-section animate-fade-in-up">
+    <div class="keywords-header">
+        <div class="keywords-title">
+            <i class="bi bi-tags-fill"></i>
+            My Keywords
+            <span class="keywords-count" id="kwCount">{{ active_count }} active / {{ total_count }} total</span>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            {% if profile.service_category %}
+            <button class="btn-reset" onclick="resetDefaults()">
+                <i class="bi bi-arrow-counterclockwise"></i> Reset Defaults
+            </button>
+            {% endif %}
+            <span class="kw-source">{{ profile.service_category.name|default:"No category" }}</span>
+        </div>
+    </div>
+
+    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+        These keywords determine which leads get matched to your business.
+        Toggle off keywords you don't want, or add custom ones for services you offer.
+    </p>
+
+    <!-- Add Keyword Form -->
+    <form class="keyword-add-form" onsubmit="addKeyword(event)">
+        <input type="text" id="newKeyword" class="keyword-add-input"
+               placeholder="Add a custom keyword... (e.g. 'bathroom remodel', 'sump pump')"
+               maxlength="100" autocomplete="off">
+        <button type="submit" class="btn-primary btn-sm">
+            <i class="bi bi-plus-lg"></i> Add
+        </button>
+    </form>
+
+    <!-- Keyword Chips -->
+    <div class="keyword-grid" id="keywordGrid">
+        {% for kw in keywords %}
+        <div class="keyword-chip {% if not kw.is_active %}inactive{% endif %} {% if kw.source == 'custom' %}custom{% endif %}"
+             id="kw-{{ kw.id }}">
+            <span>{{ kw.keyword }}</span>
+            <span class="kw-source {% if kw.source == 'custom' %}custom{% endif %}">{{ kw.source }}</span>
+            <label class="kw-toggle">
+                <input type="checkbox" {% if kw.is_active %}checked{% endif %}
+                       onchange="toggleKeyword({{ kw.id }}, this)">
+                <span class="kw-toggle-slider"></span>
+            </label>
+            {% if kw.source == 'custom' %}
+            <button class="kw-delete" onclick="deleteKeyword({{ kw.id }})" title="Delete">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.85rem; width: 100%;">
+            <i class="bi bi-tags" style="font-size: 2rem; display: block; margin-bottom: 0.5rem; opacity: 0.3;"></i>
+            {% if profile.service_category %}
+                No keywords yet. Click "Reset Defaults" to load category keywords.
+            {% else %}
+                Select a service category in onboarding to get started with keywords.
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Email Style Guide -->
+<div class="settings-section animate-fade-in-up" style="animation-delay: 100ms;">
+    <div class="keywords-title" style="margin-bottom: 0.5rem;">
+        <i class="bi bi-pen-fill"></i>
+        Email Style Guide
+    </div>
+    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+        Describe how you want your outreach emails written. Claude AI will follow these instructions when generating personalized emails for your campaigns.
+    </p>
+    <textarea id="emailStyleGuide" class="keyword-add-input" rows="5"
+              style="border-radius: 10px; resize: vertical; width: 100%; box-sizing: border-box; line-height: 1.5;"
+              placeholder="e.g. Keep it casual and friendly, like a neighbor introducing themselves. Mention our 20 years of experience. Don't be salesy — focus on being helpful. Always mention our free estimates.">{{ profile.email_style_guide }}</textarea>
+    <div style="display: flex; justify-content: flex-end; margin-top: 0.75rem;">
+        <button class="btn-primary btn-sm" onclick="saveStyleGuide()">
+            <i class="bi bi-check-lg"></i> Save Style Guide
+        </button>
+    </div>
+</div>
+
+<!-- Email Signature -->
+<div class="settings-section animate-fade-in-up" style="animation-delay: 150ms;">
+    <div class="keywords-title" style="margin-bottom: 0.5rem;">
+        <i class="bi bi-vector-pen"></i>
+        Email Signature
+    </div>
+    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">
+        Your sign-off appended to every outreach email. Include your name, title, phone, and website.
+    </p>
+    <textarea id="emailSignature" class="keyword-add-input" rows="4"
+              style="border-radius: 10px; resize: vertical; width: 100%; box-sizing: border-box; line-height: 1.5;"
+              placeholder="e.g.&#10;Best regards,&#10;Mike Johnson | Owner&#10;Premier Plumbing LLC&#10;(555) 123-4567 | www.premierplumbing.com">{{ profile.email_signature }}</textarea>
+    <div style="display: flex; justify-content: flex-end; margin-top: 0.75rem;">
+        <button class="btn-primary btn-sm" onclick="saveSignature()">
+            <i class="bi bi-check-lg"></i> Save Signature
+        </button>
+    </div>
+</div>
+
+<!-- Info Section -->
+<div class="settings-section animate-fade-in-up" style="animation-delay: 200ms;">
+    <div class="keywords-title" style="margin-bottom: 1rem;">
+        <i class="bi bi-info-circle-fill"></i>
+        How Keywords Work
+    </div>
+    <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6;">
+        <p style="margin-bottom: 0.75rem;">
+            <strong style="color: var(--text-primary);">Category defaults</strong> come from your service category
+            ({{ profile.service_category.name|default:"not set" }}). You can toggle them off but not delete them.
+        </p>
+        <p style="margin-bottom: 0.75rem;">
+            <strong style="color: var(--text-primary);">Custom keywords</strong> are ones you add yourself.
+            You can toggle, edit, or delete them at any time.
+        </p>
+        <p style="margin: 0;">
+            Only <strong style="color: var(--accent-blue);">active</strong> keywords are used to match incoming
+            leads to your business. The more specific your keywords, the more relevant your leads will be.
+        </p>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="kw-toast" id="kwToast"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showToast(msg) {
+    const t = document.getElementById('kwToast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function updateCount() {
+    const chips = document.querySelectorAll('.keyword-chip');
+    const active = document.querySelectorAll('.keyword-chip:not(.inactive)').length;
+    document.getElementById('kwCount').textContent = `${active} active / ${chips.length} total`;
+}
+
+function toggleKeyword(id, checkbox) {
+    const chip = document.getElementById('kw-' + id);
+    fetch(`{% url 'keyword_toggle' keyword_id=0 %}`.replace('0', id), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.is_active) {
+            chip.classList.remove('inactive');
+        } else {
+            chip.classList.add('inactive');
+        }
+        updateCount();
+        showToast(`"${data.keyword}" ${data.is_active ? 'activated' : 'deactivated'}`);
+    });
+}
+
+function addKeyword(e) {
+    e.preventDefault();
+    const input = document.getElementById('newKeyword');
+    const keyword = input.value.trim();
+    if (!keyword) return;
+
+    fetch('{% url "keyword_add" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ keyword }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            showToast(data.error);
+            return;
+        }
+
+        // Check if chip already exists
+        const existing = document.getElementById('kw-' + data.id);
+        if (existing) {
+            existing.classList.remove('inactive');
+            showToast(`"${data.keyword}" already exists — activated`);
+        } else {
+            // Create new chip
+            const grid = document.getElementById('keywordGrid');
+            const chip = document.createElement('div');
+            chip.className = 'keyword-chip custom';
+            chip.id = 'kw-' + data.id;
+            chip.innerHTML = `
+                <span>${data.keyword}</span>
+                <span class="kw-source custom">custom</span>
+                <label class="kw-toggle">
+                    <input type="checkbox" checked onchange="toggleKeyword(${data.id}, this)">
+                    <span class="kw-toggle-slider"></span>
+                </label>
+                <button class="kw-delete" onclick="deleteKeyword(${data.id})" title="Delete">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            `;
+            grid.appendChild(chip);
+            showToast(`Added "${data.keyword}"`);
+        }
+        input.value = '';
+        updateCount();
+    });
+}
+
+function deleteKeyword(id) {
+    const chip = document.getElementById('kw-' + id);
+    if (!chip) return;
+
+    fetch(`{% url 'keyword_delete' keyword_id=0 %}`.replace('0', id), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            showToast(data.error);
+            return;
+        }
+        chip.style.transform = 'scale(0.8)';
+        chip.style.opacity = '0';
+        setTimeout(() => {
+            chip.remove();
+            updateCount();
+        }, 200);
+        showToast('Keyword deleted');
+    });
+}
+
+function saveStyleGuide() {
+    const value = document.getElementById('emailStyleGuide').value;
+    fetch('{% url "save_email_prefs" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ field: 'email_style_guide', value }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        showToast(data.error || 'Style guide saved');
+    });
+}
+
+function saveSignature() {
+    const value = document.getElementById('emailSignature').value;
+    fetch('{% url "save_email_prefs" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ field: 'email_signature', value }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        showToast(data.error || 'Email signature saved');
+    });
+}
+
+function resetDefaults() {
+    fetch('{% url "keyword_reset_defaults" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.created > 0) {
+            showToast(`Added ${data.created} default keywords`);
+            setTimeout(() => location.reload(), 500);
+        } else {
+            showToast('All defaults already present');
+        }
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly SalesSignal Report</title>
+</head>
+<body style="margin:0;padding:0;background:#07070C;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#F1F1F5;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#07070C;">
+<tr><td align="center" style="padding:30px 15px;">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+<!-- Header -->
+<tr><td style="background:#12121A;border-radius:16px 16px 0 0;padding:30px 35px;border-bottom:1px solid rgba(255,255,255,0.06);">
+    <table width="100%"><tr>
+        <td style="font-size:22px;font-weight:700;color:#F1F1F5;">
+            <span style="color:#3B82F6;">SalesSignal</span> AI
+        </td>
+        <td style="text-align:right;font-size:12px;color:#6B6B80;">
+            {{ week_start|date:"M d" }} - {{ week_end|date:"M d, Y" }}
+        </td>
+    </tr></table>
+</td></tr>
+
+<!-- Greeting -->
+<tr><td style="background:#12121A;padding:25px 35px 10px;">
+    <p style="margin:0;font-size:16px;color:#A0A0B8;">
+        Hey {{ profile.owner_name|default:profile.business_name }}, here's your weekly snapshot:
+    </p>
+</td></tr>
+
+<!-- KPI Row -->
+<tr><td style="background:#12121A;padding:15px 25px;">
+    <table width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td width="25%" style="padding:10px;text-align:center;">
+            <div style="background:#1A1A26;border-radius:12px;padding:16px 8px;border-top:3px solid #3B82F6;">
+                <div style="font-size:28px;font-weight:700;color:#F1F1F5;">{{ summary.total_leads }}</div>
+                <div style="font-size:11px;color:#6B6B80;text-transform:uppercase;letter-spacing:0.05em;margin-top:4px;">Detected</div>
+            </div>
+        </td>
+        <td width="25%" style="padding:10px;text-align:center;">
+            <div style="background:#1A1A26;border-radius:12px;padding:16px 8px;border-top:3px solid #8B5CF6;">
+                <div style="font-size:28px;font-weight:700;color:#F1F1F5;">{{ summary.responded }}</div>
+                <div style="font-size:11px;color:#6B6B80;text-transform:uppercase;letter-spacing:0.05em;margin-top:4px;">Responded</div>
+            </div>
+        </td>
+        <td width="25%" style="padding:10px;text-align:center;">
+            <div style="background:#1A1A26;border-radius:12px;padding:16px 8px;border-top:3px solid #10B981;">
+                <div style="font-size:28px;font-weight:700;color:#F1F1F5;">{{ summary.won }}</div>
+                <div style="font-size:11px;color:#6B6B80;text-transform:uppercase;letter-spacing:0.05em;margin-top:4px;">Won</div>
+            </div>
+        </td>
+        <td width="25%" style="padding:10px;text-align:center;">
+            <div style="background:#1A1A26;border-radius:12px;padding:16px 8px;border-top:3px solid #F59E0B;">
+                <div style="font-size:28px;font-weight:700;color:#F1F1F5;">${{ summary.revenue|floatformat:0 }}</div>
+                <div style="font-size:11px;color:#6B6B80;text-transform:uppercase;letter-spacing:0.05em;margin-top:4px;">Revenue</div>
+            </div>
+        </td>
+    </tr></table>
+</td></tr>
+
+<!-- Hot Leads Alert -->
+{% if summary.hot_open %}
+<tr><td style="background:#12121A;padding:5px 35px 15px;">
+    <div style="background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.3);border-radius:10px;padding:14px 18px;display:flex;align-items:center;">
+        <span style="font-size:22px;margin-right:10px;">&#128293;</span>
+        <span style="color:#FF4757;font-weight:600;font-size:14px;">
+            {{ summary.hot_open }} hot lead{{ summary.hot_open|pluralize }} still unanswered!
+        </span>
+    </div>
+</td></tr>
+{% endif %}
+
+<!-- Performance Stats -->
+<tr><td style="background:#12121A;padding:10px 35px 20px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#1A1A26;border-radius:12px;overflow:hidden;">
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:12px 16px;font-size:13px;color:#6B6B80;">Response Rate</td>
+            <td style="padding:12px 16px;font-size:14px;font-weight:600;color:#F1F1F5;text-align:right;">{{ summary.response_rate }}%</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:12px 16px;font-size:13px;color:#6B6B80;">Top Platform</td>
+            <td style="padding:12px 16px;font-size:14px;font-weight:600;color:#3B82F6;text-align:right;">{{ summary.top_platform }} ({{ summary.top_platform_count }})</td>
+        </tr>
+        <tr>
+            <td style="padding:12px 16px;font-size:13px;color:#6B6B80;">Hottest Area</td>
+            <td style="padding:12px 16px;font-size:14px;font-weight:600;color:#10B981;text-align:right;">{{ summary.top_area }} ({{ summary.top_area_count }})</td>
+        </tr>
+    </table>
+</td></tr>
+
+<!-- Competitor Watch -->
+{% if summary.competitor_count %}
+<tr><td style="background:#12121A;padding:0 35px 20px;">
+    <div style="font-size:13px;font-weight:600;color:#6B6B80;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Competitor Watch</div>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#1A1A26;border-radius:12px;overflow:hidden;">
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:12px 16px;font-size:13px;color:#6B6B80;">Tracking</td>
+            <td style="padding:12px 16px;font-size:14px;font-weight:600;color:#F1F1F5;text-align:right;">{{ summary.competitor_count }} competitors</td>
+        </tr>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:12px 16px;font-size:13px;color:#6B6B80;">Their Negative Reviews</td>
+            <td style="padding:12px 16px;font-size:14px;font-weight:600;color:#FF4757;text-align:right;">{{ summary.competitor_neg_reviews }}</td>
+        </tr>
+        <tr>
+            <td style="padding:12px 16px;font-size:13px;color:#6B6B80;">Opportunities for You</td>
+            <td style="padding:12px 16px;font-size:14px;font-weight:600;color:#F59E0B;text-align:right;">{{ summary.competitor_opportunities }}</td>
+        </tr>
+    </table>
+</td></tr>
+{% endif %}
+
+<!-- CTA -->
+<tr><td style="background:#12121A;padding:10px 35px 30px;text-align:center;">
+    <a href="#" style="display:inline-block;background:#3B82F6;color:#fff;text-decoration:none;padding:12px 32px;border-radius:10px;font-weight:600;font-size:14px;">
+        View Full Dashboard
+    </a>
+</td></tr>
+
+<!-- Footer -->
+<tr><td style="background:#0A0A0F;border-radius:0 0 16px 16px;padding:20px 35px;text-align:center;">
+    <p style="margin:0;font-size:11px;color:#6B6B80;">
+        SalesSignal AI - Real-time lead intelligence for local service businesses
+    </p>
+</td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>

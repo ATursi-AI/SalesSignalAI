@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0A0A0F; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 24px;">
+
+        <!-- Header -->
+        <div style="text-align: center; padding: 24px 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
+            <div style="display: inline-block; background: linear-gradient(135deg, #3B82F6, #8B5CF6); padding: 10px 14px; border-radius: 10px; margin-bottom: 8px;">
+                <span style="color: white; font-size: 18px; font-weight: bold;">S</span>
+            </div>
+            <div style="color: #3B82F6; font-size: 20px; font-weight: 800; letter-spacing: -0.02em;">SalesSignal AI</div>
+        </div>
+
+        <!-- Urgency Banner -->
+        <div style="text-align: center; padding: 20px 0;">
+            {% if lead.urgency_level == 'hot' %}
+            <div style="display: inline-block; background: rgba(255, 71, 87, 0.15); border: 1px solid rgba(255, 71, 87, 0.3); padding: 8px 24px; border-radius: 999px;">
+                <span style="color: #FF4757; font-weight: 800; font-size: 16px; letter-spacing: 0.05em;">HOT LEAD</span>
+            </div>
+            {% elif lead.urgency_level == 'warm' %}
+            <div style="display: inline-block; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); padding: 8px 24px; border-radius: 999px;">
+                <span style="color: #F59E0B; font-weight: 800; font-size: 16px; letter-spacing: 0.05em;">WARM LEAD</span>
+            </div>
+            {% else %}
+            <div style="display: inline-block; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); padding: 8px 24px; border-radius: 999px;">
+                <span style="color: #3B82F6; font-weight: 800; font-size: 16px; letter-spacing: 0.05em;">NEW LEAD</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Lead Card -->
+        <div style="background: rgba(26, 26, 38, 0.8); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 24px; margin-bottom: 20px;">
+            <!-- Platform & Location -->
+            <div style="margin-bottom: 12px;">
+                <span style="display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; color: white; background: {% if lead.platform == 'craigslist' %}#7B2FBE{% elif lead.platform == 'reddit' %}#FF4500{% elif lead.platform == 'patch' %}#0EA5E9{% elif lead.platform == 'facebook' %}#1877F2{% elif lead.platform == 'nextdoor' %}#8ED500{% elif lead.platform == 'google_qna' %}#4285F4{% elif lead.platform == 'google_reviews' %}#FBBC04{% elif lead.platform == 'yelp_review' %}#D32323{% elif lead.platform == 'angi_review' %}#39B54A{% elif lead.platform == 'houzz' %}#4DBC5B{% elif lead.platform == 'alignable' %}#1B3A5C{% elif lead.platform == 'thumbtack' %}#009FD9{% elif lead.platform == 'porch' %}#00BFA5{% elif lead.platform == 'citydata' %}#2D5F8A{% elif lead.platform == 'biggerpockets' %}#F57C00{% elif lead.platform == 'local_news' %}#607D8B{% elif lead.platform == 'parent_community' %}#E91E63{% elif lead.platform == 'trade_forum' %}#795548{% else %}#6B7280{% endif %};">
+                    {{ lead.get_platform_display }}
+                </span>
+                {% if lead.detected_location %}
+                <span style="color: #A0A0B8; font-size: 13px; margin-left: 8px;">
+                    {{ lead.detected_location }}
+                </span>
+                {% endif %}
+            </div>
+
+            {% if lead.ai_summary %}
+            <div style="color: #F1F1F5; font-size: 16px; font-weight: 600; margin-bottom: 12px; line-height: 1.4;">
+                {{ lead.ai_summary }}
+            </div>
+            {% endif %}
+
+            <div style="color: #A0A0B8; font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
+                {{ lead.source_content|truncatechars:300 }}
+            </div>
+
+            {% if lead.source_author %}
+            <div style="color: #6B6B80; font-size: 12px;">
+                Posted by: {{ lead.source_author }}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- CTA Button -->
+        <div style="text-align: center; padding: 8px 0 24px;">
+            <a href="{{ lead_url }}" style="display: inline-block; background: #3B82F6; color: white; padding: 14px 40px; border-radius: 8px; font-weight: 700; font-size: 15px; text-decoration: none; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);">
+                View Lead & Respond
+            </a>
+        </div>
+
+        <!-- Tip -->
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 8px; padding: 14px 18px; margin-bottom: 24px;">
+            <div style="color: #10B981; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px;">
+                Pro Tip
+            </div>
+            <div style="color: #A0A0B8; font-size: 13px; line-height: 1.5;">
+                The first responder wins 78% of the time. Respond within 30 minutes for the best chance of winning this job.
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; padding: 20px 0; border-top: 1px solid rgba(255,255,255,0.06);">
+            <div style="color: #6B6B80; font-size: 12px; line-height: 1.6;">
+                SalesSignal AI — Real-Time Lead Intelligence<br>
+                <a href="{{ dashboard_url }}" style="color: #3B82F6; text-decoration: none;">Open Dashboard</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,114 @@
+{% load static %}
+{% load lead_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard{% endblock %} | SalesSignal AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'css/salessignal.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon"><i class="bi bi-broadcast"></i></div>
+                <div>
+                    <div class="brand-text">SalesSignal</div>
+                    <div class="brand-sub">AI Lead Intelligence</div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="sidebar-section-label">Main</div>
+                <a href="{% url 'dashboard_home' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard_home' %}active{% endif %}">
+                    <i class="bi bi-grid-1x2-fill"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'lead_feed' %}" class="sidebar-link {% if request.resolver_match.url_name == 'lead_feed' or request.resolver_match.url_name == 'lead_detail' %}active{% endif %}">
+                    <i class="bi bi-lightning-fill"></i>
+                    <span>Lead Feed</span>
+                </a>
+                <a href="{% url 'territory_map' %}" class="sidebar-link {% if request.resolver_match.url_name == 'territory_map' %}active{% endif %}">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    <span>Territory Map</span>
+                </a>
+
+                <div class="sidebar-section-label">Outreach</div>
+                <a href="{% url 'campaign_list' %}" class="sidebar-link {% if 'campaign' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-megaphone-fill"></i>
+                    <span>Campaigns</span>
+                </a>
+                <a href="{% url 'competitor_list' %}" class="sidebar-link {% if 'competitor' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-binoculars-fill"></i>
+                    <span>Competitors</span>
+                </a>
+
+                <div class="sidebar-section-label">Insights</div>
+                <a href="{% url 'analytics_dashboard' %}" class="sidebar-link {% if 'analytics' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-bar-chart-fill"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="{% url 'settings_page' %}" class="sidebar-link {% if 'settings' in request.resolver_match.url_name or 'keyword' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-gear-fill"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-avatar">
+                    {{ request.user.first_name|default:request.user.username|truncatechars:2|upper }}
+                </div>
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-name">
+                        {% if request.user.business_profile %}
+                            {{ request.user.business_profile.business_name|truncatechars:22 }}
+                        {% else %}
+                            {{ request.user.username }}
+                        {% endif %}
+                    </div>
+                    <div class="sidebar-user-tier">
+                        {% if request.user.business_profile %}
+                            {{ request.user.business_profile.subscription_tier }} plan
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <h1 class="topbar-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                <div class="topbar-actions">
+                    <button class="btn-secondary btn-sm" onclick="window.location.href='{% url 'logout' %}'">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert-dark alert-{{ message.tags }}">
+                            <i class="bi bi-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script src="{% static 'js/salessignal.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

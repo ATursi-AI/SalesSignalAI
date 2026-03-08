@@ -1,0 +1,104 @@
+from pathlib import Path
+from decouple import config, Csv
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-key-change-in-production')
+DEBUG = config('DEBUG', default=True, cast=bool)
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=Csv())
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.humanize',
+    'core',
+]
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+ROOT_URLCONF = 'salessignal.urls'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = 'salessignal.wsgi.application'
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+]
+
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'America/New_York'
+USE_I18N = True
+USE_TZ = True
+
+STATIC_URL = 'static/'
+STATICFILES_DIRS = []
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGIN_URL = '/auth/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/'
+
+# External service keys
+REDDIT_CLIENT_ID = config('REDDIT_CLIENT_ID', default='')
+REDDIT_CLIENT_SECRET = config('REDDIT_CLIENT_SECRET', default='')
+REDDIT_USER_AGENT = config('REDDIT_USER_AGENT', default='SalesSignalAI/1.0')
+REDDIT_USERNAME = config('REDDIT_USERNAME', default='')
+REDDIT_PASSWORD = config('REDDIT_PASSWORD', default='')
+
+GOOGLE_MAPS_API_KEY = config('GOOGLE_MAPS_API_KEY', default='')
+ANTHROPIC_API_KEY = config('ANTHROPIC_API_KEY', default='')
+SENDGRID_API_KEY = config('SENDGRID_API_KEY', default='')
+
+TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='')
+TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='')
+TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER', default='')
+
+SERPAPI_KEY = config('SERPAPI_KEY', default='')
+ZEROBOUNCE_API_KEY = config('ZEROBOUNCE_API_KEY', default='')
+
+ALERT_FROM_EMAIL = config('ALERT_FROM_EMAIL', default='alerts@salessignal.ai')
+
+# Email backend (console for dev, SMTP for prod)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = ALERT_FROM_EMAIL

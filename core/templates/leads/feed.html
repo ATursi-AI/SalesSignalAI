@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load lead_tags %}
+
+{% block title %}Lead Feed{% endblock %}
+{% block page_title %}Lead Feed{% endblock %}
+
+{% block content %}
+<!-- Urgency Summary Bar -->
+<div class="d-flex align-center gap-2 mb-3 animate-fade-in-up" style="flex-wrap: wrap;">
+    <a href="?urgency=hot" class="urgency-badge urgency-hot" style="padding: 0.35rem 0.85rem; font-size: 0.8rem; text-decoration: none; cursor: pointer;">
+        <i class="bi bi-fire"></i> {{ hot_count }} HOT
+    </a>
+    <a href="?urgency=warm" class="urgency-badge urgency-warm" style="padding: 0.35rem 0.85rem; font-size: 0.8rem; text-decoration: none; cursor: pointer;">
+        {{ warm_count }} WARM
+    </a>
+    <a href="?urgency=new" class="urgency-badge urgency-new" style="padding: 0.35rem 0.85rem; font-size: 0.8rem; text-decoration: none; cursor: pointer;">
+        {{ new_count }} NEW
+    </a>
+    {% if current_urgency or current_platform or current_status or current_search %}
+    <a href="{% url 'lead_feed' %}" style="font-size: 0.8rem; margin-left: 0.5rem;">
+        <i class="bi bi-x-circle"></i> Clear Filters
+    </a>
+    {% endif %}
+</div>
+
+<!-- Filter Bar -->
+<div class="glass-card-static animate-fade-in-up animate-delay-1" style="padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
+    <form method="get" action="{% url 'lead_feed' %}" style="display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap;">
+        <div style="flex: 2; min-width: 200px;">
+            <label class="form-label-dark">Search</label>
+            <input type="text" name="q" class="form-control-dark" placeholder="Search leads..." value="{{ current_search }}">
+        </div>
+        <div style="flex: 1; min-width: 140px;">
+            <label class="form-label-dark">Platform</label>
+            <select name="platform" class="form-control-dark">
+                <option value="">All Platforms</option>
+                {% for value, label in platforms %}
+                <option value="{{ value }}" {% if current_platform == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="flex: 1; min-width: 120px;">
+            <label class="form-label-dark">Urgency</label>
+            <select name="urgency" class="form-control-dark">
+                <option value="">All</option>
+                <option value="hot" {% if current_urgency == 'hot' %}selected{% endif %}>HOT</option>
+                <option value="warm" {% if current_urgency == 'warm' %}selected{% endif %}>WARM</option>
+                <option value="new" {% if current_urgency == 'new' %}selected{% endif %}>NEW</option>
+                <option value="stale" {% if current_urgency == 'stale' %}selected{% endif %}>Stale</option>
+            </select>
+        </div>
+        <div style="flex: 1; min-width: 130px;">
+            <label class="form-label-dark">Status</label>
+            <select name="status" class="form-control-dark">
+                <option value="">All</option>
+                {% for value, label in statuses %}
+                <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <button type="submit" class="btn-primary-glow btn-sm" style="height: 40px;">
+                <i class="bi bi-search"></i> Filter
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Lead List -->
+<div class="lead-stream">
+    {% if assignments %}
+        {% for assignment in assignments %}
+        <a href="{% url 'lead_detail' assignment.id %}" style="text-decoration: none; color: inherit;">
+            <div class="glass-card lead-card {% if assignment.lead.urgency_level == 'hot' %}is-hot{% endif %} animate-fade-in-up" style="animation-delay: {{ forloop.counter0 }}0ms;">
+                <div style="flex: 1;">
+                    <div class="lead-meta">
+                        <span class="platform-pill platform-{{ assignment.lead.platform }}">
+                            {{ assignment.lead.platform|platform_label }}
+                        </span>
+                        <span class="urgency-badge {{ assignment.lead.urgency_level|urgency_class }}">
+                            {% if assignment.lead.urgency_level == 'hot' %}<i class="bi bi-fire"></i>{% endif %}
+                            {{ assignment.lead.urgency_level|upper }}
+                        </span>
+                        {% if assignment.lead.ai_summary %}
+                        <span style="font-size: 0.7rem; color: var(--accent-blue); font-weight: 600;">
+                            <i class="bi bi-robot"></i> AI
+                        </span>
+                        {% endif %}
+                        <!-- Status indicator -->
+                        <span style="margin-left: auto; font-size: 0.72rem; padding: 0.15rem 0.5rem; border-radius: var(--radius-full); background: var(--bg-surface); color: var(--text-muted); border: 1px solid var(--border-subtle);">
+                            {{ assignment.get_status_display }}
+                        </span>
+                    </div>
+
+                    {% if assignment.lead.ai_summary %}
+                    <div style="color: var(--text-primary); font-size: 0.9rem; font-weight: 500; margin-bottom: 0.25rem;">
+                        {{ assignment.lead.ai_summary }}
+                    </div>
+                    {% endif %}
+
+                    <div class="lead-content-preview">
+                        {{ assignment.lead.source_content|truncatechars:220 }}
+                    </div>
+
+                    <div class="lead-footer">
+                        {% if assignment.lead.detected_location %}
+                        <span class="lead-location">
+                            <i class="bi bi-geo-alt"></i> {{ assignment.lead.detected_location }}
+                        </span>
+                        {% endif %}
+                        {% if assignment.lead.source_author %}
+                        <span><i class="bi bi-person"></i> {{ assignment.lead.source_author }}</span>
+                        {% endif %}
+                        <span class="lead-time">{{ assignment.lead.discovered_at|time_ago }}</span>
+                        {% if assignment.lead.matched_keywords %}
+                        <span style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
+                            {% for kw in assignment.lead.matched_keywords|slice:":3" %}
+                            <span style="font-size: 0.65rem; padding: 0.1rem 0.4rem; background: var(--bg-surface); border-radius: var(--radius-full); color: var(--text-muted);">{{ kw }}</span>
+                            {% endfor %}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div style="flex-shrink: 0; display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-end;">
+                    <i class="bi bi-chevron-right" style="color: var(--text-muted); font-size: 1.2rem;"></i>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    {% else %}
+        <div class="glass-card-static empty-state">
+            <div class="empty-state-icon"><i class="bi bi-broadcast"></i></div>
+            <h3>No Leads Found</h3>
+            {% if current_platform or current_urgency or current_status or current_search %}
+            <p>No leads match your current filters. Try adjusting your search criteria.</p>
+            <a href="{% url 'lead_feed' %}" class="btn-secondary btn-sm"><i class="bi bi-x-circle"></i> Clear Filters</a>
+            {% else %}
+            <p>We're monitoring the internet for service requests in your area. New leads will appear here as they're discovered.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

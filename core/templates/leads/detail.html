@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+{% load lead_tags %}
+
+{% block title %}Lead Detail{% endblock %}
+{% block page_title %}Lead Detail{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1rem;">
+    <a href="{% url 'lead_feed' %}" style="font-size: 0.85rem; color: var(--text-secondary);">
+        <i class="bi bi-arrow-left"></i> Back to Lead Feed
+    </a>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 360px; gap: 1.5rem; align-items: start;">
+
+    <!-- Main Content -->
+    <div>
+        <!-- Lead Header Card -->
+        <div class="glass-card-static animate-fade-in-up {% if lead.urgency_level == 'hot' %}is-hot{% endif %}" style="padding: 1.75rem; margin-bottom: 1.25rem; {% if lead.urgency_level == 'hot' %}border-left: 3px solid var(--accent-coral); box-shadow: inset 4px 0 20px rgba(255, 71, 87, 0.05);{% endif %}">
+            <div class="lead-meta" style="margin-bottom: 0.75rem;">
+                <span class="platform-pill platform-{{ lead.platform }}">
+                    {{ lead.platform|platform_label }}
+                </span>
+                <span class="urgency-badge {{ lead.urgency_level|urgency_class }}">
+                    {% if lead.urgency_level == 'hot' %}<i class="bi bi-fire"></i>{% endif %}
+                    {{ lead.urgency_level|upper }}
+                </span>
+                <span class="lead-time" style="margin-left: auto;">{{ lead.discovered_at|time_ago }}</span>
+            </div>
+
+            {% if lead.ai_summary %}
+            <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.15); border-radius: var(--radius-sm); padding: 0.85rem 1rem; margin-bottom: 1rem;">
+                <div style="font-size: 0.7rem; font-weight: 700; color: var(--accent-blue); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.25rem;">
+                    <i class="bi bi-robot"></i> AI Summary
+                </div>
+                <div style="font-size: 0.9rem; color: var(--text-primary); font-weight: 500;">
+                    {{ lead.ai_summary }}
+                </div>
+            </div>
+            {% endif %}
+
+            <div style="font-size: 0.95rem; line-height: 1.7; color: var(--text-secondary); white-space: pre-line;">{{ lead.source_content }}</div>
+
+            <div class="lead-footer" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+                {% if lead.detected_location %}
+                <span class="lead-location"><i class="bi bi-geo-alt-fill"></i> {{ lead.detected_location }}</span>
+                {% endif %}
+                {% if lead.detected_zip %}
+                <span class="mono" style="font-size: 0.75rem;">ZIP: {{ lead.detected_zip }}</span>
+                {% endif %}
+                {% if lead.source_author %}
+                <span><i class="bi bi-person-fill"></i> {{ lead.source_author }}</span>
+                {% endif %}
+                {% if lead.source_posted_at %}
+                <span class="lead-time">Posted: {{ lead.source_posted_at|time_ago }}</span>
+                {% endif %}
+            </div>
+
+            {% if lead.source_url %}
+            <div style="margin-top: 1rem;">
+                <a href="{{ lead.source_url }}" target="_blank" rel="noopener" class="btn-secondary btn-sm">
+                    <i class="bi bi-box-arrow-up-right"></i> View Original Post
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- AI Suggested Response -->
+        {% if lead.ai_suggested_response %}
+        <div class="glass-card-static animate-fade-in-up animate-delay-2" style="padding: 1.75rem; margin-bottom: 1.25rem;">
+            <div class="section-label" style="margin-bottom: 0.75rem;">
+                <i class="bi bi-robot" style="color: var(--accent-blue);"></i> AI Suggested Response
+            </div>
+            <div id="ai-response-text" style="font-size: 0.9rem; line-height: 1.7; color: var(--text-secondary); background: var(--bg-surface); padding: 1rem 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); white-space: pre-line;">{{ lead.ai_suggested_response }}</div>
+            <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem;">
+                <button class="btn-primary-glow btn-sm" onclick="copyResponse()">
+                    <i class="bi bi-clipboard"></i> Copy Response
+                </button>
+                {% if lead.source_url %}
+                <a href="{{ lead.source_url }}" target="_blank" rel="noopener" class="btn-secondary btn-sm">
+                    <i class="bi bi-reply"></i> Reply on {{ lead.platform|platform_label }}
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Similar Leads -->
+        {% if similar_leads %}
+        <div class="glass-card-static animate-fade-in-up animate-delay-3" style="padding: 1.5rem;">
+            <div class="section-label" style="margin-bottom: 0.75rem;">Similar Leads Nearby</div>
+            {% for sim in similar_leads %}
+            <a href="{% url 'lead_detail' sim.id %}" style="text-decoration: none; color: inherit; display: block; padding: 0.65rem 0; border-bottom: 1px solid var(--border-subtle);">
+                <div class="d-flex align-center gap-1">
+                    <span class="platform-pill platform-{{ sim.lead.platform }}" style="font-size: 0.65rem;">{{ sim.lead.platform|platform_label }}</span>
+                    <span class="urgency-badge {{ sim.lead.urgency_level|urgency_class }}" style="font-size: 0.6rem;">{{ sim.lead.urgency_level|upper }}</span>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary); margin-left: 0.25rem;">{{ sim.lead.source_content|truncatechars:80 }}</span>
+                    <span class="lead-time" style="margin-left: auto;">{{ sim.lead.discovered_at|time_ago }}</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div>
+        <!-- Status Management -->
+        <div class="glass-card-static animate-fade-in-up animate-delay-1" style="padding: 1.5rem; margin-bottom: 1.25rem;">
+            <div class="section-label" style="margin-bottom: 1rem;">Lead Status</div>
+
+            <form method="post" action="{% url 'lead_update_status' assignment.id %}" id="status-form">
+                {% csrf_token %}
+                <div style="margin-bottom: 1rem;">
+                    <select name="status" class="form-control-dark" id="status-select" onchange="this.form.submit()">
+                        <option value="new" {% if assignment.status == 'new' %}selected{% endif %}>New</option>
+                        <option value="viewed" {% if assignment.status == 'viewed' %}selected{% endif %}>Viewed</option>
+                        <option value="alerted" {% if assignment.status == 'alerted' %}selected{% endif %}>Alert Sent</option>
+                        <option value="contacted" {% if assignment.status == 'contacted' %}selected{% endif %}>Contacted</option>
+                        <option value="quoted" {% if assignment.status == 'quoted' %}selected{% endif %}>Quote Sent</option>
+                        <option value="won" {% if assignment.status == 'won' %}selected{% endif %}>Won</option>
+                        <option value="lost" {% if assignment.status == 'lost' %}selected{% endif %}>Lost</option>
+                        <option value="expired" {% if assignment.status == 'expired' %}selected{% endif %}>Expired</option>
+                    </select>
+                </div>
+            </form>
+
+            <!-- Quick Actions -->
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                {% if assignment.status != 'contacted' and assignment.status != 'won' and assignment.status != 'lost' %}
+                <form method="post" action="{% url 'lead_update_status' assignment.id %}" style="display: contents;">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="contacted">
+                    <button type="submit" class="btn-primary-glow btn-sm w-100">
+                        <i class="bi bi-telephone-fill"></i> Mark Contacted
+                    </button>
+                </form>
+                {% endif %}
+                {% if assignment.status != 'won' %}
+                <form method="post" action="{% url 'lead_update_status' assignment.id %}" style="display: contents;">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="won">
+                    <button type="submit" class="btn-primary-glow btn-sm w-100 btn-emerald">
+                        <i class="bi bi-trophy-fill"></i> Mark Won
+                    </button>
+                </form>
+                {% endif %}
+                {% if assignment.status != 'lost' and assignment.status != 'expired' %}
+                <form method="post" action="{% url 'lead_update_status' assignment.id %}" style="display: contents;">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="lost">
+                    <button type="submit" class="btn-secondary btn-sm w-100">
+                        <i class="bi bi-x-circle"></i> Mark Lost
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Revenue & Notes (for Won) -->
+        <div class="glass-card-static animate-fade-in-up animate-delay-2" style="padding: 1.5rem; margin-bottom: 1.25rem;">
+            <div class="section-label" style="margin-bottom: 0.75rem;">Revenue & Notes</div>
+            <form method="post" action="{% url 'lead_update_status' assignment.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="{{ assignment.status }}">
+                <div class="form-group" style="margin-bottom: 0.75rem;">
+                    <label class="form-label-dark">Revenue ($)</label>
+                    <input type="number" name="revenue" step="0.01" class="form-control-dark" placeholder="0.00" value="{{ assignment.revenue|default:'' }}">
+                </div>
+                <div class="form-group" style="margin-bottom: 0.75rem;">
+                    <label class="form-label-dark">Notes</label>
+                    <textarea name="notes" class="form-control-dark" rows="3" placeholder="Add notes about this lead...">{{ assignment.notes }}</textarea>
+                </div>
+                <button type="submit" class="btn-secondary btn-sm w-100">
+                    <i class="bi bi-save"></i> Save
+                </button>
+            </form>
+        </div>
+
+        <!-- Timeline -->
+        <div class="glass-card-static animate-fade-in-up animate-delay-3" style="padding: 1.5rem; margin-bottom: 1.25rem;">
+            <div class="section-label" style="margin-bottom: 1rem;">Timeline</div>
+            <div style="display: flex; flex-direction: column; gap: 0;">
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background: var(--accent-blue);"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-label">Discovered</div>
+                        <div class="timeline-time">{{ lead.discovered_at|time_ago }}</div>
+                    </div>
+                </div>
+                {% if assignment.alert_sent_at %}
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background: var(--accent-amber);"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-label">Alert Sent ({{ assignment.alert_method }})</div>
+                        <div class="timeline-time">{{ assignment.alert_sent_at|time_ago }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                {% if assignment.viewed_at %}
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background: var(--accent-blue);"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-label">Viewed</div>
+                        <div class="timeline-time">{{ assignment.viewed_at|time_ago }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                {% if assignment.contacted_at %}
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background: var(--accent-emerald);"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-label">Contacted</div>
+                        <div class="timeline-time">{{ assignment.contacted_at|time_ago }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                {% if assignment.status == 'won' %}
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background: var(--accent-emerald);"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-label">Won{% if assignment.revenue %} — ${{ assignment.revenue }}{% endif %}</div>
+                        <div class="timeline-time">{{ assignment.updated_at|time_ago }}</div>
+                    </div>
+                </div>
+                {% elif assignment.status == 'lost' %}
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background: var(--accent-coral);"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-label">Lost</div>
+                        <div class="timeline-time">{{ assignment.updated_at|time_ago }}</div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Location Map Placeholder -->
+        {% if lead.detected_location %}
+        <div class="glass-card-static animate-fade-in-up animate-delay-4" style="padding: 1.5rem;">
+            <div class="section-label" style="margin-bottom: 0.75rem;">Location</div>
+            <div style="background: var(--bg-surface); border-radius: var(--radius-sm); padding: 2rem 1rem; text-align: center; border: 1px solid var(--border-subtle);">
+                <i class="bi bi-geo-alt-fill" style="font-size: 2rem; color: var(--accent-blue); display: block; margin-bottom: 0.5rem;"></i>
+                <div style="font-weight: 600; margin-bottom: 0.25rem;">{{ lead.detected_location }}</div>
+                {% if lead.detected_zip %}
+                <div style="font-size: 0.8rem; color: var(--text-muted);" class="mono">ZIP {{ lead.detected_zip }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyResponse() {
+    const text = document.getElementById('ai-response-text').innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target.closest('button');
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+        setTimeout(() => btn.innerHTML = orig, 2000);
+    });
+}
+</script>
+{% endblock %}

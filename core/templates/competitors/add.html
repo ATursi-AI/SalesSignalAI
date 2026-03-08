@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Add Competitor{% endblock %}
+{% block page_title %}Add Competitor{% endblock %}
+
+{% block content %}
+<div style="max-width: 700px;">
+    <div class="glass-card-static" style="padding: 2rem;">
+        <h3 style="margin-bottom: 0.5rem;"><i class="bi bi-search" style="color: var(--accent-blue); margin-right: 0.4rem;"></i>Find a Competitor</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+            Search by business name to auto-populate from Google, or enter details manually.
+        </p>
+
+        <!-- Google lookup -->
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label class="form-label">Search Google Maps</label>
+            <div style="display: flex; gap: 0.5rem;">
+                <input type="text" id="google-search" class="form-input" placeholder="e.g. 'Mike's Plumbing Brooklyn NY'" style="flex: 1;">
+                <button type="button" class="btn-secondary" onclick="searchGoogle()" id="search-btn">
+                    <i class="bi bi-search"></i> Search
+                </button>
+            </div>
+            <div id="search-results" style="margin-top: 0.75rem;"></div>
+        </div>
+
+        <div class="form-divider">
+            <span>or enter manually</span>
+        </div>
+
+        <!-- Manual form -->
+        <form method="post" action="{% url 'competitor_add' %}" id="competitor-form">
+            {% csrf_token %}
+            <input type="hidden" name="google_place_id" id="google_place_id" value="">
+
+            <div class="form-group">
+                <label class="form-label">Business Name *</label>
+                <input type="text" name="name" id="comp-name" class="form-input" required placeholder="Competitor business name">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">Website</label>
+                    <input type="url" name="website" id="comp-website" class="form-input" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input type="text" name="phone" id="comp-phone" class="form-input" placeholder="(555) 123-4567">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Yelp URL</label>
+                <input type="url" name="yelp_url" id="comp-yelp" class="form-input" placeholder="https://www.yelp.com/biz/...">
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn-primary-glow" style="flex: 1;">
+                    <i class="bi bi-plus-lg"></i> Add Competitor
+                </button>
+                <a href="{% url 'competitor_list' %}" class="btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function searchGoogle() {
+    const query = document.getElementById('google-search').value.trim();
+    if (query.length < 3) return;
+
+    const btn = document.getElementById('search-btn');
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Searching...';
+    btn.disabled = true;
+
+    fetch('/competitors/lookup/?q=' + encodeURIComponent(query))
+        .then(r => r.json())
+        .then(data => {
+            btn.innerHTML = '<i class="bi bi-search"></i> Search';
+            btn.disabled = false;
+            renderResults(data.results || []);
+        })
+        .catch(() => {
+            btn.innerHTML = '<i class="bi bi-search"></i> Search';
+            btn.disabled = false;
+        });
+}
+
+document.getElementById('google-search').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); searchGoogle(); }
+});
+
+function renderResults(results) {
+    const container = document.getElementById('search-results');
+    if (!results.length) {
+        container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No results found. Try a different search or enter details manually.</p>';
+        return;
+    }
+
+    let html = '';
+    results.forEach(r => {
+        const stars = r.rating ? `<span style="color: var(--accent-amber);">${r.rating} ★</span> (${r.review_count || 0} reviews)` : '';
+        html += `
+        <div class="google-result-card" onclick="selectResult(this)"
+             data-place-id="${r.place_id}" data-name="${escapeAttr(r.name)}"
+             data-website="${escapeAttr(r.website || '')}" data-phone="${escapeAttr(r.phone || '')}">
+            <div style="font-weight: 600; color: var(--text-primary);">${escapeHtml(r.name)}</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.15rem;">${escapeHtml(r.address || '')}</div>
+            ${stars ? `<div style="font-size: 0.8rem; margin-top: 0.25rem;">${stars}</div>` : ''}
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+function selectResult(el) {
+    document.querySelectorAll('.google-result-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+
+    document.getElementById('google_place_id').value = el.dataset.placeId;
+    document.getElementById('comp-name').value = el.dataset.name;
+    if (el.dataset.website) document.getElementById('comp-website').value = el.dataset.website;
+    if (el.dataset.phone) document.getElementById('comp-phone').value = el.dataset.phone;
+}
+
+function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
+function escapeAttr(s) {
+    return s.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+</script>
+{% endblock %}

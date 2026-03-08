@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load lead_tags %}
+
+{% block title %}{{ competitor.name }}{% endblock %}
+{% block page_title %}{{ competitor.name }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1rem;">
+    <a href="{% url 'competitor_list' %}" style="color: var(--text-secondary); font-size: 0.85rem;">
+        <i class="bi bi-arrow-left"></i> Back to Competitors
+    </a>
+</div>
+
+<!-- Competitor Header Card -->
+<div class="glass-card-static competitor-detail-header animate-fade-in-up">
+    <div class="competitor-detail-top">
+        <div class="competitor-avatar-lg">
+            {{ competitor.name|truncatechars:2|upper }}
+        </div>
+        <div style="flex: 1;">
+            <h2 style="font-size: 1.5rem; margin-bottom: 0.25rem;">{{ competitor.name }}</h2>
+            <div style="display: flex; flex-wrap: wrap; gap: 1rem; color: var(--text-secondary); font-size: 0.85rem;">
+                {% if competitor.website %}
+                <span><i class="bi bi-globe"></i> <a href="{{ competitor.website }}" target="_blank" rel="noopener">{{ competitor.website|truncatechars:40 }}</a></span>
+                {% endif %}
+                {% if competitor.phone %}
+                <span><i class="bi bi-telephone"></i> {{ competitor.phone }}</span>
+                {% endif %}
+                {% if competitor.yelp_url %}
+                <span><i class="bi bi-star"></i> <a href="{{ competitor.yelp_url }}" target="_blank" rel="noopener">Yelp Profile</a></span>
+                {% endif %}
+            </div>
+        </div>
+        <form method="post" action="{% url 'competitor_delete' competitor.id %}" onsubmit="return confirm('Remove this competitor?')">
+            {% csrf_token %}
+            <button type="submit" class="btn-secondary btn-sm" style="color: var(--accent-coral);">
+                <i class="bi bi-trash"></i> Remove
+            </button>
+        </form>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="competitor-detail-stats">
+        <div class="competitor-detail-stat">
+            <div class="competitor-detail-stat-label">Google Rating</div>
+            <div class="competitor-detail-stat-value">
+                {% if competitor.current_google_rating %}
+                <span style="color: var(--accent-amber); font-size: 1.5rem;">{{ competitor.current_google_rating }}</span>
+                <span style="color: var(--text-muted); font-size: 0.85rem;">/ 5</span>
+                {% else %}
+                <span style="color: var(--text-muted);">&mdash;</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="competitor-detail-stat">
+            <div class="competitor-detail-stat-label">Total Reviews</div>
+            <div class="competitor-detail-stat-value mono">
+                {% if competitor.current_review_count %}{{ competitor.current_review_count }}{% else %}&mdash;{% endif %}
+            </div>
+        </div>
+        <div class="competitor-detail-stat">
+            <div class="competitor-detail-stat-label">Negative Reviews</div>
+            <div class="competitor-detail-stat-value mono" style="color: var(--accent-coral);">
+                {{ negative_count }}
+            </div>
+        </div>
+        <div class="competitor-detail-stat">
+            <div class="competitor-detail-stat-label"><i class="bi bi-lightning-fill" style="color: var(--accent-amber);"></i> Opportunities</div>
+            <div class="competitor-detail-stat-value mono" style="color: var(--accent-emerald);">
+                {{ opportunity_count }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reviews Section -->
+<div style="display: flex; align-items: center; justify-content: space-between; margin: 1.5rem 0 1rem;">
+    <h3 style="font-size: 1.15rem;">
+        <i class="bi bi-chat-left-text" style="color: var(--accent-blue); margin-right: 0.35rem;"></i>
+        Recent Reviews ({{ total_reviews }})
+    </h3>
+    <div style="display: flex; gap: 0.5rem;">
+        <button class="btn-secondary btn-sm review-filter active" data-filter="all" onclick="filterReviews('all', this)">All</button>
+        <button class="btn-secondary btn-sm review-filter" data-filter="negative" onclick="filterReviews('negative', this)">
+            <i class="bi bi-exclamation-triangle" style="color: var(--accent-coral);"></i> Negative
+        </button>
+        <button class="btn-secondary btn-sm review-filter" data-filter="opportunity" onclick="filterReviews('opportunity', this)">
+            <i class="bi bi-lightning-fill" style="color: var(--accent-amber);"></i> Opportunities
+        </button>
+    </div>
+</div>
+
+{% if reviews %}
+<div class="review-list" id="review-list">
+    {% for review in reviews %}
+    <div class="glass-card review-card animate-fade-in-up {% if review.is_opportunity %}review-opportunity{% endif %} {% if review.is_negative %}review-negative{% endif %}"
+         data-negative="{{ review.is_negative|yesno:'true,false' }}"
+         data-opportunity="{{ review.is_opportunity|yesno:'true,false' }}"
+         style="animation-delay: {{ forloop.counter0 }}50ms;">
+
+        <!-- Review Header -->
+        <div class="review-header">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div class="review-stars">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= review.rating %}
+                        <i class="bi bi-star-fill {% if review.rating <= 2 %}star-negative{% else %}star-normal{% endif %}"></i>
+                        {% else %}
+                        <i class="bi bi-star" style="color: var(--text-muted);"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <span class="review-platform-pill">{{ review.platform }}</span>
+                {% if review.is_opportunity %}
+                <span class="opportunity-badge"><i class="bi bi-lightning-fill"></i> Opportunity</span>
+                {% endif %}
+                {% if review.is_negative %}
+                <span class="negative-badge"><i class="bi bi-exclamation-triangle-fill"></i> Negative</span>
+                {% endif %}
+            </div>
+            <div style="color: var(--text-muted); font-size: 0.8rem;">
+                {% if review.review_date %}{{ review.review_date|date:"M d, Y" }}{% endif %}
+            </div>
+        </div>
+
+        <!-- Review Body -->
+        {% if review.reviewer_name %}
+        <div style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; margin-bottom: 0.35rem;">
+            {{ review.reviewer_name }}
+        </div>
+        {% endif %}
+        <div class="review-text">
+            {{ review.review_text|truncatechars:400 }}
+        </div>
+
+        <!-- AI Analysis -->
+        {% if review.ai_analysis %}
+        <div class="review-ai-analysis">
+            <div class="review-ai-label"><i class="bi bi-stars"></i> AI Analysis</div>
+            <div class="review-ai-text">{{ review.ai_analysis }}</div>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="glass-card-static empty-state" style="margin-top: 1rem;">
+    <div class="empty-state-icon"><i class="bi bi-chat-left-text"></i></div>
+    <h3>No Reviews Yet</h3>
+    <p>Reviews will appear here once the competitor monitoring system scans this business.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterReviews(filter, btn) {
+    document.querySelectorAll('.review-filter').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    document.querySelectorAll('.review-card').forEach(card => {
+        if (filter === 'all') {
+            card.style.display = '';
+        } else if (filter === 'negative') {
+            card.style.display = card.dataset.negative === 'true' ? '' : 'none';
+        } else if (filter === 'opportunity') {
+            card.style.display = card.dataset.opportunity === 'true' ? '' : 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

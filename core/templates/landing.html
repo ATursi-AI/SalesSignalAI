@@ -1,0 +1,243 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SalesSignal AI — Real-Time Lead Intelligence for Service Businesses</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'css/salessignal.css' %}">
+</head>
+<body class="landing-page">
+
+    <!-- Navigation -->
+    <nav class="landing-nav">
+        <div class="brand">
+            <div class="brand-icon"><i class="bi bi-broadcast"></i></div>
+            <span class="brand-name">SalesSignal AI</span>
+        </div>
+        <div class="landing-nav-links">
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How it Works</a>
+            <a href="#pricing">Pricing</a>
+            <a href="{% url 'login' %}" class="btn-secondary btn-sm">Log In</a>
+            <a href="{% url 'register' %}" class="btn-primary-glow btn-sm">Get Started</a>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero-section">
+        <div class="animate-fade-in-up">
+            <div class="hero-badge">
+                <i class="bi bi-lightning-fill"></i>
+                Real-Time Lead Intelligence Platform
+            </div>
+            <h1 class="hero-title">
+                Capture Every <span class="highlight">Service Lead</span> Before Your Competition
+            </h1>
+            <p class="hero-subtitle">
+                SalesSignal monitors the internet 24/7 for people actively requesting services in your area.
+                When someone posts "I need a plumber ASAP" — you know about it in seconds, not days.
+            </p>
+            <div class="hero-cta">
+                <a href="{% url 'register' %}" class="btn-primary-glow" style="padding: 0.85rem 2.5rem; font-size: 1rem;">
+                    <i class="bi bi-rocket-takeoff-fill"></i> Start Free Trial
+                </a>
+                <a href="#how-it-works" class="btn-secondary" style="padding: 0.85rem 2.5rem; font-size: 1rem;">
+                    <i class="bi bi-play-circle"></i> See How It Works
+                </a>
+            </div>
+            <div class="hero-stats">
+                <div>
+                    <div class="hero-stat-value" data-count="50">0</div>
+                    <div class="hero-stat-label">Service Categories</div>
+                </div>
+                <div>
+                    <div class="hero-stat-value" data-count="9">0</div>
+                    <div class="hero-stat-label">Platforms Monitored</div>
+                </div>
+                <div>
+                    <div class="hero-stat-value" data-count="24" data-suffix="/7">0</div>
+                    <div class="hero-stat-label">Always Scanning</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="how-section" id="how-it-works">
+        <div class="section-label mb-2 animate-on-scroll">How It Works</div>
+        <h2 class="section-title animate-on-scroll">Three Steps to More Jobs</h2>
+        <p class="section-subtitle animate-on-scroll">Set up in 5 minutes. Start getting leads immediately.</p>
+
+        <div class="steps-grid">
+            <div class="step-card glass-card animate-on-scroll">
+                <span class="step-number">01</span>
+                <div class="step-icon"><i class="bi bi-person-gear"></i></div>
+                <h3>Tell Us Your Trade</h3>
+                <p>Select your service category and set your coverage area. We configure monitoring for your exact niche — from plumbing to solar installation.</p>
+            </div>
+            <div class="step-card glass-card animate-on-scroll">
+                <span class="step-number">02</span>
+                <div class="step-icon" style="background: rgba(255, 71, 87, 0.1); border-color: rgba(255, 71, 87, 0.2);">
+                    <i class="bi bi-broadcast" style="color: var(--accent-coral);"></i>
+                </div>
+                <h3>We Scan Everything</h3>
+                <p>Our AI monitors Craigslist, Reddit, Patch, Houzz, Yelp, Google Q&A, Facebook, Nextdoor, and more — every 15 minutes, around the clock.</p>
+            </div>
+            <div class="step-card glass-card animate-on-scroll">
+                <span class="step-number">03</span>
+                <div class="step-icon" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2);">
+                    <i class="bi bi-bell-fill" style="color: var(--accent-emerald);"></i>
+                </div>
+                <h3>Respond & Win</h3>
+                <p>Get instant alerts with AI-crafted responses. Be the first to respond and close more jobs. The fastest responder wins — that's you now.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features-section" id="features">
+        <div class="text-center mb-4">
+            <div class="section-label mb-2 animate-on-scroll">Powerful Features</div>
+            <h2 class="animate-on-scroll" style="font-size: 2.25rem;">Everything You Need to Dominate Your Market</h2>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card glass-card animate-on-scroll">
+                <div class="feature-icon coral"><i class="bi bi-fire"></i></div>
+                <h4>Real-Time Lead Alerts</h4>
+                <p>Get notified within seconds when someone in your area needs your service. HOT leads pulse with urgency so you never miss a time-sensitive opportunity.</p>
+            </div>
+            <div class="feature-card glass-card animate-on-scroll">
+                <div class="feature-icon blue"><i class="bi bi-robot"></i></div>
+                <h4>AI-Powered Responses</h4>
+                <p>Claude AI analyzes each lead and generates a personalized response you can copy-paste. Sound professional and relevant every single time.</p>
+            </div>
+            <div class="feature-card glass-card animate-on-scroll">
+                <div class="feature-icon emerald"><i class="bi bi-geo-alt-fill"></i></div>
+                <h4>Territory Intelligence</h4>
+                <p>See demand heat maps, know which neighborhoods generate the most leads, and track your coverage area with precision.</p>
+            </div>
+            <div class="feature-card glass-card animate-on-scroll">
+                <div class="feature-icon amber"><i class="bi bi-binoculars-fill"></i></div>
+                <h4>Competitor Tracking</h4>
+                <p>Monitor competitor reviews in real-time. When they get a bad review, you get an opportunity alert to win that unsatisfied customer.</p>
+            </div>
+            <div class="feature-card glass-card animate-on-scroll">
+                <div class="feature-icon purple"><i class="bi bi-envelope-at-fill"></i></div>
+                <h4>Outreach Campaigns</h4>
+                <p>Build prospect lists from Google Maps, generate AI-personalized cold emails, and run automated follow-up sequences.</p>
+            </div>
+            <div class="feature-card glass-card animate-on-scroll">
+                <div class="feature-icon teal"><i class="bi bi-bar-chart-fill"></i></div>
+                <h4>Performance Analytics</h4>
+                <p>Track lead volume, response rates, conversion funnels, and revenue. Know exactly which platforms and areas drive your best results.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Platform Coverage -->
+    <section style="padding: 4rem 2rem; text-align: center;">
+        <div class="section-label mb-2 animate-on-scroll">Platform Coverage</div>
+        <h2 class="animate-on-scroll mb-3" style="font-size: 2rem;">We Monitor Where Your Customers Are</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; max-width: 700px; margin: 0 auto;" class="animate-on-scroll">
+            <span class="platform-pill platform-craigslist" style="padding: 0.5rem 1.25rem; font-size: 0.9rem;"><i class="bi bi-list-task"></i> Craigslist</span>
+            <span class="platform-pill platform-reddit" style="padding: 0.5rem 1.25rem; font-size: 0.9rem;"><i class="bi bi-reddit"></i> Reddit</span>
+            <span class="platform-pill platform-patch" style="padding: 0.5rem 1.25rem; font-size: 0.9rem;"><i class="bi bi-newspaper"></i> Patch.com</span>
+            <span class="platform-pill platform-google_qna" style="padding: 0.5rem 1.25rem; font-size: 0.9rem;"><i class="bi bi-google"></i> Google Q&A</span>
+            <span class="platform-pill platform-yelp_review" style="padding: 0.5rem 1.25rem; font-size: 0.9rem;"><i class="bi bi-star-fill"></i> Yelp</span>
+            <span class="platform-pill platform-houzz" style="padding: 0.5rem 1.25rem; font-size: 0.9rem;"><i class="bi bi-house-heart"></i> Houzz</span>
+            <span class="platform-pill platform-alignable" style="padding: 0.5rem 1.25rem; font-size: 0.9rem;"><i class="bi bi-building"></i> Alignable</span>
+            <span class="platform-pill platform-facebook" style="padding: 0.5rem 1.25rem; font-size: 0.9rem;"><i class="bi bi-facebook"></i> Facebook</span>
+            <span class="platform-pill platform-nextdoor" style="padding: 0.5rem 1.25rem; font-size: 0.9rem;"><i class="bi bi-people-fill"></i> Nextdoor</span>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="pricing-section" id="pricing">
+        <div class="section-label mb-2 animate-on-scroll">Simple Pricing</div>
+        <h2 class="animate-on-scroll" style="font-size: 2.25rem;">Plans That Scale With Your Business</h2>
+        <p class="animate-on-scroll" style="color: var(--text-secondary); margin-bottom: 3rem;">Start free. Upgrade when you're ready to dominate.</p>
+
+        <div class="pricing-grid">
+            <div class="pricing-card glass-card animate-on-scroll">
+                <div class="pricing-name">Starter</div>
+                <div class="pricing-price">$0<span>/mo</span></div>
+                <div class="pricing-desc">Perfect for testing the waters</div>
+                <ul class="pricing-features">
+                    <li><i class="bi bi-check-circle-fill"></i> Real-time lead alerts</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Up to 25 leads/month</li>
+                    <li><i class="bi bi-check-circle-fill"></i> 3 platform sources</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Email notifications</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Basic analytics</li>
+                </ul>
+                <a href="{% url 'register' %}" class="btn-secondary w-100" style="justify-content: center;">Get Started Free</a>
+            </div>
+
+            <div class="pricing-card glass-card featured animate-on-scroll">
+                <div class="pricing-name">Growth</div>
+                <div class="pricing-price">$79<span>/mo</span></div>
+                <div class="pricing-desc">For businesses ready to grow fast</div>
+                <ul class="pricing-features">
+                    <li><i class="bi bi-check-circle-fill"></i> Unlimited leads</li>
+                    <li><i class="bi bi-check-circle-fill"></i> All 9 platform sources</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Email + SMS alerts</li>
+                    <li><i class="bi bi-check-circle-fill"></i> AI suggested responses</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Outreach campaigns (500/mo)</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Competitor tracking (5)</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Territory map</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Full analytics</li>
+                </ul>
+                <a href="{% url 'register' %}" class="btn-primary-glow w-100" style="justify-content: center;">Start Growth Plan</a>
+            </div>
+
+            <div class="pricing-card glass-card animate-on-scroll">
+                <div class="pricing-name">Pro</div>
+                <div class="pricing-price">$199<span>/mo</span></div>
+                <div class="pricing-desc">For teams dominating their market</div>
+                <ul class="pricing-features">
+                    <li><i class="bi bi-check-circle-fill"></i> Everything in Growth</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Unlimited outreach emails</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Unlimited competitors</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Team members (up to 5)</li>
+                    <li><i class="bi bi-check-circle-fill"></i> API access</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Priority support</li>
+                    <li><i class="bi bi-check-circle-fill"></i> Custom integrations</li>
+                </ul>
+                <a href="{% url 'register' %}" class="btn-secondary w-100" style="justify-content: center;">Start Pro Plan</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <div class="animate-on-scroll" style="position: relative; z-index: 1;">
+            <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">Ready to Never Miss a Lead Again?</h2>
+            <p style="color: var(--text-secondary); font-size: 1.15rem; margin-bottom: 2rem; max-width: 500px; margin-left: auto; margin-right: auto;">
+                Join hundreds of service businesses using SalesSignal AI to capture more jobs and grow faster.
+            </p>
+            <a href="{% url 'register' %}" class="btn-primary-glow" style="padding: 1rem 3rem; font-size: 1.1rem;">
+                <i class="bi bi-rocket-takeoff-fill"></i> Start Your Free Trial
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+        <div class="footer-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Contact</a>
+            <a href="#">Blog</a>
+        </div>
+        <div class="footer-copy">
+            &copy; 2025 SalesSignal AI. All rights reserved. Built for service businesses that want to win.
+        </div>
+    </footer>
+
+    <script src="{% static 'js/salessignal.js' %}"></script>
+</body>
+</html>

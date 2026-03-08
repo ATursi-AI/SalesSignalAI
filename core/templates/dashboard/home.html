@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% load lead_tags %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- KPI Cards -->
+<div class="kpi-grid">
+    <div class="glass-card kpi-card kpi-hot animate-fade-in-up animate-delay-1">
+        <div class="kpi-icon"><i class="bi bi-fire"></i></div>
+        <div class="kpi-label">Hot Leads</div>
+        <div class="kpi-value" data-count="{{ hot_leads }}">0</div>
+        <div class="kpi-trend up"><i class="bi bi-arrow-up-short"></i> Active now</div>
+    </div>
+    <div class="glass-card kpi-card kpi-leads animate-fade-in-up animate-delay-2">
+        <div class="kpi-icon"><i class="bi bi-lightning-fill"></i></div>
+        <div class="kpi-label">Leads This Week</div>
+        <div class="kpi-value" data-count="{{ leads_this_week }}">0</div>
+        <div class="kpi-trend up"><i class="bi bi-arrow-up-short"></i> Monitoring</div>
+    </div>
+    <div class="glass-card kpi-card kpi-rate animate-fade-in-up animate-delay-3">
+        <div class="kpi-icon"><i class="bi bi-reply-fill"></i></div>
+        <div class="kpi-label">Response Rate</div>
+        <div class="kpi-value" data-count="{{ response_rate }}" data-suffix="%">0%</div>
+        <div class="kpi-trend up"><i class="bi bi-arrow-up-short"></i> Keep it up</div>
+    </div>
+    <div class="glass-card kpi-card kpi-won animate-fade-in-up animate-delay-4">
+        <div class="kpi-icon"><i class="bi bi-trophy-fill"></i></div>
+        <div class="kpi-label">Won This Month</div>
+        <div class="kpi-value" data-count="{{ leads_won }}">0</div>
+        <div class="kpi-trend up"><i class="bi bi-arrow-up-short"></i> Revenue</div>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<div style="display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; align-items: start;">
+
+    <!-- Lead Stream -->
+    <div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+            <h3 style="font-size: 1.15rem;">
+                <i class="bi bi-lightning-fill" style="color: var(--accent-blue); margin-right: 0.35rem;"></i>
+                Live Lead Stream
+            </h3>
+            <a href="{% url 'lead_feed' %}" class="btn-secondary btn-sm">View All <i class="bi bi-arrow-right"></i></a>
+        </div>
+
+        <div class="lead-stream">
+            {% if recent_assignments %}
+                {% for assignment in recent_assignments %}
+                <div class="glass-card lead-card {% if assignment.lead.urgency_level == 'hot' %}is-hot{% endif %} animate-fade-in-up" style="animation-delay: {{ forloop.counter0 }}00ms;">
+                    <div style="flex: 1;">
+                        <div class="lead-meta">
+                            <span class="platform-pill platform-{{ assignment.lead.platform }}">
+                                {{ assignment.lead.platform|platform_label }}
+                            </span>
+                            <span class="urgency-badge {{ assignment.lead.urgency_level|urgency_class }}">
+                                {% if assignment.lead.urgency_level == 'hot' %}<i class="bi bi-fire"></i>{% endif %}
+                                {{ assignment.lead.urgency_level|upper }}
+                            </span>
+                            {% if assignment.status == 'new' %}
+                                <span style="font-size: 0.7rem; color: var(--accent-blue); font-weight: 600;">NEW</span>
+                            {% endif %}
+                        </div>
+                        <div class="lead-content-preview">
+                            {{ assignment.lead.source_content|truncatechars:180 }}
+                        </div>
+                        <div class="lead-footer">
+                            {% if assignment.lead.detected_location %}
+                            <span class="lead-location">
+                                <i class="bi bi-geo-alt"></i> {{ assignment.lead.detected_location }}
+                            </span>
+                            {% endif %}
+                            <span class="lead-time">{{ assignment.lead.discovered_at|time_ago }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="glass-card-static empty-state">
+                    <div class="empty-state-icon"><i class="bi bi-broadcast"></i></div>
+                    <h3>No Leads Yet</h3>
+                    <p>We're monitoring the internet for service requests in your area. New leads will appear here as they're discovered.</p>
+                    <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                        <span class="platform-pill platform-craigslist"><i class="bi bi-check"></i> Craigslist</span>
+                        <span class="platform-pill platform-reddit"><i class="bi bi-check"></i> Reddit</span>
+                        <span class="platform-pill platform-patch"><i class="bi bi-check"></i> Patch</span>
+                        <span class="platform-pill platform-facebook"><i class="bi bi-check"></i> Facebook</span>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Sidebar Stats -->
+    <div>
+        <!-- Quick Stats -->
+        <div class="glass-card-static animate-fade-in-up animate-delay-3" style="padding: 1.5rem; margin-bottom: 1.25rem;">
+            <div class="section-label" style="margin-bottom: 1rem;">Quick Stats</div>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-secondary); font-size: 0.85rem;"><i class="bi bi-clock" style="margin-right: 0.35rem;"></i>Avg Response Time</span>
+                    <span class="stat-number-sm text-blue">{{ avg_response|default:"--" }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-secondary); font-size: 0.85rem;"><i class="bi bi-star" style="margin-right: 0.35rem;"></i>Best Platform</span>
+                    <span class="stat-number-sm text-amber">{{ best_platform|default:"--" }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-secondary); font-size: 0.85rem;"><i class="bi bi-geo" style="margin-right: 0.35rem;"></i>Top Area</span>
+                    <span class="stat-number-sm text-emerald">{{ top_area|default:"--" }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-secondary); font-size: 0.85rem;"><i class="bi bi-percent" style="margin-right: 0.35rem;"></i>Conversion Rate</span>
+                    <span class="stat-number-sm text-coral">{{ conversion_rate|default:"--" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Info -->
+        <div class="glass-card-static animate-fade-in-up animate-delay-4" style="padding: 1.5rem; margin-bottom: 1.25rem;">
+            <div class="section-label" style="margin-bottom: 1rem;">Your Setup</div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.6rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="bi bi-briefcase-fill" style="color: var(--accent-blue);"></i>
+                    <span>{{ profile.service_category.name|default:"Not set" }}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="bi bi-geo-alt-fill" style="color: var(--accent-emerald);"></i>
+                    <span>{{ profile.city|default:"--" }}, {{ profile.state|default:"--" }} {{ profile.zip_code }}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="bi bi-bullseye" style="color: var(--accent-amber);"></i>
+                    <span>{{ profile.service_radius_miles }} mile radius</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="bi bi-bell-fill" style="color: var(--accent-coral);"></i>
+                    <span>
+                        {% if profile.alert_via_email %}Email{% endif %}
+                        {% if profile.alert_via_email and profile.alert_via_sms %} + {% endif %}
+                        {% if profile.alert_via_sms %}SMS{% endif %}
+                        {% if not profile.alert_via_email and not profile.alert_via_sms %}Not configured{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Competitor Watch -->
+        <div class="glass-card-static animate-fade-in-up animate-delay-5" style="padding: 1.5rem;">
+            <div class="section-label" style="margin-bottom: 1rem;">Competitor Watch</div>
+            {% if competitor_count %}
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-secondary); font-size: 0.85rem;"><i class="bi bi-binoculars" style="margin-right: 0.35rem;"></i>Tracking</span>
+                    <span class="stat-number-sm text-blue">{{ competitor_count }}</span>
+                </div>
+                {% if competitor_neg %}
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-secondary); font-size: 0.85rem;"><i class="bi bi-star" style="margin-right: 0.35rem;"></i>Their Neg Reviews</span>
+                    <span class="stat-number-sm text-coral">{{ competitor_neg }} this week</span>
+                </div>
+                {% endif %}
+                <a href="{% url 'competitor_list' %}" style="font-size: 0.8rem; text-align: center; margin-top: 0.25rem;">View competitors</a>
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 1rem 0; color: var(--text-muted); font-size: 0.85rem;">
+                <i class="bi bi-binoculars" style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem; opacity: 0.4;"></i>
+                No competitors tracked yet.<br>
+                <a href="{% url 'competitor_add' %}" style="font-size: 0.8rem;">Add a competitor</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    @media (max-width: 900px) {
+        .page-content > div:last-child {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>
+{% endblock %}

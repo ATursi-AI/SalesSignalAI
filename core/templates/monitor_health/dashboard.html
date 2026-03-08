@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Monitor Health{% endblock %}
+{% block page_title %}Monitor Health{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Monitor Health Dashboard */
+.health-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+.health-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
+}
+.health-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+}
+.health-card.status-success::before { background: var(--accent-emerald); }
+.health-card.status-partial::before { background: var(--accent-amber); }
+.health-card.status-failed::before { background: var(--accent-coral); }
+.health-card.status-running::before { background: var(--accent-blue); animation: pulse-bar 1.5s ease-in-out infinite; }
+.health-card.status-unknown::before { background: var(--text-muted); }
+
+@keyframes pulse-bar {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.health-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.health-status {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    font-weight: 700;
+}
+.health-status.success { background: rgba(16,185,129,0.15); color: var(--accent-emerald); }
+.health-status.partial { background: rgba(245,158,11,0.15); color: var(--accent-amber); }
+.health-status.failed { background: rgba(255,71,87,0.15); color: var(--accent-coral); }
+.health-status.running { background: rgba(59,130,246,0.15); color: var(--accent-blue); }
+.health-status.unknown { background: rgba(107,107,128,0.15); color: var(--text-muted); }
+
+.health-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+}
+.health-stat-label {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+}
+.health-stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+.health-error {
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(255,71,87,0.08);
+    border-radius: 8px;
+    font-size: 0.7rem;
+    color: var(--accent-coral);
+    word-break: break-all;
+}
+.health-time {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+}
+
+/* Warming Progress */
+.warming-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.warming-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+.warming-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.warming-title i { color: var(--accent-amber); }
+.warming-kpis {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1rem;
+}
+.warming-kpi {
+    text-align: center;
+}
+.warming-kpi-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.warming-kpi-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.warming-bar {
+    height: 8px;
+    background: var(--bg-elevated);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+.warming-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent-amber), var(--accent-emerald));
+    transition: width 0.5s ease;
+}
+.warming-day-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Email Log Table */
+.email-log-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+.email-log-table th {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.email-log-table td {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Recent Runs */
+.runs-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.runs-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.runs-title i { color: var(--accent-blue); }
+
+.run-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    font-size: 0.8rem;
+}
+.run-row:last-child { border-bottom: none; }
+.run-name {
+    min-width: 140px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.run-time {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    min-width: 130px;
+}
+.run-stat {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+}
+
+/* Unsub counter */
+.unsub-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(255,71,87,0.1);
+    color: var(--accent-coral);
+    padding: 0.3rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .health-grid { grid-template-columns: 1fr; }
+    .warming-kpis { flex-wrap: wrap; gap: 1rem; }
+    .run-row { flex-wrap: wrap; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Warming Progress -->
+<div class="warming-section animate-fade-in-up">
+    <div class="warming-header">
+        <div class="warming-title"><i class="bi bi-fire"></i> Domain Warming</div>
+        <div class="unsub-badge">
+            <i class="bi bi-envelope-x"></i>
+            {{ unsub_count }} unsubscribed{% if unsub_recent %} ({{ unsub_recent }} this week){% endif %}
+        </div>
+    </div>
+    <div class="warming-kpis">
+        <div class="warming-kpi">
+            <div class="warming-kpi-value">Day {{ warming_day }}</div>
+            <div class="warming-kpi-label">Warming Day</div>
+        </div>
+        <div class="warming-kpi">
+            <div class="warming-kpi-value">{{ today_limit }}/day</div>
+            <div class="warming-kpi-label">Current Limit</div>
+        </div>
+        {% for log in email_logs %}{% if forloop.last %}
+        <div class="warming-kpi">
+            <div class="warming-kpi-value">{{ log.emails_sent }}</div>
+            <div class="warming-kpi-label">Sent Today</div>
+        </div>
+        <div class="warming-kpi">
+            <div class="warming-kpi-value" style="color: {% if log.bounce_rate > 5 %}var(--accent-coral){% elif log.bounce_rate > 2 %}var(--accent-amber){% else %}var(--accent-emerald){% endif %}">{{ log.bounce_rate }}%</div>
+            <div class="warming-kpi-label">Bounce Rate</div>
+        </div>
+        {% endif %}{% endfor %}
+    </div>
+    <div class="warming-bar">
+        <div class="warming-bar-fill" style="width: {% widthratio warming_day 14 100 %}%"></div>
+    </div>
+    <div class="warming-day-label">
+        {% if warming_day <= 14 %}
+            Warming phase: Day {{ warming_day }} of 14. Limit auto-increases as reputation builds.
+        {% else %}
+            Warming complete. Sending at full capacity.
+        {% endif %}
+    </div>
+
+    {% if email_logs %}
+    <table class="email-log-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Sent</th>
+                <th>Delivered</th>
+                <th>Bounced</th>
+                <th>Complaints</th>
+                <th>Limit</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in email_logs %}
+            <tr>
+                <td>{{ log.date|date:"M d" }}</td>
+                <td>{{ log.emails_sent }}</td>
+                <td>{{ log.emails_delivered }}</td>
+                <td style="color: {% if log.emails_bounced %}var(--accent-coral){% else %}inherit{% endif %}">{{ log.emails_bounced }}</td>
+                <td style="color: {% if log.emails_complained %}var(--accent-coral){% else %}inherit{% endif %}">{{ log.emails_complained }}</td>
+                <td style="color: var(--text-muted)">{{ log.warming_limit }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+
+<!-- Monitor Cards -->
+<h3 style="font-size: 1rem; margin-bottom: 1rem;">
+    <i class="bi bi-heart-pulse" style="color: var(--accent-emerald); margin-right: 0.35rem;"></i>
+    Monitor Health
+</h3>
+<div class="health-grid">
+    {% for name, data in monitors.items %}
+    <div class="health-card status-{{ data.latest.status|default:'unknown' }} animate-fade-in-up">
+        <div class="health-name">
+            {{ name|title }}
+            <span class="health-status {{ data.latest.status|default:'unknown' }}">
+                {{ data.latest.status|default:'Never Run'|upper }}
+            </span>
+        </div>
+        <div class="health-stats">
+            <div>
+                <div class="health-stat-label">Week Runs</div>
+                <div class="health-stat-value">{{ data.week.total_runs|default:0 }}</div>
+            </div>
+            <div>
+                <div class="health-stat-label">Success Rate</div>
+                <div class="health-stat-value" style="color: {% if data.success_rate >= 90 %}var(--accent-emerald){% elif data.success_rate >= 50 %}var(--accent-amber){% else %}var(--accent-coral){% endif %}">{{ data.success_rate }}%</div>
+            </div>
+            <div>
+                <div class="health-stat-label">Items Scraped</div>
+                <div class="health-stat-value">{{ data.week.total_scraped|default:0 }}</div>
+            </div>
+            <div>
+                <div class="health-stat-label">Leads Created</div>
+                <div class="health-stat-value" style="color: var(--accent-emerald)">{{ data.week.total_leads|default:0 }}</div>
+            </div>
+        </div>
+        {% if data.latest.error_message %}
+        <div class="health-error">{{ data.latest.error_message|truncatechars:150 }}</div>
+        {% endif %}
+        {% if data.latest.started_at %}
+        <div class="health-time">
+            Last run: {{ data.latest.started_at|timesince }} ago
+            {% if data.latest.duration_seconds %} ({{ data.latest.duration_seconds|floatformat:1 }}s){% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% empty %}
+    <div class="health-card status-unknown" style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
+        <p style="color: var(--text-muted);">No monitor runs yet. Run <code>python manage.py run_monitors</code> to start.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Recent Runs -->
+<div class="runs-section animate-fade-in-up">
+    <div class="runs-title"><i class="bi bi-clock-history"></i> Recent Runs</div>
+    {% for run in recent_runs %}
+    <div class="run-row">
+        <span class="run-name">{{ run.monitor_name }}</span>
+        <span class="health-status {{ run.status }}">{{ run.status|upper }}</span>
+        <span class="run-time">{{ run.started_at|date:"M d, H:i" }}</span>
+        <span class="run-stat">{{ run.items_scraped }} scraped</span>
+        <span class="run-stat" style="color: var(--accent-emerald)">{{ run.leads_created }} leads</span>
+        {% if run.errors %}<span class="run-stat" style="color: var(--accent-coral)">{{ run.errors }} err</span>{% endif %}
+        {% if run.duration_seconds %}<span class="run-stat" style="color: var(--text-muted)">{{ run.duration_seconds|floatformat:1 }}s</span>{% endif %}
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 0.85rem;">
+        No runs recorded yet.
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

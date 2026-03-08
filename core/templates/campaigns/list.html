@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load lead_tags %}
+
+{% block title %}Campaigns{% endblock %}
+{% block page_title %}Outreach Campaigns{% endblock %}
+
+{% block content %}
+<div class="competitors-header">
+    <div>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">
+            {{ active_count }} active &middot; {{ draft_count }} draft
+        </p>
+    </div>
+    <a href="{% url 'campaign_wizard' %}" class="btn-primary-glow">
+        <i class="bi bi-plus-lg"></i> New Campaign
+    </a>
+</div>
+
+{% if campaigns %}
+<div class="campaign-list">
+    {% for c in campaigns %}
+    <a href="{% url 'campaign_detail' c.id %}" class="glass-card campaign-card animate-fade-in-up" style="animation-delay: {{ forloop.counter0 }}50ms; text-decoration:none;">
+        <div class="campaign-card-top">
+            <div>
+                <h4 class="competitor-name">{{ c.name }}</h4>
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem;">
+                    <span class="campaign-status-pill status-{{ c.status }}">{{ c.get_status_display }}</span>
+                    {% if c.target_business_types %}
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">
+                        {{ c.target_business_types|join:", " }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            <span class="competitor-arrow"><i class="bi bi-chevron-right"></i></span>
+        </div>
+
+        <div class="campaign-metrics-row">
+            <div class="campaign-metric">
+                <div class="campaign-metric-value mono">{{ c.total_prospects }}</div>
+                <div class="campaign-metric-label">Prospects</div>
+            </div>
+            <div class="campaign-metric">
+                <div class="campaign-metric-value mono">{{ c.emails_sent }}</div>
+                <div class="campaign-metric-label">Sent</div>
+            </div>
+            <div class="campaign-metric">
+                <div class="campaign-metric-value mono">{{ c.emails_opened }}</div>
+                <div class="campaign-metric-label">Opened</div>
+            </div>
+            <div class="campaign-metric">
+                <div class="campaign-metric-value mono" style="color: var(--accent-emerald);">{{ c.emails_replied }}</div>
+                <div class="campaign-metric-label">Replied</div>
+            </div>
+        </div>
+
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+            Created {{ c.created_at|time_ago }}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="glass-card-static empty-state" style="margin-top: 2rem;">
+    <div class="empty-state-icon"><i class="bi bi-megaphone"></i></div>
+    <h3>No Campaigns Yet</h3>
+    <p>Create your first outreach campaign to start connecting with prospects via AI-personalized emails.</p>
+    <a href="{% url 'campaign_wizard' %}" class="btn-primary-glow" style="margin-top: 1rem;">
+        <i class="bi bi-plus-lg"></i> Create Your First Campaign
+    </a>
+</div>
+{% endif %}
+{% endblock %}

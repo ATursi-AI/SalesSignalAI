@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% load lead_tags %}
+
+{% block title %}{{ campaign.name }}{% endblock %}
+{% block page_title %}{{ campaign.name }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1rem;">
+    <a href="{% url 'campaign_list' %}" style="color: var(--text-secondary); font-size: 0.85rem;">
+        <i class="bi bi-arrow-left"></i> Back to Campaigns
+    </a>
+</div>
+
+<!-- Campaign Header -->
+<div class="glass-card-static campaign-detail-header animate-fade-in-up">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.35rem;">
+                <h2 style="font-size: 1.4rem; margin: 0;">{{ campaign.name }}</h2>
+                <span class="campaign-status-pill status-{{ campaign.status }}">{{ campaign.get_status_display }}</span>
+            </div>
+            <div style="color: var(--text-muted); font-size: 0.8rem;">
+                Created {{ campaign.created_at|time_ago }}
+                {% if campaign.target_business_types %}
+                &middot; Targeting: {{ campaign.target_business_types|join:", " }}
+                {% endif %}
+            </div>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            {% if campaign.status == 'active' %}
+            <form method="post" action="{% url 'campaign_action' campaign.id %}" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="pause">
+                <button class="btn-secondary btn-sm"><i class="bi bi-pause-fill"></i> Pause</button>
+            </form>
+            <form method="post" action="{% url 'campaign_action' campaign.id %}" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="send_queue">
+                <button class="btn-primary-glow btn-sm"><i class="bi bi-send"></i> Send Queue</button>
+            </form>
+            {% elif campaign.status == 'paused' %}
+            <form method="post" action="{% url 'campaign_action' campaign.id %}" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="resume">
+                <button class="btn-primary-glow btn-sm"><i class="bi bi-play-fill"></i> Resume</button>
+            </form>
+            {% elif campaign.status == 'draft' %}
+            <form method="post" action="{% url 'campaign_action' campaign.id %}" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="resume">
+                <button class="btn-primary-glow btn-sm"><i class="bi bi-rocket-takeoff"></i> Activate</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- KPI Row -->
+    <div class="competitor-detail-stats">
+        <div class="competitor-detail-stat">
+            <div class="competitor-detail-stat-label">Prospects</div>
+            <div class="competitor-detail-stat-value mono">{{ campaign.total_prospects }}</div>
+        </div>
+        <div class="competitor-detail-stat">
+            <div class="competitor-detail-stat-label">Emails Sent</div>
+            <div class="competitor-detail-stat-value mono">{{ sent_count }}</div>
+        </div>
+        <div class="competitor-detail-stat">
+            <div class="competitor-detail-stat-label">Open Rate</div>
+            <div class="competitor-detail-stat-value mono" style="color: var(--accent-blue);">{{ open_rate }}%</div>
+        </div>
+        <div class="competitor-detail-stat">
+            <div class="competitor-detail-stat-label">Reply Rate</div>
+            <div class="competitor-detail-stat-value mono" style="color: var(--accent-emerald);">{{ reply_rate }}%</div>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Summary -->
+<div class="glass-card-static" style="padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
+    <div style="display: flex; gap: 2rem; font-size: 0.85rem; color: var(--text-secondary); flex-wrap: wrap;">
+        <span><i class="bi bi-envelope" style="color: var(--accent-blue);"></i> {{ campaign.max_emails_per_day }}/day limit</span>
+        <span><i class="bi bi-clock" style="color: var(--accent-amber);"></i> {{ campaign.followup_delay_days }}-day follow-up delay</span>
+        <span><i class="bi bi-arrow-repeat" style="color: var(--accent-emerald);"></i> {{ campaign.max_followups }} max follow-ups</span>
+        <span>
+            <i class="bi bi-stars" style="color: var(--accent-blue);"></i>
+            AI Personalization: {% if campaign.use_ai_personalization %}On{% else %}Off{% endif %}
+        </span>
+    </div>
+</div>
+
+<!-- Email List -->
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+    <h3 style="font-size: 1.15rem;">
+        <i class="bi bi-envelope" style="color: var(--accent-blue); margin-right: 0.35rem;"></i>
+        Emails ({{ total_emails }})
+    </h3>
+    <div style="display: flex; gap: 0.5rem;">
+        <a href="{% url 'campaign_detail' campaign.id %}" class="btn-secondary btn-sm {% if not current_status %}active{% endif %}">All</a>
+        {% for val, label in email_statuses %}
+        <a href="{% url 'campaign_detail' campaign.id %}?status={{ val }}" class="btn-secondary btn-sm {% if current_status == val %}active{% endif %}">{{ label }}</a>
+        {% endfor %}
+    </div>
+</div>
+
+{% if emails %}
+<div class="campaign-email-list">
+    {% for email in emails %}
+    <div class="glass-card campaign-email-row animate-fade-in-up" style="animation-delay: {{ forloop.counter0 }}30ms;">
+        <div class="email-row-left">
+            <div class="email-status-dot status-dot-{{ email.status }}"></div>
+            <div>
+                <div style="font-weight: 600; font-size: 0.9rem;">{{ email.prospect.name }}</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                    {{ email.prospect.email|default:email.prospect.owner_email }}
+                    {% if email.sequence_number > 1 %}
+                    <span class="email-seq-badge">Follow-up #{{ email.sequence_number|add:"-1" }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="email-row-middle">
+            <div style="font-size: 0.85rem; font-weight: 500;">{{ email.subject|truncatechars:60 }}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">{{ email.body|truncatechars:80 }}</div>
+        </div>
+        <div class="email-row-right">
+            <span class="email-status-pill email-status-{{ email.status }}">{{ email.get_status_display }}</span>
+            {% if email.sent_at %}
+            <span style="font-size: 0.7rem; color: var(--text-muted);">{{ email.sent_at|time_ago }}</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="glass-card-static empty-state">
+    <div class="empty-state-icon"><i class="bi bi-envelope"></i></div>
+    <h3>No Emails Yet</h3>
+    <p>Emails will appear here once the campaign generates and sends them.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load lead_tags %}
+
+{% block title %}Competitors{% endblock %}
+{% block page_title %}Competitor Intelligence{% endblock %}
+
+{% block content %}
+<div class="competitors-header">
+    <div>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">
+            Track {{ total }} competitor{{ total|pluralize }} &mdash; monitor ratings, reviews &amp; opportunities
+        </p>
+    </div>
+    <a href="{% url 'competitor_add' %}" class="btn-primary-glow">
+        <i class="bi bi-plus-lg"></i> Add Competitor
+    </a>
+</div>
+
+{% if competitors %}
+<div class="competitor-grid">
+    {% for comp in competitors %}
+    <a href="{% url 'competitor_detail' comp.id %}" class="glass-card competitor-card animate-fade-in-up" style="animation-delay: {{ forloop.counter0 }}50ms; text-decoration:none;">
+        <div class="competitor-card-header">
+            <div class="competitor-avatar">
+                {{ comp.name|truncatechars:2|upper }}
+            </div>
+            <div>
+                <h4 class="competitor-name">{{ comp.name }}</h4>
+                {% if comp.website %}
+                <span class="competitor-url">{{ comp.website|truncatechars:35 }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="competitor-stats-row">
+            <div class="competitor-stat">
+                <div class="competitor-stat-label">Google Rating</div>
+                <div class="competitor-stat-value">
+                    {% if comp.current_google_rating %}
+                    <span class="rating-stars">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= comp.current_google_rating %}
+                            <i class="bi bi-star-fill" style="color: var(--accent-amber);"></i>
+                            {% elif forloop.counter <= comp.current_google_rating|add:"0.5" %}
+                            <i class="bi bi-star-half" style="color: var(--accent-amber);"></i>
+                            {% else %}
+                            <i class="bi bi-star" style="color: var(--text-muted);"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </span>
+                    <span class="rating-number">{{ comp.current_google_rating }}</span>
+                    {% else %}
+                    <span style="color: var(--text-muted);">&mdash;</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="competitor-stat">
+                <div class="competitor-stat-label">Reviews</div>
+                <div class="competitor-stat-value mono">
+                    {% if comp.current_review_count %}
+                    {{ comp.current_review_count }}
+                    {% else %}
+                    &mdash;
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="competitor-card-footer">
+            {% if comp.last_checked %}
+            <span style="color: var(--text-muted); font-size: 0.75rem;">
+                <i class="bi bi-clock"></i> Checked {{ comp.last_checked|time_ago }}
+            </span>
+            {% else %}
+            <span style="color: var(--text-muted); font-size: 0.75rem;">Not checked yet</span>
+            {% endif %}
+            <span class="competitor-arrow"><i class="bi bi-chevron-right"></i></span>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="glass-card-static empty-state" style="margin-top: 2rem;">
+    <div class="empty-state-icon"><i class="bi bi-binoculars"></i></div>
+    <h3>No Competitors Tracked Yet</h3>
+    <p>Add your first competitor by business name or Google Maps URL to start monitoring their reviews and ratings.</p>
+    <a href="{% url 'competitor_add' %}" class="btn-primary-glow" style="margin-top: 1rem;">
+        <i class="bi bi-plus-lg"></i> Add Your First Competitor
+    </a>
+</div>
+{% endif %}
+{% endblock %}
