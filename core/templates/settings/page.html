@@ -312,8 +312,107 @@
     </div>
 </div>
 
-<!-- Info Section -->
+<!-- Email Configuration (Custom SMTP) -->
 <div class="settings-section animate-fade-in-up" style="animation-delay: 200ms;">
+    <div class="keywords-header">
+        <div class="keywords-title">
+            <i class="bi bi-envelope-gear-fill"></i>
+            Email Configuration
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="font-size: 0.8rem; color: var(--text-muted);">
+                {% if profile.use_custom_smtp %}
+                    <i class="bi bi-circle-fill" style="color: var(--accent-emerald); font-size: 0.5rem; vertical-align: middle;"></i> Custom SMTP
+                {% else %}
+                    <i class="bi bi-circle-fill" style="color: var(--accent-blue); font-size: 0.5rem; vertical-align: middle;"></i> Default (SendGrid)
+                {% endif %}
+            </span>
+        </div>
+    </div>
+    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+        Send outreach campaigns from your own email server for better deliverability and brand consistency.
+        When disabled, emails are sent through our default SendGrid infrastructure.
+    </p>
+
+    <!-- Toggle -->
+    <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-elevated); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.25rem;">
+        <div>
+            <div style="font-weight: 600; font-size: 0.9rem;">Use Custom SMTP Server</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">Send through your own email server</div>
+        </div>
+        <label class="toggle-switch">
+            <input type="checkbox" id="smtpEnabled" {% if profile.use_custom_smtp %}checked{% endif %}
+                   onchange="toggleSmtpFields()">
+            <span class="toggle-slider"></span>
+        </label>
+    </div>
+
+    <!-- SMTP Fields -->
+    <div id="smtpFields" style="{% if not profile.use_custom_smtp %}opacity: 0.5; pointer-events: none;{% endif %}">
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 0.35rem;">SMTP Host</label>
+                <input type="text" id="smtpHost" class="keyword-add-input" style="margin-bottom: 0;"
+                       placeholder="smtp.gmail.com" value="{{ profile.custom_smtp_host }}">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 0.35rem;">Port</label>
+                <input type="number" id="smtpPort" class="keyword-add-input" style="margin-bottom: 0;"
+                       placeholder="587" value="{{ profile.custom_smtp_port|default:587 }}">
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 0.35rem;">Username</label>
+                <input type="text" id="smtpUsername" class="keyword-add-input" style="margin-bottom: 0;"
+                       placeholder="you@yourdomain.com" value="{{ profile.custom_smtp_username }}" autocomplete="off">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 0.35rem;">Password</label>
+                <input type="password" id="smtpPassword" class="keyword-add-input" style="margin-bottom: 0;"
+                       placeholder="{% if profile.custom_smtp_password_encrypted %}••••••••{% else %}App password or SMTP password{% endif %}"
+                       value="{% if profile.custom_smtp_password_encrypted %}••••••••{% endif %}" autocomplete="new-password">
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 0.35rem;">From Email</label>
+                <input type="email" id="smtpFromEmail" class="keyword-add-input" style="margin-bottom: 0;"
+                       placeholder="outreach@yourdomain.com" value="{{ profile.custom_from_email }}">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 0.35rem;">From Name</label>
+                <input type="text" id="smtpFromName" class="keyword-add-input" style="margin-bottom: 0;"
+                       placeholder="{{ profile.business_name }}" value="{{ profile.custom_from_name }}">
+            </div>
+        </div>
+
+        <!-- Common providers hint -->
+        <div style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.5;">
+            <strong>Common settings:</strong>
+            Gmail: smtp.gmail.com:587 (use App Password) &bull;
+            Outlook: smtp.office365.com:587 &bull;
+            Yahoo: smtp.mail.yahoo.com:465 &bull;
+            Zoho: smtp.zoho.com:587
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <button class="btn-primary btn-sm" onclick="saveSmtpSettings()" id="smtpSaveBtn">
+                <i class="bi bi-check-lg"></i> Save SMTP Settings
+            </button>
+            <button class="btn-secondary btn-sm" onclick="sendTestEmail()" id="smtpTestBtn"
+                    {% if not profile.custom_smtp_host %}disabled{% endif %}>
+                <i class="bi bi-send"></i> Send Test Email
+            </button>
+        </div>
+
+        <!-- Test result -->
+        <div id="smtpTestResult" style="display: none; margin-top: 0.75rem; padding: 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;"></div>
+    </div>
+</div>
+
+<!-- Info Section -->
+<div class="settings-section animate-fade-in-up" style="animation-delay: 250ms;">
     <div class="keywords-title" style="margin-bottom: 1rem;">
         <i class="bi bi-info-circle-fill"></i>
         How Keywords Work
@@ -501,6 +600,96 @@ function resetDefaults() {
         } else {
             showToast('All defaults already present');
         }
+    });
+}
+
+/* ── SMTP Configuration ── */
+function toggleSmtpFields() {
+    const enabled = document.getElementById('smtpEnabled').checked;
+    const fields = document.getElementById('smtpFields');
+    fields.style.opacity = enabled ? '1' : '0.5';
+    fields.style.pointerEvents = enabled ? 'auto' : 'none';
+}
+
+function saveSmtpSettings() {
+    const btn = document.getElementById('smtpSaveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+
+    const payload = {
+        use_custom_smtp: document.getElementById('smtpEnabled').checked,
+        custom_smtp_host: document.getElementById('smtpHost').value,
+        custom_smtp_port: document.getElementById('smtpPort').value || 587,
+        custom_smtp_username: document.getElementById('smtpUsername').value,
+        custom_smtp_password: document.getElementById('smtpPassword').value,
+        custom_from_email: document.getElementById('smtpFromEmail').value,
+        custom_from_name: document.getElementById('smtpFromName').value,
+    };
+
+    fetch('{% url "save_smtp_settings" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Save SMTP Settings';
+        if (data.error) {
+            showToast(data.error);
+        } else {
+            showToast('SMTP settings saved');
+            // Enable test button now that settings are saved
+            document.getElementById('smtpTestBtn').disabled = false;
+        }
+    })
+    .catch(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Save SMTP Settings';
+        showToast('Failed to save settings');
+    });
+}
+
+function sendTestEmail() {
+    const btn = document.getElementById('smtpTestBtn');
+    const result = document.getElementById('smtpTestResult');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Sending...';
+    result.style.display = 'none';
+
+    fetch('{% url "send_test_email" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-send"></i> Send Test Email';
+        result.style.display = 'block';
+
+        if (data.success) {
+            result.style.background = 'rgba(16, 185, 129, 0.1)';
+            result.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+            result.style.color = 'var(--accent-emerald)';
+            result.innerHTML = '<i class="bi bi-check-circle-fill"></i> ' + data.message;
+        } else {
+            result.style.background = 'rgba(255, 71, 87, 0.1)';
+            result.style.border = '1px solid rgba(255, 71, 87, 0.3)';
+            result.style.color = 'var(--accent-coral)';
+            result.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + (data.error || 'Unknown error');
+        }
+    })
+    .catch(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-send"></i> Send Test Email';
+        showToast('Failed to send test email');
     });
 }
 </script>

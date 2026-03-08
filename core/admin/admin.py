@@ -6,6 +6,10 @@ from core.models import (
     TrackedCompetitor, CompetitorReview,
     MonitoredLocalSite, MonitoredFacebookGroup,
     MonitorRun, EmailSendLog, Unsubscribe,
+    PermitSource, PropertyTransferSource,
+    StateBusinessFilingSource,
+    CodeViolationSource, HealthInspectionSource,
+    LicensingBoardSource, CourtRecordSource,
 )
 
 
@@ -136,4 +140,60 @@ class EmailSendLogAdmin(admin.ModelAdmin):
 class UnsubscribeAdmin(admin.ModelAdmin):
     list_display = ['email', 'reason', 'created_at']
     search_fields = ['email']
+    readonly_fields = ['created_at']
+
+
+@admin.register(PermitSource)
+class PermitSourceAdmin(admin.ModelAdmin):
+    list_display = ['name', 'county', 'state', 'scrape_method', 'is_active', 'last_scraped']
+    list_filter = ['state', 'scrape_method', 'is_active']
+    search_fields = ['name', 'county', 'state']
+    readonly_fields = ['created_at']
+
+
+@admin.register(PropertyTransferSource)
+class PropertyTransferSourceAdmin(admin.ModelAdmin):
+    list_display = ['name', 'county', 'state', 'scrape_method', 'is_active', 'last_scraped']
+    list_filter = ['state', 'scrape_method', 'is_active']
+    search_fields = ['name', 'county', 'state']
+    readonly_fields = ['created_at']
+
+
+@admin.register(StateBusinessFilingSource)
+class StateBusinessFilingSourceAdmin(admin.ModelAdmin):
+    list_display = ['state_name', 'state', 'scrape_method', 'is_active', 'last_scraped']
+    list_filter = ['scrape_method', 'is_active']
+    search_fields = ['state_name', 'state']
+    readonly_fields = ['created_at']
+
+
+@admin.register(CodeViolationSource)
+class CodeViolationSourceAdmin(admin.ModelAdmin):
+    list_display = ['name', 'municipality', 'state', 'scrape_method', 'is_active', 'last_scraped']
+    list_filter = ['state', 'scrape_method', 'is_active']
+    search_fields = ['name', 'municipality', 'state']
+    readonly_fields = ['created_at']
+
+
+@admin.register(HealthInspectionSource)
+class HealthInspectionSourceAdmin(admin.ModelAdmin):
+    list_display = ['name', 'jurisdiction', 'state', 'scrape_method', 'failing_threshold', 'is_active', 'last_scraped']
+    list_filter = ['state', 'scrape_method', 'is_active']
+    search_fields = ['name', 'jurisdiction', 'state']
+    readonly_fields = ['created_at']
+
+
+@admin.register(LicensingBoardSource)
+class LicensingBoardSourceAdmin(admin.ModelAdmin):
+    list_display = ['name', 'state', 'license_type', 'scrape_method', 'is_active', 'last_scraped']
+    list_filter = ['state', 'license_type', 'scrape_method', 'is_active']
+    search_fields = ['name', 'state', 'license_type']
+    readonly_fields = ['created_at']
+
+
+@admin.register(CourtRecordSource)
+class CourtRecordSourceAdmin(admin.ModelAdmin):
+    list_display = ['name', 'county', 'state', 'scrape_method', 'is_active', 'last_scraped']
+    list_filter = ['state', 'scrape_method', 'is_active']
+    search_fields = ['name', 'county', 'state']
     readonly_fields = ['created_at']

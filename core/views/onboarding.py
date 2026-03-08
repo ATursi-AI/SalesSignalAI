@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -11,6 +13,14 @@ def onboarding_view(request):
         return redirect('dashboard_home')
 
     categories = ServiceCategory.objects.filter(is_active=True).prefetch_related('subcategories')
+
+    # Group categories by industry_group for tabbed UI
+    group_labels = dict(ServiceCategory.INDUSTRY_GROUPS)
+    grouped = OrderedDict()
+    for key, label in ServiceCategory.INDUSTRY_GROUPS:
+        cats = [c for c in categories if c.industry_group == key]
+        if cats:
+            grouped[key] = {'label': label, 'categories': cats}
 
     if request.method == 'POST':
         step = request.POST.get('step')
@@ -51,5 +61,6 @@ def onboarding_view(request):
 
     return render(request, 'onboarding/wizard.html', {
         'categories': categories,
+        'grouped_categories': grouped,
         'profile': profile,
     })

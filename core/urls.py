@@ -51,6 +51,9 @@ urlpatterns = [
     path('settings/keywords/<int:keyword_id>/delete/', user_settings.keyword_delete, name='keyword_delete'),
     path('settings/keywords/reset/', user_settings.keyword_reset_defaults, name='keyword_reset_defaults'),
     path('settings/email-prefs/', user_settings.save_email_prefs, name='save_email_prefs'),
+    path('settings/smtp/', user_settings.save_smtp_settings, name='save_smtp_settings'),
+    path('settings/smtp/test/', user_settings.send_test_email, name='send_test_email'),
+    path('settings/theme/', user_settings.save_theme, name='save_theme'),
 
     # Monitor Health (staff only)
     path('monitors/', monitor_health.monitor_health_dashboard, name='monitor_health'),

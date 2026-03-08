@@ -43,6 +43,21 @@
     --platform-local-news: #607D8B;
     --platform-parent-community: #E91E63;
     --platform-trade-forum: #795548;
+    --platform-tiktok: #010101;
+    --platform-quora: #B92B27;
+    --platform-threads: #000000;
+    --platform-fb-marketplace: #0866FF;
+    --platform-trustpilot: #00B67A;
+    --platform-instagram: #E4405F;
+    --platform-bbb: #005A78;
+    --platform-permit: #E67E22;
+    --platform-property-sale: #2980B9;
+    --platform-business-filing: #27AE60;
+    --platform-weather-alert: #E74C3C;
+    --platform-code-violation: #F1C40F;
+    --platform-eviction-filing: #95A5A6;
+    --platform-health-inspection: #E91E63;
+    --platform-license-expiry: #D35400;
 
     /* Text */
     --text-primary: #F1F1F5;
@@ -81,6 +96,43 @@
     --transition-fast: 150ms ease;
     --transition-base: 250ms ease;
     --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- Light Theme Override ---------- */
+[data-theme="light"] {
+    /* Backgrounds */
+    --bg-deepest: #F0F0F5;
+    --bg-deep: #F5F5FA;
+    --bg-base: #FFFFFF;
+    --bg-surface: #F8F8FC;
+    --bg-elevated: #FFFFFF;
+    --bg-hover: #EDEDF5;
+
+    /* Text */
+    --text-primary: #1A1A2E;
+    --text-secondary: #5A5A72;
+    --text-muted: #8E8EA0;
+    --text-inverse: #F1F1F5;
+
+    /* Borders */
+    --border-subtle: rgba(0, 0, 0, 0.06);
+    --border-light: rgba(0, 0, 0, 0.10);
+    --border-focus: rgba(59, 130, 246, 0.5);
+
+    /* Glass */
+    --glass-bg: rgba(255, 255, 255, 0.75);
+    --glass-border: rgba(0, 0, 0, 0.08);
+
+    /* Shadows */
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 24px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.10);
+    --shadow-glow-blue: 0 0 30px rgba(59, 130, 246, 0.08);
+    --shadow-glow-coral: 0 0 30px rgba(255, 71, 87, 0.08);
+
+    /* Platform TikTok/Threads visibility fix */
+    --platform-tiktok: #333333;
+    --platform-threads: #333333;
 }
 
 /* ---------- Reset & Base ---------- */
@@ -503,7 +555,7 @@ h4 { font-size: 1.25rem; }
 .platform-houzz { background: var(--platform-houzz); }
 .platform-alignable { background: var(--platform-alignable); }
 .platform-facebook { background: var(--platform-facebook); }
-.platform-nextdoor { background: var(--platform-nextdoor); }
+.platform-nextdoor { background: var(--platform-nextdoor); color: #000; }
 .platform-twitter { background: var(--platform-twitter); }
 .platform-citydata { background: var(--platform-citydata); }
 .platform-biggerpockets { background: var(--platform-biggerpockets); }
@@ -515,6 +567,21 @@ h4 { font-size: 1.25rem; }
 .platform-parent_community { background: var(--platform-parent-community); }
 .platform-trade_forum { background: var(--platform-trade-forum); }
 .platform-manual { background: #6B7280; }
+.platform-tiktok { background: var(--platform-tiktok); border: 1px solid #333; }
+.platform-quora { background: var(--platform-quora); }
+.platform-threads { background: var(--platform-threads); border: 1px solid #333; }
+.platform-fb_marketplace { background: var(--platform-fb-marketplace); }
+.platform-trustpilot { background: var(--platform-trustpilot); }
+.platform-instagram { background: var(--platform-instagram); }
+.platform-bbb { background: var(--platform-bbb); }
+.platform-permit { background: var(--platform-permit); }
+.platform-property_sale { background: var(--platform-property-sale); }
+.platform-business_filing { background: var(--platform-business-filing); }
+.platform-weather_alert { background: var(--platform-weather-alert); animation: pulse-hot 2s ease-in-out infinite; }
+.platform-code_violation { background: var(--platform-code-violation); color: #000; }
+.platform-eviction_filing { background: var(--platform-eviction-filing); }
+.platform-health_inspection { background: var(--platform-health-inspection); }
+.platform-license_expiry { background: var(--platform-license-expiry); }
 
 /* ---------- Lead Cards ---------- */
 .lead-stream {
@@ -632,6 +699,27 @@ h4 { font-size: 1.25rem; }
 .btn-sm {
     padding: 0.4rem 0.85rem;
     font-size: 0.8rem;
+}
+
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all var(--transition-fast);
+}
+.btn-icon:hover {
+    background: var(--bg-hover);
+    color: var(--accent-amber);
+    border-color: var(--accent-amber);
 }
 
 .btn-coral {

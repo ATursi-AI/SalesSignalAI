@@ -1,7 +1,10 @@
 """
-Settings views — My Keywords management.
+Settings views — Keywords, email preferences, and SMTP configuration.
 """
 import json
+import logging
+import smtplib
+from email.mime.text import MIMEText
 
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -9,6 +12,8 @@ from django.shortcuts import render
 from django.views.decorators.http import require_POST
 
 from core.models import UserKeyword
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -138,3 +143,136 @@ def keyword_reset_defaults(request):
     profile = request.user.business_profile
     created = profile.populate_default_keywords()
     return JsonResponse({'created': created})
+
+
+@login_required
+@require_POST
+def save_smtp_settings(request):
+    """Save custom SMTP configuration."""
+    profile = request.user.business_profile
+
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, AttributeError):
+        return JsonResponse({'error': 'Invalid request'}, status=400)
+
+    profile.use_custom_smtp = data.get('use_custom_smtp', False)
+    profile.custom_smtp_host = data.get('custom_smtp_host', '').strip()
+    profile.custom_smtp_port = int(data.get('custom_smtp_port', 587))
+    profile.custom_smtp_username = data.get('custom_smtp_username', '').strip()
+    profile.custom_from_email = data.get('custom_from_email', '').strip()
+    profile.custom_from_name = data.get('custom_from_name', '').strip()
+
+    # Only update password if a new one is provided (not the placeholder)
+    password = data.get('custom_smtp_password', '')
+    if password and password != '••••••••':
+        profile.set_smtp_password(password)
+
+    # Validate required fields when enabling
+    if profile.use_custom_smtp:
+        missing = []
+        if not profile.custom_smtp_host:
+            missing.append('SMTP Host')
+        if not profile.custom_smtp_username:
+            missing.append('Username')
+        if not profile.custom_smtp_password_encrypted:
+            missing.append('Password')
+        if not profile.custom_from_email:
+            missing.append('From Email')
+        if missing:
+            return JsonResponse({
+                'error': f"Missing required fields: {', '.join(missing)}",
+            }, status=400)
+
+    profile.save(update_fields=[
+        'use_custom_smtp', 'custom_smtp_host', 'custom_smtp_port',
+        'custom_smtp_username', 'custom_smtp_password_encrypted',
+        'custom_from_email', 'custom_from_name',
+    ])
+
+    return JsonResponse({'saved': True})
+
+
+@login_required
+@require_POST
+def save_theme(request):
+    """Save user's theme preference (dark/light)."""
+    try:
+        data = json.loads(request.body)
+        theme = data.get('theme', 'dark')
+    except (json.JSONDecodeError, AttributeError):
+        theme = 'dark'
+
+    if theme not in ('dark', 'light'):
+        theme = 'dark'
+
+    profile = request.user.business_profile
+    profile.theme_preference = theme
+    profile.save(update_fields=['theme_preference'])
+
+    return JsonResponse({'saved': True, 'theme': theme})
+
+
+@login_required
+@require_POST
+def send_test_email(request):
+    """Send a test email through the customer's custom SMTP to verify it works."""
+    profile = request.user.business_profile
+
+    if not profile.custom_smtp_host or not profile.custom_smtp_password_encrypted:
+        return JsonResponse({'error': 'SMTP not configured. Save settings first.'}, status=400)
+
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, AttributeError):
+        data = {}
+
+    to_email = data.get('to_email', profile.email).strip()
+    if not to_email:
+        return JsonResponse({'error': 'No recipient email address.'}, status=400)
+
+    password = profile.get_smtp_password()
+    if not password:
+        return JsonResponse({'error': 'Could not decrypt SMTP password.'}, status=400)
+
+    from_name = profile.custom_from_name or profile.business_name
+    from_addr = profile.custom_from_email
+
+    msg = MIMEText(
+        f"This is a test email from SalesSignal AI.\n\n"
+        f"Your custom SMTP configuration is working correctly.\n\n"
+        f"SMTP Host: {profile.custom_smtp_host}\n"
+        f"SMTP Port: {profile.custom_smtp_port}\n"
+        f"From: {from_name} <{from_addr}>\n\n"
+        f"You can now send outreach campaigns through your own email server.",
+        'plain',
+    )
+    msg['Subject'] = 'SalesSignal AI — SMTP Test Successful'
+    msg['From'] = f'{from_name} <{from_addr}>'
+    msg['To'] = to_email
+
+    try:
+        if profile.custom_smtp_port == 465:
+            server = smtplib.SMTP_SSL(profile.custom_smtp_host, profile.custom_smtp_port, timeout=15)
+        else:
+            server = smtplib.SMTP(profile.custom_smtp_host, profile.custom_smtp_port, timeout=15)
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+
+        server.login(profile.custom_smtp_username, password)
+        server.sendmail(from_addr, [to_email], msg.as_string())
+        server.quit()
+
+        logger.info(f'SMTP test email sent for {profile.business_name} to {to_email}')
+        return JsonResponse({'success': True, 'message': f'Test email sent to {to_email}'})
+
+    except smtplib.SMTPAuthenticationError:
+        return JsonResponse({'error': 'Authentication failed. Check username and password.'}, status=400)
+    except smtplib.SMTPConnectError:
+        return JsonResponse({'error': f'Could not connect to {profile.custom_smtp_host}:{profile.custom_smtp_port}'}, status=400)
+    except TimeoutError:
+        return JsonResponse({'error': f'Connection timed out to {profile.custom_smtp_host}:{profile.custom_smtp_port}'}, status=400)
+    except Exception as e:
+        logger.error(f'SMTP test failed for {profile.business_name}: {e}')
+        return JsonResponse({'error': str(e)}, status=400)

@@ -39,18 +39,36 @@
 
                 <!-- Step 1: Service Type -->
                 <div class="step-content active" id="step-1">
-                    <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <div style="text-align: center; margin-bottom: 1rem;">
                         <h3>What service do you provide?</h3>
-                        <p style="color: var(--text-secondary); font-size: 0.9rem;">Select your primary service category</p>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">Choose your industry, then select your category</p>
                     </div>
-                    <div class="category-grid">
-                        {% for cat in categories %}
-                        <div class="category-card" data-id="{{ cat.id }}" {% if profile.service_category_id == cat.id %}style="border-color: var(--accent-blue); background: rgba(59, 130, 246, 0.1);"{% endif %}>
-                            <i class="bi {{ cat.icon|default:'bi-briefcase' }}"></i>
-                            {{ cat.name }}
-                        </div>
+
+                    <!-- Industry Group Tabs -->
+                    <div class="industry-tabs" style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 1rem; justify-content: center;">
+                        {% for key, group in grouped_categories.items %}
+                        <button type="button" class="industry-tab{% if forloop.first %} active{% endif %}" data-group="{{ key }}"
+                                style="padding: 0.35rem 0.75rem; font-size: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); background: transparent; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; white-space: nowrap;"
+                                onclick="switchIndustryTab('{{ key }}')">
+                            {{ group.label }}
+                        </button>
                         {% endfor %}
                     </div>
+
+                    <!-- Category grids per industry group -->
+                    {% for key, group in grouped_categories.items %}
+                    <div class="category-group" id="group-{{ key }}" style="{% if not forloop.first %}display: none;{% endif %}">
+                        <div class="category-grid">
+                            {% for cat in group.categories %}
+                            <div class="category-card" data-id="{{ cat.id }}" {% if profile.service_category_id == cat.id %}style="border-color: var(--accent-blue); background: rgba(59, 130, 246, 0.1);"{% endif %}>
+                                <i class="bi {{ cat.icon|default:'bi-briefcase' }}"></i>
+                                {{ cat.name }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+
                     <button type="button" class="btn-primary-glow w-100 mt-3" style="justify-content: center;" onclick="submitStep(1)">
                         Continue <i class="bi bi-arrow-right"></i>
                     </button>
@@ -148,8 +166,38 @@
 
     <script src="{% static 'js/salessignal.js' %}"></script>
     <script>
+        function switchIndustryTab(groupKey) {
+            // Hide all groups
+            document.querySelectorAll('.category-group').forEach(g => g.style.display = 'none');
+            // Show selected group
+            const target = document.getElementById('group-' + groupKey);
+            if (target) target.style.display = 'block';
+            // Update tab styles
+            document.querySelectorAll('.industry-tab').forEach(t => {
+                t.classList.remove('active');
+                t.style.background = 'transparent';
+                t.style.color = 'var(--text-secondary)';
+                t.style.borderColor = 'var(--border-subtle)';
+            });
+            const activeTab = document.querySelector('.industry-tab[data-group="' + groupKey + '"]');
+            if (activeTab) {
+                activeTab.classList.add('active');
+                activeTab.style.background = 'rgba(59, 130, 246, 0.15)';
+                activeTab.style.color = 'var(--accent-blue)';
+                activeTab.style.borderColor = 'var(--accent-blue)';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             initOnboarding();
+
+            // Activate first tab styling
+            const firstTab = document.querySelector('.industry-tab.active');
+            if (firstTab) {
+                firstTab.style.background = 'rgba(59, 130, 246, 0.15)';
+                firstTab.style.color = 'var(--accent-blue)';
+                firstTab.style.borderColor = 'var(--accent-blue)';
+            }
 
             // SMS toggle show/hide phone field
             const smsToggle = document.getElementById('sms-toggle');

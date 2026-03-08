@@ -3,10 +3,29 @@ from django.contrib.auth.models import User
 
 
 class ServiceCategory(models.Model):
+    INDUSTRY_GROUPS = [
+        ('home_services', 'Home Services & Repair'),
+        ('cleaning', 'Cleaning Services'),
+        ('outdoor', 'Outdoor & Landscaping'),
+        ('construction', 'Construction & Remodeling'),
+        ('auto', 'Automotive'),
+        ('professional', 'Professional Services'),
+        ('healthcare', 'Healthcare & Wellness'),
+        ('events', 'Events & Entertainment'),
+        ('education', 'Education & Training'),
+        ('pet', 'Pet Services'),
+        ('senior', 'Senior Care'),
+        ('technology', 'Technology'),
+    ]
+
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(unique=True)
     icon = models.CharField(max_length=50, blank=True)
     description = models.TextField(blank=True)
+    industry_group = models.CharField(
+        max_length=30, choices=INDUSTRY_GROUPS, default='home_services',
+        help_text='Groups categories in the onboarding wizard',
+    )
     default_keywords = models.JSONField(default=list)
     craigslist_section = models.CharField(max_length=50, blank=True)
     google_maps_terms = models.JSONField(default=list)
@@ -73,8 +92,40 @@ class BusinessProfile(models.Model):
         blank=True,
         help_text='Your preferred email sign-off (name, title, phone, website).',
     )
+
+    # Custom SMTP — when enabled, outreach campaigns send through customer's own server
+    use_custom_smtp = models.BooleanField(
+        default=False,
+        help_text='Send outreach emails through your own SMTP server instead of our default.',
+    )
+    custom_smtp_host = models.CharField(max_length=255, blank=True)
+    custom_smtp_port = models.IntegerField(default=587)
+    custom_smtp_username = models.CharField(max_length=255, blank=True)
+    custom_smtp_password_encrypted = models.TextField(
+        blank=True,
+        help_text='Fernet-encrypted SMTP password. Use set_smtp_password() / get_smtp_password().',
+    )
+    custom_from_email = models.EmailField(blank=True)
+    custom_from_name = models.CharField(max_length=200, blank=True)
+
+    # Theme preference
+    theme_preference = models.CharField(
+        max_length=10, choices=[('dark', 'Dark'), ('light', 'Light')],
+        default='dark',
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def set_smtp_password(self, plaintext):
+        """Encrypt and store the SMTP password."""
+        from core.utils.crypto import encrypt_value
+        self.custom_smtp_password_encrypted = encrypt_value(plaintext)
+
+    def get_smtp_password(self):
+        """Decrypt and return the SMTP password."""
+        from core.utils.crypto import decrypt_value
+        return decrypt_value(self.custom_smtp_password_encrypted)
 
     def __str__(self):
         return self.business_name or f"Profile for {self.user.username}"

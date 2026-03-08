@@ -1,10 +1,15 @@
 """
-Email sending via SendGrid API.
+Email sending via SendGrid API or custom SMTP.
 Handles individual and batch email sending for outreach campaigns.
 Integrates domain warming, bounce handling, unsubscribe checks, and CAN-SPAM compliance.
+
+When a BusinessProfile has use_custom_smtp=True, outreach emails are routed through
+the customer's own SMTP server. Otherwise, they go through our default SendGrid.
 """
 import logging
+import smtplib
 import uuid
+from email.mime.text import MIMEText
 
 from django.conf import settings
 from django.utils import timezone
@@ -50,11 +55,60 @@ def add_unsubscribe(email, reason=''):
     return created
 
 
-def send_email(to_email, subject, body, from_email=None, reply_to=None,
-               skip_unsub_check=False):
+def _send_via_custom_smtp(to_email, subject, body, business):
     """
-    Send a single email via SendGrid.
-    Checks unsubscribe list and warming limits before sending.
+    Send email through a customer's own SMTP server.
+    Used when BusinessProfile.use_custom_smtp is True.
+    """
+    password = business.get_smtp_password()
+    if not password:
+        return {'success': False, 'message_id': '', 'error': 'smtp_password_decrypt_failed'}
+
+    from_name = business.custom_from_name or business.business_name
+    from_addr = business.custom_from_email
+
+    msg = MIMEText(body, 'plain')
+    msg['Subject'] = subject
+    msg['From'] = f'{from_name} <{from_addr}>'
+    msg['To'] = to_email
+
+    message_id = uuid.uuid4().hex[:16]
+
+    try:
+        if business.custom_smtp_port == 465:
+            server = smtplib.SMTP_SSL(business.custom_smtp_host, business.custom_smtp_port, timeout=30)
+        else:
+            server = smtplib.SMTP(business.custom_smtp_host, business.custom_smtp_port, timeout=30)
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+
+        server.login(business.custom_smtp_username, password)
+        server.sendmail(from_addr, [to_email], msg.as_string())
+        server.quit()
+
+        logger.info(f'[Custom SMTP] Email sent to {to_email} via {business.custom_smtp_host} (ID: {message_id})')
+
+        from .warming import record_send
+        record_send()
+
+        return {'success': True, 'message_id': message_id, 'error': ''}
+
+    except smtplib.SMTPAuthenticationError:
+        logger.error(f'[Custom SMTP] Auth failed for {business.business_name}')
+        return {'success': False, 'message_id': '', 'error': 'smtp_auth_failed'}
+    except Exception as e:
+        logger.error(f'[Custom SMTP] Send failed for {business.business_name}: {e}')
+        return {'success': False, 'message_id': '', 'error': str(e)}
+
+
+def send_email(to_email, subject, body, from_email=None, reply_to=None,
+               skip_unsub_check=False, business=None):
+    """
+    Send a single email via SendGrid or custom SMTP.
+
+    When business is provided and has use_custom_smtp=True, routes through
+    the customer's own SMTP server. Otherwise uses our default SendGrid.
 
     Returns:
         dict with 'success' (bool), 'message_id' (str), 'error' (str)
@@ -64,15 +118,20 @@ def send_email(to_email, subject, body, from_email=None, reply_to=None,
         logger.info(f'Skipped {to_email} — on unsubscribe list')
         return {'success': False, 'message_id': '', 'error': 'unsubscribed'}
 
+    # Append CAN-SPAM footer
+    body = _append_unsubscribe_footer(body, to_email)
+
+    # Route through custom SMTP if configured
+    if business and business.use_custom_smtp and business.custom_smtp_host:
+        return _send_via_custom_smtp(to_email, subject, body, business)
+
+    # Default: SendGrid
     api_key = getattr(settings, 'SENDGRID_API_KEY', '')
     if not api_key:
         logger.warning(f'SENDGRID_API_KEY not configured — would send to {to_email}')
         return {'success': False, 'message_id': '', 'error': 'api_not_configured'}
 
     from_email = from_email or getattr(settings, 'ALERT_FROM_EMAIL', 'noreply@salessignal.ai')
-
-    # Append CAN-SPAM footer
-    body = _append_unsubscribe_footer(body, to_email)
 
     try:
         import sendgrid
@@ -179,13 +238,15 @@ def send_outreach_email(outreach_email_id):
         logger.info(f'Send deferred for OutreachEmail {oe.id}: {reason}')
         return False
 
-    reply_to = oe.campaign.business.email or None
+    business = oe.campaign.business
+    reply_to = business.email or None
 
     result = send_email(
         to_email=to_email,
         subject=oe.subject,
         body=oe.body,
         reply_to=reply_to,
+        business=business,
     )
 
     if result['error'] == 'unsubscribed':

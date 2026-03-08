@@ -5,3 +5,4 @@ beautifulsoup4>=4.12
 praw>=7.7
 anthropic>=0.18
 pillow>=10.0
+apify-client>=1.6

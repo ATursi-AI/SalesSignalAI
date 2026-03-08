@@ -95,6 +95,7 @@ TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='')
 TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER', default='')
 
 SERPAPI_KEY = config('SERPAPI_KEY', default='')
+APIFY_API_TOKEN = config('APIFY_API_TOKEN', default='')
 ZEROBOUNCE_API_KEY = config('ZEROBOUNCE_API_KEY', default='')
 
 ALERT_FROM_EMAIL = config('ALERT_FROM_EMAIL', default='alerts@salessignal.ai')

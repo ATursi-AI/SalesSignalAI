@@ -3,6 +3,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     initCountUp();
     initFadeInUp();
+    initThemeIcon();
 });
 
 /* ---------- Count-up Animation for KPI Numbers ---------- */
@@ -116,6 +117,41 @@ function initOnboarding() {
             if (input) input.value = card.dataset.id;
         });
     });
+}
+
+/* ---------- Theme Toggle ---------- */
+function initThemeIcon() {
+    var icon = document.getElementById('theme-icon');
+    if (!icon) return;
+    var theme = document.documentElement.getAttribute('data-theme') || 'dark';
+    icon.className = theme === 'light' ? 'bi bi-moon-stars' : 'bi bi-sun';
+}
+
+function toggleTheme() {
+    var html = document.documentElement;
+    var current = html.getAttribute('data-theme') || 'dark';
+    var next = current === 'dark' ? 'light' : 'dark';
+
+    html.setAttribute('data-theme', next);
+    document.cookie = 'theme=' + next + ';path=/;max-age=31536000;SameSite=Lax';
+
+    var icon = document.getElementById('theme-icon');
+    if (icon) icon.className = next === 'light' ? 'bi bi-moon-stars' : 'bi bi-sun';
+
+    // Save to server if logged in
+    fetch('/settings/theme/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
+        },
+        body: JSON.stringify({ theme: next }),
+    }).catch(function() {});
+}
+
+function getCsrfToken() {
+    var m = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+    return m ? m[1] : '';
 }
 
 /* ---------- Radius slider value display ---------- */

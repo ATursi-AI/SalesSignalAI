@@ -59,6 +59,31 @@ def dashboard_home(request):
         competitor__in=competitors, is_negative=True, review_date__gte=week_ago,
     ).count() if competitor_count else 0
 
+    # Public records leads breakdown (last 30 days)
+    public_records_platforms = [
+        'building_permit', 'property_sale', 'new_business_filing',
+        'code_violation', 'health_inspection', 'license_expiry',
+        'eviction_filing', 'bbb',
+    ]
+    public_records_stats = (
+        assignments.filter(
+            lead__platform__in=public_records_platforms,
+            created_at__gte=month_ago,
+        )
+        .values('lead__platform')
+        .annotate(count=Count('id'))
+        .order_by('-count')
+    )
+    public_records_total = sum(s['count'] for s in public_records_stats)
+    public_records_breakdown = [
+        {
+            'platform': s['lead__platform'],
+            'label': s['lead__platform'].replace('_', ' ').title(),
+            'count': s['count'],
+        }
+        for s in public_records_stats
+    ]
+
     context = {
         'profile': profile,
         'hot_leads': hot_leads,
@@ -72,5 +97,7 @@ def dashboard_home(request):
         'conversion_rate': conversion_rate,
         'competitor_count': competitor_count,
         'competitor_neg': competitor_neg,
+        'public_records_total': public_records_total,
+        'public_records_breakdown': public_records_breakdown,
     }
     return render(request, 'dashboard/home.html', context)

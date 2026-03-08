@@ -1,9 +1,16 @@
 {% load static %}
 {% load lead_tags %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="{% if user.is_authenticated and user.business_profile.theme_preference == 'light' %}light{% else %}dark{% endif %}">
 <head>
     <meta charset="UTF-8">
+    <script>
+    /* Prevent flash of wrong theme — read cookie before paint */
+    (function(){
+        var m = document.cookie.match(/(?:^|;\s*)theme=(\w+)/);
+        if (m) document.documentElement.setAttribute('data-theme', m[1]);
+    })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Dashboard{% endblock %} | SalesSignal AI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -87,6 +94,9 @@
             <header class="topbar">
                 <h1 class="topbar-title">{% block page_title %}Dashboard{% endblock %}</h1>
                 <div class="topbar-actions">
+                    <button class="btn-icon btn-sm" onclick="toggleTheme()" title="Toggle light/dark theme" id="theme-toggle-btn">
+                        <i class="bi bi-sun" id="theme-icon"></i>
+                    </button>
                     <button class="btn-secondary btn-sm" onclick="window.location.href='{% url 'logout' %}'">
                         <i class="bi bi-box-arrow-right"></i> Logout
                     </button>

@@ -5,6 +5,10 @@ from .competitors import TrackedCompetitor, CompetitorReview
 from .monitoring import (
     MonitoredLocalSite, MonitoredFacebookGroup,
     MonitorRun, EmailSendLog, Unsubscribe,
+    PermitSource, PropertyTransferSource,
+    StateBusinessFilingSource,
+    CodeViolationSource, HealthInspectionSource,
+    LicensingBoardSource, CourtRecordSource,
 )
 
 __all__ = [
@@ -14,4 +18,8 @@ __all__ = [
     'TrackedCompetitor', 'CompetitorReview',
     'MonitoredLocalSite', 'MonitoredFacebookGroup',
     'MonitorRun', 'EmailSendLog', 'Unsubscribe',
+    'PermitSource', 'PropertyTransferSource',
+    'StateBusinessFilingSource',
+    'CodeViolationSource', 'HealthInspectionSource',
+    'LicensingBoardSource', 'CourtRecordSource',
 ]
