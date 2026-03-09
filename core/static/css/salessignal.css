@@ -1158,6 +1158,60 @@ select.form-control-dark {
 
 .landing-nav-links a:hover { color: var(--text-primary); }
 
+/* Landing mobile hamburger */
+.landing-hamburger {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.6rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    line-height: 1;
+}
+
+/* Landing mobile menu overlay */
+.landing-mobile-menu {
+    display: none;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background: rgba(10, 10, 15, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 1.5rem 2rem 2rem;
+    flex-direction: column;
+    gap: 0.25rem;
+    transform: translateY(-10px);
+    opacity: 0;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+    pointer-events: none;
+}
+.landing-mobile-menu.open {
+    display: flex;
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+.landing-mobile-menu a:not(.btn-secondary):not(.btn-primary-glow) {
+    display: block;
+    padding: 0.85rem 0;
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+    font-weight: 500;
+    text-decoration: none;
+    border-bottom: 1px solid var(--border-subtle);
+    transition: color var(--transition-fast);
+}
+.landing-mobile-menu a:not(.btn-secondary):not(.btn-primary-glow):hover {
+    color: var(--text-primary);
+}
+
 /* Hero Section */
 .hero-section {
     min-height: 100vh;
@@ -1733,11 +1787,9 @@ input[type="range"]::-webkit-slider-thumb {
     .topbar { padding: 0.75rem 1rem; }
     .topbar-title { font-size: 1rem; }
 
-    /* Landing nav: hide links, show hamburger not needed (landing has own nav) */
-    .landing-nav-links a:not(.btn-secondary):not(.btn-primary-glow) {
-        display: none;
-    }
-    .landing-nav-links { gap: 0.75rem; }
+    /* Landing nav: hide links, show hamburger */
+    .landing-nav-links { display: none; }
+    .landing-hamburger { display: flex; }
 }
 
 @media (max-width: 480px) {

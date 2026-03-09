@@ -15,18 +15,32 @@
 
     <!-- Navigation -->
     <nav class="landing-nav">
-        <div class="brand">
+        <a href="/" class="brand" style="text-decoration: none; color: inherit;">
             <div class="brand-icon"><i class="bi bi-broadcast"></i></div>
             <span class="brand-name">SalesSignal AI</span>
-        </div>
-        <div class="landing-nav-links">
+        </a>
+        <div class="landing-nav-links" id="landing-nav-links">
             <a href="#features">Features</a>
             <a href="#how-it-works">How it Works</a>
             <a href="#pricing">Pricing</a>
             <a href="{% url 'login' %}" class="btn-secondary btn-sm">Log In</a>
             <a href="{% url 'register' %}" class="btn-primary-glow btn-sm">Get Started</a>
         </div>
+        <button class="landing-hamburger" id="landing-hamburger" onclick="toggleLandingMenu()" aria-label="Open menu">
+            <i class="bi bi-list" id="landing-menu-icon"></i>
+        </button>
     </nav>
+
+    <!-- Mobile nav overlay -->
+    <div class="landing-mobile-menu" id="landing-mobile-menu">
+        <a href="#features" onclick="closeLandingMenu()">Features</a>
+        <a href="#how-it-works" onclick="closeLandingMenu()">How it Works</a>
+        <a href="#pricing" onclick="closeLandingMenu()">Pricing</a>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+            <a href="{% url 'login' %}" class="btn-secondary" style="justify-content: center;">Log In</a>
+            <a href="{% url 'register' %}" class="btn-primary-glow" style="justify-content: center;">Get Started</a>
+        </div>
+    </div>
 
     <!-- Hero -->
     <section class="hero-section">
@@ -246,5 +260,25 @@
     </footer>
 
     <script src="{% static 'js/salessignal.js' %}"></script>
+    <script>
+    function toggleLandingMenu() {
+        var menu = document.getElementById('landing-mobile-menu');
+        var icon = document.getElementById('landing-menu-icon');
+        var isOpen = menu.classList.contains('open');
+        if (isOpen) {
+            menu.classList.remove('open');
+            icon.className = 'bi bi-list';
+        } else {
+            menu.classList.add('open');
+            icon.className = 'bi bi-x-lg';
+        }
+    }
+    function closeLandingMenu() {
+        var menu = document.getElementById('landing-mobile-menu');
+        var icon = document.getElementById('landing-menu-icon');
+        menu.classList.remove('open');
+        icon.className = 'bi bi-list';
+    }
+    </script>
 </body>
 </html>
