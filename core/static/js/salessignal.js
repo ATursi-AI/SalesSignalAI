@@ -154,6 +154,23 @@ function getCsrfToken() {
     return m ? m[1] : '';
 }
 
+/* ---------- Mobile Sidebar ---------- */
+function openMobileSidebar() {
+    var sidebar = document.getElementById('app-sidebar');
+    var backdrop = document.getElementById('sidebar-backdrop');
+    if (sidebar) sidebar.classList.add('open');
+    if (backdrop) backdrop.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeMobileSidebar() {
+    var sidebar = document.getElementById('app-sidebar');
+    var backdrop = document.getElementById('sidebar-backdrop');
+    if (sidebar) sidebar.classList.remove('open');
+    if (backdrop) backdrop.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
 /* ---------- Radius slider value display ---------- */
 function updateRadiusValue(val) {
     const display = document.getElementById('radius-value');

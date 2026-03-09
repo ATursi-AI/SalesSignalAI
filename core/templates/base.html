@@ -23,7 +23,10 @@
 <body>
     <div class="app-layout">
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="app-sidebar">
+            <button class="sidebar-close-btn" onclick="closeMobileSidebar()" aria-label="Close menu">
+                <i class="bi bi-x-lg"></i>
+            </button>
             <div class="sidebar-brand">
                 <div class="brand-icon"><i class="bi bi-broadcast"></i></div>
                 <div>
@@ -89,9 +92,15 @@
             </div>
         </aside>
 
+        <!-- Mobile sidebar backdrop -->
+        <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeMobileSidebar()"></div>
+
         <!-- Main Content -->
         <main class="main-content">
             <header class="topbar">
+                <button class="hamburger-btn" id="hamburger-btn" onclick="openMobileSidebar()" aria-label="Open menu">
+                    <i class="bi bi-list"></i>
+                </button>
                 <h1 class="topbar-title">{% block page_title %}Dashboard{% endblock %}</h1>
                 <div class="topbar-actions">
                     <button class="btn-icon btn-sm" onclick="toggleTheme()" title="Toggle light/dark theme" id="theme-toggle-btn">

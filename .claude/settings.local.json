@@ -81,7 +81,9 @@
       "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe manage.py makemigrations core --name add_theme_preference)",
       "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe manage.py migrate core)",
       "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe -c \"from core.views.user_settings import save_theme; print\\(''OK''\\)\")",
-      "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe -c \"import django; django.setup\\(\\); from core.views.user_settings import save_theme; print\\(''save_theme OK''\\); from core.urls import urlpatterns; print\\(f''URLs: {len\\(urlpatterns\\)} patterns''\\)\")"
+      "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe -c \"import django; django.setup\\(\\); from core.views.user_settings import save_theme; print\\(''save_theme OK''\\); from core.urls import urlpatterns; print\\(f''URLs: {len\\(urlpatterns\\)} patterns''\\)\")",
+      "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe -c \"import django; django.setup\\(\\); from django.urls import reverse; print\\(reverse\\(''save_theme''\\)\\); print\\(''All OK''\\)\")",
+      "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe manage.py makemigrations core --name add_has_seen_welcome)"
     ]
   }
 }

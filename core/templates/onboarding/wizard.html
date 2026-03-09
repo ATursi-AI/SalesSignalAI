@@ -25,11 +25,17 @@
 
             <!-- Step Indicator -->
             <div class="step-indicator">
-                <div class="step-dot active" id="dot-1"></div>
+                <div class="step-dot active" id="dot-1">
+                    <span class="step-dot-label">Service</span>
+                </div>
                 <div class="step-line"></div>
-                <div class="step-dot" id="dot-2"></div>
+                <div class="step-dot" id="dot-2">
+                    <span class="step-dot-label">Area</span>
+                </div>
                 <div class="step-line"></div>
-                <div class="step-dot" id="dot-3"></div>
+                <div class="step-dot" id="dot-3">
+                    <span class="step-dot-label">Alerts</span>
+                </div>
             </div>
 
             <form id="onboarding-form" method="post" action="{% url 'onboarding' %}">
@@ -37,7 +43,7 @@
                 <input type="hidden" name="step" value="1">
                 <input type="hidden" name="service_category" id="service_category" value="">
 
-                <!-- Step 1: Service Type -->
+                <!-- Step 1: Service Type Selection -->
                 <div class="step-content active" id="step-1">
                     <div style="text-align: center; margin-bottom: 1rem;">
                         <h3>What service do you provide?</h3>
@@ -74,12 +80,31 @@
                     </button>
                 </div>
 
-                <!-- Step 2: Location -->
+                <!-- Step 2: Keywords + Location -->
                 <div class="step-content" id="step-2">
                     <div style="text-align: center; margin-bottom: 1.5rem;">
-                        <h3>Where do you work?</h3>
-                        <p style="color: var(--text-secondary); font-size: 0.9rem;">Set your service area so we find leads near you</p>
+                        <h3>Your Keywords & Service Area</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">We auto-populated keywords for your category. Add or remove as needed, then set your location.</p>
                     </div>
+
+                    <!-- Keywords Section -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <label class="form-label-dark" style="margin-bottom: 0.5rem; display: block;">
+                            <i class="bi bi-tags-fill" style="color: var(--accent-blue); margin-right: 0.35rem;"></i>
+                            Monitoring Keywords
+                        </label>
+                        <div id="keyword-container" style="display: flex; flex-wrap: wrap; gap: 0.35rem; padding: 0.75rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); min-height: 48px; margin-bottom: 0.5rem;">
+                            <!-- Keywords rendered by JS -->
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" id="new-keyword-input" class="form-control-dark" placeholder="Add a keyword..." style="flex: 1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addKeyword();}">
+                            <button type="button" class="btn-secondary btn-sm" onclick="addKeyword()" style="white-space: nowrap;">
+                                <i class="bi bi-plus-lg"></i> Add
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Location Section -->
                     <div class="form-group">
                         <label class="form-label-dark">Street Address</label>
                         <input type="text" name="address" class="form-control-dark" placeholder="123 Main St" value="{{ profile.address }}">
@@ -105,11 +130,12 @@
                             <span>5 mi</span><span>25 mi</span><span>50 mi</span>
                         </div>
                     </div>
+
                     <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
                         <button type="button" class="btn-secondary" style="flex: 1; justify-content: center;" onclick="goToStep(1)">
                             <i class="bi bi-arrow-left"></i> Back
                         </button>
-                        <button type="button" class="btn-primary-glow" style="flex: 2; justify-content: center;" onclick="submitStep(2)">
+                        <button type="button" class="btn-primary-glow" style="flex: 2; justify-content: center;" onclick="submitStep2WithKeywords()">
                             Continue <i class="bi bi-arrow-right"></i>
                         </button>
                     </div>
@@ -151,12 +177,38 @@
                         </div>
                     </div>
 
+                    <!-- Quiet Hours -->
+                    <div style="background: var(--bg-surface); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+                            <div>
+                                <div style="font-weight: 600; margin-bottom: 0.15rem;"><i class="bi bi-moon-fill" style="color: var(--accent-amber); margin-right: 0.5rem;"></i>Quiet Hours</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">Pause alerts during off hours</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="quiet-toggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div id="quiet-hours-fields" style="display: none;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label class="form-label-dark" style="font-size: 0.8rem;">From</label>
+                                    <input type="time" name="quiet_start" class="form-control-dark" value="22:00">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label class="form-label-dark" style="font-size: 0.8rem;">Until</label>
+                                    <input type="time" name="quiet_end" class="form-control-dark" value="07:00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
                         <button type="button" class="btn-secondary" style="flex: 1; justify-content: center;" onclick="goToStep(2)">
                             <i class="bi bi-arrow-left"></i> Back
                         </button>
-                        <button type="button" class="btn-emerald btn-primary-glow" style="flex: 2; justify-content: center; background: var(--accent-emerald); box-shadow: 0 4px 15px var(--accent-emerald-glow);" onclick="submitStep(3)">
-                            <i class="bi bi-check-circle-fill"></i> Complete Setup
+                        <button type="button" class="btn-primary-glow" style="flex: 2; justify-content: center; background: var(--accent-emerald); box-shadow: 0 4px 15px var(--accent-emerald-glow);" onclick="submitStep(3)">
+                            <i class="bi bi-check-circle-fill"></i> Launch My Monitors
                         </button>
                     </div>
                 </div>
@@ -166,20 +218,69 @@
 
     <script src="{% static 'js/salessignal.js' %}"></script>
     <script>
+        // Current keywords state
+        var activeKeywords = {{ existing_keywords|safe }};
+
+        function renderKeywords() {
+            var container = document.getElementById('keyword-container');
+            if (!container) return;
+            container.innerHTML = '';
+            activeKeywords.forEach(function(kw, i) {
+                var pill = document.createElement('span');
+                pill.className = 'keyword-pill';
+                pill.style.cssText = 'display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.65rem; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25); border-radius: var(--radius-full); font-size: 0.8rem; color: var(--accent-blue); cursor: default;';
+                pill.innerHTML = kw + ' <button type="button" onclick="removeKeyword(' + i + ')" style="background:none; border:none; color: var(--text-muted); cursor: pointer; padding: 0; font-size: 0.9rem; line-height: 1;" title="Remove">&times;</button>';
+                container.appendChild(pill);
+            });
+        }
+
+        function addKeyword() {
+            var input = document.getElementById('new-keyword-input');
+            var kw = input.value.trim().toLowerCase();
+            if (kw && activeKeywords.indexOf(kw) === -1) {
+                activeKeywords.push(kw);
+                renderKeywords();
+            }
+            input.value = '';
+            input.focus();
+        }
+
+        function removeKeyword(index) {
+            activeKeywords.splice(index, 1);
+            renderKeywords();
+        }
+
+        function submitStep2WithKeywords() {
+            // First save keywords
+            var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            fetch('{% url "onboarding" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ step: '1_keywords', keywords: activeKeywords }),
+            })
+            .then(function(r) { return r.json(); })
+            .then(function() {
+                // Then save location (step 2)
+                submitStep(2);
+            })
+            .catch(function(err) { console.error('Keyword save error:', err); });
+        }
+
         function switchIndustryTab(groupKey) {
-            // Hide all groups
-            document.querySelectorAll('.category-group').forEach(g => g.style.display = 'none');
-            // Show selected group
-            const target = document.getElementById('group-' + groupKey);
+            document.querySelectorAll('.category-group').forEach(function(g) { g.style.display = 'none'; });
+            var target = document.getElementById('group-' + groupKey);
             if (target) target.style.display = 'block';
-            // Update tab styles
-            document.querySelectorAll('.industry-tab').forEach(t => {
+            document.querySelectorAll('.industry-tab').forEach(function(t) {
                 t.classList.remove('active');
                 t.style.background = 'transparent';
                 t.style.color = 'var(--text-secondary)';
                 t.style.borderColor = 'var(--border-subtle)';
             });
-            const activeTab = document.querySelector('.industry-tab[data-group="' + groupKey + '"]');
+            var activeTab = document.querySelector('.industry-tab[data-group="' + groupKey + '"]');
             if (activeTab) {
                 activeTab.classList.add('active');
                 activeTab.style.background = 'rgba(59, 130, 246, 0.15)';
@@ -188,11 +289,12 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', function() {
             initOnboarding();
+            renderKeywords();
 
             // Activate first tab styling
-            const firstTab = document.querySelector('.industry-tab.active');
+            var firstTab = document.querySelector('.industry-tab.active');
             if (firstTab) {
                 firstTab.style.background = 'rgba(59, 130, 246, 0.15)';
                 firstTab.style.color = 'var(--accent-blue)';
@@ -200,13 +302,51 @@
             }
 
             // SMS toggle show/hide phone field
-            const smsToggle = document.getElementById('sms-toggle');
-            const phoneField = document.getElementById('sms-phone-field');
+            var smsToggle = document.getElementById('sms-toggle');
+            var phoneField = document.getElementById('sms-phone-field');
             if (smsToggle) {
-                smsToggle.addEventListener('change', () => {
+                smsToggle.addEventListener('change', function() {
                     phoneField.style.display = smsToggle.checked ? 'block' : 'none';
                 });
             }
+
+            // Quiet hours toggle
+            var quietToggle = document.getElementById('quiet-toggle');
+            var quietFields = document.getElementById('quiet-hours-fields');
+            if (quietToggle) {
+                quietToggle.addEventListener('change', function() {
+                    quietFields.style.display = quietToggle.checked ? 'block' : 'none';
+                });
+            }
+
+            // Override submitStep to capture keywords on step 1
+            var origSubmitStep = window.submitStep;
+            window.submitStep = function(stepNum) {
+                if (stepNum === 1) {
+                    // Submit category, then populate keywords on success
+                    var form = document.getElementById('onboarding-form');
+                    var formData = new FormData(form);
+                    formData.set('step', '1');
+                    fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.success) {
+                            if (data.keywords) {
+                                activeKeywords = data.keywords;
+                                renderKeywords();
+                            }
+                            if (data.next_step) goToStep(data.next_step);
+                        }
+                    })
+                    .catch(function(err) { console.error('Step 1 error:', err); });
+                } else {
+                    origSubmitStep(stepNum);
+                }
+            };
         });
     </script>
 </body>

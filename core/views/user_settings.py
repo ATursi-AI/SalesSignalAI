@@ -195,6 +195,16 @@ def save_smtp_settings(request):
 
 @login_required
 @require_POST
+def dismiss_welcome(request):
+    """Mark the welcome banner as seen so it doesn't show again."""
+    profile = request.user.business_profile
+    profile.has_seen_welcome = True
+    profile.save(update_fields=['has_seen_welcome'])
+    return JsonResponse({'dismissed': True})
+
+
+@login_required
+@require_POST
 def save_theme(request):
     """Save user's theme preference (dark/light)."""
     try:

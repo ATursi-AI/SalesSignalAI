@@ -114,6 +114,9 @@ class BusinessProfile(models.Model):
         default='dark',
     )
 
+    # Welcome banner tracking
+    has_seen_welcome = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

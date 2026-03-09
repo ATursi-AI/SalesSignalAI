@@ -54,6 +54,7 @@ urlpatterns = [
     path('settings/smtp/', user_settings.save_smtp_settings, name='save_smtp_settings'),
     path('settings/smtp/test/', user_settings.send_test_email, name='send_test_email'),
     path('settings/theme/', user_settings.save_theme, name='save_theme'),
+    path('settings/dismiss-welcome/', user_settings.dismiss_welcome, name='dismiss_welcome'),
 
     # Monitor Health (staff only)
     path('monitors/', monitor_health.monitor_health_dashboard, name='monitor_health'),

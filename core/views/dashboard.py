@@ -84,6 +84,22 @@ def dashboard_home(request):
         for s in public_records_stats
     ]
 
+    # Welcome banner: show on first visit, with monitoring info
+    show_welcome = not profile.has_seen_welcome
+    source_count = 34  # Total monitor sources
+
+    # For empty state: nationwide leads in their service category (last 24h)
+    nationwide_recent = []
+    if total_leads == 0 and profile.service_category:
+        nationwide_recent = list(
+            Lead.objects.filter(
+                detected_service_type=profile.service_category,
+                discovered_at__gte=now - timedelta(hours=24),
+            )
+            .order_by('-discovered_at')[:5]
+            .values('platform', 'source_content', 'detected_location', 'discovered_at')
+        )
+
     context = {
         'profile': profile,
         'hot_leads': hot_leads,
@@ -99,5 +115,9 @@ def dashboard_home(request):
         'competitor_neg': competitor_neg,
         'public_records_total': public_records_total,
         'public_records_breakdown': public_records_breakdown,
+        'show_welcome': show_welcome,
+        'source_count': source_count,
+        'total_leads': total_leads,
+        'nationwide_recent': nationwide_recent,
     }
     return render(request, 'dashboard/home.html', context)
