@@ -19,6 +19,251 @@ from core.utils.location import extract_location, is_in_service_area
 
 logger = logging.getLogger(__name__)
 
+# ─────────────────────────────────────────────────────────────
+# Weak single-word keywords that must appear in a qualifying
+# phrase to count as a match.  If a keyword appears here, a
+# bare word-boundary hit is ignored — only the compound phrases
+# listed will count.
+# ─────────────────────────────────────────────────────────────
+KEYWORD_PHRASES = {
+    # Keyword  →  list of qualifying phrases (checked case-insensitively)
+    'moving': [
+        'moving company', 'need movers', 'hiring movers', 'moving truck',
+        'moving help', 'moving service', 'local movers', 'moving quote',
+        'moving cost', 'help me move', 'moving out', 'moving in',
+        'moving to', 'moving from', 'interstate move', 'long distance move',
+    ],
+    'stone': [
+        'stone work', 'stonework', 'stone patio', 'stone wall', 'natural stone',
+        'stone veneer', 'stone mason', 'stone steps', 'stone walkway',
+        'flagstone', 'bluestone', 'stone repair',
+    ],
+    'addition': [
+        'home addition', 'room addition', 'building addition', 'house addition',
+        'add an addition', 'build an addition', 'addition to my house',
+        'addition to my home', 'garage addition',
+    ],
+    'maintenance': [
+        'home maintenance', 'property maintenance', 'maintenance service',
+        'maintenance man', 'maintenance person', 'building maintenance',
+        'maintenance work', 'hvac maintenance', 'lawn maintenance',
+    ],
+    'painting': [
+        'house painting', 'interior painting', 'exterior painting',
+        'painter needed', 'painting contractor', 'painting company',
+        'need a painter', 'hire a painter', 'paint my house', 'paint my room',
+        'painting quote', 'painting estimate', 'wall painting', 'trim painting',
+        'painting service', 'recommend a painter', 'looking for a painter',
+    ],
+    'lighting': [
+        'lighting installation', 'lighting electrician', 'recessed lighting',
+        'lighting fixture', 'install lighting', 'outdoor lighting',
+        'landscape lighting', 'lighting upgrade', 'led lighting',
+        'lighting repair', 'track lighting',
+    ],
+    'panel': [
+        'electrical panel', 'breaker panel', 'panel upgrade', 'panel box',
+        'fuse panel', 'sub panel', 'subpanel', 'panel replacement',
+        'service panel', '200 amp panel',
+    ],
+    'leak': [
+        'plumbing leak', 'pipe leak', 'water leak', 'roof leak', 'leak repair',
+        'gas leak', 'faucet leak', 'toilet leak', 'slab leak', 'leaking pipe',
+        'leaking faucet', 'leaking toilet', 'leaking roof', 'leaking water',
+        'fix a leak', 'fix the leak', 'stop a leak',
+    ],
+    'drain': [
+        'drain cleaning', 'clogged drain', 'drain repair', 'drain line',
+        'drain snake', 'slow drain', 'drain backup', 'drain clog',
+        'floor drain', 'shower drain', 'blocked drain', 'drain service',
+    ],
+    'pipe': [
+        'pipe repair', 'pipe leak', 'burst pipe', 'frozen pipe', 'pipe replacement',
+        'broken pipe', 'pipe fitting', 'copper pipe', 'pvc pipe',
+        'leaking pipe', 'pipe burst', 'repiping', 'pipe insulation',
+    ],
+    'outlet': [
+        'electrical outlet', 'power outlet', 'outlet repair', 'gfci outlet',
+        'install outlet', 'outlet replacement', 'add outlet', 'dead outlet',
+    ],
+    'tile': [
+        'tile installation', 'tile work', 'floor tile', 'bathroom tile',
+        'shower tile', 'tile repair', 'tile floor', 'backsplash tile',
+        'tile contractor', 'retile', 'tile guy', 'subway tile',
+    ],
+    'deck': [
+        'deck building', 'deck repair', 'deck staining', 'build a deck',
+        'deck contractor', 'deck replacement', 'composite deck',
+        'deck installation', 'wood deck', 'deck railing',
+    ],
+    'patio': [
+        'patio installation', 'patio repair', 'build a patio', 'paver patio',
+        'patio contractor', 'patio design', 'concrete patio', 'stone patio',
+        'patio cover',
+    ],
+    'clogged': [
+        'clogged drain', 'clogged toilet', 'clogged pipe', 'clogged sink',
+        'clogged sewer', 'clogged shower',
+    ],
+    'insulation': [
+        'attic insulation', 'wall insulation', 'insulation contractor',
+        'spray foam insulation', 'blown-in insulation', 'insulation install',
+        'insulation upgrade', 'home insulation', 'insulation company',
+    ],
+    'concrete': [
+        'concrete work', 'concrete repair', 'concrete slab', 'pour concrete',
+        'concrete contractor', 'concrete driveway', 'concrete patio',
+        'concrete sidewalk', 'concrete steps', 'concrete foundation',
+        'concrete crack', 'stamped concrete',
+    ],
+    'brick': [
+        'brick work', 'brickwork', 'brick repair', 'brick wall', 'brick patio',
+        'brick pointing', 'tuckpointing', 'brick mason', 'brick layer',
+        'brick steps', 'brick house',
+    ],
+    'solar': [
+        'solar panel', 'solar installation', 'solar energy', 'solar power',
+        'solar company', 'solar quote', 'go solar', 'solar roof',
+        'solar contractor', 'solar installer',
+    ],
+    'heating': [
+        'heating repair', 'heating system', 'heating company', 'heating unit',
+        'heating service', 'no heating', 'heating broke', 'central heating',
+        'heating installation', 'heating contractor',
+    ],
+    'cooling': [
+        'cooling system', 'cooling repair', 'cooling service', 'cooling unit',
+        'cooling company', 'cooling contractor',
+    ],
+    'construction': [
+        'construction company', 'construction contractor', 'construction project',
+        'construction work', 'new construction', 'construction crew',
+        'construction estimate', 'construction quote',
+    ],
+    'renovation': [
+        'home renovation', 'house renovation', 'kitchen renovation',
+        'bathroom renovation', 'renovation contractor', 'renovation project',
+        'renovation company', 'renovation cost', 'renovation quote',
+    ],
+    'remodel': [
+        'home remodel', 'house remodel', 'kitchen remodel', 'bathroom remodel',
+        'basement remodel', 'remodel contractor', 'remodel project',
+        'remodel company', 'remodel cost',
+    ],
+    'wiring': [
+        'electrical wiring', 'house wiring', 'home wiring', 'wiring upgrade',
+        'rewiring', 'wiring repair', 'wiring issue', 'wiring problem',
+        'knob and tube', 'romex',
+    ],
+    'mold': [
+        'mold removal', 'mold remediation', 'mold testing', 'mold inspection',
+        'black mold', 'mold problem', 'mold issue', 'mold in',
+        'mold damage', 'mold company',
+    ],
+    'fencing': [
+        'fence installation', 'fence repair', 'fence company', 'privacy fence',
+        'fence contractor', 'build a fence', 'new fence', 'wood fence',
+        'vinyl fence', 'chain link fence', 'fence quote',
+    ],
+    'entertainment': [
+        'event entertainment', 'party entertainment', 'wedding entertainment',
+        'live entertainment', 'hire entertainment',
+    ],
+    'bookkeeping': [
+        'bookkeeping service', 'bookkeeper needed', 'need a bookkeeper',
+        'looking for a bookkeeper', 'bookkeeping help', 'bookkeeping company',
+        'hire a bookkeeper', 'recommend a bookkeeper', 'small business bookkeeping',
+    ],
+    'staining': [
+        'deck staining', 'wood staining', 'fence staining', 'stain the deck',
+        'stain the fence', 'staining service', 'staining contractor',
+        'floor staining', 'cabinet staining', 'furniture staining',
+    ],
+    'sidewalk': [
+        'sidewalk repair', 'sidewalk replacement', 'pour sidewalk',
+        'sidewalk crack', 'sidewalk contractor', 'new sidewalk',
+        'fix sidewalk', 'broken sidewalk', 'sidewalk leveling',
+    ],
+    'foundation': [
+        'foundation repair', 'foundation crack', 'foundation issue',
+        'foundation problem', 'foundation contractor', 'foundation inspection',
+        'foundation settling', 'foundation work', 'slab foundation',
+    ],
+    'transmission': [
+        'transmission repair', 'transmission shop', 'transmission fluid',
+        'transmission rebuild', 'transmission replacement', 'transmission problem',
+        'transmission issue', 'transmission service', 'transmission mechanic',
+    ],
+    'parking lot': [
+        'parking lot repair', 'parking lot paving', 'parking lot seal',
+        'parking lot striping', 'parking lot resurfac', 'repave parking lot',
+        'pave parking lot',
+    ],
+}
+
+# ─────────────────────────────────────────────────────────────
+# Keywords to remove entirely — too ambiguous in all contexts
+# ─────────────────────────────────────────────────────────────
+REMOVED_KEYWORDS = {
+    'fix it',       # matches any discussion of fixing anything
+    'contacts',     # matches eyewear / phone contacts
+    'glasses',      # matches eyeglasses discussions
+    'vision',       # too generic
+    'packing',      # too generic (packing for trips, etc)
+}
+
+# ─────────────────────────────────────────────────────────────
+# Negative keywords per category slug — if any appear in the
+# text, the category is disqualified even if keywords matched
+# ─────────────────────────────────────────────────────────────
+NEGATIVE_KEYWORDS = {
+    'plumbing': ['car', 'dealership', 'ev', 'tesla', 'bitcoin', 'crypto'],
+    'painting': ['art', 'canvas', 'gallery', 'museum', 'watercolor', 'acrylic paint', 'oil painting'],
+    'tree-service': ['cuttings', 'propagat', 'christmas tree', 'family tree'],
+    'moving': ['emotionally', 'grocery', 'roth', 'ira', '401k', 'hysa', 'bank account',
+               'savings account', 'investment', 'stock market', 'portfolio'],
+    'concrete-masonry': ['custody', 'jewelry', 'jeweler', 'estate jewel', 'gemstone',
+                         'engagement ring', 'diamond'],
+    'electrical': ['car', 'ev charger', 'electric vehicle', 'guitar', 'amp ', 'amplifier'],
+    'therapist-counselor': ['massage', 'physical therap'],
+    'florist': ['flour', 'bakery', 'baking'],
+    'veterinarian': ['nutritionist'],
+    'real-estate-agent': ['commission rate', 'commission split', 'nar settlement',
+                          'broker fee', 'agent to agent', 'listing agent commission'],
+    'paving-asphalt': ['parking ticket', 'parking meter', 'parking garage',
+                       'street parking', 'parking permit'],
+    'physical-therapy': ['physical therapist career', 'become a pt', 'pt school',
+                         'dpt program'],
+    'insurance-agent': ['health insurance marketplace', 'obamacare', 'medicaid',
+                        'medicare part'],
+}
+
+# ─────────────────────────────────────────────────────────────
+# Strong intent phrases — if any of these appear in text,
+# a single keyword match is sufficient (high confidence)
+# ─────────────────────────────────────────────────────────────
+STRONG_INTENT_PATTERNS = [
+    r'recommend\w* (?:a |an |me a |me an )',
+    r'looking for (?:a |an )',
+    r'need (?:a |an )',
+    r'hire (?:a |an )',
+    r'hiring (?:a |an )',
+    r'anyone know (?:a |an )',
+    r'can anyone recommend',
+    r'who do you (?:use|recommend|call)',
+    r'know (?:a |of a |any )good',
+    r'suggest (?:a |an )',
+    r'best .{0,20} in (?:the |my )',
+    r'affordable .{0,15} near',
+    r'quote for',
+    r'estimate for',
+    r'(?:free |get a )(?:quote|estimate)',
+]
+
+_strong_intent_re = re.compile(
+    '|'.join(STRONG_INTENT_PATTERNS), re.IGNORECASE
+)
+
 
 def compute_content_hash(platform, url, content):
     """Generate a SHA-256 hash for deduplication."""
@@ -26,46 +271,98 @@ def compute_content_hash(platform, url, content):
     return hashlib.sha256(raw.encode('utf-8')).hexdigest()
 
 
+def _keyword_matches_text(kw, text_lower):
+    """
+    Check if a keyword matches text, applying phrase restrictions
+    for weak single-word keywords.
+    Returns True if the keyword matches.
+    """
+    kw_lower = kw.lower()
+
+    # Skip entirely removed keywords
+    if kw_lower in REMOVED_KEYWORDS:
+        return False
+
+    # Multi-word keywords: whole-word phrase match (word boundaries)
+    if ' ' in kw_lower:
+        return bool(re.search(
+            r'\b' + re.escape(kw_lower) + r'\b', text_lower
+        ))
+
+    # Single-word keyword: check if it requires a qualifying phrase
+    if kw_lower in KEYWORD_PHRASES:
+        phrases = KEYWORD_PHRASES[kw_lower]
+        return any(
+            re.search(r'\b' + re.escape(p) + r'\b', text_lower)
+            for p in phrases
+        )
+
+    # Regular single-word keyword: word boundary match
+    return bool(re.search(r'\b' + re.escape(kw_lower) + r'\b', text_lower))
+
+
+def _check_negative_keywords(text_lower, category_slug):
+    """Return True if text contains negative keywords for this category."""
+    negatives = NEGATIVE_KEYWORDS.get(category_slug, [])
+    if not negatives:
+        return False
+    for neg in negatives:
+        neg_lower = neg.lower()
+        if neg_lower in text_lower:
+            return True
+    return False
+
+
 def match_keywords(text, categories=None):
     """
     Match text against ServiceCategory.default_keywords.
-    Returns list of (category, matched_keywords, score) sorted by score desc.
+
+    Returns list of (category, matched_keywords, score, confidence)
+    sorted by score desc.  confidence is 'high' or 'low'.
+
+    High confidence = 2+ keyword matches OR 1 match + strong intent phrase.
+    Low confidence  = only 1 weak keyword match with no intent signal.
     """
     if not text:
         return []
 
     text_lower = text.lower()
+    has_strong_intent = bool(_strong_intent_re.search(text))
 
     if categories is None:
-        categories = ServiceCategory.objects.filter(is_active=True)
+        categories = ServiceCategory.objects.filter(
+            is_active=True
+        ).prefetch_related('subcategories')
 
     results = []
     for cat in categories:
-        keywords = cat.default_keywords or []
-        # Also include subcategory keywords
+        # Check negative keywords first
+        if _check_negative_keywords(text_lower, cat.slug):
+            continue
+
+        keywords = list(cat.default_keywords or [])
         for sub in cat.subcategories.all():
             keywords.extend(sub.additional_keywords or [])
 
         matched = []
         for kw in keywords:
-            kw_lower = kw.lower()
-            # Multi-word keywords: exact phrase match
-            # Single words: word boundary match
-            if ' ' in kw_lower:
-                if kw_lower in text_lower:
-                    matched.append(kw)
-            else:
-                # Simple word boundary check
-                import re
-                if re.search(r'\b' + re.escape(kw_lower) + r'\b', text_lower):
-                    matched.append(kw)
+            if _keyword_matches_text(kw, text_lower):
+                matched.append(kw)
 
         if matched:
             # Score: number of matched keywords, weighted by specificity
             score = len(matched)
             # Bonus for multi-word keyword matches (more specific)
             score += sum(0.5 for kw in matched if ' ' in kw)
-            results.append((cat, matched, score))
+
+            # Confidence assessment
+            has_phrase_match = any(' ' in kw for kw in matched)
+            if len(matched) >= 2 or has_phrase_match or has_strong_intent:
+                confidence = 'high'
+            else:
+                confidence = 'low'
+
+            results.append((cat, matched, score, confidence))
 
     results.sort(key=lambda x: x[2], reverse=True)
     return results
@@ -115,8 +412,9 @@ def process_lead(platform, source_url, content, author='', posted_at=None, raw_d
     keyword_matches = match_keywords(content)
     best_category = None
     matched_keywords = []
+    confidence = 'low'
     if keyword_matches:
-        best_category, matched_keywords, _ = keyword_matches[0]
+        best_category, matched_keywords, _, confidence = keyword_matches[0]
 
     # Calculate urgency
     urgency_level, urgency_score = calculate_urgency(posted_at)
@@ -134,6 +432,7 @@ def process_lead(platform, source_url, content, author='', posted_at=None, raw_d
         matched_keywords=matched_keywords,
         urgency_score=urgency_score,
         urgency_level=urgency_level,
+        confidence=confidence,
         content_hash=content_hash,
         raw_data=raw_data or {},
     )
@@ -171,13 +470,8 @@ def matches_business_keywords(text, business):
 
     matched = []
     for kw in active_keywords:
-        kw_lower = kw.lower()
-        if ' ' in kw_lower:
-            if kw_lower in text_lower:
-                matched.append(kw)
-        else:
-            if re.search(r'\b' + re.escape(kw_lower) + r'\b', text_lower):
-                matched.append(kw)
+        if _keyword_matches_text(kw, text_lower):
+            matched.append(kw)
 
     return len(matched) > 0, matched
 

@@ -60,6 +60,18 @@
                     <span>Competitors</span>
                 </a>
 
+                {% if user.is_staff %}
+                <div class="sidebar-section-label">Staff</div>
+                <a href="{% url 'admin_lead_repository' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_lead_repository' %}active{% endif %}">
+                    <i class="bi bi-database-fill"></i>
+                    <span>Lead Repository</span>
+                </a>
+                <a href="{% url 'monitor_health' %}" class="sidebar-link {% if request.resolver_match.url_name == 'monitor_health' %}active{% endif %}">
+                    <i class="bi bi-activity"></i>
+                    <span>Monitor Health</span>
+                </a>
+                {% endif %}
+
                 <div class="sidebar-section-label">Insights</div>
                 <a href="{% url 'analytics_dashboard' %}" class="sidebar-link {% if 'analytics' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-bar-chart-fill"></i>

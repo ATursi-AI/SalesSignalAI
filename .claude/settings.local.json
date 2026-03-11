@@ -83,7 +83,11 @@
       "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe -c \"from core.views.user_settings import save_theme; print\\(''OK''\\)\")",
       "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe -c \"import django; django.setup\\(\\); from core.views.user_settings import save_theme; print\\(''save_theme OK''\\); from core.urls import urlpatterns; print\\(f''URLs: {len\\(urlpatterns\\)} patterns''\\)\")",
       "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe -c \"import django; django.setup\\(\\); from django.urls import reverse; print\\(reverse\\(''save_theme''\\)\\); print\\(''All OK''\\)\")",
-      "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe manage.py makemigrations core --name add_has_seen_welcome)"
+      "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe manage.py makemigrations core --name add_has_seen_welcome)",
+      "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe manage.py monitor_reddit --dry-run)",
+      "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe manage.py monitor_reddit --dry-run --max-age-hours 168)",
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name add_lead_confidence_review_status)",
+      "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe manage.py shell -c \"from core.models.leads import Lead; count = Lead.objects.count\\(\\); Lead.objects.all\\(\\).delete\\(\\); print\\(f''Deleted {count} leads''\\)\")"
     ]
   }
 }

@@ -166,7 +166,7 @@ def _get_monitor_registry():
     # Each entry: name -> (import_path_fn, default_kwargs)
     monitor_defs = [
         ('craigslist', 'core.utils.monitors.craigslist', 'monitor_craigslist', {}),
-        ('reddit', 'core.utils.monitors.reddit_local', 'monitor_reddit', {}),
+        ('reddit', 'core.utils.monitors.reddit_json', 'monitor_reddit', {}),
         ('patch', 'core.utils.monitors.patch', 'monitor_patch', {}),
         ('houzz', 'core.utils.monitors.houzz', 'monitor_houzz', {}),
         ('alignable', 'core.utils.monitors.alignable', 'monitor_alignable', {}),

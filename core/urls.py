@@ -1,6 +1,6 @@
 from django.urls import path
 from core.views import landing, auth, onboarding, dashboard, leads, competitors, territory, campaigns, analytics
-from core.views import monitor_health, webhooks, user_settings
+from core.views import monitor_health, webhooks, user_settings, admin_leads
 
 urlpatterns = [
     path('', landing.landing_page, name='landing'),
@@ -55,6 +55,13 @@ urlpatterns = [
     path('settings/smtp/test/', user_settings.send_test_email, name='send_test_email'),
     path('settings/theme/', user_settings.save_theme, name='save_theme'),
     path('settings/dismiss-welcome/', user_settings.dismiss_welcome, name='dismiss_welcome'),
+
+    # Lead Repository (staff only)
+    path('admin-leads/', admin_leads.lead_repository, name='admin_lead_repository'),
+    path('admin-leads/api/', admin_leads.lead_repository_api, name='admin_lead_repository_api'),
+    path('admin-leads/<int:lead_id>/', admin_leads.lead_detail_api, name='admin_lead_detail_api'),
+    path('admin-leads/<int:lead_id>/action/', admin_leads.lead_action, name='admin_lead_action'),
+    path('admin-leads/bulk/', admin_leads.lead_bulk_action, name='admin_lead_bulk_action'),
 
     # Monitor Health (staff only)
     path('monitors/', monitor_health.monitor_health_dashboard, name='monitor_health'),

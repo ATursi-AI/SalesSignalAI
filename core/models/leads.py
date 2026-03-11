@@ -48,6 +48,19 @@ class Lead(models.Model):
         ('stale', 'Stale'),
     ]
 
+    REVIEW_STATUS_CHOICES = [
+        ('unreviewed', 'Unreviewed'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('assigned', 'Assigned'),
+    ]
+
+    CONFIDENCE_CHOICES = [
+        ('high', 'High'),
+        ('medium', 'Medium'),
+        ('low', 'Low'),
+    ]
+
     platform = models.CharField(max_length=50, choices=PLATFORM_CHOICES)
     source_url = models.URLField(max_length=500)
     source_content = models.TextField()
@@ -67,6 +80,9 @@ class Lead(models.Model):
 
     ai_summary = models.TextField(blank=True)
     ai_suggested_response = models.TextField(blank=True)
+
+    confidence = models.CharField(max_length=10, choices=CONFIDENCE_CHOICES, default='low')
+    review_status = models.CharField(max_length=20, choices=REVIEW_STATUS_CHOICES, default='unreviewed')
 
     discovered_at = models.DateTimeField(auto_now_add=True)
     raw_data = models.JSONField(default=dict)
