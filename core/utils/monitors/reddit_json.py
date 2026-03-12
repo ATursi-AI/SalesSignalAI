@@ -6,12 +6,14 @@ Fetches /r/{subreddit}/new.json for each configured subreddit,
 matches posts against service keywords, extracts location, and
 creates Lead records via the standard process_lead() pipeline.
 """
+import json
 import logging
 import re
 import time
 from datetime import datetime, timedelta
 
 import requests
+from django.conf import settings
 from django.utils import timezone
 
 from .lead_processor import process_lead
@@ -205,7 +207,40 @@ def clean_content(title, selftext):
     return '\n\n'.join(parts)
 
 
-def monitor_reddit(subreddits=None, max_age_hours=48, dry_run=False):
+def _post_lead_remote(ingest_url, api_key, lead_data):
+    """
+    POST a lead to a remote SalesSignal instance via the ingest API.
+
+    Args:
+        ingest_url: full URL of the /api/ingest-lead/ endpoint
+        api_key: Bearer token for authentication
+        lead_data: dict with platform, source_url, source_content, etc.
+
+    Returns:
+        (success: bool, status_code: int, response_body: dict)
+    """
+    headers = {
+        'Authorization': f'Bearer {api_key}',
+        'Content-Type': 'application/json',
+    }
+    try:
+        resp = requests.post(
+            ingest_url,
+            data=json.dumps(lead_data),
+            headers=headers,
+            timeout=15,
+        )
+        try:
+            body = resp.json()
+        except (ValueError, json.JSONDecodeError):
+            body = {'raw': resp.text[:200]}
+        return resp.status_code in (201, 409), resp.status_code, body
+    except requests.RequestException as e:
+        logger.error(f'[Remote] POST failed: {e}')
+        return False, 0, {'error': str(e)}
+
+
+def monitor_reddit(subreddits=None, max_age_hours=48, dry_run=False, remote=False):
     """
     Main monitoring function. Scans subreddits for service-related posts.
 
@@ -213,12 +248,31 @@ def monitor_reddit(subreddits=None, max_age_hours=48, dry_run=False):
         subreddits: list of subreddit names (default: DEFAULT_SUBREDDITS)
         max_age_hours: ignore posts older than this (default: 48)
         dry_run: if True, log matches but don't create Lead records
+        remote: if True, POST leads to REMOTE_INGEST_URL instead of saving locally
 
     Returns:
         dict with counts: scraped, created, duplicates, matched, errors
     """
     if subreddits is None:
         subreddits = DEFAULT_SUBREDDITS
+
+    # Resolve remote config
+    ingest_url = ''
+    ingest_key = ''
+    if remote:
+        ingest_url = getattr(settings, 'REMOTE_INGEST_URL', '')
+        ingest_key = getattr(settings, 'INGEST_API_KEY', '')
+        if not ingest_url or not ingest_key:
+            logger.error(
+                '[Remote] REMOTE_INGEST_URL and INGEST_API_KEY must be set '
+                'in .env for --remote mode'
+            )
+            return {
+                'scraped': 0, 'created': 0, 'duplicates': 0, 'matched': 0,
+                'assigned': 0, 'errors': 1, 'geo_filtered': 0,
+                'intent_filtered': 0, 'dry_run_matches': [],
+                'remote_sent': 0, 'remote_failed': 0,
+            }
 
     stats = {
         'scraped': 0,
@@ -230,6 +284,8 @@ def monitor_reddit(subreddits=None, max_age_hours=48, dry_run=False):
         'geo_filtered': 0,
         'intent_filtered': 0,
         'dry_run_matches': [],
+        'remote_sent': 0,
+        'remote_failed': 0,
     }
 
     cutoff = timezone.now() - timedelta(hours=max_age_hours)
@@ -311,6 +367,43 @@ def monitor_reddit(subreddits=None, max_age_hours=48, dry_run=False):
                             (timezone.now() - posted_at).total_seconds() / 3600, 1
                         ) if posted_at else '?',
                     })
+                    continue
+
+                # ── Remote mode: POST to remote ingest API ──
+                if remote:
+                    payload = {
+                        'platform': 'reddit',
+                        'source_url': source_url,
+                        'source_content': content,
+                        'author': post.get('author', ''),
+                        'confidence': confidence,
+                        'detected_category': best_category.slug,
+                        'raw_data': {
+                            'subreddit': post['subreddit'],
+                            'score': post.get('score', 0),
+                            'num_comments': post.get('num_comments', 0),
+                            'flair': post.get('link_flair_text', ''),
+                            'matched_keywords': matched_kws[:5],
+                        },
+                    }
+                    ok, status_code, body = _post_lead_remote(
+                        ingest_url, ingest_key, payload,
+                    )
+                    if ok:
+                        if status_code == 201:
+                            stats['remote_sent'] += 1
+                            stats['created'] += 1
+                        else:
+                            stats['duplicates'] += 1
+                        logger.info(
+                            f'[Remote] {status_code} — {body.get("status", "?")}'
+                        )
+                    else:
+                        stats['remote_failed'] += 1
+                        stats['errors'] += 1
+                        logger.warning(
+                            f'[Remote] Failed ({status_code}): {body}'
+                        )
                     continue
 
                 # Create lead via standard pipeline

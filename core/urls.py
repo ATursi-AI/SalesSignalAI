@@ -1,6 +1,6 @@
 from django.urls import path
 from core.views import landing, auth, onboarding, dashboard, leads, competitors, territory, campaigns, analytics
-from core.views import monitor_health, webhooks, user_settings, admin_leads
+from core.views import monitor_health, webhooks, user_settings, admin_leads, ingest_api
 
 urlpatterns = [
     path('', landing.landing_page, name='landing'),
@@ -66,6 +66,9 @@ urlpatterns = [
     # Monitor Health (staff only)
     path('monitors/', monitor_health.monitor_health_dashboard, name='monitor_health'),
     path('monitors/api/', monitor_health.monitor_health_api, name='monitor_health_api'),
+
+    # Lead Ingestion API
+    path('api/ingest-lead/', ingest_api.ingest_lead, name='ingest_lead'),
 
     # Webhooks & Compliance
     path('webhooks/sendgrid/', webhooks.sendgrid_webhook, name='sendgrid_webhook'),

@@ -100,6 +100,10 @@ ZEROBOUNCE_API_KEY = config('ZEROBOUNCE_API_KEY', default='')
 
 ALERT_FROM_EMAIL = config('ALERT_FROM_EMAIL', default='alerts@salessignal.ai')
 
+# Lead ingestion API
+INGEST_API_KEY = config('INGEST_API_KEY', default='')
+REMOTE_INGEST_URL = config('REMOTE_INGEST_URL', default='https://salessignalai.com/api/ingest-lead/')
+
 # Email backend (console for dev, SMTP for prod)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = ALERT_FROM_EMAIL

@@ -87,7 +87,15 @@
       "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe manage.py monitor_reddit --dry-run)",
       "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe manage.py monitor_reddit --dry-run --max-age-hours 168)",
       "Bash(venv/Scripts/python.exe manage.py makemigrations core --name add_lead_confidence_review_status)",
-      "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe manage.py shell -c \"from core.models.leads import Lead; count = Lead.objects.count\\(\\); Lead.objects.all\\(\\).delete\\(\\); print\\(f''Deleted {count} leads''\\)\")"
+      "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe manage.py shell -c \"from core.models.leads import Lead; count = Lead.objects.count\\(\\); Lead.objects.all\\(\\).delete\\(\\); print\\(f''Deleted {count} leads''\\)\")",
+      "Bash(find /c/Users/aturs/Documents/AI_Engineering_Course/SalesSignalAI -path */venv -prune -o -type f -name *scraper*.py -print)",
+      "Bash(find /c/Users/aturs/Documents/AI_Engineering_Course/SalesSignalAI -path */venv -prune -o -type f -name *.py -print)",
+      "Bash(xargs grep:*)",
+      "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe manage.py monitor_google_reviews_scraper --dry-run --city \"Long Island, NY\" --category plumber)",
+      "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe manage.py monitor_google_reviews_scraper --dry-run --city \"Long Island, NY\" --category plumber electrician)",
+      "Bash(venv/Scripts/python.exe manage.py monitor_google_reviews_scraper --dry-run --city \"Long Island, NY\" --category plumber electrician)",
+      "Bash(python -c \"import secrets; print\\(secrets.token_urlsafe\\(32\\)\\)\")",
+      "Bash(venv/Scripts/python.exe manage.py monitor_reddit --dry-run --max-age-hours 1 --subreddits AskNYC --remote)"
     ]
   }
 }

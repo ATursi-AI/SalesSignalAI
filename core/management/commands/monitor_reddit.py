@@ -34,15 +34,26 @@ class Command(BaseCommand):
             default=48,
             help='Max post age in hours (default: 48)',
         )
+        parser.add_argument(
+            '--remote',
+            action='store_true',
+            help='POST leads to REMOTE_INGEST_URL instead of saving locally',
+        )
 
     def handle(self, *args, **options):
         dry_run = options['dry_run']
         subreddits = options['subreddits']
         max_age = options['max_age_hours']
+        remote = options['remote']
 
         self.stdout.write(self.style.HTTP_INFO('Starting Reddit monitor...'))
         if dry_run:
             self.stdout.write(self.style.WARNING('  DRY RUN — no leads will be created'))
+        if remote:
+            from django.conf import settings as django_settings
+            self.stdout.write(self.style.WARNING(
+                f'  REMOTE MODE — posting to {django_settings.REMOTE_INGEST_URL}'
+            ))
         self.stdout.write(f'  Subreddits: {", ".join(subreddits or DEFAULT_SUBREDDITS)}')
         self.stdout.write(f'  Max age: {max_age}h')
         self.stdout.write('')
@@ -51,6 +62,7 @@ class Command(BaseCommand):
             subreddits=subreddits,
             max_age_hours=max_age,
             dry_run=dry_run,
+            remote=remote,
         )
 
         self.stdout.write('')
@@ -83,6 +95,13 @@ class Command(BaseCommand):
                     self.stdout.write('')
             else:
                 self.stdout.write(self.style.WARNING('  No matches found in scanned posts.'))
+        elif remote:
+            self.stdout.write(f'  Remote sent:     {stats.get("remote_sent", 0)}')
+            self.stdout.write(f'  Duplicates:      {stats["duplicates"]}')
+            if stats.get('remote_failed'):
+                self.stdout.write(self.style.WARNING(
+                    f'  Remote failed:   {stats["remote_failed"]}'
+                ))
         else:
             self.stdout.write(f'  Leads created:   {stats["created"]}')
             self.stdout.write(f'  Duplicates:      {stats["duplicates"]}')
