@@ -553,6 +553,18 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
             penalty_str = f'${int(float(penalty)):,}' if penalty else ''
             balance_str = f'${int(float(balance)):,}' if balance else ''
 
+            # Penalty-based urgency scoring
+            penalty_amount = float(penalty) if penalty else 0
+            if penalty_amount >= 10_000:
+                urgency_level = 'hot'
+                urgency_score = 95
+            elif penalty_amount >= 1_000:
+                urgency_level = 'warm'
+                urgency_score = 75
+            else:
+                urgency_level = 'new'
+                urgency_score = 50
+
             # Build rich content with date and contact info
             content_parts = [
                 f'NYC DOB VIOLATION: {v_type}',
@@ -615,7 +627,8 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
                     f'[DRY RUN] Violation: {address} | {v_type} | '
                     f'{severity} | Respondent: {respondent or "N/A"} | '
                     f'Issued: {violation_date_str} ({age_text}) | '
-                    f'Penalty: {penalty_str or "N/A"}'
+                    f'Penalty: {penalty_str or "N/A"} | '
+                    f'Urgency: {urgency_level.upper()}'
                 )
                 stats['created'] += 1
                 continue
@@ -627,7 +640,7 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
                     'source_content': content,
                     'author': respondent,
                     'confidence': 'high',
-                    'urgency': 'hot',
+                    'urgency': urgency_level,
                     'detected_category': 'DOB_VIOLATION',
                     'raw_data': raw_data,
                 }
@@ -654,8 +667,8 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
 
             if lead and created:
                 lead.confidence = 'high'
-                lead.urgency_level = 'hot'
-                lead.urgency_score = 90
+                lead.urgency_level = urgency_level
+                lead.urgency_score = urgency_score
                 lead.detected_location = address
                 if resp_zip:
                     lead.detected_zip = resp_zip

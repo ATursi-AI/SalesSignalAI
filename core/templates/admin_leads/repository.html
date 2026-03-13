@@ -867,13 +867,15 @@ function renderLeads(data) {
     const btns = document.getElementById('paginationButtons');
     let html = '';
     if (data.total_pages > 1) {
-        html += `<button ${data.page <= 1 ? 'disabled' : ''} onclick="applyFilters(${data.page - 1})"><i class="bi bi-chevron-left"></i></button>`;
+        html += `<button ${data.page <= 1 ? 'disabled' : ''} onclick="applyFilters(1)" title="First page"><i class="bi bi-chevron-double-left"></i></button>`;
+        html += `<button ${data.page <= 1 ? 'disabled' : ''} onclick="applyFilters(${data.page - 1})" title="Previous page"><i class="bi bi-chevron-left"></i></button>`;
         const start = Math.max(1, data.page - 3);
         const end = Math.min(data.total_pages, data.page + 3);
         for (let i = start; i <= end; i++) {
             html += `<button class="${i === data.page ? 'active-page' : ''}" onclick="applyFilters(${i})">${i}</button>`;
         }
-        html += `<button ${data.page >= data.total_pages ? 'disabled' : ''} onclick="applyFilters(${data.page + 1})"><i class="bi bi-chevron-right"></i></button>`;
+        html += `<button ${data.page >= data.total_pages ? 'disabled' : ''} onclick="applyFilters(${data.page + 1})" title="Next page"><i class="bi bi-chevron-right"></i></button>`;
+        html += `<button ${data.page >= data.total_pages ? 'disabled' : ''} onclick="applyFilters(${data.total_pages})" title="Last page"><i class="bi bi-chevron-double-right"></i></button>`;
     }
     btns.innerHTML = html;
 
