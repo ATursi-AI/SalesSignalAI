@@ -121,7 +121,8 @@
       "WebFetch(domain:data.cityofnewyork.us)",
       "Bash(venv/Scripts/python.exe -c \"import py_compile; py_compile.compile\\(''core/utils/monitors/nyc_dob.py'', doraise=True\\); print\\(''OK''\\)\")",
       "Bash(venv/Scripts/python.exe -c \"import py_compile; py_compile.compile\\(''core/views/sales.py'', doraise=True\\); print\\(''OK''\\)\")",
-      "Bash(venv/Scripts/python.exe manage.py check --no-color)"
+      "Bash(venv/Scripts/python.exe manage.py check --no-color)",
+      "Bash(venv/Scripts/python.exe manage.py monitor_nyc_dob --type permits --borough queens --days 30 --dry-run)"
     ]
   }
 }

@@ -35,19 +35,28 @@ logger = logging.getLogger(__name__)
 SODA_BASE = 'https://data.cityofnewyork.us/resource'
 
 DATASET_IDS = {
-    'permits': 'ic3t-wcy2',
-    'violations': '3h2n-5cm9',
-    'certificates': 'bs8b-p36w',
+    'permits': 'ipu4-2q9a',      # DOB Permit Issuance (current, updated daily)
+    'violations': '6bgk-3dad',    # DOB ECB Violations (current, updated daily)
+    'certificates': 'bs8b-p36w',  # Certificates of Occupancy (calendar_date type)
 }
 
 # Borough codes used in DOB datasets
-BOROUGH_MAP = {
+# Permits dataset uses text names; violations/certificates use numeric codes
+BOROUGH_CODE_MAP = {
     'manhattan': '1', 'bronx': '2', 'brooklyn': '3',
     'queens': '4', 'staten_island': '5', 'staten island': '5',
+}
+BOROUGH_TEXT_MAP = {
+    'manhattan': 'MANHATTAN', 'bronx': 'BRONX', 'brooklyn': 'BROOKLYN',
+    'queens': 'QUEENS', 'staten_island': 'STATEN ISLAND', 'staten island': 'STATEN ISLAND',
 }
 BOROUGH_NAMES = {
     '1': 'Manhattan', '2': 'Bronx', '3': 'Brooklyn',
     '4': 'Queens', '5': 'Staten Island',
+    'MANHATTAN': 'Manhattan', 'BRONX': 'Bronx', 'BROOKLYN': 'Brooklyn',
+    'QUEENS': 'Queens', 'STATEN ISLAND': 'Staten Island',
+    'Manhattan': 'Manhattan', 'Bronx': 'Bronx', 'Brooklyn': 'Brooklyn',
+    'Queens': 'Queens', 'Staten Island': 'Staten Island',
 }
 
 # Permit job_type codes -> service categories
@@ -175,6 +184,26 @@ def _build_address(house_num, street, borough_name):
     return f'{addr}, NY' if addr else 'NYC, NY'
 
 
+def _days_ago_text(dt):
+    """Human-readable 'X days ago' / 'today' / 'yesterday' from a datetime."""
+    if not dt:
+        return ''
+    now = timezone.now()
+    delta = (now - dt).days
+    if delta == 0:
+        return 'today'
+    elif delta == 1:
+        return 'yesterday'
+    elif delta < 7:
+        return f'{delta} days ago'
+    elif delta < 30:
+        weeks = delta // 7
+        return f'{weeks} week{"s" if weeks > 1 else ""} ago'
+    else:
+        months = delta // 30
+        return f'{months} month{"s" if months > 1 else ""} ago'
+
+
 def _detect_permit_services(job_type, description=''):
     """Map NYC DOB job type and description to service categories."""
     services = set()
@@ -206,15 +235,16 @@ def _detect_violation_services(violation_type, violation_category=''):
     return list(services) if services else ['General Contractor']
 
 
-def _query_soda(scraper, dataset_id, where_clause, limit=1000):
+def _query_soda(scraper, dataset_id, where_clause, limit=1000, order=':id'):
     """
     Query the NYC Open Data SODA API via the scraper session.
 
     Args:
         scraper: NYCDOBScraper instance (uses its get() for rate limiting)
-        dataset_id: the dataset identifier (e.g. 'ic3t-wcy2')
+        dataset_id: the dataset identifier (e.g. 'ipu4-2q9a')
         where_clause: SoQL $where filter
         limit: max rows to return
+        order: SoQL $order clause (default ':id')
 
     Returns:
         list of dicts or empty list on failure
@@ -223,7 +253,7 @@ def _query_soda(scraper, dataset_id, where_clause, limit=1000):
     params = {
         '$where': where_clause,
         '$limit': limit,
-        '$order': ':id',
+        '$order': order,
     }
 
     # Add optional app token for higher rate limits
@@ -234,9 +264,14 @@ def _query_soda(scraper, dataset_id, where_clause, limit=1000):
 
     try:
         resp = scraper.get(url, params=params, headers=headers)
-        if not resp or resp.status_code != 200:
+        if not resp:
+            logger.warning('[nyc_dob] SODA response is None (blocked/skipped by BaseScraper)')
             return []
-        return resp.json()
+        if resp.status_code != 200:
+            logger.warning(f'[nyc_dob] SODA returned status {resp.status_code}')
+            return []
+        data = resp.json()
+        return data
     except RateLimitHit:
         raise
     except Exception as e:
@@ -273,69 +308,115 @@ def _post_lead_remote(ingest_url, api_key, lead_data):
 
 def _monitor_permits(scraper, borough, days, dry_run, remote, stats,
                      ingest_url, api_key):
-    """Sub-monitor: NYC DOB permit applications (dataset ic3t-wcy2)."""
-    since = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%dT00:00:00')
-    where = f"pre__filing_date > '{since}'"
+    """Sub-monitor: NYC DOB permit issuance (dataset ipu4-2q9a).
+
+    Dates in this dataset are text (MM/DD/YYYY). We fetch recent records
+    ordered by dobrundate DESC and filter client-side by filing_date.
+    """
+    cutoff = timezone.now() - timedelta(days=days)
+    # Dates in this dataset are text (MM/DD/YYYY) — can't filter server-side.
+    # Fetch recent INITIAL filings and filter client-side by filing_date.
+    where = "filing_status = 'INITIAL'"
 
     if borough:
-        boro_code = BOROUGH_MAP.get(borough.lower(), '')
-        if boro_code:
-            where += f" AND borough = '{boro_code}'"
+        boro_text = BOROUGH_TEXT_MAP.get(borough.lower(), '')
+        if boro_text:
+            where += f" AND borough = '{boro_text}'"
 
     logger.info(f'[nyc_dob] Querying permits: {where}')
 
     try:
-        items = _query_soda(scraper, DATASET_IDS['permits'], where)
+        items = _query_soda(scraper, DATASET_IDS['permits'], where, order=':id DESC')
     except RateLimitHit:
         logger.warning('[nyc_dob] Rate limited on permits query')
         return
 
     stats['items_scraped'] += len(items)
-    logger.info(f'[nyc_dob] Permits: fetched {len(items)} filings')
+    logger.info(f'[nyc_dob] Permits: fetched {len(items)} raw records')
 
     for item in items:
         if scraper.is_stopped:
             break
         try:
+            # Parse fields from ipu4-2q9a dataset
             job_num = item.get('job__', '')
-            doc_num = item.get('doc__', '')
-            borough_code = item.get('borough', '')
+            borough_raw = item.get('borough', '')
             house_num = item.get('house__', '')
             street = item.get('street_name', '')
+            block = item.get('block', '')
+            lot = item.get('lot', '')
             job_type = item.get('job_type', '')
-            description = item.get('other_description', '') or item.get('job_status_descrp', '') or ''
-            filing_date_str = item.get('pre__filing_date', '') or item.get('fully_permitted', '')
+            zip_code = item.get('zip_code', '')
+            filing_date_str = item.get('filing_date', '')
+            permit_status = item.get('permit_status', '')
+            owner_biz = item.get('owner_s_business_name', '')
             owner_first = item.get('owner_s_first_name', '')
             owner_last = item.get('owner_s_last_name', '')
+            owner_phone = item.get('owner_sphone__', '')
+            residential = item.get('residential', '')
+            community_board = item.get('community_board', '')
+            bldg_type = item.get('bldg_type', '')
 
-            borough_name = BOROUGH_NAMES.get(borough_code, borough_code)
-            address = _build_address(house_num, street, borough_name)
+            # Client-side date filter
             filing_date = _parse_soda_date(filing_date_str)
+            if filing_date and filing_date < cutoff:
+                continue
+
+            borough_name = BOROUGH_NAMES.get(borough_raw, borough_raw)
+            address = _build_address(house_num, street, borough_name)
             owner_name = f'{owner_first} {owner_last}'.strip()
-            services = _detect_permit_services(job_type, description)
+            owner_display = owner_biz or owner_name
+            services = _detect_permit_services(job_type, '')
+            has_phone = bool(owner_phone and owner_phone.strip())
+            age_text = _days_ago_text(filing_date)
 
             if not address or address == 'NYC, NY':
                 continue
 
-            content = (
-                f'NYC Building Permit Filed: {job_type.upper() if job_type else "Permit"}\n'
-                f'Address: {address}\n'
-                f'Borough: {borough_name}\n'
-                f'Description: {description[:300]}\n'
-                f'Owner: {owner_name}\n'
-                f'Job #: {job_num}\n'
-                f'Services needed: {", ".join(services[:6])}'
-            )
+            # Build rich content with contact info and date
+            content_parts = [
+                f'NYC Building Permit Filed: {job_type.upper() if job_type else "Permit"}',
+                f'Filed: {filing_date_str}{f" ({age_text})" if age_text else ""}',
+                f'Address: {address}',
+            ]
+            if zip_code:
+                content_parts.append(f'Zip: {zip_code}')
+            content_parts.append(f'Borough: {borough_name} | Block: {block} | Lot: {lot}')
+            content_parts.append(f'Type: {"Residential" if residential == "YES" else "Commercial"}')
+
+            # Contact info section
+            content_parts.append('')  # blank line
+            if owner_biz:
+                content_parts.append(f'Owner Business: {owner_biz}')
+            if owner_name:
+                content_parts.append(f'Owner: {owner_name}')
+            if has_phone:
+                content_parts.append(f'Phone: {owner_phone}')
+            if not has_phone:
+                content_parts.append('[No phone on file — flag for AI enrichment]')
+
+            content_parts.append(f'Job #: {job_num}')
+            content_parts.append(f'Services needed: {", ".join(services[:6])}')
+            content = '\n'.join(content_parts)
 
             raw_data = {
                 'source_type': 'nyc_dob_permit',
                 'job_number': job_num,
-                'doc_number': doc_num,
                 'borough': borough_name,
                 'address': address,
+                'block': block,
+                'lot': lot,
+                'zip_code': zip_code,
                 'job_type': job_type,
-                'job_description': description[:500],
-                'owner': owner_name,
+                'bldg_type': bldg_type,
+                'permit_status': permit_status,
+                'residential': residential,
+                'community_board': community_board,
+                'owner_business_name': owner_biz,
+                'owner_name': owner_name,
+                'owner_phone': owner_phone,
+                'has_phone': has_phone,
+                'needs_enrichment': not has_phone,
                 'filing_date': filing_date_str,
                 'services_mapped': services,
             }
@@ -343,8 +424,11 @@ def _monitor_permits(scraper, borough, days, dry_run, remote, stats,
             source_url = _soda_url(DATASET_IDS['permits'])
 
             if dry_run:
+                phone_display = owner_phone if has_phone else 'NO PHONE'
                 logger.info(
-                    f'[DRY RUN] Permit: {address} — {job_type}'
+                    f'[DRY RUN] Permit: {address} | {job_type} | '
+                    f'Owner: {owner_display} | {phone_display} | '
+                    f'Filed: {filing_date_str} ({age_text})'
                 )
                 stats['created'] += 1
                 continue
@@ -354,7 +438,7 @@ def _monitor_permits(scraper, borough, days, dry_run, remote, stats,
                     'platform': 'public_records',
                     'source_url': source_url,
                     'source_content': content,
-                    'author': owner_name,
+                    'author': owner_display,
                     'confidence': 'high',
                     'detected_category': 'BUILDING_PERMIT',
                     'raw_data': raw_data,
@@ -375,14 +459,19 @@ def _monitor_permits(scraper, borough, days, dry_run, remote, stats,
                 platform='public_records',
                 source_url=source_url,
                 content=content,
-                author=owner_name,
+                author=owner_display,
                 posted_at=filing_date,
                 raw_data=raw_data,
             )
 
             if lead and created:
                 lead.confidence = 'high'
-                lead.save(update_fields=['confidence'])
+                lead.detected_location = f'{address}'
+                if zip_code:
+                    lead.detected_zip = zip_code
+                lead.save(update_fields=[
+                    'confidence', 'detected_location', 'detected_zip',
+                ])
                 stats['created'] += 1
                 stats['assigned'] += num_assigned
             else:
@@ -401,19 +490,26 @@ def _monitor_permits(scraper, borough, days, dry_run, remote, stats,
 
 def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
                         ingest_url, api_key):
-    """Sub-monitor: NYC DOB violations (dataset 3h2n-5cm9)."""
-    since = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%dT00:00:00')
-    where = f"issue_date > '{since}'"
+    """Sub-monitor: NYC DOB ECB Violations (dataset 6bgk-3dad).
+
+    Dates are YYYYMMDD text — string comparison works correctly for these.
+    Fields: ecb_violation_number, boro, violation_type, severity,
+            respondent_name, respondent_house_number, respondent_street,
+            respondent_city, respondent_zip, violation_description,
+            penality_imposed, issue_date, ecb_violation_status
+    """
+    since = (datetime.now() - timedelta(days=days)).strftime('%Y%m%d')
+    where = f"issue_date > '{since}' AND ecb_violation_status = 'ACTIVE'"
 
     if borough:
-        boro_code = BOROUGH_MAP.get(borough.lower(), '')
+        boro_code = BOROUGH_CODE_MAP.get(borough.lower(), '')
         if boro_code:
             where += f" AND boro = '{boro_code}'"
 
     logger.info(f'[nyc_dob] Querying violations: {where}')
 
     try:
-        items = _query_soda(scraper, DATASET_IDS['violations'], where)
+        items = _query_soda(scraper, DATASET_IDS['violations'], where, order='issue_date DESC')
     except RateLimitHit:
         logger.warning('[nyc_dob] Rate limited on violations query')
         return
@@ -425,40 +521,90 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
         if scraper.is_stopped:
             break
         try:
-            bis_viol = item.get('isn_dob_bis_viol', '')
+            ecb_num = item.get('ecb_violation_number', '')
             v_type = item.get('violation_type', '')
-            v_category = item.get('violation_category', '')
+            severity = item.get('severity', '')
             violation_date_str = item.get('issue_date', '')
-            description = item.get('description', '')
-            house_num = item.get('house_number', '')
-            street = item.get('street', '')
+            description = item.get('violation_description', '')
+            respondent = item.get('respondent_name', '')
+            house_num = item.get('respondent_house_number', '')
+            street = item.get('respondent_street', '')
+            city = item.get('respondent_city', '')
+            resp_zip = item.get('respondent_zip', '')
+            penalty = item.get('penality_imposed', '')
+            balance = item.get('balance_due', '')
             boro_code = item.get('boro', '')
+            bin_num = item.get('bin', '')
+            block = item.get('block', '')
+            lot = item.get('lot', '')
+            hearing_date_str = item.get('hearing_date', '')
+            hearing_status = item.get('hearing_status', '')
+            section_law = item.get('section_law_description1', '')
 
             borough_name = BOROUGH_NAMES.get(boro_code, 'NYC')
-            address = _build_address(house_num, street, borough_name)
+            address = _build_address(house_num, street, city or borough_name)
             violation_date = _parse_soda_date(violation_date_str)
-            services = _detect_violation_services(v_type, v_category)
+            services = _detect_violation_services(v_type, description or '')
+            age_text = _days_ago_text(violation_date)
 
             if not address or address == 'NYC, NY':
                 continue
 
-            content = (
-                f'NYC DOB VIOLATION: {v_type}\n'
-                f'Category: {v_category}\n'
-                f'Address: {address}\n'
-                f'Description: {description[:300]}\n'
-                f'URGENT: Violations must be corrected or fines increase.\n'
-                f'Services needed: {", ".join(services[:6])}'
-            )
+            penalty_str = f'${int(float(penalty)):,}' if penalty else ''
+            balance_str = f'${int(float(balance)):,}' if balance else ''
+
+            # Build rich content with date and contact info
+            content_parts = [
+                f'NYC DOB VIOLATION: {v_type}',
+                f'Issued: {violation_date_str}{f" ({age_text})" if age_text else ""}',
+                f'Severity: {severity}',
+                f'Address: {address}',
+            ]
+            if resp_zip:
+                content_parts.append(f'Zip: {resp_zip}')
+            content_parts.append(f'Block: {block} | Lot: {lot}')
+            content_parts.append('')
+            if respondent:
+                content_parts.append(f'Respondent: {respondent}')
+            content_parts.append('[No phone on file — flag for AI enrichment]')
+            content_parts.append('')
+            if description:
+                content_parts.append(f'Description: {description[:400]}')
+            if section_law:
+                content_parts.append(f'Law: {section_law.strip()}')
+            if penalty_str:
+                content_parts.append(f'Penalty: {penalty_str}')
+            if balance_str:
+                content_parts.append(f'Balance Due: {balance_str}')
+            if hearing_date_str:
+                hearing_date = _parse_soda_date(hearing_date_str)
+                h_age = _days_ago_text(hearing_date) if hearing_date else ''
+                content_parts.append(f'Hearing: {hearing_date_str} ({hearing_status})')
+            content_parts.append(f'ECB #: {ecb_num}')
+            content_parts.append('URGENT: Violations must be corrected or fines increase.')
+            content_parts.append(f'Services needed: {", ".join(services[:6])}')
+            content = '\n'.join(content_parts)
 
             raw_data = {
                 'source_type': 'nyc_dob_violation',
-                'bis_viol': bis_viol,
+                'ecb_violation_number': ecb_num,
                 'violation_type': v_type,
-                'violation_category': v_category,
+                'severity': severity,
                 'address': address,
-                'description': description[:500],
+                'block': block,
+                'lot': lot,
+                'bin': bin_num,
+                'respondent': respondent,
+                'respondent_city': city,
+                'respondent_zip': resp_zip,
+                'description': (description or '')[:500],
+                'section_law': section_law,
+                'penalty': penalty,
+                'balance_due': balance,
+                'hearing_date': hearing_date_str,
+                'hearing_status': hearing_status,
                 'issue_date': violation_date_str,
+                'needs_enrichment': True,
                 'services_mapped': services,
             }
 
@@ -466,7 +612,10 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
 
             if dry_run:
                 logger.info(
-                    f'[DRY RUN] Violation: {address} — {v_type}'
+                    f'[DRY RUN] Violation: {address} | {v_type} | '
+                    f'{severity} | Respondent: {respondent or "N/A"} | '
+                    f'Issued: {violation_date_str} ({age_text}) | '
+                    f'Penalty: {penalty_str or "N/A"}'
                 )
                 stats['created'] += 1
                 continue
@@ -476,7 +625,7 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
                     'platform': 'public_records',
                     'source_url': source_url,
                     'source_content': content,
-                    'author': '',
+                    'author': respondent,
                     'confidence': 'high',
                     'urgency': 'hot',
                     'detected_category': 'DOB_VIOLATION',
@@ -498,7 +647,7 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
                 platform='public_records',
                 source_url=source_url,
                 content=content,
-                author='',
+                author=respondent,
                 posted_at=violation_date,
                 raw_data=raw_data,
             )
@@ -507,7 +656,13 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
                 lead.confidence = 'high'
                 lead.urgency_level = 'hot'
                 lead.urgency_score = 90
-                lead.save(update_fields=['confidence', 'urgency_level', 'urgency_score'])
+                lead.detected_location = address
+                if resp_zip:
+                    lead.detected_zip = resp_zip
+                lead.save(update_fields=[
+                    'confidence', 'urgency_level', 'urgency_score',
+                    'detected_location', 'detected_zip',
+                ])
                 stats['created'] += 1
                 stats['assigned'] += num_assigned
             else:
@@ -526,19 +681,23 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
 
 def _monitor_certificates(scraper, borough, days, dry_run, remote, stats,
                           ingest_url, api_key):
-    """Sub-monitor: NYC certificates of occupancy (dataset bs8b-p36w)."""
+    """Sub-monitor: NYC certificates of occupancy (dataset bs8b-p36w).
+
+    c_o_issue_date is a proper calendar_date column — ISO date filtering works.
+    Borough values are text names: Manhattan, Bronx, Brooklyn, Queens, Staten Island.
+    """
     since = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%dT00:00:00')
     where = f"c_o_issue_date > '{since}'"
 
     if borough:
-        boro_code = BOROUGH_MAP.get(borough.lower(), '')
-        if boro_code:
-            where += f" AND borough = '{boro_code}'"
+        # This dataset uses title-case borough names
+        boro_name = borough.replace('_', ' ').title()
+        where += f" AND borough = '{boro_name}'"
 
     logger.info(f'[nyc_dob] Querying certificates of occupancy: {where}')
 
     try:
-        items = _query_soda(scraper, DATASET_IDS['certificates'], where)
+        items = _query_soda(scraper, DATASET_IDS['certificates'], where, order='c_o_issue_date DESC')
     except RateLimitHit:
         logger.warning('[nyc_dob] Rate limited on certificates query')
         return
@@ -558,34 +717,59 @@ def _monitor_certificates(scraper, borough, days, dry_run, remote, stats,
             job_type = item.get('job_type', '')
             issue_type = item.get('issue_type', '')
             postcode = item.get('postcode', '')
+            block = item.get('block', '')
+            lot = item.get('lot', '')
+            bin_num = item.get('bin__', '')
+            applicant_first = item.get('applicant_s_first_name', '')
+            applicant_last = item.get('applicant_s_last_name', '')
+            owner_name_raw = item.get('owner_name', '')
 
             borough_name = BOROUGH_NAMES.get(borough_code, borough_code)
             address = _build_address(house_num, street, borough_name)
             co_date = _parse_soda_date(co_date_str)
+            age_text = _days_ago_text(co_date)
+            applicant_name = f'{applicant_first} {applicant_last}'.strip()
+            owner_display = owner_name_raw or applicant_name
 
             if not address or address == 'NYC, NY':
                 continue
 
-            content = (
-                f'Certificate of Occupancy Issued\n'
-                f'Address: {address}\n'
-                f'Borough: {borough_name}\n'
-                f'Job Type: {job_type}\n'
-                f'Issue Type: {issue_type}\n'
-                f'Job #: {job_num}\n'
-                f'New tenant moving in — high-value lead window.\n'
-                f'Services needed: {", ".join(CO_SERVICES[:6])}'
-            )
+            # Build rich content with date, contact info, and enrichment flag
+            content_parts = [
+                f'Certificate of Occupancy Issued: {job_type}',
+                f'Issued: {co_date_str[:10] if co_date_str else "N/A"}'
+                f'{f" ({age_text})" if age_text else ""}',
+                f'Address: {address}',
+            ]
+            if postcode:
+                content_parts.append(f'Zip: {postcode}')
+            content_parts.append(f'Borough: {borough_name} | Block: {block} | Lot: {lot}')
+            content_parts.append(f'Issue Type: {issue_type}')
+            content_parts.append('')
+            if owner_display:
+                content_parts.append(f'Owner/Applicant: {owner_display}')
+            content_parts.append('[No phone on file — flag for AI enrichment]')
+            content_parts.append('')
+            content_parts.append(f'Job #: {job_num}')
+            content_parts.append('New tenant moving in — high-value lead window.')
+            content_parts.append(f'Services needed: {", ".join(CO_SERVICES[:6])}')
+            content = '\n'.join(content_parts)
 
             raw_data = {
                 'source_type': 'nyc_dob_certificate',
                 'job_number': job_num,
                 'borough': borough_name,
                 'address': address,
+                'block': block,
+                'lot': lot,
+                'bin': bin_num,
                 'job_type': job_type,
                 'issue_type': issue_type,
                 'postcode': postcode,
                 'c_o_issue_date': co_date_str,
+                'owner_name': owner_display,
+                'applicant_name': applicant_name,
+                'needs_enrichment': True,
                 'services_mapped': CO_SERVICES,
             }
 
@@ -593,7 +777,9 @@ def _monitor_certificates(scraper, borough, days, dry_run, remote, stats,
 
             if dry_run:
                 logger.info(
-                    f'[DRY RUN] CO: {address} — {building_type}'
+                    f'[DRY RUN] CO: {address} | {job_type} | '
+                    f'Owner: {owner_display or "N/A"} | '
+                    f'Issued: {co_date_str[:10] if co_date_str else "N/A"} ({age_text})'
                 )
                 stats['created'] += 1
                 continue
@@ -603,7 +789,7 @@ def _monitor_certificates(scraper, borough, days, dry_run, remote, stats,
                     'platform': 'public_records',
                     'source_url': source_url,
                     'source_content': content,
-                    'author': '',
+                    'author': owner_display,
                     'confidence': 'high',
                     'urgency': 'hot',
                     'detected_category': 'CERTIFICATE_OF_OCCUPANCY',
@@ -625,7 +811,7 @@ def _monitor_certificates(scraper, borough, days, dry_run, remote, stats,
                 platform='public_records',
                 source_url=source_url,
                 content=content,
-                author='',
+                author=owner_display,
                 posted_at=co_date,
                 raw_data=raw_data,
             )
@@ -634,7 +820,13 @@ def _monitor_certificates(scraper, borough, days, dry_run, remote, stats,
                 lead.confidence = 'high'
                 lead.urgency_level = 'hot'
                 lead.urgency_score = 85
-                lead.save(update_fields=['confidence', 'urgency_level', 'urgency_score'])
+                lead.detected_location = address
+                if postcode:
+                    lead.detected_zip = postcode
+                lead.save(update_fields=[
+                    'confidence', 'urgency_level', 'urgency_score',
+                    'detected_location', 'detected_zip',
+                ])
                 stats['created'] += 1
                 stats['assigned'] += num_assigned
             else:
