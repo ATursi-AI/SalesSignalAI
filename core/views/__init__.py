@@ -10,3 +10,6 @@ from .analytics import *
 from . import monitor_health
 from . import webhooks
 from . import user_settings
+from . import crm
+from . import sales_admin
+from . import sales

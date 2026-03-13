@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Today's Calls{% endblock %}
+{% block page_title %}Today's Calls{% endblock %}
+
+{% block content %}
+<div class="sales-page">
+    <!-- Call Goal Progress -->
+    <div class="glass-card" style="margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h3 class="card-title" style="margin: 0;"><i class="bi bi-telephone-fill"></i> Call Goal</h3>
+            <span style="font-size: 1.5rem; font-weight: 700;">{{ calls_today }} / {{ call_goal }}</span>
+        </div>
+        <div style="background: rgba(255,255,255,0.08); border-radius: 8px; height: 12px; overflow: hidden;">
+            {% widthratio calls_today call_goal 100 as pct %}
+            <div style="width: {% widthratio calls_today call_goal 100 %}%; height: 100%; background: {% if calls_today >= call_goal %}var(--accent-emerald){% else %}var(--accent-blue){% endif %}; border-radius: 8px; transition: width 0.3s;"></div>
+        </div>
+    </div>
+
+    <!-- Overdue Follow-ups -->
+    {% if overdue %}
+    <div class="glass-card" style="margin-bottom: 1.5rem; border-left: 3px solid var(--accent-coral);">
+        <h3 class="card-title" style="color: var(--accent-coral);"><i class="bi bi-exclamation-triangle-fill"></i> Overdue ({{ overdue|length }})</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Business</th><th>Phone</th><th>Stage</th><th>Was Due</th><th></th></tr>
+                </thead>
+                <tbody>
+                    {% for p in overdue %}
+                    <tr>
+                        <td><strong>{{ p.business_name }}</strong></td>
+                        <td>{% if p.phone %}<a href="tel:{{ p.phone }}">{{ p.phone }}</a>{% else %}—{% endif %}</td>
+                        <td><span class="status-pill status-{{ p.pipeline_stage }}">{{ p.get_pipeline_stage_display }}</span></td>
+                        <td style="color: var(--accent-coral);">{{ p.next_follow_up_date }}</td>
+                        <td><a href="{% url 'sales_prospect_detail' p.id %}" class="btn-secondary btn-sm">Open</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Today's Follow-ups -->
+    <div class="glass-card" style="margin-bottom: 1.5rem;">
+        <h3 class="card-title"><i class="bi bi-calendar-check-fill"></i> Today's Follow-ups ({{ todays|length }})</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Business</th><th>Phone</th><th>Stage</th><th>Category</th><th></th></tr>
+                </thead>
+                <tbody>
+                    {% for p in todays %}
+                    <tr>
+                        <td><strong>{{ p.business_name }}</strong></td>
+                        <td>{% if p.phone %}<a href="tel:{{ p.phone }}">{{ p.phone }}</a>{% else %}—{% endif %}</td>
+                        <td><span class="status-pill status-{{ p.pipeline_stage }}">{{ p.get_pipeline_stage_display }}</span></td>
+                        <td>{{ p.service_category|default:"—" }}</td>
+                        <td><a href="{% url 'sales_prospect_detail' p.id %}" class="btn-secondary btn-sm">Open</a></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-muted text-center">No follow-ups scheduled for today.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- New Prospects to Call -->
+    <div class="glass-card">
+        <h3 class="card-title"><i class="bi bi-person-plus-fill"></i> New Prospects ({{ new_prospects|length }})</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Business</th><th>Phone</th><th>Category</th><th>Source</th><th></th></tr>
+                </thead>
+                <tbody>
+                    {% for p in new_prospects %}
+                    <tr>
+                        <td><strong>{{ p.business_name }}</strong></td>
+                        <td>{% if p.phone %}<a href="tel:{{ p.phone }}">{{ p.phone }}</a>{% else %}—{% endif %}</td>
+                        <td>{{ p.service_category|default:"—" }}</td>
+                        <td class="text-muted">{{ p.get_source_display }}</td>
+                        <td><a href="{% url 'sales_prospect_detail' p.id %}" class="btn-secondary btn-sm">Open</a></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-muted text-center">No new prospects. Ask your admin to import leads.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

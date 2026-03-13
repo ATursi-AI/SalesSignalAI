@@ -403,6 +403,34 @@
     transition: all 0.15s;
 }
 .btn-unreview:hover { background: rgba(107, 107, 128, 0.22); }
+.btn-delete-row {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    line-height: 1;
+    transition: all 0.15s;
+}
+.btn-delete-row:hover { color: var(--accent-coral); background: rgba(255, 71, 87, 0.12); }
+.btn-delete-detail {
+    background: rgba(255, 71, 87, 0.12);
+    color: var(--accent-coral);
+    border: 1px solid rgba(255, 71, 87, 0.25);
+    border-radius: var(--radius-sm);
+    padding: 7px 16px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.btn-delete-detail:hover { background: rgba(255, 71, 87, 0.22); }
+.bulk-bar .btn-bulk-delete {
+    background: rgba(255, 71, 87, 0.35);
+    border: 1px solid rgba(255, 71, 87, 0.5);
+}
 .assign-row {
     display: flex;
     gap: 8px;
@@ -624,6 +652,7 @@
         {% endfor %}
     </select>
     <button onclick="bulkAction('assign')"><i class="bi bi-person-plus"></i> Assign</button>
+    <button class="btn-bulk-delete" onclick="bulkDelete()"><i class="bi bi-trash3"></i> Delete</button>
     <div class="bulk-spacer"></div>
     <button onclick="clearSelection()"><i class="bi bi-x-circle"></i> Deselect</button>
 </div>
@@ -651,6 +680,7 @@
                     <th>Author</th>
                     <th>Status</th>
                     <th>Assigned</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody id="leadTableBody">
@@ -676,9 +706,15 @@ const BUSINESSES = [
     {% endfor %}
 ];
 
+const SALESPEOPLE = [
+    {% for sp in salespeople %}
+    { id: {{ sp.id }}, name: "{{ sp.user.get_full_name|default:sp.user.username|escapejs }}" },
+    {% endfor %}
+];
+
 const PLATFORM_COLORS = {
     craigslist: '#7B2FBE', reddit: '#FF4500', google_qna: '#4285F4',
-    google_reviews: '#4285F4', yelp_review: '#D32323', facebook: '#1877F2',
+    google_reviews: '#4285F4', google_maps: '#34A853', yelp_review: '#D32323', facebook: '#1877F2',
     nextdoor: '#8ED500', twitter: '#1DA1F2', instagram: '#E4405F',
     tiktok: '#333', quora: '#B92B27', threads: '#333',
     fb_marketplace: '#1877F2', bbb: '#005A78', permit: '#E67E22',
@@ -695,7 +731,7 @@ const PLATFORM_COLORS = {
 const PLATFORM_ICONS = {
     reddit: 'bi-reddit', facebook: 'bi-facebook', twitter: 'bi-twitter-x',
     instagram: 'bi-instagram', tiktok: 'bi-tiktok', google_qna: 'bi-google',
-    google_reviews: 'bi-google', nextdoor: 'bi-houses', permit: 'bi-building',
+    google_reviews: 'bi-google', google_maps: 'bi-geo-alt-fill', nextdoor: 'bi-houses', permit: 'bi-building',
     property_sale: 'bi-house-door', business_filing: 'bi-file-earmark-text',
     weather_alert: 'bi-cloud-lightning', code_violation: 'bi-exclamation-triangle',
     health_inspection: 'bi-heart-pulse', license_expiry: 'bi-card-text',
@@ -807,7 +843,7 @@ function renderLeads(data) {
 
     if (!data.leads.length) {
         tbody.innerHTML = `
-            <tr><td colspan="11">
+            <tr><td colspan="12">
                 <div class="empty-state">
                     <i class="bi bi-inbox"></i>
                     <p>No leads match your filters</p>
@@ -871,6 +907,9 @@ function renderLeadRow(lead) {
             <td style="font-size:0.8rem;color:var(--text-secondary)">${escHtml(lead.author) || '-'}</td>
             <td><span class="badge badge-${lead.review_status}">${lead.review_status}</span></td>
             <td style="font-size:0.78rem;color:#A78BFA;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(assignedNames)}</td>
+            <td class="cb-cell" onclick="event.stopPropagation()">
+                <button class="btn-delete-row" onclick="deleteLead(${lead.id})" title="Delete lead"><i class="bi bi-trash3"></i></button>
+            </td>
         </tr>`;
 }
 
@@ -909,7 +948,7 @@ async function toggleDetail(leadId, event) {
         const tr = document.createElement('tr');
         tr.className = 'detail-row';
         tr.id = 'detail-' + leadId;
-        tr.innerHTML = `<td colspan="11">${detailHtml}</td>`;
+        tr.innerHTML = `<td colspan="12">${detailHtml}</td>`;
         row.insertAdjacentElement('afterend', tr);
         expandedLead = leadId;
     } catch (e) {
@@ -980,6 +1019,7 @@ function buildDetailPanel(lead) {
                 <button class="btn-approve" onclick="leadAction(${lead.id}, 'approve')"><i class="bi bi-check-lg"></i> Approve</button>
                 <button class="btn-reject" onclick="leadAction(${lead.id}, 'reject')"><i class="bi bi-x-lg"></i> Reject</button>
                 <button class="btn-unreview" onclick="leadAction(${lead.id}, 'unreview')"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+                <button class="btn-delete-detail" onclick="deleteLead(${lead.id})"><i class="bi bi-trash3"></i> Delete</button>
             </div>
 
             <h4 style="margin-top:16px">Assign to Business</h4>
@@ -994,6 +1034,18 @@ function buildDetailPanel(lead) {
             <div class="current-assignments">
                 <h4 style="margin-top:10px">Currently Assigned</h4>
                 ${assignments}
+            </div>` : ''}
+
+            ${SALESPEOPLE.length ? `
+            <h4 style="margin-top:16px">Send to Sales Pipeline</h4>
+            <div class="assign-row">
+                <select id="salesSelect-${lead.id}">
+                    <option value="">Select salesperson...</option>
+                    ${SALESPEOPLE.map(sp => `<option value="${sp.id}">${escHtml(sp.name)}</option>`).join('')}
+                </select>
+                <button onclick="sendToSales(${lead.id})" style="background:rgba(16,185,129,0.15);color:var(--accent-emerald);border-color:rgba(16,185,129,0.3)">
+                    <i class="bi bi-arrow-right-circle"></i> Send
+                </button>
             </div>` : ''}
 
             <a href="${escHtml(lead.source_url)}" target="_blank" rel="noopener"
@@ -1042,6 +1094,59 @@ async function unassignLead(leadId, bizId) {
         });
         const data = await resp.json();
         if (data.ok) fetchLeads();
+    } catch (e) { console.error(e); }
+}
+
+/* ── Send to Sales Pipeline ── */
+async function sendToSales(leadId) {
+    const sel = document.getElementById('salesSelect-' + leadId);
+    const spId = sel.value;
+    if (!spId) return;
+    try {
+        const resp = await fetch(`/admin-leads/${leadId}/action/`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()},
+            body: JSON.stringify({action: 'send_to_sales', salesperson_id: parseInt(spId)}),
+        });
+        const data = await resp.json();
+        if (data.ok) { alert(data.message); fetchLeads(); }
+        else if (data.error) alert(data.error);
+    } catch (e) { console.error(e); }
+}
+
+/* ── Delete ── */
+async function deleteLead(leadId) {
+    if (!confirm('Are you sure you want to permanently delete this lead? This cannot be undone.')) return;
+    try {
+        const resp = await fetch(`/admin-leads/${leadId}/action/`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()},
+            body: JSON.stringify({action: 'delete'}),
+        });
+        const data = await resp.json();
+        if (data.ok) {
+            selectedLeads.delete(leadId);
+            fetchLeads();
+        }
+    } catch (e) { console.error(e); }
+}
+
+async function bulkDelete() {
+    const ids = Array.from(selectedLeads);
+    if (!ids.length) return;
+    if (!confirm(`Are you sure you want to permanently delete ${ids.length} lead${ids.length > 1 ? 's' : ''}? This cannot be undone.`)) return;
+
+    try {
+        const resp = await fetch('/admin-leads/bulk/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()},
+            body: JSON.stringify({lead_ids: ids, action: 'delete'}),
+        });
+        const data = await resp.json();
+        if (data.ok) {
+            clearSelection();
+            fetchLeads();
+        } else if (data.error) alert(data.error);
     } catch (e) { console.error(e); }
 }
 

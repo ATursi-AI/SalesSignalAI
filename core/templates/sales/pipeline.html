@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}My Pipeline{% endblock %}
+{% block page_title %}My Pipeline{% endblock %}
+
+{% block extra_css %}
+<style>
+.kanban-board { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem; min-height: 60vh; }
+.kanban-column { min-width: 250px; max-width: 280px; flex-shrink: 0; }
+.kanban-header { padding: 0.75rem; border-radius: 8px 8px 0 0; background: rgba(255,255,255,0.05); border-bottom: 2px solid var(--accent-blue); display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 0.85rem; }
+.kanban-header .count { background: rgba(255,255,255,0.1); border-radius: 10px; padding: 0.1rem 0.5rem; font-size: 0.75rem; }
+.kanban-body { background: rgba(255,255,255,0.02); border-radius: 0 0 8px 8px; padding: 0.5rem; min-height: 200px; }
+.kanban-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; cursor: grab; transition: all 0.15s; }
+.kanban-card:hover { border-color: var(--accent-blue); transform: translateY(-1px); }
+.kanban-card.dragging { opacity: 0.5; }
+.kanban-card h4 { font-size: 0.85rem; margin: 0 0 0.25rem 0; }
+.kanban-card .meta { font-size: 0.75rem; color: var(--text-muted); }
+.kanban-card .value { font-size: 0.75rem; color: var(--accent-emerald); font-weight: 600; margin-top: 0.25rem; }
+.kanban-body.drag-over { background: rgba(59,130,246,0.08); border: 1px dashed var(--accent-blue); border-radius: 0 0 8px 8px; }
+.stage-new .kanban-header { border-color: var(--text-muted); }
+.stage-contacted .kanban-header { border-color: var(--accent-blue); }
+.stage-callback .kanban-header { border-color: var(--accent-amber); }
+.stage-demo_scheduled .kanban-header { border-color: #8b5cf6; }
+.stage-demo_completed .kanban-header { border-color: #8b5cf6; }
+.stage-proposal_sent .kanban-header { border-color: var(--accent-amber); }
+.stage-closed_won .kanban-header { border-color: var(--accent-emerald); }
+.stage-closed_lost .kanban-header { border-color: var(--accent-coral); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="kanban-board">
+    {% for col in columns %}
+    <div class="kanban-column stage-{{ col.code }}">
+        <div class="kanban-header">
+            {{ col.label }}
+            <span class="count">{{ col.prospects|length }}</span>
+        </div>
+        <div class="kanban-body" data-stage="{{ col.code }}"
+             ondragover="event.preventDefault(); this.classList.add('drag-over')"
+             ondragleave="this.classList.remove('drag-over')"
+             ondrop="dropCard(event, '{{ col.code }}')">
+            {% for p in col.prospects %}
+            <div class="kanban-card" draggable="true" data-id="{{ p.id }}"
+                 ondragstart="event.dataTransfer.setData('text/plain', '{{ p.id }}'); this.classList.add('dragging')"
+                 ondragend="this.classList.remove('dragging')"
+                 onclick="window.location='{% url 'sales_prospect_detail' p.id %}'">
+                <h4>{{ p.business_name|truncatechars:30 }}</h4>
+                <div class="meta">
+                    {% if p.phone %}{{ p.phone }}{% endif %}
+                    {% if p.service_category %} &middot; {{ p.service_category }}{% endif %}
+                </div>
+                {% if p.estimated_monthly_value %}<div class="value">${{ p.estimated_monthly_value|intcomma }}/mo</div>{% endif %}
+                {% if p.next_follow_up_date %}<div class="meta"><i class="bi bi-calendar-event"></i> {{ p.next_follow_up_date }}</div>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function dropCard(event, newStage) {
+    event.preventDefault();
+    event.currentTarget.classList.remove('drag-over');
+    const prospectId = event.dataTransfer.getData('text/plain');
+    const fd = new FormData();
+    fd.set('prospect_id', prospectId);
+    fd.set('stage', newStage);
+    fetch('{% url "sales_pipeline_move" %}', {
+        method: 'POST', body: fd,
+        headers: {'X-CSRFToken': '{{ csrf_token }}'},
+    })
+    .then(r => r.json())
+    .then(data => { if (data.success) location.reload(); });
+}
+</script>
+{% endblock %}

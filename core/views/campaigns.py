@@ -4,23 +4,43 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.utils import timezone
-from django.db.models import Q
+from django.db.models import Q, Count, Sum
 
 from core.models import (
     OutreachCampaign, OutreachEmail, ProspectBusiness, ServiceCategory,
 )
+from core.models.outreach import OutreachProspect, GeneratedEmail
 from core.utils.scrapers.google_maps import scrape_prospects
 from core.utils.scrapers.website_email import extract_emails_from_website
 from core.utils.email_engine.validator import validate_prospect_email
-from core.utils.email_engine.ai_writer import generate_outreach_email
-from core.utils.email_engine.sender import send_outreach_email, process_campaign_queue
+from core.utils.email_engine.ai_engine import (
+    generate_email, enrich_prospect, classify_reply, generate_reply_draft,
+)
+from core.utils.email_engine.backends import get_email_sender
+from core.utils.email_engine.sender import (
+    send_outreach_email, process_campaign_queue, _append_unsubscribe_footer,
+)
 from core.utils.email_engine.followup import schedule_followups
+
+
+def _get_business(request):
+    bp = getattr(request.user, 'business_profile', None)
+    return bp
 
 
 @login_required
 def campaign_list(request):
-    profile = request.user.business_profile
+    profile = _get_business(request)
+    if not profile:
+        return redirect('onboarding')
+
     campaigns = OutreachCampaign.objects.filter(business=profile).order_by('-created_at')
+
+    # Annotate with prospect/email counts from new models
+    for c in campaigns:
+        c.prospect_count = c.prospects.count()
+        c.new_prospect_count = c.prospects.filter(status='new').count()
+        c.replied_count = c.prospects.filter(status__in=['replied', 'interested']).count()
 
     context = {
         'campaigns': campaigns,
@@ -32,18 +52,21 @@ def campaign_list(request):
 
 @login_required
 def campaign_wizard(request):
-    """Multi-step campaign creation wizard."""
-    profile = request.user.business_profile
+    """Multi-step campaign creation wizard with enhanced fields."""
+    profile = _get_business(request)
+    if not profile:
+        return redirect('onboarding')
 
     if request.method == 'POST':
         step = request.POST.get('step', '1')
 
         if step == '1':
-            # Step 1: Name + target business type + geography
             name = request.POST.get('name', '').strip()
             target_types = request.POST.getlist('target_types')
             target_zips = request.POST.get('target_zip_codes', '').strip()
             target_radius = request.POST.get('target_radius', '25')
+            target_category = request.POST.get('target_category', '').strip()
+            target_location = request.POST.get('target_location', '').strip()
 
             if not name:
                 return JsonResponse({'error': 'Campaign name is required'}, status=400)
@@ -56,6 +79,8 @@ def campaign_wizard(request):
                 target_business_types=target_types,
                 target_zip_codes=zip_list,
                 target_radius_miles=int(target_radius) if target_radius else 25,
+                target_category=target_category,
+                target_location=target_location,
                 status='draft',
             )
 
@@ -66,15 +91,21 @@ def campaign_wizard(request):
             })
 
         elif step == '2':
-            # Step 2: Email template
             campaign_id = request.POST.get('campaign_id')
             campaign = get_object_or_404(OutreachCampaign, id=campaign_id, business=profile)
 
             campaign.email_subject_template = request.POST.get('subject_template', '')
             campaign.email_body_template = request.POST.get('body_template', '')
             campaign.use_ai_personalization = request.POST.get('use_ai', 'on') == 'on'
+            campaign.email_style = request.POST.get('email_style', 'professional')
+            campaign.customer_custom_instructions = request.POST.get('custom_instructions', '')
+            campaign.reply_to_email = request.POST.get('reply_to_email', '') or profile.email
+            campaign.sending_email = request.POST.get('sending_email', '')
+            campaign.send_mode = request.POST.get('send_mode', 'salessignal')
             campaign.save(update_fields=[
                 'email_subject_template', 'email_body_template', 'use_ai_personalization',
+                'email_style', 'customer_custom_instructions',
+                'reply_to_email', 'sending_email', 'send_mode',
             ])
 
             return JsonResponse({
@@ -84,15 +115,16 @@ def campaign_wizard(request):
             })
 
         elif step == '3':
-            # Step 3: Sending pace + follow-up schedule
             campaign_id = request.POST.get('campaign_id')
             campaign = get_object_or_404(OutreachCampaign, id=campaign_id, business=profile)
 
+            campaign.daily_send_limit = int(request.POST.get('daily_limit', 15))
             campaign.max_emails_per_day = int(request.POST.get('max_per_day', 25))
             campaign.followup_delay_days = int(request.POST.get('followup_delay', 3))
-            campaign.max_followups = int(request.POST.get('max_followups', 2))
+            campaign.email_sequence_count = int(request.POST.get('sequence_count', 3))
             campaign.save(update_fields=[
-                'max_emails_per_day', 'followup_delay_days', 'max_followups',
+                'daily_send_limit', 'max_emails_per_day',
+                'followup_delay_days', 'email_sequence_count',
             ])
 
             return JsonResponse({
@@ -102,7 +134,6 @@ def campaign_wizard(request):
             })
 
         elif step == '4':
-            # Step 4: Scrape prospects
             campaign_id = request.POST.get('campaign_id')
             campaign = get_object_or_404(OutreachCampaign, id=campaign_id, business=profile)
 
@@ -123,64 +154,56 @@ def campaign_wizard(request):
             return JsonResponse({'success': True, 'campaign_id': campaign.id})
 
         elif step == '5':
-            # Step 5: Launch campaign
             campaign_id = request.POST.get('campaign_id')
             campaign = get_object_or_404(OutreachCampaign, id=campaign_id, business=profile)
 
             prospect_ids = request.POST.getlist('prospect_ids')
             if not prospect_ids:
-                # Use all available prospects
                 prospects = ProspectBusiness.objects.filter(
                     email_validated=True,
-                ).exclude(
-                    email='',
-                ).exclude(
-                    outreach_emails__campaign=campaign,
-                )
+                ).exclude(email='')
                 if campaign.target_zip_codes:
                     prospects = prospects.filter(zip_code__in=campaign.target_zip_codes)
                 prospect_ids = list(prospects.values_list('id', flat=True)[:100])
 
-            # Generate initial emails for each prospect
-            generated = 0
+            # Create OutreachProspect records from ProspectBusiness
+            created_count = 0
             for pid in prospect_ids:
                 try:
-                    prospect = ProspectBusiness.objects.get(id=pid)
-                    to_email = prospect.email or prospect.owner_email
+                    pb = ProspectBusiness.objects.get(id=pid)
+                    to_email = pb.email or pb.owner_email
                     if not to_email:
                         continue
 
-                    # Check for existing email in this campaign
-                    if OutreachEmail.objects.filter(campaign=campaign, prospect=prospect).exists():
+                    # Skip if already added to this campaign
+                    if OutreachProspect.objects.filter(
+                        campaign=campaign, contact_email=to_email
+                    ).exists():
                         continue
 
-                    if campaign.use_ai_personalization:
-                        content = generate_outreach_email(prospect, campaign, 1)
-                    else:
-                        from core.utils.email_engine.ai_writer import _template_fallback
-                        content = _template_fallback(prospect, campaign, 1)
-
-                    if content:
-                        OutreachEmail.objects.create(
-                            campaign=campaign,
-                            prospect=prospect,
-                            sequence_number=1,
-                            subject=content['subject'],
-                            body=content['body'],
-                            status='queued',
-                        )
-                        generated += 1
-                except Exception:
+                    OutreachProspect.objects.create(
+                        campaign=campaign,
+                        prospect_business=pb,
+                        business_name=pb.name,
+                        contact_name=pb.owner_name,
+                        contact_email=to_email,
+                        contact_phone=pb.phone,
+                        website_url=pb.website,
+                        source='google_maps' if pb.google_place_id else 'manual_upload',
+                        status='new',
+                    )
+                    created_count += 1
+                except ProspectBusiness.DoesNotExist:
                     continue
 
-            campaign.total_prospects = generated
+            campaign.total_prospects = campaign.prospects.count()
             campaign.status = 'active'
             campaign.save(update_fields=['total_prospects', 'status'])
 
             return JsonResponse({
                 'success': True,
                 'redirect': f'/campaigns/{campaign.id}/',
-                'generated': generated,
+                'prospects_added': created_count,
             })
 
     # GET: render wizard
@@ -194,48 +217,74 @@ def campaign_wizard(request):
 
 @login_required
 def campaign_detail(request, campaign_id):
-    profile = request.user.business_profile
+    profile = _get_business(request)
+    if not profile:
+        return redirect('onboarding')
+
     campaign = get_object_or_404(OutreachCampaign, id=campaign_id, business=profile)
 
-    emails = campaign.emails.select_related('prospect').order_by('-created_at')
+    # Get prospects with their emails
+    prospects = campaign.prospects.all().order_by('-updated_at')
 
-    # Status filter
     status_filter = request.GET.get('status', '')
     if status_filter:
-        emails = emails.filter(status=status_filter)
+        prospects = prospects.filter(status=status_filter)
 
-    # Calculate metrics
-    total = campaign.emails.count()
-    sent = campaign.emails.filter(status__in=['sent', 'delivered', 'opened', 'replied']).count()
-    opened = campaign.emails.filter(status__in=['opened', 'replied']).count()
-    replied = campaign.emails.filter(status='replied').count()
-    open_rate = round((opened / sent * 100) if sent > 0 else 0)
-    reply_rate = round((replied / sent * 100) if sent > 0 else 0)
+    # Calculate metrics from OutreachProspect statuses
+    total_prospects = campaign.prospects.count()
+    email1_sent = campaign.prospects.filter(
+        status__in=['email1_sent', 'email2_sent', 'email3_sent', 'replied', 'interested'],
+    ).count()
+    email2_sent = campaign.prospects.filter(
+        status__in=['email2_sent', 'email3_sent', 'replied', 'interested'],
+    ).count()
+    replied = campaign.prospects.filter(status__in=['replied', 'interested']).count()
+    interested = campaign.prospects.filter(status='interested').count()
+    bounced = campaign.prospects.filter(status='bounced').count()
+
+    # Emails stats from GeneratedEmail
+    total_emails = GeneratedEmail.objects.filter(prospect__campaign=campaign).count()
+    sent_emails = GeneratedEmail.objects.filter(
+        prospect__campaign=campaign, status__in=['sent', 'opened', 'replied'],
+    ).count()
+    opened_emails = GeneratedEmail.objects.filter(
+        prospect__campaign=campaign, status__in=['opened', 'replied'],
+    ).count()
+
+    open_rate = round((opened_emails / sent_emails * 100) if sent_emails > 0 else 0)
+    reply_rate = round((replied / sent_emails * 100) if sent_emails > 0 else 0)
 
     context = {
         'campaign': campaign,
-        'emails': emails[:100],
-        'total_emails': total,
-        'sent_count': sent,
-        'opened_count': opened,
+        'prospects': prospects[:100],
+        'total_prospects': total_prospects,
+        'email1_sent': email1_sent,
+        'email2_sent': email2_sent,
+        'total_emails': total_emails,
+        'sent_emails': sent_emails,
+        'opened_emails': opened_emails,
         'replied_count': replied,
+        'interested_count': interested,
+        'bounced_count': bounced,
         'open_rate': open_rate,
         'reply_rate': reply_rate,
         'current_status': status_filter,
-        'email_statuses': OutreachEmail.STATUS_CHOICES,
+        'prospect_statuses': OutreachProspect.STATUS_CHOICES,
     }
     return render(request, 'campaigns/detail.html', context)
 
 
 @login_required
 def campaign_action(request, campaign_id):
-    """Pause, resume, or complete a campaign."""
+    """Pause, resume, complete, or send queue for a campaign."""
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
 
-    profile = request.user.business_profile
-    campaign = get_object_or_404(OutreachCampaign, id=campaign_id, business=profile)
+    profile = _get_business(request)
+    if not profile:
+        return JsonResponse({'error': 'No business profile'}, status=403)
 
+    campaign = get_object_or_404(OutreachCampaign, id=campaign_id, business=profile)
     action = request.POST.get('action', '')
 
     if action == 'pause':
@@ -259,6 +308,154 @@ def campaign_action(request, campaign_id):
         return JsonResponse({'success': True, 'status': campaign.status})
 
     return redirect('campaign_detail', campaign_id=campaign.id)
+
+
+@login_required
+def campaign_add_prospects(request, campaign_id):
+    """Add prospects to a campaign manually."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    profile = _get_business(request)
+    if not profile:
+        return JsonResponse({'error': 'No business profile'}, status=403)
+
+    campaign = get_object_or_404(OutreachCampaign, id=campaign_id, business=profile)
+
+    business_name = request.POST.get('business_name', '').strip()
+    contact_email = request.POST.get('contact_email', '').strip()
+    contact_name = request.POST.get('contact_name', '').strip()
+    contact_phone = request.POST.get('contact_phone', '').strip()
+    website_url = request.POST.get('website_url', '').strip()
+
+    if not business_name or not contact_email:
+        return JsonResponse({'error': 'Business name and email are required'}, status=400)
+
+    # Check for duplicate
+    if OutreachProspect.objects.filter(campaign=campaign, contact_email=contact_email).exists():
+        return JsonResponse({'error': 'Prospect already in this campaign'}, status=400)
+
+    OutreachProspect.objects.create(
+        campaign=campaign,
+        business_name=business_name,
+        contact_name=contact_name,
+        contact_email=contact_email,
+        contact_phone=contact_phone,
+        website_url=website_url,
+        source='manual_upload',
+        status='new',
+    )
+
+    campaign.total_prospects = campaign.prospects.count()
+    campaign.save(update_fields=['total_prospects'])
+
+    return JsonResponse({'success': True})
+
+
+@login_required
+def prospect_detail_api(request, campaign_id, prospect_id):
+    """Get prospect details including generated emails and enrichment data."""
+    profile = _get_business(request)
+    if not profile:
+        return JsonResponse({'error': 'No business profile'}, status=403)
+
+    prospect = get_object_or_404(
+        OutreachProspect,
+        id=prospect_id,
+        campaign_id=campaign_id,
+        campaign__business=profile,
+    )
+
+    emails = []
+    for ge in prospect.generated_emails.order_by('sequence_number'):
+        emails.append({
+            'sequence': ge.sequence_number,
+            'subject': ge.subject,
+            'body': ge.body,
+            'status': ge.status,
+            'model': ge.ai_model_used,
+            'sent_at': ge.sent_at.isoformat() if ge.sent_at else None,
+            'opened_at': ge.opened_at.isoformat() if ge.opened_at else None,
+        })
+
+    data = {
+        'id': prospect.id,
+        'business_name': prospect.business_name,
+        'contact_name': prospect.contact_name,
+        'contact_email': prospect.contact_email,
+        'contact_phone': prospect.contact_phone,
+        'website_url': prospect.website_url,
+        'source': prospect.get_source_display(),
+        'status': prospect.status,
+        'enrichment': prospect.enrichment_data or {},
+        'emails': emails,
+        'reply_text': prospect.reply_text,
+        'reply_classification': prospect.reply_classification,
+    }
+
+    return JsonResponse(data)
+
+
+@login_required
+def prospect_mark_status(request, campaign_id, prospect_id):
+    """Mark a prospect as interested/not interested."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    profile = _get_business(request)
+    if not profile:
+        return JsonResponse({'error': 'No business profile'}, status=403)
+
+    prospect = get_object_or_404(
+        OutreachProspect,
+        id=prospect_id,
+        campaign_id=campaign_id,
+        campaign__business=profile,
+    )
+
+    new_status = request.POST.get('status', '')
+    if new_status not in ['interested', 'not_interested']:
+        return JsonResponse({'error': 'Invalid status'}, status=400)
+
+    prospect.status = new_status
+    prospect.save(update_fields=['status', 'updated_at'])
+
+    # If interested, create Contact in CRM
+    if new_status == 'interested':
+        _create_contact_from_prospect(prospect)
+
+    return JsonResponse({'success': True, 'status': new_status})
+
+
+def _create_contact_from_prospect(prospect):
+    """Auto-create a CRM Contact when a prospect is marked as interested."""
+    from core.models.crm import Contact, Activity
+
+    campaign = prospect.campaign
+    bp = campaign.business
+
+    # Skip if contact already exists for this email
+    if Contact.objects.filter(business=bp, email=prospect.contact_email).exists():
+        return
+
+    contact = Contact.objects.create(
+        business=bp,
+        name=prospect.contact_name or prospect.business_name,
+        email=prospect.contact_email,
+        phone=prospect.contact_phone,
+        address=prospect.website_url,
+        source='outreach',
+        source_platform='email_campaign',
+        source_prospect=prospect.prospect_business,
+        pipeline_stage='contacted',
+        service_needed=campaign.target_category or '',
+    )
+
+    Activity.objects.create(
+        contact=contact,
+        activity_type='email_replied',
+        description=f'Replied to outreach campaign "{campaign.name}" — marked as interested',
+    )
 
 
 @login_required

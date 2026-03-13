@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Appointments{% endblock %}
+{% block page_title %}Appointments{% endblock %}
+
+{% block content %}
+<div class="crm-appointments-page">
+    <!-- Header -->
+    <div class="contacts-header">
+        <div class="contacts-count">
+            <i class="bi bi-calendar-check"></i> Appointments
+        </div>
+        <button class="btn-primary btn-sm" onclick="showAddApptModal()">
+            <i class="bi bi-plus-lg"></i> Book Appointment
+        </button>
+    </div>
+
+    <!-- Upcoming -->
+    <div class="glass-card">
+        <h3 class="card-section-title">Upcoming</h3>
+        <div class="appointment-list">
+            {% for appt in upcoming %}
+            <div class="appointment-row">
+                <div class="appointment-date-col">
+                    <div class="appointment-day">{{ appt.date|date:"d" }}</div>
+                    <div class="appointment-month">{{ appt.date|date:"M" }}</div>
+                </div>
+                <div class="appointment-info">
+                    <div class="appointment-contact-name">{{ appt.contact.name }}</div>
+                    <div class="appointment-time">
+                        <i class="bi bi-clock"></i>
+                        {{ appt.time|time:"g:i A" }}
+                        {% if appt.duration_minutes %}&middot; {{ appt.duration_minutes }}min{% endif %}
+                    </div>
+                    {% if appt.service_needed %}
+                    <div class="appointment-service">{{ appt.service_needed }}</div>
+                    {% endif %}
+                    {% if appt.notes %}
+                    <div class="appointment-notes text-muted">{{ appt.notes|truncatechars:100 }}</div>
+                    {% endif %}
+                </div>
+                <div class="appointment-actions">
+                    <span class="stage-badge stage-{{ appt.status }}">{{ appt.get_status_display }}</span>
+                    <div class="appointment-status-btns">
+                        <button class="btn-sm btn-icon" title="Completed"
+                                onclick="updateApptStatus({{ appt.id }}, 'completed')">
+                            <i class="bi bi-check-circle"></i>
+                        </button>
+                        <button class="btn-sm btn-icon" title="No Show"
+                                onclick="updateApptStatus({{ appt.id }}, 'no_show')">
+                            <i class="bi bi-person-x"></i>
+                        </button>
+                        <button class="btn-sm btn-icon" title="Cancel"
+                                onclick="updateApptStatus({{ appt.id }}, 'cancelled')">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="timeline-empty">
+                <i class="bi bi-calendar-x"></i>
+                <p>No upcoming appointments</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Past -->
+    {% if past %}
+    <div class="glass-card" style="margin-top: 1.5rem;">
+        <h3 class="card-section-title">Past Appointments</h3>
+        <div class="appointment-list">
+            {% for appt in past %}
+            <div class="appointment-row appointment-past">
+                <div class="appointment-date-col">
+                    <div class="appointment-day">{{ appt.date|date:"d" }}</div>
+                    <div class="appointment-month">{{ appt.date|date:"M" }}</div>
+                </div>
+                <div class="appointment-info">
+                    <div class="appointment-contact-name">{{ appt.contact.name }}</div>
+                    <div class="appointment-time">
+                        <i class="bi bi-clock"></i> {{ appt.time|time:"g:i A" }}
+                    </div>
+                </div>
+                <div class="appointment-actions">
+                    <span class="stage-badge stage-{{ appt.status }}">{{ appt.get_status_display }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add Appointment Modal -->
+<div class="modal-backdrop" id="add-appt-modal" style="display:none" onclick="if(event.target===this) this.style.display='none'">
+    <div class="modal-card">
+        <h3><i class="bi bi-calendar-plus-fill"></i> Book Appointment</h3>
+        <form onsubmit="createAppointment(event)">
+            <div class="form-group">
+                <label>Contact *</label>
+                <select name="contact_id" class="form-input" required>
+                    <option value="">Select contact...</option>
+                    {% for c in contacts %}
+                    <option value="{{ c.id }}">{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Date *</label>
+                    <input type="date" name="date" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Time *</label>
+                    <input type="time" name="time" class="form-input" required value="09:00">
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Duration (minutes)</label>
+                    <input type="number" name="duration" class="form-input" value="60">
+                </div>
+                <div class="form-group">
+                    <label>Service</label>
+                    <input type="text" name="service_needed" class="form-input" placeholder="Kitchen remodel">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea name="notes" class="form-input form-textarea" placeholder="Appointment notes..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="document.getElementById('add-appt-modal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn-primary">Book Appointment</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function getCsrfToken() {
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : '';
+}
+
+function showAddApptModal() {
+    document.getElementById('add-appt-modal').style.display = 'flex';
+}
+
+function createAppointment(e) {
+    e.preventDefault();
+    const data = new FormData(e.target);
+    fetch('/dashboard/appointments/create/', {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCsrfToken()},
+        body: data,
+    }).then(r => r.json()).then(resp => {
+        if (resp.ok) location.reload();
+        else alert(resp.error || 'Error creating appointment');
+    });
+}
+
+function updateApptStatus(apptId, status) {
+    const data = new FormData();
+    data.append('status', status);
+    fetch(`/dashboard/appointments/${apptId}/status/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCsrfToken()},
+        body: data,
+    }).then(r => r.json()).then(resp => {
+        if (resp.ok) location.reload();
+    });
+}
+</script>
+{% endblock %}

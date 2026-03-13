@@ -40,6 +40,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.crm_counts',
             ],
         },
     },
@@ -87,6 +88,7 @@ REDDIT_USERNAME = config('REDDIT_USERNAME', default='')
 REDDIT_PASSWORD = config('REDDIT_PASSWORD', default='')
 
 GOOGLE_MAPS_API_KEY = config('GOOGLE_MAPS_API_KEY', default='')
+GOOGLE_PLACES_API_KEY = config('GOOGLE_PLACES_API_KEY', default='') or GOOGLE_MAPS_API_KEY
 ANTHROPIC_API_KEY = config('ANTHROPIC_API_KEY', default='')
 SENDGRID_API_KEY = config('SENDGRID_API_KEY', default='')
 
@@ -100,6 +102,10 @@ ZEROBOUNCE_API_KEY = config('ZEROBOUNCE_API_KEY', default='')
 
 ALERT_FROM_EMAIL = config('ALERT_FROM_EMAIL', default='alerts@salessignal.ai')
 
+# Nextdoor credentials (Playwright browser automation)
+NEXTDOOR_EMAIL = config('NEXTDOOR_EMAIL', default='')
+NEXTDOOR_PASSWORD = config('NEXTDOOR_PASSWORD', default='')
+
 # Lead ingestion API
 INGEST_API_KEY = config('INGEST_API_KEY', default='')
 REMOTE_INGEST_URL = config('REMOTE_INGEST_URL', default='https://salessignalai.com/api/ingest-lead/')
@@ -107,3 +113,22 @@ REMOTE_INGEST_URL = config('REMOTE_INGEST_URL', default='https://salessignalai.c
 # Email backend (console for dev, SMTP for prod)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = ALERT_FROM_EMAIL
+
+# Outreach email sending backend: 'ses' (default), 'instantly'
+OUTREACH_EMAIL_BACKEND = config('OUTREACH_EMAIL_BACKEND', default='ses')
+
+# Amazon SES credentials
+AWS_SES_ACCESS_KEY = config('AWS_SES_ACCESS_KEY', default='')
+AWS_SES_SECRET_KEY = config('AWS_SES_SECRET_KEY', default='')
+AWS_SES_REGION = config('AWS_SES_REGION', default='us-east-1')
+
+# Instantly.ai (future)
+INSTANTLY_API_KEY = config('INSTANTLY_API_KEY', default='')
+
+# Google OAuth (Gmail sending for customers)
+GOOGLE_OAUTH_CLIENT_ID = config('GOOGLE_OAUTH_CLIENT_ID', default='')
+GOOGLE_OAUTH_CLIENT_SECRET = config('GOOGLE_OAUTH_CLIENT_SECRET', default='')
+
+# AI email generation
+GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
+DEEPSEEK_API_KEY = config('DEEPSEEK_API_KEY', default='')

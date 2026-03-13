@@ -1,6 +1,7 @@
 from django.urls import path
 from core.views import landing, auth, onboarding, dashboard, leads, competitors, territory, campaigns, analytics
-from core.views import monitor_health, webhooks, user_settings, admin_leads, ingest_api
+from core.views import monitor_health, webhooks, user_settings, admin_leads, ingest_api, crm
+from core.views import sales_admin, sales
 
 urlpatterns = [
     path('', landing.landing_page, name='landing'),
@@ -9,6 +10,22 @@ urlpatterns = [
     path('auth/logout/', auth.logout_view, name='logout'),
     path('onboarding/', onboarding.onboarding_view, name='onboarding'),
     path('dashboard/', dashboard.dashboard_home, name='dashboard_home'),
+
+    # CRM
+    path('dashboard/pipeline/', crm.pipeline, name='crm_pipeline'),
+    path('dashboard/pipeline/move/', crm.pipeline_move, name='crm_pipeline_move'),
+    path('dashboard/contacts/', crm.contact_list, name='crm_contacts'),
+    path('dashboard/contacts/create/', crm.contact_create, name='crm_contact_create'),
+    path('dashboard/contacts/<int:contact_id>/', crm.contact_detail, name='crm_contact_detail'),
+    path('dashboard/contacts/<int:contact_id>/note/', crm.contact_add_note, name='crm_contact_note'),
+    path('dashboard/contacts/<int:contact_id>/update/', crm.contact_update, name='crm_contact_update'),
+    path('dashboard/inbox/', crm.inbox, name='crm_inbox'),
+    path('dashboard/appointments/', crm.appointment_list, name='crm_appointments'),
+    path('dashboard/appointments/create/', crm.appointment_create, name='crm_appointment_create'),
+    path('dashboard/appointments/<int:appointment_id>/status/', crm.appointment_update_status, name='crm_appointment_status'),
+    path('dashboard/competitors/', crm.competitor_dashboard, name='crm_competitors'),
+    path('dashboard/revenue-data/', crm.revenue_data, name='crm_revenue_data'),
+
     path('leads/', leads.lead_feed, name='lead_feed'),
     path('leads/<int:assignment_id>/', leads.lead_detail, name='lead_detail'),
     path('leads/<int:assignment_id>/status/', leads.lead_update_status, name='lead_update_status'),
@@ -32,6 +49,9 @@ urlpatterns = [
     path('campaigns/prospects/', campaigns.prospect_list_api, name='prospect_list_api'),
     path('campaigns/<int:campaign_id>/', campaigns.campaign_detail, name='campaign_detail'),
     path('campaigns/<int:campaign_id>/action/', campaigns.campaign_action, name='campaign_action'),
+    path('campaigns/<int:campaign_id>/add-prospect/', campaigns.campaign_add_prospects, name='campaign_add_prospect'),
+    path('campaigns/<int:campaign_id>/prospects/<int:prospect_id>/', campaigns.prospect_detail_api, name='prospect_detail_api'),
+    path('campaigns/<int:campaign_id>/prospects/<int:prospect_id>/status/', campaigns.prospect_mark_status, name='prospect_mark_status'),
     path('prospects/<int:prospect_id>/find-email/', campaigns.prospect_find_email, name='prospect_find_email'),
     path('prospects/<int:prospect_id>/validate/', campaigns.prospect_validate, name='prospect_validate'),
 
@@ -69,6 +89,20 @@ urlpatterns = [
 
     # Lead Ingestion API
     path('api/ingest-lead/', ingest_api.ingest_lead, name='ingest_lead'),
+
+    # Sales Admin (superuser)
+    path('sales-admin/', sales_admin.dashboard, name='sales_admin_dashboard'),
+    path('sales-admin/team/', sales_admin.manage_team, name='sales_admin_team'),
+    path('sales-admin/assign/', sales_admin.assign_prospects, name='sales_admin_assign'),
+    path('sales-admin/team/<int:sp_id>/', sales_admin.salesperson_detail, name='sales_admin_sp_detail'),
+
+    # Sales (salesperson)
+    path('sales/pipeline/', sales.pipeline, name='sales_pipeline'),
+    path('sales/pipeline/move/', sales.pipeline_move, name='sales_pipeline_move'),
+    path('sales/prospects/', sales.prospects, name='sales_prospects'),
+    path('sales/prospects/<int:prospect_id>/', sales.prospect_detail, name='sales_prospect_detail'),
+    path('sales/today/', sales.today_calls, name='sales_today'),
+    path('sales/stats/', sales.stats, name='sales_stats'),
 
     # Webhooks & Compliance
     path('webhooks/sendgrid/', webhooks.sendgrid_webhook, name='sendgrid_webhook'),

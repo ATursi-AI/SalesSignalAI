@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Team{% endblock %}
+{% block page_title %}Manage Sales Team{% endblock %}
+
+{% block content %}
+<div class="sales-admin-page">
+    <div class="glass-card">
+        <div class="card-header-row">
+            <h3 class="card-title"><i class="bi bi-person-plus-fill"></i> Sales Team</h3>
+            <button class="btn-primary btn-sm" onclick="document.getElementById('add-modal').style.display='flex'">
+                <i class="bi bi-plus-lg"></i> Add Salesperson
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Username</th>
+                        <th>Phone</th>
+                        <th>Territory</th>
+                        <th>Daily Goal</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sp in salespeople %}
+                    <tr>
+                        <td><strong>{{ sp.user.get_full_name|default:sp.user.username }}</strong></td>
+                        <td class="text-muted">{{ sp.user.username }}</td>
+                        <td>{{ sp.phone|default:"—" }}</td>
+                        <td>{{ sp.territory|default:"—"|truncatechars:30 }}</td>
+                        <td>{{ sp.daily_call_goal }}</td>
+                        <td>
+                            <span class="status-pill status-{{ sp.status }}">{{ sp.get_status_display }}</span>
+                        </td>
+                        <td>
+                            <button class="btn-secondary btn-sm" onclick="toggleStatus({{ sp.id }}, this)">
+                                {% if sp.status == 'active' %}Deactivate{% else %}Activate{% endif %}
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Salesperson Modal -->
+<div class="modal-overlay" id="add-modal" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3>Add Salesperson</h3>
+            <button class="modal-close" onclick="document.getElementById('add-modal').style.display='none'">&times;</button>
+        </div>
+        <form id="add-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            <div class="form-group">
+                <label>Username *</label>
+                <input type="text" name="username" class="form-input" required>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" name="first_name" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" name="last_name" class="form-input">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" class="form-input">
+            </div>
+            <div class="form-group">
+                <label>Phone</label>
+                <input type="text" name="phone" class="form-input">
+            </div>
+            <div class="form-group">
+                <label>Territory</label>
+                <input type="text" name="territory" class="form-input" placeholder="e.g. Nassau County plumbers">
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%; margin-top: 0.75rem;">
+                <i class="bi bi-plus-lg"></i> Create Salesperson
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const csrf = '{{ csrf_token }}';
+
+document.getElementById('add-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const fd = new FormData(this);
+    fetch('{% url "sales_admin_team" %}', {method: 'POST', body: fd, headers: {'X-CSRFToken': csrf}})
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) location.reload();
+        else alert(data.error || 'Error');
+    });
+});
+
+function toggleStatus(spId, btn) {
+    const fd = new FormData();
+    fd.set('action', 'toggle_status');
+    fd.set('sp_id', spId);
+    fetch('{% url "sales_admin_team" %}', {method: 'POST', body: fd, headers: {'X-CSRFToken': csrf}})
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) location.reload();
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Sales Admin{% endblock %}
+{% block page_title %}Sales Team Dashboard{% endblock %}
+
+{% block content %}
+<div class="sales-admin-page">
+    <!-- Global KPIs -->
+    <div class="kpi-row">
+        <div class="glass-card kpi-card">
+            <div class="kpi-icon" style="color: var(--accent-blue);"><i class="bi bi-people-fill"></i></div>
+            <div class="kpi-value">{{ total_salespeople }}</div>
+            <div class="kpi-label">Active Reps</div>
+        </div>
+        <div class="glass-card kpi-card">
+            <div class="kpi-icon" style="color: var(--accent-amber);"><i class="bi bi-funnel-fill"></i></div>
+            <div class="kpi-value">{{ total_prospects }}</div>
+            <div class="kpi-label">In Pipeline</div>
+        </div>
+        <div class="glass-card kpi-card">
+            <div class="kpi-icon" style="color: var(--accent-emerald);"><i class="bi bi-display"></i></div>
+            <div class="kpi-value">{{ demos_this_week }}</div>
+            <div class="kpi-label">Demos This Week</div>
+        </div>
+        <div class="glass-card kpi-card">
+            <div class="kpi-icon" style="color: var(--accent-emerald);"><i class="bi bi-trophy-fill"></i></div>
+            <div class="kpi-value">{{ deals_this_month }}</div>
+            <div class="kpi-label">Deals This Month</div>
+        </div>
+        <div class="glass-card kpi-card">
+            <div class="kpi-icon" style="color: var(--accent-emerald);"><i class="bi bi-currency-dollar"></i></div>
+            <div class="kpi-value">${{ mrr_closed|intcomma }}</div>
+            <div class="kpi-label">MRR Closed</div>
+        </div>
+    </div>
+
+    <!-- Team Table -->
+    <div class="glass-card" style="margin-top: 1.5rem;">
+        <div class="card-header-row">
+            <h3 class="card-title"><i class="bi bi-people-fill"></i> Team Performance</h3>
+            <a href="{% url 'sales_admin_team' %}" class="btn-secondary btn-sm">
+                <i class="bi bi-gear"></i> Manage Team
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Salesperson</th>
+                        <th>Territory</th>
+                        <th>Calls Today</th>
+                        <th>Calls Week</th>
+                        <th>Demos</th>
+                        <th>Deals</th>
+                        <th>Pipeline $</th>
+                        <th>Active</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in team_stats %}
+                    <tr onclick="window.location='{% url 'sales_admin_sp_detail' row.sp.id %}'" style="cursor: pointer;">
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div class="contact-avatar-sm">{{ row.sp.user.first_name|default:row.sp.user.username|truncatechars:2|upper }}</div>
+                                <strong>{{ row.sp.user.get_full_name|default:row.sp.user.username }}</strong>
+                            </div>
+                        </td>
+                        <td>{{ row.sp.territory|truncatechars:30 }}</td>
+                        <td>
+                            <span class="{% if row.calls_today >= row.sp.daily_call_goal %}text-emerald{% elif row.calls_today > 0 %}text-amber{% else %}text-muted{% endif %}">
+                                {{ row.calls_today }}/{{ row.sp.daily_call_goal }}
+                            </span>
+                        </td>
+                        <td>{{ row.calls_week }}</td>
+                        <td>{{ row.demos }}</td>
+                        <td>{{ row.deals }}</td>
+                        <td>${{ row.pipeline_value|intcomma }}</td>
+                        <td>{{ row.active_prospects }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="8" class="text-muted text-center">No active salespeople. Add your team to get started.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

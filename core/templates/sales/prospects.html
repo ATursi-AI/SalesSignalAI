@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}My Prospects{% endblock %}
+{% block page_title %}My Prospects{% endblock %}
+
+{% block content %}
+<div class="sales-page">
+    <!-- Filters -->
+    <div class="glass-card" style="margin-bottom: 1rem;">
+        <form method="get" style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end;">
+            <div class="form-group" style="min-width: 200px;">
+                <label>Search</label>
+                <input type="text" name="q" value="{{ search_q }}" class="form-input" placeholder="Business, name, phone...">
+            </div>
+            <div class="form-group">
+                <label>Stage</label>
+                <select name="stage" class="form-input">
+                    <option value="">All Stages</option>
+                    {% for code, label in stages %}
+                    <option value="{{ code }}" {% if current_stage == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Source</label>
+                <select name="source" class="form-input">
+                    <option value="">All Sources</option>
+                    {% for code, label in sources %}
+                    <option value="{{ code }}" {% if current_source == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn-primary btn-sm"><i class="bi bi-search"></i> Filter</button>
+            <a href="{% url 'sales_prospects' %}" class="btn-secondary btn-sm">Clear</a>
+        </form>
+    </div>
+
+    <!-- Actions bar -->
+    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+        <button class="btn-primary btn-sm" onclick="document.getElementById('add-modal').style.display='flex'">
+            <i class="bi bi-plus-lg"></i> Add Prospect
+        </button>
+    </div>
+
+    <!-- Prospects Table -->
+    <div class="glass-card">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Business</th>
+                        <th>Phone</th>
+                        <th>Category</th>
+                        <th>Stage</th>
+                        <th>Source</th>
+                        <th>Next Follow-up</th>
+                        <th>MRR</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in prospects %}
+                    <tr onclick="window.location='{% url 'sales_prospect_detail' p.id %}'" style="cursor: pointer;">
+                        <td>
+                            <strong>{{ p.business_name }}</strong>
+                            {% if p.owner_name %}<br><small class="text-muted">{{ p.owner_name }}</small>{% endif %}
+                        </td>
+                        <td>{{ p.phone|default:"—" }}</td>
+                        <td>{{ p.service_category|default:"—" }}</td>
+                        <td><span class="status-pill status-{{ p.pipeline_stage }}">{{ p.get_pipeline_stage_display }}</span></td>
+                        <td class="text-muted">{{ p.get_source_display }}</td>
+                        <td>{% if p.next_follow_up_date %}{{ p.next_follow_up_date }}{% else %}—{% endif %}</td>
+                        <td>{% if p.estimated_monthly_value %}${{ p.estimated_monthly_value|intcomma }}{% else %}—{% endif %}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-muted text-center">No prospects yet. Add one or ask your admin to import leads.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Prospect Modal -->
+<div class="modal-overlay" id="add-modal" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3>Add Prospect</h3>
+            <button class="modal-close" onclick="document.getElementById('add-modal').style.display='none'">&times;</button>
+        </div>
+        <form id="add-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_prospect">
+            <div class="form-group">
+                <label>Business Name *</label>
+                <input type="text" name="business_name" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label>Owner / Contact Name</label>
+                <input type="text" name="owner_name" class="form-input">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="text" name="phone" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" class="form-input">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
+                <div class="form-group">
+                    <label>Category</label>
+                    <input type="text" name="service_category" class="form-input" placeholder="plumber">
+                </div>
+                <div class="form-group">
+                    <label>City</label>
+                    <input type="text" name="city" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>State</label>
+                    <input type="text" name="state" class="form-input" maxlength="2">
+                </div>
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%; margin-top: 0.75rem;">
+                <i class="bi bi-plus-lg"></i> Add Prospect
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('add-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const fd = new FormData(this);
+    fetch('{% url "sales_prospects" %}', {
+        method: 'POST', body: fd,
+        headers: {'X-CSRFToken': '{{ csrf_token }}'},
+    }).then(r => r.json()).then(data => {
+        if (data.success) location.reload();
+        else alert(data.error || 'Error');
+    });
+});
+</script>
+{% endblock %}

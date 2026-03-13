@@ -50,15 +50,70 @@
                     <span>Territory Map</span>
                 </a>
 
+                <div class="sidebar-section-label">CRM</div>
+                <a href="{% url 'crm_pipeline' %}" class="sidebar-link {% if request.resolver_match.url_name == 'crm_pipeline' %}active{% endif %}">
+                    <i class="bi bi-kanban-fill"></i>
+                    <span>Pipeline</span>
+                </a>
+                <a href="{% url 'crm_contacts' %}" class="sidebar-link {% if 'crm_contact' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Contacts</span>
+                </a>
+                <a href="{% url 'crm_inbox' %}" class="sidebar-link {% if request.resolver_match.url_name == 'crm_inbox' %}active{% endif %}">
+                    <i class="bi bi-envelope-fill"></i>
+                    <span>Inbox</span>
+                    {% if inbox_unread_count %}<span class="sidebar-badge">{{ inbox_unread_count }}</span>{% endif %}
+                </a>
+                <a href="{% url 'crm_appointments' %}" class="sidebar-link {% if 'crm_appointment' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-calendar-check-fill"></i>
+                    <span>Appointments</span>
+                </a>
+                <a href="{% url 'crm_competitors' %}" class="sidebar-link {% if request.resolver_match.url_name == 'crm_competitors' %}active{% endif %}">
+                    <i class="bi bi-binoculars-fill"></i>
+                    <span>Competitors</span>
+                </a>
+
                 <div class="sidebar-section-label">Outreach</div>
                 <a href="{% url 'campaign_list' %}" class="sidebar-link {% if 'campaign' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-megaphone-fill"></i>
                     <span>Campaigns</span>
                 </a>
-                <a href="{% url 'competitor_list' %}" class="sidebar-link {% if 'competitor' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-binoculars-fill"></i>
-                    <span>Competitors</span>
+
+                {% if user.salesperson_profile %}
+                <div class="sidebar-section-label">Sales</div>
+                <a href="{% url 'sales_pipeline' %}" class="sidebar-link {% if request.resolver_match.url_name == 'sales_pipeline' %}active{% endif %}">
+                    <i class="bi bi-kanban-fill"></i>
+                    <span>My Pipeline</span>
                 </a>
+                <a href="{% url 'sales_prospects' %}" class="sidebar-link {% if 'sales_prospect' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-person-lines-fill"></i>
+                    <span>My Prospects</span>
+                </a>
+                <a href="{% url 'sales_today' %}" class="sidebar-link {% if request.resolver_match.url_name == 'sales_today' %}active{% endif %}">
+                    <i class="bi bi-telephone-fill"></i>
+                    <span>Today's Calls</span>
+                </a>
+                <a href="{% url 'sales_stats' %}" class="sidebar-link {% if request.resolver_match.url_name == 'sales_stats' %}active{% endif %}">
+                    <i class="bi bi-graph-up"></i>
+                    <span>My Stats</span>
+                </a>
+                {% endif %}
+
+                {% if user.is_superuser %}
+                <div class="sidebar-section-label">Sales Admin</div>
+                <a href="{% url 'sales_admin_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'sales_admin_dashboard' %}active{% endif %}">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Team Dashboard</span>
+                </a>
+                <a href="{% url 'sales_admin_team' %}" class="sidebar-link {% if request.resolver_match.url_name == 'sales_admin_team' %}active{% endif %}">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Manage Team</span>
+                </a>
+                <a href="{% url 'sales_admin_assign' %}" class="sidebar-link {% if request.resolver_match.url_name == 'sales_admin_assign' %}active{% endif %}">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    <span>Assign Prospects</span>
+                </a>
+                {% endif %}
 
                 {% if user.is_staff %}
                 <div class="sidebar-section-label">Staff</div>

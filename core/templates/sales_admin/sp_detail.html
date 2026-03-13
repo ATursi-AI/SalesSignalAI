@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ sp.user.get_full_name|default:sp.user.username }}{% endblock %}
+{% block page_title %}{{ sp.user.get_full_name|default:sp.user.username }}{% endblock %}
+
+{% block content %}
+<div class="sales-admin-page">
+    <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+        <a href="{% url 'sales_admin_dashboard' %}" class="btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+        <span class="status-pill status-{{ sp.status }}">{{ sp.get_status_display }}</span>
+        {% if sp.territory %}<span class="text-muted" style="align-self: center;">{{ sp.territory }}</span>{% endif %}
+    </div>
+
+    <!-- Stage filter -->
+    <div class="filter-pills" style="margin-bottom: 1rem;">
+        <a href="{% url 'sales_admin_sp_detail' sp.id %}" class="filter-pill {% if not current_stage %}active{% endif %}">All</a>
+        {% for code, label in stages %}
+        <a href="?stage={{ code }}" class="filter-pill {% if current_stage == code %}active{% endif %}">{{ label }}</a>
+        {% endfor %}
+    </div>
+
+    <div class="glass-card">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Business</th>
+                        <th>Phone</th>
+                        <th>Category</th>
+                        <th>Stage</th>
+                        <th>Next Follow-up</th>
+                        <th>MRR Est.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in prospects %}
+                    <tr>
+                        <td><strong>{{ p.business_name }}</strong>{% if p.owner_name %}<br><small class="text-muted">{{ p.owner_name }}</small>{% endif %}</td>
+                        <td>{{ p.phone|default:"—" }}</td>
+                        <td>{{ p.service_category|default:"—" }}</td>
+                        <td><span class="status-pill status-{{ p.pipeline_stage }}">{{ p.get_pipeline_stage_display }}</span></td>
+                        <td>{% if p.next_follow_up_date %}{{ p.next_follow_up_date }}{% else %}—{% endif %}</td>
+                        <td>{% if p.estimated_monthly_value %}${{ p.estimated_monthly_value|intcomma }}{% else %}—{% endif %}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-muted text-center">No prospects{% if current_stage %} in this stage{% endif %}.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

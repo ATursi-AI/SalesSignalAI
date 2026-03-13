@@ -10,7 +10,7 @@
     <!-- Step Indicators -->
     <div class="wizard-steps" style="margin-bottom: 2rem;">
         <div class="wizard-step active" id="dot-1"><span>1</span> Setup</div>
-        <div class="wizard-step" id="dot-2"><span>2</span> Email Template</div>
+        <div class="wizard-step" id="dot-2"><span>2</span> Email &amp; AI</div>
         <div class="wizard-step" id="dot-3"><span>3</span> Schedule</div>
         <div class="wizard-step" id="dot-4"><span>4</span> Prospects</div>
         <div class="wizard-step" id="dot-5"><span>5</span> Launch</div>
@@ -28,7 +28,18 @@
 
                 <div class="form-group">
                     <label class="form-label">Campaign Name *</label>
-                    <input type="text" name="name" class="form-input" required placeholder="e.g. Q1 Plumber Outreach — Brooklyn">
+                    <input type="text" name="name" class="form-input" required placeholder="e.g. Q1 Property Manager Outreach — Brooklyn">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Target Category</label>
+                        <input type="text" name="target_category" class="form-input" placeholder="e.g. property manager, restaurant, medical office">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Target Location</label>
+                        <input type="text" name="target_location" class="form-input" placeholder="e.g. Brooklyn, NY or 11201">
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -55,25 +66,46 @@
                 </div>
 
                 <button type="button" class="btn-primary-glow w-100" onclick="submitWizardStep(1)" style="margin-top: 1rem;">
-                    Next: Email Template <i class="bi bi-arrow-right"></i>
+                    Next: Email &amp; AI Settings <i class="bi bi-arrow-right"></i>
                 </button>
             </div>
         </div>
 
-        <!-- Step 2: Email Template -->
+        <!-- Step 2: Email Template + AI + Sending -->
         <div class="wizard-panel" id="step-2">
             <div class="glass-card-static" style="padding: 2rem;">
-                <h3><i class="bi bi-2-circle" style="color: var(--accent-blue);"></i> Email Template</h3>
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Set a base template — Claude AI will personalize each email for every prospect.</p>
+                <h3><i class="bi bi-2-circle" style="color: var(--accent-blue);"></i> Email &amp; AI Settings</h3>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Configure how emails are written and sent.</p>
 
+                <!-- Email Style -->
                 <div class="form-group">
-                    <label class="form-label">Subject Line Template</label>
-                    <input type="text" name="subject_template" class="form-input" placeholder="e.g. Partnership opportunity for {{prospect_name}}">
+                    <label class="form-label">Email Tone</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <label class="chip-select">
+                            <input type="radio" name="email_style" value="professional" checked>
+                            <span><i class="bi bi-briefcase"></i> Professional</span>
+                        </label>
+                        <label class="chip-select">
+                            <input type="radio" name="email_style" value="friendly">
+                            <span><i class="bi bi-emoji-smile"></i> Friendly</span>
+                        </label>
+                        <label class="chip-select">
+                            <input type="radio" name="email_style" value="direct">
+                            <span><i class="bi bi-lightning"></i> Direct</span>
+                        </label>
+                    </div>
                 </div>
 
+                <!-- Custom Instructions -->
                 <div class="form-group">
-                    <label class="form-label">Email Body Template <span style="color:var(--text-muted); font-size:0.75rem;">(tone/style guide for AI)</span></label>
-                    <textarea name="body_template" class="form-input" rows="6" placeholder="Describe the tone, key points, and value proposition you want in each email. AI will use this as a style guide to write unique emails per prospect."></textarea>
+                    <label class="form-label">Custom Instructions for AI <span style="color:var(--text-muted); font-size:0.75rem;">(optional)</span></label>
+                    <textarea name="custom_instructions" class="form-input" rows="3" placeholder='e.g. "mention our 20 years experience", "emphasize eco-friendly products", "always ask about their current provider"'></textarea>
+                </div>
+
+                <!-- Subject template -->
+                <div class="form-group">
+                    <label class="form-label">Subject Line Guide <span style="color:var(--text-muted); font-size:0.75rem;">(optional — AI uses this as inspiration)</span></label>
+                    <input type="text" name="subject_template" class="form-input" placeholder="e.g. Quick question about {{prospect}}">
                 </div>
 
                 {% if profile.email_style_guide %}
@@ -82,28 +114,47 @@
                         <i class="bi bi-pen"></i> Your Email Style Guide
                     </div>
                     <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; white-space: pre-line;">{{ profile.email_style_guide }}</div>
-                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">
-                        Edit in <a href="{% url 'settings_page' %}" style="color: var(--accent-blue);">Settings</a>
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if profile.email_signature %}
-                <div class="glass-card-static" style="padding: 1rem; margin-top: 0.75rem; background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.12);">
-                    <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-emerald); margin-bottom: 0.4rem;">
-                        <i class="bi bi-vector-pen"></i> Your Email Signature
-                    </div>
-                    <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; white-space: pre-line;">{{ profile.email_signature }}</div>
                 </div>
                 {% endif %}
 
                 <label class="toggle-row" style="margin: 1rem 0;">
                     <input type="checkbox" name="use_ai" checked>
                     <span class="toggle-switch"></span>
-                    <span><strong>AI Personalization</strong> — Claude generates unique emails per prospect</span>
+                    <span><strong>AI Personalization</strong> — AI generates unique emails per prospect using Gemini + DeepSeek</span>
                 </label>
 
-                <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+                <!-- Sending Mode -->
+                <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--glass-border);">
+                    <label class="form-label">How to Send Emails</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
+                        <label class="glass-card-static" style="padding: 1rem; cursor: pointer; border: 2px solid var(--accent-blue); transition: border-color 0.2s;" id="mode-salessignal">
+                            <input type="radio" name="send_mode" value="salessignal" checked style="display:none;" onchange="updateSendMode()">
+                            <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem;">
+                                <i class="bi bi-shield-check" style="color: var(--accent-emerald);"></i> Use SalesSignal Email
+                            </div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted);">
+                                Emails sent from campaigns@salessignalai.com with your reply-to address. Works immediately.
+                            </div>
+                        </label>
+                        <label class="glass-card-static" style="padding: 1rem; cursor: pointer; border: 2px solid transparent; transition: border-color 0.2s;" id="mode-gmail">
+                            <input type="radio" name="send_mode" value="gmail" style="display:none;" onchange="updateSendMode()">
+                            <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem;">
+                                <i class="bi bi-google" style="color: var(--accent-coral);"></i> Connect Your Gmail
+                            </div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted);">
+                                Emails sent from your actual Gmail address. More legitimate. Requires Google OAuth setup.
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Reply-to email -->
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label class="form-label">Reply-To Email</label>
+                    <input type="email" name="reply_to_email" class="form-input" value="{{ profile.email }}" placeholder="Your email where replies go">
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
                     <button type="button" class="btn-secondary" onclick="goToWizardStep(1)"><i class="bi bi-arrow-left"></i> Back</button>
                     <button type="button" class="btn-primary-glow" style="flex:1;" onclick="submitWizardStep(2)">
                         Next: Schedule <i class="bi bi-arrow-right"></i>
@@ -116,27 +167,32 @@
         <div class="wizard-panel" id="step-3">
             <div class="glass-card-static" style="padding: 2rem;">
                 <h3><i class="bi bi-3-circle" style="color: var(--accent-blue);"></i> Sending Schedule</h3>
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Control your sending pace and follow-up strategy.</p>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Control your sending pace and email sequence.</p>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                     <div class="form-group">
-                        <label class="form-label">Max Emails/Day</label>
-                        <input type="number" name="max_per_day" class="form-input" value="25" min="1" max="100">
+                        <label class="form-label">New Prospects/Day</label>
+                        <input type="number" name="daily_limit" class="form-input" value="15" min="1" max="50">
+                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem;">New Email 1's per day</div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Follow-up Delay (days)</label>
                         <input type="number" name="followup_delay" class="form-input" value="3" min="1" max="14">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Max Follow-ups</label>
-                        <input type="number" name="max_followups" class="form-input" value="2" min="0" max="5">
+                        <label class="form-label">Email Sequence Length</label>
+                        <select name="sequence_count" class="form-input">
+                            <option value="1">1 email only</option>
+                            <option value="2">2 emails</option>
+                            <option value="3" selected>3 emails (recommended)</option>
+                        </select>
                     </div>
                 </div>
 
                 <div class="glass-card-static" style="padding: 1rem; margin-top: 1rem; background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.12);">
                     <div style="font-size: 0.85rem; color: var(--text-secondary);">
                         <i class="bi bi-info-circle" style="color: var(--accent-blue);"></i>
-                        <strong>Sequence:</strong> Initial email → Wait 3 days → Follow-up 1 → Wait 3 days → Follow-up 2 (different messaging each time)
+                        <strong>Sequence:</strong> Email 1 (personalized intro via DeepSeek) &rarr; Wait 3 days &rarr; Email 2 (follow-up via Gemini) &rarr; Wait 4 days &rarr; Email 3 (soft close via Gemini)
                     </div>
                 </div>
 
@@ -163,7 +219,6 @@
                 </div>
                 <div id="scrape-status" style="margin-bottom: 1rem;"></div>
 
-                <!-- Prospect list -->
                 <div id="prospect-list" style="margin-top: 1rem;">
                     <div style="text-align:center; color: var(--text-muted); padding: 2rem 0; font-size: 0.85rem;">
                         Search to find prospects, or skip to use existing prospects from your database.
@@ -173,7 +228,7 @@
                 <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
                     <button type="button" class="btn-secondary" onclick="goToWizardStep(3)"><i class="bi bi-arrow-left"></i> Back</button>
                     <button type="button" class="btn-primary-glow" style="flex:1;" onclick="goToWizardStep(5)">
-                        Next: Review & Launch <i class="bi bi-arrow-right"></i>
+                        Next: Review &amp; Launch <i class="bi bi-arrow-right"></i>
                     </button>
                 </div>
             </div>
@@ -182,20 +237,22 @@
         <!-- Step 5: Review & Launch -->
         <div class="wizard-panel" id="step-5">
             <div class="glass-card-static" style="padding: 2rem;">
-                <h3><i class="bi bi-5-circle" style="color: var(--accent-emerald);"></i> Review & Launch</h3>
+                <h3><i class="bi bi-5-circle" style="color: var(--accent-emerald);"></i> Review &amp; Launch</h3>
                 <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Review your campaign settings and launch.</p>
 
                 <div id="review-summary" style="margin-bottom: 1.5rem;">
                     <div class="review-row"><span>Campaign:</span> <strong id="review-name">--</strong></div>
+                    <div class="review-row"><span>Email Tone:</span> <strong id="review-style">Professional</strong></div>
                     <div class="review-row"><span>AI Personalization:</span> <strong id="review-ai">Enabled</strong></div>
-                    <div class="review-row"><span>Send Pace:</span> <strong id="review-pace">25/day</strong></div>
-                    <div class="review-row"><span>Follow-ups:</span> <strong id="review-followups">2 (every 3 days)</strong></div>
+                    <div class="review-row"><span>Send Pace:</span> <strong id="review-pace">15/day</strong></div>
+                    <div class="review-row"><span>Sequence:</span> <strong id="review-seq">3 emails</strong></div>
+                    <div class="review-row"><span>Sending via:</span> <strong id="review-mode">SalesSignal Email</strong></div>
                 </div>
 
                 <div class="glass-card-static" style="padding: 1rem; background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.12); margin-bottom: 1.5rem;">
                     <div style="font-size: 0.85rem; color: var(--text-secondary);">
                         <i class="bi bi-stars" style="color: var(--accent-emerald);"></i>
-                        <strong>Claude AI</strong> will generate unique, personalized emails for each prospect based on their business info, Google rating, and your template.
+                        <strong>Multi-Model AI</strong> will enrich each prospect's website via Gemini, generate personalized Email 1 via DeepSeek, and write follow-ups via Gemini Flash-Lite.
                     </div>
                 </div>
 
@@ -227,7 +284,6 @@ function goToWizardStep(step) {
     document.getElementById('step-' + step).classList.add('active');
     document.getElementById('dot-' + step).classList.add('active');
     currentStep = step;
-
     if (step === 5) updateReviewSummary();
 }
 
@@ -238,16 +294,12 @@ function submitWizardStep(step) {
     if (campaignId) formData.set('campaign_id', campaignId);
 
     fetch(form.action, {
-        method: 'POST',
-        body: formData,
+        method: 'POST', body: formData,
         headers: {'X-Requested-With': 'XMLHttpRequest'},
     })
     .then(r => r.json())
     .then(data => {
-        if (data.error) {
-            alert(data.error);
-            return;
-        }
+        if (data.error) { alert(data.error); return; }
         if (data.campaign_id) {
             campaignId = data.campaign_id;
             document.getElementById('campaign_id').value = campaignId;
@@ -258,39 +310,36 @@ function submitWizardStep(step) {
     .catch(err => console.error('Wizard error:', err));
 }
 
+function updateSendMode() {
+    const ss = document.getElementById('mode-salessignal');
+    const gm = document.getElementById('mode-gmail');
+    const checked = document.querySelector('[name=send_mode]:checked').value;
+    ss.style.borderColor = checked === 'salessignal' ? 'var(--accent-blue)' : 'transparent';
+    gm.style.borderColor = checked === 'gmail' ? 'var(--accent-blue)' : 'transparent';
+}
+
 function scrapeProspects() {
     const query = document.getElementById('prospect-query').value.trim();
     if (!query) return;
-
     const btn = document.getElementById('scrape-btn');
     btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Searching...';
     btn.disabled = true;
-
     const formData = new FormData();
     formData.set('query', query);
     formData.set('campaign_id', campaignId || '');
-
-    const form = document.getElementById('campaign-form');
-    // Get CSRF token
-    const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
-
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     fetch('/campaigns/prospect-scrape/', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': csrfToken,
-        },
+        method: 'POST', body: formData,
+        headers: {'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrfToken},
     })
     .then(r => r.json())
     .then(data => {
         btn.innerHTML = '<i class="bi bi-search"></i> Search Google Maps';
         btn.disabled = false;
-
         if (data.stats) {
             const s = data.stats;
             document.getElementById('scrape-status').innerHTML =
-                `<div class="alert-dark alert-success"><i class="bi bi-check-circle"></i> Found ${s.searched} businesses, created ${s.created} new prospects (${s.duplicates} already existed)</div>`;
+                `<div class="alert-dark alert-success"><i class="bi bi-check-circle"></i> Found ${s.searched} businesses, created ${s.created} new prospects</div>`;
         }
         loadProspectList();
     })
@@ -304,9 +353,9 @@ function loadProspectList() {
     fetch('/campaigns/prospects/?validated=0')
         .then(r => r.json())
         .then(data => {
-            const container = document.getElementById('prospect-list');
+            const c = document.getElementById('prospect-list');
             if (!data.prospects.length) {
-                container.innerHTML = '<p style="color:var(--text-muted); text-align:center;">No prospects found yet.</p>';
+                c.innerHTML = '<p style="color:var(--text-muted); text-align:center;">No prospects found yet.</p>';
                 return;
             }
             let html = `<div class="section-label" style="margin-bottom:0.5rem;">${data.total} Prospects</div>`;
@@ -315,19 +364,15 @@ function loadProspectList() {
                 const badge = p.email_validated
                     ? '<span style="color:var(--accent-emerald); font-size:0.7rem;"><i class="bi bi-check-circle-fill"></i> Valid</span>'
                     : (p.email ? '<span style="color:var(--accent-amber); font-size:0.7rem;">Unvalidated</span>' : '');
-                html += `
-                <div class="prospect-row">
+                html += `<div class="prospect-row">
                     <div style="flex:1;">
-                        <div style="font-weight:600; font-size:0.9rem;">${escapeHtml(p.name)}</div>
-                        <div style="font-size:0.8rem; color:var(--text-secondary);">${escapeHtml(p.city || '')}${p.state ? ', ' + p.state : ''} ${p.google_rating ? '| ' + p.google_rating + ' stars' : ''}</div>
+                        <div style="font-weight:600; font-size:0.9rem;">${esc(p.name)}</div>
+                        <div style="font-size:0.8rem; color:var(--text-secondary);">${esc(p.city || '')}${p.state ? ', ' + p.state : ''} ${p.google_rating ? '| ' + p.google_rating + ' stars' : ''}</div>
                     </div>
-                    <div style="text-align:right;">
-                        <div style="font-size:0.8rem;">${email}</div>
-                        ${badge}
-                    </div>
+                    <div style="text-align:right;"><div style="font-size:0.8rem;">${email}</div>${badge}</div>
                 </div>`;
             });
-            container.innerHTML = html;
+            c.innerHTML = html;
         });
 }
 
@@ -335,42 +380,38 @@ function updateReviewSummary() {
     const name = document.querySelector('[name=name]');
     if (name) document.getElementById('review-name').textContent = name.value || '--';
 
+    const style = document.querySelector('[name=email_style]:checked');
+    document.getElementById('review-style').textContent = style ? style.value.charAt(0).toUpperCase() + style.value.slice(1) : 'Professional';
+
     const ai = document.querySelector('[name=use_ai]');
-    document.getElementById('review-ai').textContent = (ai && ai.checked) ? 'Enabled' : 'Disabled';
+    document.getElementById('review-ai').textContent = (ai && ai.checked) ? 'Enabled (Gemini + DeepSeek)' : 'Disabled (template only)';
 
-    const pace = document.querySelector('[name=max_per_day]');
-    document.getElementById('review-pace').textContent = (pace ? pace.value : '25') + '/day';
+    const pace = document.querySelector('[name=daily_limit]');
+    document.getElementById('review-pace').textContent = (pace ? pace.value : '15') + ' new/day';
 
-    const delay = document.querySelector('[name=followup_delay]');
-    const maxF = document.querySelector('[name=max_followups]');
-    document.getElementById('review-followups').textContent =
-        (maxF ? maxF.value : '2') + ' (every ' + (delay ? delay.value : '3') + ' days)';
+    const seq = document.querySelector('[name=sequence_count]');
+    document.getElementById('review-seq').textContent = (seq ? seq.value : '3') + ' emails';
+
+    const mode = document.querySelector('[name=send_mode]:checked');
+    document.getElementById('review-mode').textContent = mode && mode.value === 'gmail' ? 'Your Gmail' : 'SalesSignal Email';
 }
 
 function launchCampaign() {
-    if (!campaignId) {
-        alert('Please complete the previous steps first.');
-        return;
-    }
-
+    if (!campaignId) { alert('Please complete the previous steps first.'); return; }
     const form = document.getElementById('campaign-form');
     const formData = new FormData(form);
     formData.set('step', '5');
     formData.set('campaign_id', campaignId);
-
     fetch(form.action, {
-        method: 'POST',
-        body: formData,
+        method: 'POST', body: formData,
         headers: {'X-Requested-With': 'XMLHttpRequest'},
     })
     .then(r => r.json())
-    .then(data => {
-        if (data.redirect) window.location.href = data.redirect;
-    })
+    .then(data => { if (data.redirect) window.location.href = data.redirect; })
     .catch(err => console.error('Launch error:', err));
 }
 
-function escapeHtml(s) {
+function esc(s) {
     const d = document.createElement('div');
     d.textContent = s || '';
     return d.innerHTML;

@@ -95,7 +95,29 @@
       "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe manage.py monitor_google_reviews_scraper --dry-run --city \"Long Island, NY\" --category plumber electrician)",
       "Bash(venv/Scripts/python.exe manage.py monitor_google_reviews_scraper --dry-run --city \"Long Island, NY\" --category plumber electrician)",
       "Bash(python -c \"import secrets; print\\(secrets.token_urlsafe\\(32\\)\\)\")",
-      "Bash(venv/Scripts/python.exe manage.py monitor_reddit --dry-run --max-age-hours 1 --subreddits AskNYC --remote)"
+      "Bash(venv/Scripts/python.exe manage.py monitor_reddit --dry-run --max-age-hours 1 --subreddits AskNYC --remote)",
+      "Bash(grep -E '\\\\.py$')",
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name add_tracked_google_business)",
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name add_google_maps_platform)",
+      "Bash(venv/Scripts/python.exe manage.py monitor_google_places --dry-run --city \"Long Island, NY\" --category plumber,electrician --radius 10000)",
+      "Bash(venv/Scripts/python.exe manage.py monitor_google_places --help)",
+      "Bash(venv/Scripts/pip.exe install:*)",
+      "Bash(venv/Scripts/python.exe -m playwright install chromium)",
+      "Bash(venv/Scripts/python.exe -c \"from playwright.sync_api import sync_playwright; print\\(''Playwright OK''\\)\")",
+      "Bash(venv/Scripts/python.exe manage.py monitor_nextdoor --help)",
+      "Bash(venv/Scripts/python.exe manage.py monitor_nextdoor --dry-run --max-posts 5)",
+      "Bash(venv/Scripts/python.exe manage.py seed_nextdoor_cookies --help)",
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name crm_models)",
+      "Bash(venv/Scripts/python.exe -c \"from core.utils.monitors.google_places import monitor_google_places; print\\(''OK''\\)\")",
+      "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe -c \"from core.utils.monitors.google_places import monitor_google_places, _process_no_website; print\\(''Import OK''\\)\")",
+      "Bash(venv/Scripts/python.exe manage.py shell -c \"from core.utils.monitors.google_places import monitor_google_places, _process_no_website; print\\(''Import OK''\\)\")",
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name outreach_campaign_engine)",
+      "Bash(venv/Scripts/python.exe manage.py run_email_campaigns --dry-run)",
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name sales_team_crm)",
+      "Bash(PYTHONIOENCODING=utf-8 venv/Scripts/python.exe -c \":*)",
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name add_public_records_platform)",
+      "Bash(venv/Scripts/python.exe manage.py monitor_nyc_dob --help)",
+      "Bash(venv/Scripts/python.exe manage.py monitor_town_permits --help)"
     ]
   }
 }

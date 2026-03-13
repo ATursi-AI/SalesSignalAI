@@ -413,3 +413,39 @@ class MonitoredFacebookGroup(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class TrackedGoogleBusiness(models.Model):
+    """
+    Tracks businesses discovered via the Google Places API.
+    Used to detect new businesses (not seen before) and track
+    status changes (open -> closed) over time.
+    """
+    BUSINESS_STATUS_CHOICES = [
+        ('OPERATIONAL', 'Operational'),
+        ('CLOSED_TEMPORARILY', 'Closed Temporarily'),
+        ('CLOSED_PERMANENTLY', 'Closed Permanently'),
+    ]
+
+    place_id = models.CharField(max_length=300, unique=True, db_index=True)
+    name = models.CharField(max_length=300)
+    address = models.CharField(max_length=500, blank=True)
+    category = models.CharField(max_length=100, blank=True,
+        help_text='Google Places primary type or search category')
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    business_status = models.CharField(max_length=30,
+        choices=BUSINESS_STATUS_CHOICES, default='OPERATIONAL')
+    avg_rating = models.FloatField(null=True, blank=True)
+    total_reviews = models.IntegerField(default=0)
+    google_maps_url = models.URLField(max_length=500, blank=True)
+    first_seen = models.DateTimeField(auto_now_add=True)
+    last_checked = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-first_seen']
+        verbose_name = 'Tracked Google Business'
+        verbose_name_plural = 'Tracked Google Businesses'
+
+    def __str__(self):
+        return f'{self.name} ({self.place_id[:20]}...)'

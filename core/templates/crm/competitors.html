@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Competitor Tracker{% endblock %}
+{% block page_title %}Competitor Tracker{% endblock %}
+
+{% block content %}
+<div class="crm-competitors-page">
+    <!-- Header -->
+    <div class="contacts-header">
+        <div class="contacts-count">
+            <i class="bi bi-binoculars-fill"></i> Tracking {{ total_competitors }} competitor{{ total_competitors|pluralize }}
+        </div>
+        <a href="{% url 'competitor_add' %}" class="btn-primary btn-sm">
+            <i class="bi bi-plus-lg"></i> Add Competitor
+        </a>
+    </div>
+
+    <!-- Competitor Cards -->
+    <div class="competitor-grid">
+        {% for item in competitor_data %}
+        <div class="glass-card competitor-card">
+            <div class="competitor-card-header">
+                <div>
+                    <h3 class="competitor-name">{{ item.competitor.name }}</h3>
+                    {% if item.competitor.business_status != 'open' %}
+                    <span class="stage-badge stage-lost">{{ item.competitor.business_status|upper }}</span>
+                    {% endif %}
+                </div>
+                <div class="competitor-trend">
+                    {% if item.competitor.rating_trend == 'improving' %}
+                    <i class="bi bi-arrow-up-circle-fill text-success"></i>
+                    {% elif item.competitor.rating_trend == 'declining' %}
+                    <i class="bi bi-arrow-down-circle-fill text-danger"></i>
+                    {% else %}
+                    <i class="bi bi-dash-circle-fill text-muted"></i>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Rating -->
+            <div class="competitor-rating-row">
+                <div class="competitor-stars">
+                    {% if item.competitor.current_google_rating %}
+                    <span class="competitor-rating-value">{{ item.competitor.current_google_rating }}</span>
+                    <div class="star-display">
+                        {% with rating=item.competitor.current_google_rating %}
+                        {% for i in "12345" %}
+                        <i class="bi {% if forloop.counter <= rating %}bi-star-fill{% elif forloop.counter|add:"-0.5"|floatformat:0 <= rating %}bi-star-half{% else %}bi-star{% endif %}" style="color: #F59E0B;"></i>
+                        {% endfor %}
+                        {% endwith %}
+                    </div>
+                    <span class="text-muted">({{ item.competitor.current_review_count|default:0 }} reviews)</span>
+                    {% else %}
+                    <span class="text-muted">No rating data</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Negative reviews alert -->
+            {% if item.negative_count_30d > 0 %}
+            <div class="competitor-alert">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                {{ item.negative_count_30d }} negative review{{ item.negative_count_30d|pluralize }} in last 30 days
+            </div>
+            {% endif %}
+
+            <!-- Recent negative reviews -->
+            {% if item.recent_negative %}
+            <div class="competitor-reviews">
+                <div class="competitor-reviews-title">Recent Negative Reviews</div>
+                {% for review in item.recent_negative %}
+                <div class="competitor-review-item">
+                    <div class="competitor-review-header">
+                        <span class="competitor-review-rating">
+                            {% for i in "12345" %}
+                            <i class="bi {% if forloop.counter <= review.rating %}bi-star-fill{% else %}bi-star{% endif %}"
+                               style="color: {% if review.rating <= 2 %}#FF4757{% else %}#F59E0B{% endif %}; font-size: 0.7rem;"></i>
+                            {% endfor %}
+                        </span>
+                        <span class="text-muted">{{ review.review_date|date:"M d" }}</span>
+                    </div>
+                    <div class="competitor-review-text">{{ review.review_text|truncatechars:120 }}</div>
+                    {% if review.reviewer_name %}
+                    <div class="text-muted" style="font-size: 0.75rem;">— {{ review.reviewer_name }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Quick info -->
+            <div class="competitor-meta">
+                {% if item.competitor.last_checked %}
+                <span class="text-muted"><i class="bi bi-clock"></i> Checked {{ item.competitor.last_checked|timesince }} ago</span>
+                {% endif %}
+                <a href="{% url 'competitor_detail' item.competitor.id %}" class="btn-secondary btn-sm">
+                    <i class="bi bi-arrow-right"></i> Details
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="glass-card" style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+            <i class="bi bi-binoculars" style="font-size: 3rem; color: var(--text-muted);"></i>
+            <h3 style="margin-top: 1rem;">No competitors tracked</h3>
+            <p class="text-muted">Track your competitors to see their reviews, ratings, and business status.</p>
+            <a href="{% url 'competitor_add' %}" class="btn-primary" style="margin-top: 1rem;">
+                <i class="bi bi-plus-lg"></i> Add Your First Competitor
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

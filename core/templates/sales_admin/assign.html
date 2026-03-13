@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Assign Prospects{% endblock %}
+{% block page_title %}Assign Prospects{% endblock %}
+
+{% block content %}
+<div class="sales-admin-page">
+    <!-- Import from Lead Repository -->
+    <div class="glass-card">
+        <div class="card-header-row">
+            <h3 class="card-title"><i class="bi bi-database-fill-gear"></i> Import from Lead Repository</h3>
+        </div>
+        <p class="text-muted" style="margin-bottom: 1rem;">Google Maps leads (no-website businesses) ready to import as sales prospects.</p>
+
+        <div class="form-group" style="max-width: 300px; margin-bottom: 1rem;">
+            <label>Assign to Salesperson</label>
+            <select id="import-sp" class="form-input">
+                <option value="">Select...</option>
+                {% for sp in salespeople %}
+                <option value="{{ sp.id }}">{{ sp.user.get_full_name|default:sp.user.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="select-all-leads" onclick="toggleAllLeads(this)"></th>
+                        <th>Business</th>
+                        <th>Category</th>
+                        <th>Location</th>
+                        <th>Discovered</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lead in importable_leads %}
+                    <tr>
+                        <td><input type="checkbox" class="lead-checkbox" value="{{ lead.id }}"></td>
+                        <td><strong>{{ lead.source_author|default:"Unknown" }}</strong></td>
+                        <td>{{ lead.detected_category }}</td>
+                        <td>{{ lead.detected_location|truncatechars:30 }}</td>
+                        <td>{{ lead.discovered_at|timesince }} ago</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-muted text-center">No importable leads found. Run the Google Places monitor first.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if importable_leads %}
+        <button class="btn-primary btn-sm" style="margin-top: 0.75rem;" onclick="importLeads()">
+            <i class="bi bi-download"></i> Import Selected
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- CSV Upload -->
+    <div class="glass-card" style="margin-top: 1.5rem;">
+        <div class="card-header-row">
+            <h3 class="card-title"><i class="bi bi-filetype-csv"></i> Upload CSV</h3>
+        </div>
+        <form id="csv-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="upload_csv">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+                <div class="form-group">
+                    <label>Salesperson</label>
+                    <select name="salesperson_id" class="form-input" required>
+                        <option value="">Select...</option>
+                        {% for sp in salespeople %}
+                        <option value="{{ sp.id }}">{{ sp.user.get_full_name|default:sp.user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>CSV File</label>
+                    <input type="file" name="csv_file" accept=".csv" class="form-input" required>
+                </div>
+                <button type="submit" class="btn-primary btn-sm">
+                    <i class="bi bi-upload"></i> Upload
+                </button>
+            </div>
+            <p class="text-muted" style="font-size: 0.75rem; margin-top: 0.5rem;">
+                Columns: business_name, owner_name, phone, email, website, address, city, state, zip_code, category
+            </p>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const csrf = '{{ csrf_token }}';
+
+function toggleAllLeads(el) {
+    document.querySelectorAll('.lead-checkbox').forEach(cb => cb.checked = el.checked);
+}
+
+function importLeads() {
+    const spId = document.getElementById('import-sp').value;
+    if (!spId) { alert('Select a salesperson first'); return; }
+    const ids = [...document.querySelectorAll('.lead-checkbox:checked')].map(cb => cb.value);
+    if (!ids.length) { alert('Select at least one lead'); return; }
+
+    const fd = new FormData();
+    fd.set('action', 'import_leads');
+    fd.set('salesperson_id', spId);
+    ids.forEach(id => fd.append('lead_ids', id));
+
+    fetch('{% url "sales_admin_assign" %}', {method: 'POST', body: fd, headers: {'X-CSRFToken': csrf}})
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Imported ${data.imported} prospects!`);
+            location.reload();
+        } else {
+            alert(data.error || 'Error');
+        }
+    });
+}
+
+document.getElementById('csv-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const fd = new FormData(this);
+    fetch('{% url "sales_admin_assign" %}', {method: 'POST', body: fd, headers: {'X-CSRFToken': csrf}})
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Imported ${data.imported} prospects from CSV!`);
+            location.reload();
+        } else {
+            alert(data.error || 'Error');
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load lead_tags %}
+
+{% block title %}Pipeline{% endblock %}
+{% block page_title %}Pipeline{% endblock %}
+
+{% block content %}
+<div class="crm-pipeline-page">
+    <!-- Pipeline Stats Bar -->
+    <div class="pipeline-stats-bar">
+        <div class="pipeline-stat">
+            <span class="stat-value">{{ active_count }}</span>
+            <span class="stat-label">Active Deals</span>
+        </div>
+        <div class="pipeline-stat">
+            <span class="stat-value">${{ total_value|floatformat:0|intcomma }}</span>
+            <span class="stat-label">Pipeline Value</span>
+        </div>
+        <div class="pipeline-stat stat-won">
+            <span class="stat-value">${{ won_value|floatformat:0|intcomma }}</span>
+            <span class="stat-label">Won Revenue</span>
+        </div>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="kanban-board">
+        {% for stage_key, stage_label in stages %}
+        <div class="kanban-column" data-stage="{{ stage_key }}">
+            <div class="kanban-column-header">
+                <span class="kanban-column-title">{{ stage_label }}</span>
+                <span class="kanban-column-count">{{ pipeline_data|get_stage:stage_key|length }}</span>
+            </div>
+            <div class="kanban-cards" id="stage-{{ stage_key }}"
+                 ondrop="dropCard(event)" ondragover="allowDrop(event)">
+                {% for contact in pipeline_data|get_stage:stage_key %}
+                <div class="kanban-card" draggable="true"
+                     ondragstart="dragStart(event)"
+                     data-contact-id="{{ contact.id }}"
+                     onclick="window.location.href='/dashboard/contacts/{{ contact.id }}/'">
+                    <div class="kanban-card-header">
+                        <span class="kanban-card-name">{{ contact.name }}</span>
+                        {% if contact.source_platform %}
+                        <span class="platform-pill platform-{{ contact.source_platform }}">{{ contact.source_platform }}</span>
+                        {% endif %}
+                    </div>
+                    {% if contact.service_needed %}
+                    <div class="kanban-card-service">{{ contact.service_needed }}</div>
+                    {% endif %}
+                    <div class="kanban-card-meta">
+                        <span><i class="bi bi-calendar3"></i> {{ contact.created_at|date:"M d" }}</span>
+                        {% if contact.estimated_value %}
+                        <span class="kanban-card-value">${{ contact.estimated_value|floatformat:0|intcomma }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="kanban-empty">No contacts</div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function dragStart(e) {
+    e.dataTransfer.setData('text/plain', e.target.dataset.contactId);
+    e.target.classList.add('dragging');
+}
+
+function allowDrop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.add('drag-over');
+}
+
+document.querySelectorAll('.kanban-cards').forEach(el => {
+    el.addEventListener('dragleave', function(e) {
+        this.classList.remove('drag-over');
+    });
+});
+
+function dropCard(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    const contactId = e.dataTransfer.getData('text/plain');
+    const newStage = e.currentTarget.closest('.kanban-column').dataset.stage;
+
+    const card = document.querySelector(`[data-contact-id="${contactId}"]`);
+    if (card) {
+        card.classList.remove('dragging');
+        e.currentTarget.appendChild(card);
+
+        // Update counts
+        updateColumnCounts();
+
+        // Save to server
+        fetch('/dashboard/pipeline/move/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+            },
+            body: JSON.stringify({contact_id: contactId, stage: newStage}),
+        }).then(r => r.json()).then(data => {
+            if (!data.ok) console.error('Move failed:', data);
+        });
+    }
+}
+
+function updateColumnCounts() {
+    document.querySelectorAll('.kanban-column').forEach(col => {
+        const cards = col.querySelectorAll('.kanban-card').length;
+        col.querySelector('.kanban-column-count').textContent = cards;
+    });
+}
+
+function getCsrfToken() {
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : '';
+}
+</script>
+{% endblock %}

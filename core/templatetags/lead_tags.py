@@ -72,6 +72,12 @@ def urgency_class(level):
 
 
 @register.filter
+def get_stage(pipeline_data, stage_key):
+    """Get contacts for a pipeline stage from the pipeline_data dict."""
+    return pipeline_data.get(stage_key, [])
+
+
+@register.filter
 def time_ago(dt):
     if not dt:
         return ''

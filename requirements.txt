@@ -6,3 +6,4 @@ praw>=7.7
 anthropic>=0.18
 pillow>=10.0
 apify-client>=1.6
+playwright>=1.40

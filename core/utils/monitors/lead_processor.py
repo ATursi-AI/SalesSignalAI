@@ -508,7 +508,7 @@ def assign_lead_to_businesses(lead, location, service_category):
             continue
 
         # Avoid duplicate assignments
-        _, created = LeadAssignment.objects.get_or_create(
+        assignment, created = LeadAssignment.objects.get_or_create(
             lead=lead,
             business=bp,
             defaults={'status': 'new'},
@@ -516,8 +516,46 @@ def assign_lead_to_businesses(lead, location, service_category):
         if created:
             assignments_created += 1
             logger.info(f"Assigned lead #{lead.id} to {bp.business_name} (matched: {kw_matched[:3]})")
+            # Auto-create CRM Contact
+            _create_contact_from_assignment(assignment, lead, bp)
 
     if assignments_created == 0:
         logger.warning(f"Lead #{lead.id} matched no businesses")
 
     return assignments_created
+
+
+def _create_contact_from_assignment(assignment, lead, business):
+    """Auto-create a CRM Contact when a lead is assigned to a business."""
+    from core.models.crm import Contact, Activity
+
+    # Determine contact name from lead author or content
+    name = lead.source_author.strip() if lead.source_author else ''
+    if not name or name.lower() in ('', '[deleted]', 'anonymous', 'unknown'):
+        name = f'{lead.get_platform_display()} Lead #{lead.id}'
+
+    # Determine service needed
+    service = ''
+    if lead.detected_service_type:
+        service = lead.detected_service_type.name
+
+    contact, created = Contact.objects.get_or_create(
+        business=business,
+        source_lead=lead,
+        defaults={
+            'name': name[:200],
+            'source': 'lead',
+            'source_platform': lead.platform,
+            'source_assignment': assignment,
+            'service_needed': service,
+            'pipeline_stage': 'new',
+        },
+    )
+
+    if created:
+        Activity.objects.create(
+            contact=contact,
+            activity_type='lead_found',
+            description=f'Found on {lead.get_platform_display()} — {lead.source_content[:100]}',
+        )
+        logger.info(f"Created CRM contact '{contact.name}' from lead #{lead.id}")

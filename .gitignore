@@ -18,3 +18,4 @@ Thumbs.db
 *.swp
 *.swo
 node_modules/
+browser_data/

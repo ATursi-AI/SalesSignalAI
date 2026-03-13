@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Inbox{% endblock %}
+{% block page_title %}Inbox{% endblock %}
+
+{% block content %}
+<div class="crm-inbox-page">
+    <div class="inbox-header">
+        <div class="inbox-count">
+            <i class="bi bi-envelope-fill"></i>
+            {{ unread_count }} repl{{ unread_count|pluralize:"y,ies" }}
+        </div>
+    </div>
+
+    <div class="inbox-list">
+        <!-- New system: OutreachProspect replies -->
+        {% for p in replied_prospects %}
+        <div class="inbox-item" id="prospect-{{ p.id }}">
+            <div class="inbox-item-header">
+                <div class="inbox-sender">
+                    <div class="contact-avatar-sm">{{ p.business_name|truncatechars:2|upper }}</div>
+                    <div>
+                        <div class="inbox-sender-name">{{ p.business_name }}</div>
+                        <div class="inbox-sender-email">{{ p.contact_email }} {% if p.contact_name %}&middot; {{ p.contact_name }}{% endif %}</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    {% if p.reply_classification %}
+                    <span class="email-status-pill email-status-{{ p.reply_classification }}">{{ p.reply_classification }}</span>
+                    {% endif %}
+                    <div class="inbox-date">{% if p.replied_at %}{{ p.replied_at|timesince }} ago{% endif %}</div>
+                </div>
+            </div>
+
+            <div class="inbox-campaign-tag">
+                <i class="bi bi-megaphone"></i> {{ p.campaign.name }}
+            </div>
+
+            {% if p.reply_text %}
+            <div style="padding: 0.75rem 1rem; background: rgba(16,185,129,0.06); border-radius: 6px; margin: 0.5rem 0; font-size: 0.85rem; color: var(--text-secondary); white-space: pre-line;">
+                {{ p.reply_text|truncatechars:300 }}
+            </div>
+            {% endif %}
+
+            <div class="inbox-actions">
+                <button class="btn-primary btn-sm" onclick="window.open('mailto:{{ p.contact_email }}?subject=Re: {{ p.business_name|urlencode }}')">
+                    <i class="bi bi-reply"></i> Reply
+                </button>
+                {% if p.status != 'interested' %}
+                <button class="btn-primary-glow btn-sm" onclick="markProspectStatus({{ p.campaign.id }}, {{ p.id }}, 'interested')">
+                    <i class="bi bi-hand-thumbs-up"></i> Interested
+                </button>
+                {% else %}
+                <span style="font-size: 0.75rem; color: var(--accent-emerald);"><i class="bi bi-check-circle-fill"></i> Marked Interested</span>
+                {% endif %}
+                <button class="btn-secondary btn-sm" onclick="markProspectStatus({{ p.campaign.id }}, {{ p.id }}, 'not_interested')">
+                    <i class="bi bi-x-circle"></i> Not Interested
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Legacy: OutreachEmail replies -->
+        {% for email in replied_emails %}
+        <div class="inbox-item" id="inbox-{{ email.id }}">
+            <div class="inbox-item-header">
+                <div class="inbox-sender">
+                    <div class="contact-avatar-sm">{{ email.prospect.name|truncatechars:2|upper }}</div>
+                    <div>
+                        <div class="inbox-sender-name">{{ email.prospect.name }}</div>
+                        <div class="inbox-sender-email">{{ email.prospect.email|default:email.prospect.owner_email }}</div>
+                    </div>
+                </div>
+                <div class="inbox-date">{{ email.replied_at|timesince }} ago</div>
+            </div>
+
+            <div class="inbox-campaign-tag">
+                <i class="bi bi-megaphone"></i> {{ email.campaign.name }}
+            </div>
+
+            <div class="inbox-original">
+                <div class="inbox-original-label">Your email:</div>
+                <div class="inbox-original-subject">{{ email.subject }}</div>
+            </div>
+
+            <div class="inbox-actions">
+                <button class="btn-primary btn-sm" onclick="window.open('mailto:{{ email.prospect.email|default:email.prospect.owner_email }}?subject=Re: {{ email.subject|urlencode }}')">
+                    <i class="bi bi-reply"></i> Reply
+                </button>
+                <button class="btn-secondary btn-sm" onclick="markNotInterested({{ email.id }})">
+                    <i class="bi bi-x-circle"></i> Not Interested
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if not replied_prospects and not replied_emails %}
+        <div class="inbox-empty">
+            <i class="bi bi-inbox"></i>
+            <h3>Inbox is empty</h3>
+            <p class="text-muted">Email replies from your outreach campaigns will appear here. Start a campaign to begin outreach.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function markNotInterested(emailId) {
+    const item = document.getElementById('inbox-' + emailId);
+    if (item) { item.style.opacity = '0.4'; item.style.pointerEvents = 'none'; }
+}
+
+function markProspectStatus(campaignId, prospectId, status) {
+    const csrf = '{{ csrf_token }}';
+    const fd = new FormData();
+    fd.set('status', status);
+    fetch(`/campaigns/${campaignId}/prospects/${prospectId}/status/`, {
+        method: 'POST', body: fd,
+        headers: {'X-CSRFToken': csrf},
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const item = document.getElementById('prospect-' + prospectId);
+            if (status === 'not_interested') {
+                item.style.opacity = '0.4';
+                item.style.pointerEvents = 'none';
+            } else {
+                location.reload();
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

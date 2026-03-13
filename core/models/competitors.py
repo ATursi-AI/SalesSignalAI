@@ -11,6 +11,13 @@ class TrackedCompetitor(models.Model):
     phone = models.CharField(max_length=20, blank=True)
     current_google_rating = models.FloatField(null=True, blank=True)
     current_review_count = models.IntegerField(null=True, blank=True)
+    previous_google_rating = models.FloatField(null=True, blank=True)
+    previous_review_count = models.IntegerField(null=True, blank=True)
+    rating_trend = models.CharField(
+        max_length=10, blank=True, default='flat',
+        choices=[('improving', 'Improving'), ('declining', 'Declining'), ('flat', 'Flat')],
+    )
+    business_status = models.CharField(max_length=30, blank=True, default='open')
     last_checked = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

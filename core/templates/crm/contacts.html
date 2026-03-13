@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Contacts{% endblock %}
+{% block page_title %}Contacts{% endblock %}
+
+{% block content %}
+<div class="crm-contacts-page">
+    <!-- Header Bar -->
+    <div class="contacts-header">
+        <div class="contacts-count">{{ total_count }} contact{{ total_count|pluralize }}</div>
+        <button class="btn-primary btn-sm" onclick="showAddContactModal()">
+            <i class="bi bi-plus-lg"></i> Add Contact
+        </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="contacts-filters">
+        <div class="filter-group">
+            <input type="text" class="filter-search" placeholder="Search contacts..."
+                   value="{{ search_query }}" id="contact-search"
+                   onkeydown="if(event.key==='Enter') applyFilters()">
+            <button class="btn-secondary btn-sm" onclick="applyFilters()">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+        <div class="filter-group">
+            <select class="filter-select" id="filter-stage" onchange="applyFilters()">
+                <option value="">All Stages</option>
+                {% for key, label in stages %}
+                <option value="{{ key }}" {% if current_stage == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <select class="filter-select" id="filter-source" onchange="applyFilters()">
+                <option value="">All Sources</option>
+                {% for key, label in sources %}
+                <option value="{{ key }}" {% if current_source == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Contacts Table -->
+    <div class="contacts-table-wrap">
+        <table class="contacts-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Source</th>
+                    <th>Type</th>
+                    <th>Service</th>
+                    <th>Status</th>
+                    <th>Last Contact</th>
+                    <th>Follow-up</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for contact in contacts %}
+                <tr class="contact-row" onclick="window.location.href='/dashboard/contacts/{{ contact.id }}/'">
+                    <td>
+                        <div class="contact-name-cell">
+                            <div class="contact-avatar-sm">{{ contact.name|truncatechars:2|upper }}</div>
+                            <div>
+                                <div class="contact-name">{{ contact.name }}</div>
+                                {% if contact.email %}<div class="contact-email">{{ contact.email }}</div>{% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if contact.source_platform %}
+                        <span class="platform-pill platform-{{ contact.source_platform }}">{{ contact.source_platform }}</span>
+                        {% else %}
+                        <span class="text-muted">{{ contact.get_source_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="contact-type-badge contact-type-{{ contact.source }}">
+                            {{ contact.get_source_display }}
+                        </span>
+                    </td>
+                    <td>{{ contact.service_needed|default:"-"|truncatechars:30 }}</td>
+                    <td>
+                        <span class="stage-badge stage-{{ contact.pipeline_stage }}">
+                            {{ contact.get_pipeline_stage_display }}
+                        </span>
+                    </td>
+                    <td class="text-muted">{{ contact.updated_at|timesince }} ago</td>
+                    <td>
+                        {% if contact.next_follow_up %}
+                        <span class="{% if contact.next_follow_up < now %}text-danger{% else %}text-muted{% endif %}">
+                            {{ contact.next_follow_up|date:"M d" }}
+                        </span>
+                        {% else %}-{% endif %}
+                    </td>
+                    <td>
+                        {% if contact.won_value %}
+                        <span class="text-success">${{ contact.won_value|floatformat:0|intcomma }}</span>
+                        {% elif contact.estimated_value %}
+                        ${{ contact.estimated_value|floatformat:0|intcomma }}
+                        {% else %}-{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="contacts-empty">
+                        <i class="bi bi-people"></i>
+                        <p>No contacts yet</p>
+                        <p class="text-muted">Contacts are created automatically when leads are assigned to your business, or you can add them manually.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Contact Modal -->
+<div class="modal-backdrop" id="add-contact-modal" style="display:none" onclick="if(event.target===this) this.style.display='none'">
+    <div class="modal-card">
+        <h3><i class="bi bi-person-plus-fill"></i> Add Contact</h3>
+        <form id="add-contact-form" onsubmit="createContact(event)">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" name="name" required class="form-input" placeholder="John Smith">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" class="form-input" placeholder="john@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="text" name="phone" class="form-input" placeholder="(555) 123-4567">
+                </div>
+                <div class="form-group">
+                    <label>Service Needed</label>
+                    <input type="text" name="service_needed" class="form-input" placeholder="Kitchen remodel">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Address</label>
+                <input type="text" name="address" class="form-input" placeholder="123 Main St, City, ST">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="document.getElementById('add-contact-modal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn-primary">Add Contact</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function applyFilters() {
+    const q = document.getElementById('contact-search').value;
+    const stage = document.getElementById('filter-stage').value;
+    const source = document.getElementById('filter-source').value;
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (stage) params.set('stage', stage);
+    if (source) params.set('source', source);
+    window.location.href = '/dashboard/contacts/?' + params.toString();
+}
+
+function showAddContactModal() {
+    document.getElementById('add-contact-modal').style.display = 'flex';
+}
+
+function getCsrfToken() {
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : '';
+}
+
+function createContact(e) {
+    e.preventDefault();
+    const form = e.target;
+    const data = new FormData(form);
+    fetch('/dashboard/contacts/create/', {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCsrfToken()},
+        body: data,
+    }).then(r => r.json()).then(data => {
+        if (data.ok) {
+            window.location.href = '/dashboard/contacts/' + data.contact_id + '/';
+        } else {
+            alert(data.error || 'Error creating contact');
+        }
+    });
+}
+</script>
+{% endblock %}

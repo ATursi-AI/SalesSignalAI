@@ -11,6 +11,7 @@ class Lead(models.Model):
         ('alignable', 'Alignable'),
         ('google_qna', 'Google Q&A'),
         ('google_reviews', 'Google Reviews'),
+        ('google_maps', 'Google Maps'),
         ('yelp_review', 'Yelp Review'),
         ('angi_review', 'Angi Review'),
         ('thumbtack', 'Thumbtack'),
@@ -38,6 +39,7 @@ class Lead(models.Model):
         ('eviction_filing', 'Eviction Filing'),
         ('health_inspection', 'Health Inspection'),
         ('license_expiry', 'License Expiry'),
+        ('public_records', 'Public Records'),
         ('manual', 'Manual Entry'),
     ]
 

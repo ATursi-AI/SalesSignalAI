@@ -13,6 +13,7 @@ from django.views.decorators.http import require_POST
 
 from core.models.leads import Lead, LeadAssignment
 from core.models.business import BusinessProfile, ServiceCategory
+from core.models.sales import SalesPerson, SalesProspect
 
 
 @staff_member_required
@@ -33,11 +34,14 @@ def lead_repository(request):
     )
     businesses = BusinessProfile.objects.filter(is_active=True).order_by('business_name')
 
+    salespeople = SalesPerson.objects.filter(status='active').order_by('user__first_name')
+
     return render(request, 'admin_leads/repository.html', {
         'categories': categories,
         'platforms': sorted(set(platforms)),
         'platform_choices': dict(Lead.PLATFORM_CHOICES),
         'businesses': businesses,
+        'salespeople': salespeople,
     })
 
 
@@ -266,6 +270,37 @@ def lead_action(request, lead_id):
             lead.save(update_fields=['review_status'])
         return JsonResponse({'ok': True, 'review_status': lead.review_status})
 
+    elif action == 'send_to_sales':
+        sp_id = data.get('salesperson_id')
+        if not sp_id:
+            return JsonResponse({'error': 'salesperson_id required'}, status=400)
+        sp = get_object_or_404(SalesPerson, id=sp_id)
+        if SalesProspect.objects.filter(source_lead_id=lead.id).exists():
+            return JsonResponse({'error': 'Already in sales pipeline'}, status=400)
+        raw = lead.raw_data or {}
+        SalesProspect.objects.create(
+            salesperson=sp,
+            business_name=raw.get('business_name', lead.source_author or 'Unknown'),
+            phone=raw.get('phone', ''),
+            address=raw.get('address', lead.detected_location),
+            city=raw.get('city', ''),
+            state=raw.get('state', ''),
+            zip_code=raw.get('zip_code', ''),
+            service_category=raw.get('category', ''),
+            source='google_maps_scan',
+            source_lead_id=lead.id,
+            google_rating=raw.get('rating'),
+            google_review_count=raw.get('review_count'),
+            has_website=raw.get('type') != 'no_website',
+            notes=lead.source_content[:500] if lead.source_content else '',
+        )
+        return JsonResponse({'ok': True, 'message': 'Sent to sales pipeline'})
+
+    elif action == 'delete':
+        lead_id = lead.id
+        lead.delete()
+        return JsonResponse({'ok': True, 'deleted_id': lead_id})
+
     return JsonResponse({'error': 'Unknown action'}, status=400)
 
 
@@ -311,5 +346,9 @@ def lead_bulk_action(request):
             'assigned': created_count,
             'review_status': 'assigned',
         })
+
+    elif action == 'delete':
+        deleted_count, _ = leads.delete()
+        return JsonResponse({'ok': True, 'deleted': deleted_count})
 
     return JsonResponse({'error': 'Unknown action'}, status=400)

@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ prospect.business_name }}{% endblock %}
+{% block page_title %}{{ prospect.business_name }}{% endblock %}
+
+{% block content %}
+<div class="sales-page">
+    <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+        <a href="{% url 'sales_prospects' %}" class="btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+        <span class="status-pill status-{{ prospect.pipeline_stage }}">{{ prospect.get_pipeline_stage_display }}</span>
+        {% if prospect.source == 'google_maps_scan' %}
+        <span class="text-muted" style="font-size: 0.75rem; align-self: center;"><i class="bi bi-google"></i> Google Maps</span>
+        {% endif %}
+        {% if not prospect.has_website %}<span style="font-size: 0.75rem; color: var(--accent-coral); align-self: center;"><i class="bi bi-globe-americas"></i> No Website</span>{% endif %}
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <!-- Left: Business Info -->
+        <div class="glass-card">
+            <h3 class="card-title"><i class="bi bi-building"></i> Business Info</h3>
+            <form id="info-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_info">
+                <div class="form-group">
+                    <label>Owner / Contact</label>
+                    <input type="text" name="owner_name" value="{{ prospect.owner_name }}" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="text" name="phone" value="{{ prospect.phone }}" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" value="{{ prospect.email }}" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>Website</label>
+                    <input type="url" name="website" value="{{ prospect.website }}" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>Est. Monthly Value ($)</label>
+                    <input type="number" name="monthly_value" value="{{ prospect.estimated_monthly_value|default:'' }}" class="form-input" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea name="notes" class="form-input" rows="3">{{ prospect.notes }}</textarea>
+                </div>
+                <button type="submit" class="btn-primary btn-sm"><i class="bi bi-check-lg"></i> Save</button>
+            </form>
+
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                    <div><strong>Address:</strong> {{ prospect.address }} {{ prospect.city }} {{ prospect.state }} {{ prospect.zip_code }}</div>
+                    <div><strong>Category:</strong> {{ prospect.service_category|default:"—" }}</div>
+                    {% if prospect.google_rating %}<div><strong>Rating:</strong> {{ prospect.google_rating }}⭐ ({{ prospect.google_review_count }} reviews)</div>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Actions + Timeline -->
+        <div>
+            <!-- Quick Actions -->
+            <div class="glass-card" style="margin-bottom: 1rem;">
+                <h3 class="card-title"><i class="bi bi-lightning-fill"></i> Quick Actions</h3>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button class="btn-primary btn-sm" onclick="document.getElementById('log-modal').style.display='flex'">
+                        <i class="bi bi-plus-lg"></i> Log Activity
+                    </button>
+                    <button class="btn-secondary btn-sm" onclick="document.getElementById('followup-modal').style.display='flex'">
+                        <i class="bi bi-calendar-plus"></i> Schedule Follow-up
+                    </button>
+                    {% if prospect.pipeline_stage != 'closed_won' and prospect.pipeline_stage != 'closed_lost' %}
+                    <button class="btn-primary-glow btn-sm" onclick="document.getElementById('won-modal').style.display='flex'">
+                        <i class="bi bi-trophy"></i> Mark Won
+                    </button>
+                    <button class="btn-secondary btn-sm" onclick="document.getElementById('lost-modal').style.display='flex'">
+                        <i class="bi bi-x-circle"></i> Mark Lost
+                    </button>
+                    {% endif %}
+                </div>
+                {% if prospect.next_follow_up_date %}
+                <div style="margin-top: 0.75rem; font-size: 0.8rem;">
+                    <i class="bi bi-calendar-event"></i> Next follow-up: <strong>{{ prospect.next_follow_up_date }}</strong>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Activity Timeline -->
+            <div class="glass-card">
+                <h3 class="card-title"><i class="bi bi-clock-history"></i> Activity Timeline</h3>
+                <div class="activity-timeline">
+                    {% for a in activities %}
+                    <div class="timeline-item">
+                        <div class="timeline-icon" style="color: {{ a.color }};">
+                            <i class="bi {{ a.icon }}"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-header">
+                                <strong>{{ a.get_activity_type_display }}</strong>
+                                {% if a.outcome %}<span class="text-muted"> — {{ a.get_outcome_display }}</span>{% endif %}
+                                {% if a.call_duration %}<span class="text-muted"> ({{ a.call_duration }}s)</span>{% endif %}
+                            </div>
+                            {% if a.description %}<div class="timeline-desc">{{ a.description }}</div>{% endif %}
+                            <div class="timeline-date">{{ a.created_at|timesince }} ago</div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">No activity yet. Log your first call!</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Activity Modal -->
+<div class="modal-overlay" id="log-modal" style="display: none;">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header">
+            <h3>Log Activity</h3>
+            <button class="modal-close" onclick="this.closest('.modal-overlay').style.display='none'">&times;</button>
+        </div>
+        <form id="log-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="log_activity">
+            <div class="form-group">
+                <label>Type</label>
+                <select name="activity_type" class="form-input" onchange="toggleOutcome(this.value)">
+                    {% for code, label in activity_types %}
+                    {% if code != 'closed_won' and code != 'closed_lost' %}
+                    <option value="{{ code }}">{{ label }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" id="outcome-group">
+                <label>Outcome</label>
+                <select name="outcome" class="form-input">
+                    <option value="">— Select —</option>
+                    {% for code, label in outcome_choices %}
+                    <option value="{{ code }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" id="duration-group">
+                <label>Call Duration (seconds)</label>
+                <input type="number" name="call_duration" class="form-input" placeholder="120">
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea name="description" class="form-input" rows="3" placeholder="What happened?"></textarea>
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%;"><i class="bi bi-check-lg"></i> Log</button>
+        </form>
+    </div>
+</div>
+
+<!-- Schedule Follow-up Modal -->
+<div class="modal-overlay" id="followup-modal" style="display: none;">
+    <div class="modal-content" style="max-width: 350px;">
+        <div class="modal-header">
+            <h3>Schedule Follow-up</h3>
+            <button class="modal-close" onclick="this.closest('.modal-overlay').style.display='none'">&times;</button>
+        </div>
+        <form id="followup-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="schedule_followup">
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" name="followup_date" class="form-input" required>
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%;"><i class="bi bi-calendar-check"></i> Schedule</button>
+        </form>
+    </div>
+</div>
+
+<!-- Mark Won Modal -->
+<div class="modal-overlay" id="won-modal" style="display: none;">
+    <div class="modal-content" style="max-width: 350px;">
+        <div class="modal-header">
+            <h3>Mark Won</h3>
+            <button class="modal-close" onclick="this.closest('.modal-overlay').style.display='none'">&times;</button>
+        </div>
+        <form id="won-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="mark_won">
+            <div class="form-group">
+                <label>Monthly Value ($)</label>
+                <input type="number" name="monthly_value" class="form-input" step="0.01" placeholder="149.00">
+            </div>
+            <button type="submit" class="btn-primary-glow" style="width: 100%;"><i class="bi bi-trophy"></i> Close Deal</button>
+        </form>
+    </div>
+</div>
+
+<!-- Mark Lost Modal -->
+<div class="modal-overlay" id="lost-modal" style="display: none;">
+    <div class="modal-content" style="max-width: 350px;">
+        <div class="modal-header">
+            <h3>Mark Lost</h3>
+            <button class="modal-close" onclick="this.closest('.modal-overlay').style.display='none'">&times;</button>
+        </div>
+        <form id="lost-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="mark_lost">
+            <div class="form-group">
+                <label>Reason</label>
+                <select name="lost_reason" class="form-input">
+                    {% for code, label in lost_reasons %}
+                    <option value="{{ code }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn-secondary" style="width: 100%;"><i class="bi bi-x-circle"></i> Mark Lost</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const csrf = '{{ csrf_token }}';
+const url = '{% url "sales_prospect_detail" prospect.id %}';
+
+function postAction(form) {
+    const fd = new FormData(form);
+    return fetch(url, {method: 'POST', body: fd, headers: {'X-CSRFToken': csrf}})
+        .then(r => r.json());
+}
+
+['info-form', 'log-form', 'followup-form', 'won-form', 'lost-form'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('submit', function(e) {
+        e.preventDefault();
+        postAction(this).then(data => {
+            if (data.success) location.reload();
+            else alert(data.error || 'Error');
+        });
+    });
+});
+
+function toggleOutcome(type) {
+    document.getElementById('outcome-group').style.display = (type === 'call' || type === 'voicemail') ? '' : 'none';
+    document.getElementById('duration-group').style.display = (type === 'call') ? '' : 'none';
+}
+toggleOutcome('call');
+</script>
+{% endblock %}

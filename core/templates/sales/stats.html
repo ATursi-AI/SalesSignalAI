@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}My Stats{% endblock %}
+{% block page_title %}My Stats{% endblock %}
+
+{% block content %}
+<div class="sales-page">
+    <!-- KPIs -->
+    <div class="kpi-row">
+        <div class="glass-card kpi-card">
+            <div class="kpi-icon" style="color: var(--accent-blue);"><i class="bi bi-telephone-fill"></i></div>
+            <div class="kpi-value">{{ calls_today }}/{{ call_goal }}</div>
+            <div class="kpi-label">Calls Today</div>
+        </div>
+        <div class="glass-card kpi-card">
+            <div class="kpi-icon" style="color: var(--accent-blue);"><i class="bi bi-telephone-outbound-fill"></i></div>
+            <div class="kpi-value">{{ calls_week }}</div>
+            <div class="kpi-label">Calls This Week</div>
+        </div>
+        <div class="glass-card kpi-card">
+            <div class="kpi-icon" style="color: #8b5cf6;"><i class="bi bi-display"></i></div>
+            <div class="kpi-value">{{ demos_week }}</div>
+            <div class="kpi-label">Demos This Week</div>
+        </div>
+        <div class="glass-card kpi-card">
+            <div class="kpi-icon" style="color: var(--accent-emerald);"><i class="bi bi-trophy-fill"></i></div>
+            <div class="kpi-value">{{ deals_month }}</div>
+            <div class="kpi-label">Deals This Month</div>
+        </div>
+        <div class="glass-card kpi-card">
+            <div class="kpi-icon" style="color: var(--accent-emerald);"><i class="bi bi-currency-dollar"></i></div>
+            <div class="kpi-value">${{ mrr_month|intcomma }}</div>
+            <div class="kpi-label">MRR This Month</div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+        <!-- Monthly Stats -->
+        <div class="glass-card">
+            <h3 class="card-title"><i class="bi bi-bar-chart-fill"></i> This Month</h3>
+            <div class="stat-rows">
+                <div class="stat-row">
+                    <span>Total Calls</span>
+                    <strong>{{ calls_month }}</strong>
+                </div>
+                <div class="stat-row">
+                    <span>Total Demos</span>
+                    <strong>{{ demos_month }}</strong>
+                </div>
+                <div class="stat-row">
+                    <span>Deals Closed</span>
+                    <strong>{{ deals_month }}</strong>
+                </div>
+                <div class="stat-row">
+                    <span>MRR Closed</span>
+                    <strong style="color: var(--accent-emerald);">${{ mrr_month|intcomma }}</strong>
+                </div>
+                <div class="stat-row">
+                    <span>Conversion Rate</span>
+                    <strong>{{ conversion_rate }}%</strong>
+                </div>
+                <div class="stat-row">
+                    <span>Active Pipeline</span>
+                    <strong>{{ active_pipeline }} prospects</strong>
+                </div>
+                <div class="stat-row">
+                    <span>Pipeline Value</span>
+                    <strong style="color: var(--accent-amber);">${{ pipeline_value|intcomma }}/mo</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="glass-card">
+            <h3 class="card-title"><i class="bi bi-trophy-fill"></i> Team Leaderboard</h3>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr><th>#</th><th>Name</th><th>Deals</th><th>Calls</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for person in leaderboard %}
+                        <tr style="{% if person.is_me %}background: rgba(59,130,246,0.1); font-weight: 600;{% endif %}">
+                            <td>
+                                {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}{{ forloop.counter }}{% endif %}
+                            </td>
+                            <td>{{ person.name }}{% if person.is_me %} (You){% endif %}</td>
+                            <td>{{ person.deals }}</td>
+                            <td>{{ person.calls }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
