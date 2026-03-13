@@ -79,15 +79,15 @@
                     <span>Campaigns</span>
                 </a>
 
-                {% if user.salesperson_profile %}
+                {% if user.salesperson_profile or user.is_superuser %}
                 <div class="sidebar-section-label">Sales</div>
                 <a href="{% url 'sales_pipeline' %}" class="sidebar-link {% if request.resolver_match.url_name == 'sales_pipeline' %}active{% endif %}">
                     <i class="bi bi-kanban-fill"></i>
-                    <span>My Pipeline</span>
+                    <span>{% if user.is_superuser %}All Pipelines{% else %}My Pipeline{% endif %}</span>
                 </a>
                 <a href="{% url 'sales_prospects' %}" class="sidebar-link {% if 'sales_prospect' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-person-lines-fill"></i>
-                    <span>My Prospects</span>
+                    <span>{% if user.is_superuser %}All Prospects{% else %}My Prospects{% endif %}</span>
                 </a>
                 <a href="{% url 'sales_today' %}" class="sidebar-link {% if request.resolver_match.url_name == 'sales_today' %}active{% endif %}">
                     <i class="bi bi-telephone-fill"></i>
@@ -95,7 +95,7 @@
                 </a>
                 <a href="{% url 'sales_stats' %}" class="sidebar-link {% if request.resolver_match.url_name == 'sales_stats' %}active{% endif %}">
                     <i class="bi bi-graph-up"></i>
-                    <span>My Stats</span>
+                    <span>{% if user.is_superuser %}Team Stats{% else %}My Stats{% endif %}</span>
                 </a>
                 {% endif %}
 

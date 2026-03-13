@@ -117,7 +117,11 @@
       "Bash(PYTHONIOENCODING=utf-8 venv/Scripts/python.exe -c \":*)",
       "Bash(venv/Scripts/python.exe manage.py makemigrations core --name add_public_records_platform)",
       "Bash(venv/Scripts/python.exe manage.py monitor_nyc_dob --help)",
-      "Bash(venv/Scripts/python.exe manage.py monitor_town_permits --help)"
+      "Bash(venv/Scripts/python.exe manage.py monitor_town_permits --help)",
+      "WebFetch(domain:data.cityofnewyork.us)",
+      "Bash(venv/Scripts/python.exe -c \"import py_compile; py_compile.compile\\(''core/utils/monitors/nyc_dob.py'', doraise=True\\); print\\(''OK''\\)\")",
+      "Bash(venv/Scripts/python.exe -c \"import py_compile; py_compile.compile\\(''core/views/sales.py'', doraise=True\\); print\\(''OK''\\)\")",
+      "Bash(venv/Scripts/python.exe manage.py check --no-color)"
     ]
   }
 }

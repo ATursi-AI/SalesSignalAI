@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load humanize %}
 
-{% block title %}My Prospects{% endblock %}
-{% block page_title %}My Prospects{% endblock %}
+{% block title %}{% if is_sales_admin %}All Prospects{% else %}My Prospects{% endif %}{% endblock %}
+{% block page_title %}{% if is_sales_admin %}All Prospects{% else %}My Prospects{% endif %}{% endblock %}
 
 {% block content %}
 <div class="sales-page">
@@ -50,6 +50,7 @@
                 <thead>
                     <tr>
                         <th>Business</th>
+                        {% if is_sales_admin %}<th>Rep</th>{% endif %}
                         <th>Phone</th>
                         <th>Category</th>
                         <th>Stage</th>
@@ -65,6 +66,7 @@
                             <strong>{{ p.business_name }}</strong>
                             {% if p.owner_name %}<br><small class="text-muted">{{ p.owner_name }}</small>{% endif %}
                         </td>
+                        {% if is_sales_admin %}<td class="text-muted">{{ p.salesperson.user.get_full_name|default:p.salesperson.user.username }}</td>{% endif %}
                         <td>{{ p.phone|default:"—" }}</td>
                         <td>{{ p.service_category|default:"—" }}</td>
                         <td><span class="status-pill status-{{ p.pipeline_stage }}">{{ p.get_pipeline_stage_display }}</span></td>
@@ -73,7 +75,7 @@
                         <td>{% if p.estimated_monthly_value %}${{ p.estimated_monthly_value|intcomma }}{% else %}—{% endif %}</td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="7" class="text-muted text-center">No prospects yet. Add one or ask your admin to import leads.</td></tr>
+                    <tr><td colspan="{% if is_sales_admin %}8{% else %}7{% endif %}" class="text-muted text-center">No prospects yet. Add one or ask your admin to import leads.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -91,6 +93,17 @@
         <form id="add-form">
             {% csrf_token %}
             <input type="hidden" name="action" value="add_prospect">
+            {% if is_sales_admin and salespeople %}
+            <div class="form-group">
+                <label>Assign to Salesperson *</label>
+                <select name="salesperson_id" class="form-input" required>
+                    <option value="">Select...</option>
+                    {% for s in salespeople %}
+                    <option value="{{ s.id }}">{{ s.user.get_full_name|default:s.user.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
             <div class="form-group">
                 <label>Business Name *</label>
                 <input type="text" name="business_name" class="form-input" required>

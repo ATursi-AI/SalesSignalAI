@@ -1,8 +1,11 @@
 """
 Salesperson views — personal pipeline, prospects, activity logging, daily calls, stats.
-Accessible by staff users who have a SalesPerson profile at /sales/.
+Accessible at /sales/ by:
+  - Superusers/admins: see ALL prospects across ALL salespeople (no SalesPerson profile needed)
+  - Staff with a SalesPerson profile: see only their own prospects
 """
 from datetime import date, timedelta
+from functools import wraps
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Sum, Q, Avg
@@ -19,39 +22,54 @@ def _get_sp(request):
     return getattr(request.user, 'salesperson_profile', None)
 
 
-def salesperson_required(view):
-    """Decorator: user must be logged in AND have a SalesPerson profile."""
-    from functools import wraps
+def sales_access_required(view):
+    """Decorator: user must be logged in AND be either a superuser or have a SalesPerson profile."""
 
     @wraps(view)
     @login_required
     def wrapper(request, *args, **kwargs):
         sp = _get_sp(request)
-        if not sp:
-            from django.http import HttpResponseForbidden
-            return HttpResponseForbidden('You do not have a salesperson profile.')
-        request.salesperson = sp
+        request.salesperson = sp  # may be None for admins
+        request.is_sales_admin = request.user.is_superuser
+        if not sp and not request.user.is_superuser:
+            return redirect('login')
         return view(request, *args, **kwargs)
     return wrapper
 
 
-@salesperson_required
+def _prospect_qs(request):
+    """Return the base prospect queryset: all for admins, own for salespeople."""
+    if request.is_sales_admin:
+        return SalesProspect.objects.all()
+    return request.salesperson.prospects.all()
+
+
+def _activity_qs(request):
+    """Return the base activity queryset: all for admins, own for salespeople."""
+    if request.is_sales_admin:
+        return SalesActivity.objects.all()
+    return request.salesperson.activities.all()
+
+
+@sales_access_required
 def pipeline(request):
-    """Kanban board for the salesperson's pipeline."""
+    """Kanban board — all prospects for admin, own for salesperson."""
     sp = request.salesperson
+    base_qs = _prospect_qs(request)
     stages = SalesProspect.PIPELINE_CHOICES
     columns = []
     for code, label in stages:
-        prospects = sp.prospects.filter(pipeline_stage=code).order_by('-updated_at')
+        prospects = base_qs.filter(pipeline_stage=code).select_related('salesperson__user').order_by('-updated_at')
         columns.append({'code': code, 'label': label, 'prospects': prospects})
 
     return render(request, 'sales/pipeline.html', {
         'columns': columns,
         'sp': sp,
+        'is_sales_admin': request.is_sales_admin,
     })
 
 
-@salesperson_required
+@sales_access_required
 def pipeline_move(request):
     """AJAX: move a prospect to a new pipeline stage."""
     if request.method != 'POST':
@@ -60,28 +78,42 @@ def pipeline_move(request):
     sp = request.salesperson
     prospect_id = request.POST.get('prospect_id')
     new_stage = request.POST.get('stage')
-    prospect = get_object_or_404(SalesProspect, id=prospect_id, salesperson=sp)
+
+    if request.is_sales_admin:
+        prospect = get_object_or_404(SalesProspect, id=prospect_id)
+    else:
+        prospect = get_object_or_404(SalesProspect, id=prospect_id, salesperson=sp)
+
     old_stage = prospect.pipeline_stage
     prospect.pipeline_stage = new_stage
     prospect.save(update_fields=['pipeline_stage', 'updated_at'])
 
-    # Auto-log stage change
+    # Auto-log stage change — attribute to the prospect's salesperson for admins
+    log_sp = sp or prospect.salesperson
     SalesActivity.objects.create(
-        prospect=prospect, salesperson=sp, activity_type='note',
+        prospect=prospect, salesperson=log_sp, activity_type='note',
         description=f'Moved from {old_stage} → {new_stage}',
     )
     return JsonResponse({'success': True})
 
 
-@salesperson_required
+@sales_access_required
 def prospects(request):
     """Full prospect table with search and filters."""
     sp = request.salesperson
 
     # Handle add prospect POST
     if request.method == 'POST' and request.POST.get('action') == 'add_prospect':
+        # Admin must pick a salesperson; salesperson defaults to self
+        if request.is_sales_admin:
+            sp_id = request.POST.get('salesperson_id')
+            assign_sp = get_object_or_404(SalesPerson, id=sp_id) if sp_id else sp
+            if not assign_sp:
+                return JsonResponse({'error': 'Select a salesperson'}, status=400)
+        else:
+            assign_sp = sp
         new = SalesProspect.objects.create(
-            salesperson=sp,
+            salesperson=assign_sp,
             business_name=request.POST.get('business_name', ''),
             owner_name=request.POST.get('owner_name', ''),
             phone=request.POST.get('phone', ''),
@@ -93,7 +125,7 @@ def prospects(request):
         )
         return JsonResponse({'success': True, 'id': new.id})
 
-    qs = sp.prospects.all()
+    qs = _prospect_qs(request).select_related('salesperson__user')
 
     stage = request.GET.get('stage', '')
     search = request.GET.get('q', '')
@@ -114,6 +146,8 @@ def prospects(request):
     return render(request, 'sales/prospects.html', {
         'prospects': qs[:200],
         'sp': sp,
+        'is_sales_admin': request.is_sales_admin,
+        'salespeople': SalesPerson.objects.filter(status='active') if request.is_sales_admin else None,
         'stages': SalesProspect.PIPELINE_CHOICES,
         'sources': SalesProspect.SOURCE_CHOICES,
         'current_stage': stage,
@@ -122,11 +156,18 @@ def prospects(request):
     })
 
 
-@salesperson_required
+@sales_access_required
 def prospect_detail(request, prospect_id):
     """Single prospect: info, activity timeline, action buttons."""
     sp = request.salesperson
-    prospect = get_object_or_404(SalesProspect, id=prospect_id, salesperson=sp)
+
+    if request.is_sales_admin:
+        prospect = get_object_or_404(SalesProspect, id=prospect_id)
+    else:
+        prospect = get_object_or_404(SalesProspect, id=prospect_id, salesperson=sp)
+
+    # For activity logging, attribute to prospect's salesperson if admin has no profile
+    log_sp = sp or prospect.salesperson
 
     if request.method == 'POST':
         action = request.POST.get('action', '')
@@ -138,7 +179,7 @@ def prospect_detail(request, prospect_id):
             duration = request.POST.get('call_duration')
 
             SalesActivity.objects.create(
-                prospect=prospect, salesperson=sp,
+                prospect=prospect, salesperson=log_sp,
                 activity_type=activity_type,
                 description=description,
                 outcome=outcome,
@@ -161,7 +202,7 @@ def prospect_detail(request, prospect_id):
                 prospect.next_follow_up_date = followup_date
                 prospect.save(update_fields=['next_follow_up_date'])
                 SalesActivity.objects.create(
-                    prospect=prospect, salesperson=sp,
+                    prospect=prospect, salesperson=log_sp,
                     activity_type='follow_up',
                     description=f'Follow-up scheduled for {followup_date}',
                 )
@@ -174,7 +215,7 @@ def prospect_detail(request, prospect_id):
                 prospect.estimated_monthly_value = monthly_value
             prospect.save(update_fields=['pipeline_stage', 'estimated_monthly_value', 'updated_at'])
             SalesActivity.objects.create(
-                prospect=prospect, salesperson=sp,
+                prospect=prospect, salesperson=log_sp,
                 activity_type='closed_won',
                 description=f'Deal closed! MRR: ${monthly_value or "TBD"}',
             )
@@ -186,7 +227,7 @@ def prospect_detail(request, prospect_id):
             prospect.lost_reason = lost_reason
             prospect.save(update_fields=['pipeline_stage', 'lost_reason', 'updated_at'])
             SalesActivity.objects.create(
-                prospect=prospect, salesperson=sp,
+                prospect=prospect, salesperson=log_sp,
                 activity_type='closed_lost',
                 description=f'Lost: {prospect.get_lost_reason_display()}',
             )
@@ -202,26 +243,13 @@ def prospect_detail(request, prospect_id):
             prospect.save()
             return JsonResponse({'success': True})
 
-        elif action == 'add_prospect':
-            new = SalesProspect.objects.create(
-                salesperson=sp,
-                business_name=request.POST.get('business_name', ''),
-                owner_name=request.POST.get('owner_name', ''),
-                phone=request.POST.get('phone', ''),
-                email=request.POST.get('email', ''),
-                service_category=request.POST.get('service_category', ''),
-                city=request.POST.get('city', ''),
-                state=request.POST.get('state', ''),
-                source='manual_entry',
-            )
-            return JsonResponse({'success': True, 'id': new.id})
-
-    activities = prospect.activities.all()[:50]
+    activities = prospect.activities.select_related('salesperson__user').all()[:50]
 
     return render(request, 'sales/prospect_detail.html', {
         'prospect': prospect,
         'activities': activities,
         'sp': sp,
+        'is_sales_admin': request.is_sales_admin,
         'stages': SalesProspect.PIPELINE_CHOICES,
         'lost_reasons': SalesProspect.LOST_REASON_CHOICES,
         'activity_types': SalesActivity.TYPE_CHOICES,
@@ -229,69 +257,77 @@ def prospect_detail(request, prospect_id):
     })
 
 
-@salesperson_required
+@sales_access_required
 def today_calls(request):
     """Today's call sheet: overdue follow-ups + today's follow-ups + call goal."""
     sp = request.salesperson
     today = date.today()
+    base_qs = _prospect_qs(request).select_related('salesperson__user')
+    act_qs = _activity_qs(request)
 
-    overdue = sp.prospects.filter(
+    overdue = base_qs.filter(
         next_follow_up_date__lt=today,
     ).exclude(
         pipeline_stage__in=['closed_won', 'closed_lost'],
     ).order_by('next_follow_up_date')
 
-    todays = sp.prospects.filter(
+    todays = base_qs.filter(
         next_follow_up_date=today,
     ).exclude(
         pipeline_stage__in=['closed_won', 'closed_lost'],
     ).order_by('business_name')
 
-    new_prospects = sp.prospects.filter(
+    new_prospects = base_qs.filter(
         pipeline_stage='new',
     ).order_by('-created_at')[:20]
 
-    calls_today = sp.activities.filter(
+    calls_today = act_qs.filter(
         activity_type='call', created_at__date=today,
     ).count()
+
+    call_goal = sp.daily_call_goal if sp else 0
 
     return render(request, 'sales/today.html', {
         'overdue': overdue,
         'todays': todays,
         'new_prospects': new_prospects,
         'calls_today': calls_today,
-        'call_goal': sp.daily_call_goal,
+        'call_goal': call_goal,
         'sp': sp,
+        'is_sales_admin': request.is_sales_admin,
     })
 
 
-@salesperson_required
+@sales_access_required
 def stats(request):
-    """Personal stats: calls, demos, deals, conversion, leaderboard."""
+    """Personal stats (salesperson) or team-wide stats (admin). Plus leaderboard."""
     sp = request.salesperson
     today = date.today()
     week_start = today - timedelta(days=today.weekday())
     month_start = today.replace(day=1)
 
-    calls_today = sp.activities.filter(activity_type='call', created_at__date=today).count()
-    calls_week = sp.activities.filter(activity_type='call', created_at__date__gte=week_start).count()
-    calls_month = sp.activities.filter(activity_type='call', created_at__date__gte=month_start).count()
-    demos_week = sp.activities.filter(activity_type='demo', created_at__date__gte=week_start).count()
-    demos_month = sp.activities.filter(activity_type='demo', created_at__date__gte=month_start).count()
-    deals_month = sp.prospects.filter(pipeline_stage='closed_won', updated_at__date__gte=month_start).count()
-    mrr_month = sp.prospects.filter(
+    act_qs = _activity_qs(request)
+    prospect_qs = _prospect_qs(request)
+
+    calls_today = act_qs.filter(activity_type='call', created_at__date=today).count()
+    calls_week = act_qs.filter(activity_type='call', created_at__date__gte=week_start).count()
+    calls_month = act_qs.filter(activity_type='call', created_at__date__gte=month_start).count()
+    demos_week = act_qs.filter(activity_type='demo', created_at__date__gte=week_start).count()
+    demos_month = act_qs.filter(activity_type='demo', created_at__date__gte=month_start).count()
+    deals_month = prospect_qs.filter(pipeline_stage='closed_won', updated_at__date__gte=month_start).count()
+    mrr_month = prospect_qs.filter(
         pipeline_stage='closed_won', updated_at__date__gte=month_start,
         estimated_monthly_value__isnull=False,
     ).aggregate(total=Sum('estimated_monthly_value'))['total'] or 0
 
-    total_won = sp.prospects.filter(pipeline_stage='closed_won').count()
-    total_closed = sp.prospects.filter(pipeline_stage__in=['closed_won', 'closed_lost']).count()
+    total_won = prospect_qs.filter(pipeline_stage='closed_won').count()
+    total_closed = prospect_qs.filter(pipeline_stage__in=['closed_won', 'closed_lost']).count()
     conversion_rate = round(total_won / total_closed * 100, 1) if total_closed else 0
 
-    active_pipeline = sp.prospects.exclude(
+    active_pipeline = prospect_qs.exclude(
         pipeline_stage__in=['closed_won', 'closed_lost'],
     ).count()
-    pipeline_value = sp.prospects.exclude(
+    pipeline_value = prospect_qs.exclude(
         pipeline_stage__in=['closed_won', 'closed_lost'],
     ).filter(
         estimated_monthly_value__isnull=False,
@@ -310,12 +346,13 @@ def stats(request):
             'name': person.user.get_full_name() or person.user.username,
             'deals': deals,
             'calls': calls,
-            'is_me': person.id == sp.id,
+            'is_me': sp and person.id == sp.id,
         })
     leaderboard.sort(key=lambda x: (-x['deals'], -x['calls']))
 
     return render(request, 'sales/stats.html', {
         'sp': sp,
+        'is_sales_admin': request.is_sales_admin,
         'calls_today': calls_today,
         'calls_week': calls_week,
         'calls_month': calls_month,
@@ -327,5 +364,5 @@ def stats(request):
         'active_pipeline': active_pipeline,
         'pipeline_value': pipeline_value,
         'leaderboard': leaderboard,
-        'call_goal': sp.daily_call_goal,
+        'call_goal': sp.daily_call_goal if sp else 0,
     })

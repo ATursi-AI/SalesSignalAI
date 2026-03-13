@@ -275,7 +275,7 @@ def _monitor_permits(scraper, borough, days, dry_run, remote, stats,
                      ingest_url, api_key):
     """Sub-monitor: NYC DOB permit applications (dataset ic3t-wcy2)."""
     since = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%dT00:00:00')
-    where = f"filing_date > '{since}'"
+    where = f"pre__filing_date > '{since}'"
 
     if borough:
         boro_code = BOROUGH_MAP.get(borough.lower(), '')
@@ -303,8 +303,8 @@ def _monitor_permits(scraper, borough, days, dry_run, remote, stats,
             house_num = item.get('house__', '')
             street = item.get('street_name', '')
             job_type = item.get('job_type', '')
-            description = item.get('job_description', '') or ''
-            filing_date_str = item.get('filing_date', '')
+            description = item.get('other_description', '') or item.get('job_status_descrp', '') or ''
+            filing_date_str = item.get('pre__filing_date', '') or item.get('fully_permitted', '')
             owner_first = item.get('owner_s_first_name', '')
             owner_last = item.get('owner_s_last_name', '')
 
@@ -403,7 +403,7 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
                         ingest_url, api_key):
     """Sub-monitor: NYC DOB violations (dataset 3h2n-5cm9)."""
     since = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%dT00:00:00')
-    where = f"violation_date > '{since}'"
+    where = f"issue_date > '{since}'"
 
     if borough:
         boro_code = BOROUGH_MAP.get(borough.lower(), '')
@@ -425,16 +425,17 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
         if scraper.is_stopped:
             break
         try:
-            bis_bn = item.get('isn_dob_bis_bn', '')
+            bis_viol = item.get('isn_dob_bis_viol', '')
             v_type = item.get('violation_type', '')
             v_category = item.get('violation_category', '')
-            violation_date_str = item.get('violation_date', '')
-            respondent = item.get('respondent_name', '')
-            house_num = item.get('respondent_house_number', '')
-            street = item.get('respondent_street', '')
-            city = item.get('respondent_city', '')
+            violation_date_str = item.get('issue_date', '')
+            description = item.get('description', '')
+            house_num = item.get('house_number', '')
+            street = item.get('street', '')
+            boro_code = item.get('boro', '')
 
-            address = _build_address(house_num, street, city or 'NYC')
+            borough_name = BOROUGH_NAMES.get(boro_code, 'NYC')
+            address = _build_address(house_num, street, borough_name)
             violation_date = _parse_soda_date(violation_date_str)
             services = _detect_violation_services(v_type, v_category)
 
@@ -445,19 +446,19 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
                 f'NYC DOB VIOLATION: {v_type}\n'
                 f'Category: {v_category}\n'
                 f'Address: {address}\n'
-                f'Respondent: {respondent}\n'
+                f'Description: {description[:300]}\n'
                 f'URGENT: Violations must be corrected or fines increase.\n'
                 f'Services needed: {", ".join(services[:6])}'
             )
 
             raw_data = {
                 'source_type': 'nyc_dob_violation',
-                'bis_bn': bis_bn,
+                'bis_viol': bis_viol,
                 'violation_type': v_type,
                 'violation_category': v_category,
                 'address': address,
-                'respondent': respondent,
-                'violation_date': violation_date_str,
+                'description': description[:500],
+                'issue_date': violation_date_str,
                 'services_mapped': services,
             }
 
@@ -475,7 +476,7 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
                     'platform': 'public_records',
                     'source_url': source_url,
                     'source_content': content,
-                    'author': respondent,
+                    'author': '',
                     'confidence': 'high',
                     'urgency': 'hot',
                     'detected_category': 'DOB_VIOLATION',
@@ -497,7 +498,7 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
                 platform='public_records',
                 source_url=source_url,
                 content=content,
-                author=respondent,
+                author='',
                 posted_at=violation_date,
                 raw_data=raw_data,
             )
@@ -527,7 +528,7 @@ def _monitor_certificates(scraper, borough, days, dry_run, remote, stats,
                           ingest_url, api_key):
     """Sub-monitor: NYC certificates of occupancy (dataset bs8b-p36w)."""
     since = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%dT00:00:00')
-    where = f"co_issue_date > '{since}'"
+    where = f"c_o_issue_date > '{since}'"
 
     if borough:
         boro_code = BOROUGH_MAP.get(borough.lower(), '')
@@ -549,13 +550,14 @@ def _monitor_certificates(scraper, borough, days, dry_run, remote, stats,
         if scraper.is_stopped:
             break
         try:
-            job_num = item.get('job__', '')
+            job_num = item.get('job_number', '')
             borough_code = item.get('borough', '')
-            house_num = item.get('house__', '')
+            house_num = item.get('house_number', '')
             street = item.get('street_name', '')
-            co_date_str = item.get('co_issue_date', '')
-            building_type = item.get('building_type', '')
-            occupancy = item.get('occupancy', '')
+            co_date_str = item.get('c_o_issue_date', '')
+            job_type = item.get('job_type', '')
+            issue_type = item.get('issue_type', '')
+            postcode = item.get('postcode', '')
 
             borough_name = BOROUGH_NAMES.get(borough_code, borough_code)
             address = _build_address(house_num, street, borough_name)
@@ -568,8 +570,8 @@ def _monitor_certificates(scraper, borough, days, dry_run, remote, stats,
                 f'Certificate of Occupancy Issued\n'
                 f'Address: {address}\n'
                 f'Borough: {borough_name}\n'
-                f'Building Type: {building_type}\n'
-                f'Occupancy: {occupancy}\n'
+                f'Job Type: {job_type}\n'
+                f'Issue Type: {issue_type}\n'
                 f'Job #: {job_num}\n'
                 f'New tenant moving in — high-value lead window.\n'
                 f'Services needed: {", ".join(CO_SERVICES[:6])}'
@@ -580,9 +582,10 @@ def _monitor_certificates(scraper, borough, days, dry_run, remote, stats,
                 'job_number': job_num,
                 'borough': borough_name,
                 'address': address,
-                'building_type': building_type,
-                'occupancy': occupancy,
-                'co_issue_date': co_date_str,
+                'job_type': job_type,
+                'issue_type': issue_type,
+                'postcode': postcode,
+                'c_o_issue_date': co_date_str,
                 'services_mapped': CO_SERVICES,
             }
 
