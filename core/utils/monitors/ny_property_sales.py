@@ -1,77 +1,59 @@
 """
 NY property sales monitor for SalesSignal AI.
 
-Monitors property sales from two sources:
-  a) NYC ACRIS (Automated City Register Information System) via Open Data
-     Dataset: bnx9-e6tj (Real Property Master)
-     Filters for DEED document types to identify recent sales.
-     Also uses usep-8jbt (NYC Rolling Sales Data) for cleaner records.
+Uses the NYC ACRIS (Automated City Register Information System) via three
+SODA API endpoints on NYC Open Data:
 
-  b) Long Island county recorder offices (Nassau & Suffolk)
-     Nassau: mynassauproperty.com / Open Data portals
-     Suffolk: suffolkcountyny.gov/assessor
+  1. Master (bnx9-e6tj) — recorded documents with amounts/dates
+  2. Legals (8h5j-fqxa) — property addresses (block/lot/borough)
+  3. Parties (636b-3b5g) — buyer names (party_type=2)
+
+Query flow:
+  a) Master: doc_type='DEED', recorded_datetime >= N days, document_amt > 0
+  b) Join legals for address
+  c) Join parties for buyer (party_type=2)
+
+Borough codes: 1=Manhattan, 2=Bronx, 3=Brooklyn, 4=Queens, 5=Staten Island
 
 Every property sale generates leads for:
   Moving, House Cleaning, Locksmith, Painter, Landscaping, Insurance,
   Mortgage Broker, Handyman, Pest Control
-
-New homeowners typically need services within 90 days of closing.
 """
-import json
 import logging
 import re
 from datetime import datetime, timedelta
 
 import requests
-from bs4 import BeautifulSoup
 from django.conf import settings
 from django.utils import timezone
 
-from .base import BaseScraper, RateLimitHit
 from .lead_processor import process_lead
 
 logger = logging.getLogger(__name__)
 
 # -------------------------------------------------------------------
-# Configuration
-# -------------------------------------------------------------------
-
 # NYC Open Data SODA endpoints
+# -------------------------------------------------------------------
 SODA_BASE = 'https://data.cityofnewyork.us/resource'
-DATASET_ACRIS = 'bnx9-e6tj'     # ACRIS Real Property Master
-DATASET_SALES = 'usep-8jbt'     # NYC Rolling Sales Data (more accessible)
 
-# ACRIS document types that indicate a sale
-DEED_TYPES = [
-    'DEED', 'DEEDO', 'DEED, RP', 'DEED, OTHER',
-    'DEED, EXECUTOR', 'DEED, REFEREE', 'DEED, TAX',
-]
-
-# Borough codes
-BOROUGH_MAP = {
-    'manhattan': '1', 'bronx': '2', 'brooklyn': '3',
-    'queens': '4', 'staten_island': '5', 'staten island': '5',
+DATASETS = {
+    'master': 'bnx9-e6tj',
+    'legals': '8h5j-fqxa',
+    'parties': '636b-3b5g',
 }
+
+# Deed-related doc_type codes in ACRIS master
+DEED_DOC_TYPES = ['DEED', 'DEEDO']
+
 BOROUGH_NAMES = {
     '1': 'Manhattan', '2': 'Bronx', '3': 'Brooklyn',
     '4': 'Queens', '5': 'Staten Island',
 }
-
-# Long Island county assessor sources
-LI_COUNTY_SOURCES = {
-    'nassau': {
-        'name': 'Nassau County',
-        'assessor_url': 'https://www.mynassauproperty.com/',
-        'search_url': 'https://www.mynassauproperty.com/Search/PropertySearch',
-    },
-    'suffolk': {
-        'name': 'Suffolk County',
-        'assessor_url': 'https://www.suffolkcountyny.gov/assessor',
-        'search_url': 'https://www.suffolkcountyny.gov/assessor',
-    },
+BOROUGH_FILTER = {
+    'manhattan': '1', 'bronx': '2', 'brooklyn': '3',
+    'queens': '4', 'staten_island': '5', 'staten island': '5',
 }
 
-# Services every new homeowner needs
 SALE_SERVICES = [
     'Moving', 'House Cleaning', 'Locksmith', 'Painter',
     'Landscaping', 'Insurance', 'Mortgage Broker', 'Handyman',
@@ -79,599 +61,186 @@ SALE_SERVICES = [
     'Window Cleaning', 'Gutter Cleaning',
 ]
 
-# Property price tiers for lead scoring
 PRICE_TIERS = {
-    'luxury': 1_000_000,   # $1M+ = luxury (highest value leads)
-    'premium': 500_000,    # $500K-$1M = premium
-    'standard': 200_000,   # $200K-$500K = standard
+    'luxury': 1_000_000,
+    'premium': 500_000,
+    'standard': 200_000,
 }
 
 
-class PropertySalesScraper(BaseScraper):
-    MONITOR_NAME = 'ny_property_sales'
-    DELAY_MIN = 1.0
-    DELAY_MAX = 3.0
-    MAX_REQUESTS_PER_RUN = 25
-    MAX_PER_DOMAIN = 20
-    COOLDOWN_MINUTES = 720  # 12 hours — sales data refreshes slowly
-    RESPECT_ROBOTS = False  # API endpoints
+def _soda_url(key):
+    return f'{SODA_BASE}/{DATASETS[key]}.json'
 
 
-def _soda_url(dataset_id):
-    """Build the SODA API URL for a dataset."""
-    return f'{SODA_BASE}/{dataset_id}.json'
+def _headers():
+    h = {}
+    token = getattr(settings, 'NYC_OPEN_DATA_APP_TOKEN', '')
+    if token:
+        h['X-App-Token'] = token
+    return h
+
+
+def _format_currency(value):
+    if not value:
+        return ''
+    try:
+        amount = float(re.sub(r'[^\d.]', '', str(value)))
+        if amount < 100:
+            return ''
+        return f'${amount:,.0f}'
+    except (ValueError, TypeError):
+        return ''
+
+
+def _price_tier(amount):
+    try:
+        amount = float(re.sub(r'[^\d.]', '', str(amount)))
+    except (ValueError, TypeError):
+        return 'standard'
+    if amount >= PRICE_TIERS['luxury']:
+        return 'luxury'
+    if amount >= PRICE_TIERS['premium']:
+        return 'premium'
+    if amount >= PRICE_TIERS['standard']:
+        return 'standard'
+    return 'budget'
 
 
 def _parse_date(date_str):
-    """Parse common date formats from property records."""
     if not date_str:
         return None
-
     date_str = date_str.strip()
-    formats = [
-        '%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S',
-        '%Y-%m-%d', '%m/%d/%Y', '%m/%d/%y',
-        '%m-%d-%Y', '%b %d, %Y', '%B %d, %Y',
-    ]
-
-    for fmt in formats:
+    for fmt in ['%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d']:
         try:
             dt = datetime.strptime(date_str, fmt)
             return timezone.make_aware(dt) if timezone.is_naive(dt) else dt
         except ValueError:
             continue
-
-    try:
-        dt = datetime.fromisoformat(date_str.replace('Z', '+00:00').split('T')[0])
-        return timezone.make_aware(dt) if timezone.is_naive(dt) else dt
-    except (ValueError, TypeError):
-        pass
-
     return None
 
 
-def _format_currency(value):
-    """Format a numeric value as currency string."""
-    if not value:
-        return ''
-    try:
-        if isinstance(value, str):
-            cleaned = re.sub(r'[^\d.]', '', value)
-            amount = float(cleaned)
-        else:
-            amount = float(value)
-        if amount < 100:
-            return ''  # Filter out nominal sales ($0, $1, etc.)
-        return f'${amount:,.0f}'
-    except (ValueError, TypeError):
-        return str(value) if value else ''
-
-
-def _price_tier(amount):
-    """Determine the price tier for lead scoring."""
-    try:
-        if isinstance(amount, str):
-            amount = float(re.sub(r'[^\d.]', '', amount))
-        amount = float(amount)
-    except (ValueError, TypeError):
-        return 'standard'
-
-    if amount >= PRICE_TIERS['luxury']:
-        return 'luxury'
-    elif amount >= PRICE_TIERS['premium']:
-        return 'premium'
-    elif amount >= PRICE_TIERS['standard']:
-        return 'standard'
-    return 'budget'
-
-
-def _post_lead_remote(ingest_url, api_key, lead_data):
-    """POST a lead to a remote SalesSignal instance via the ingest API."""
-    headers = {
-        'Authorization': f'Bearer {api_key}',
-        'Content-Type': 'application/json',
-    }
-    try:
-        resp = requests.post(
-            ingest_url,
-            data=json.dumps(lead_data),
-            headers=headers,
-            timeout=15,
-        )
-        try:
-            body = resp.json()
-        except (ValueError, json.JSONDecodeError):
-            body = {'raw': resp.text[:200]}
-        return resp.status_code in (201, 409), resp.status_code, body
-    except requests.RequestException as e:
-        logger.error(f'[Remote] POST failed: {e}')
-        return False, 0, {'error': str(e)}
-
-
-def _safe_cell(cells, idx):
-    """Safely extract text from a table cell by index."""
-    if idx is None or idx < 0 or idx >= len(cells):
-        return ''
-    return cells[idx].get_text(strip=True)
-
-
-# -------------------------------------------------------------------
-# Source: NYC ACRIS + Rolling Sales via SODA API
-# -------------------------------------------------------------------
-
-def _monitor_nyc(scraper, days, dry_run, remote, stats, ingest_url, api_key):
-    """NYC property sales via ACRIS / Rolling Sales SODA API."""
+def _fetch_master_records(days, borough=None):
+    """Fetch recent deed recordings from the ACRIS master dataset."""
     since = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%dT00:00:00')
+    url = _soda_url('master')
 
-    # Use NYC Rolling Sales dataset — cleaner data with addresses
-    url = _soda_url(DATASET_SALES)
+    codes_str = ','.join(f"'{c}'" for c in DEED_DOC_TYPES)
+    where_parts = [
+        f"recorded_datetime >= '{since}'",
+        "document_amt > 0",
+        f"doc_type in({codes_str})",
+    ]
+    if borough:
+        boro_code = BOROUGH_FILTER.get(borough.lower(), borough)
+        where_parts.append(f"recorded_borough='{boro_code}'")
+
     params = {
-        '$where': f"sale_date > '{since}' AND sale_price > 10000",
-        '$limit': 1000,
-        '$order': 'sale_date DESC',
+        '$where': ' AND '.join(where_parts),
+        '$select': 'document_id,recorded_datetime,document_amt,doc_type,recorded_borough,crfn',
+        '$limit': 2000,
+        '$order': 'recorded_datetime DESC',
     }
 
-    # Add optional app token for higher rate limits
-    app_token = getattr(settings, 'NYC_OPEN_DATA_APP_TOKEN', '')
-    extra_headers = {}
-    if app_token:
-        extra_headers['X-App-Token'] = app_token
-
     try:
-        resp = scraper.get(url, params=params, headers=extra_headers)
-        if not resp or resp.status_code != 200:
-            logger.warning(
-                f'[ny_property_sales] NYC API returned '
-                f'{resp.status_code if resp else "None"}'
-            )
-            stats['errors'] += 1
-            return
+        resp = requests.get(url, params=params, headers=_headers(), timeout=60)
+        if resp.status_code != 200:
+            logger.warning(f'[ny_property_sales] Master API returned {resp.status_code}')
+            return []
         items = resp.json()
-    except RateLimitHit:
-        logger.warning('[ny_property_sales] Rate limited on NYC API')
-        return
+        logger.info(f'[ny_property_sales] Fetched {len(items)} master records')
+        return items
     except Exception as e:
-        logger.error(f'[ny_property_sales] NYC API error: {e}')
-        stats['errors'] += 1
-        return
+        logger.error(f'[ny_property_sales] Error fetching master records: {e}')
+        return []
 
-    stats['items_scraped'] += len(items)
-    logger.info(f'[ny_property_sales] NYC: fetched {len(items)} sales')
 
-    for item in items:
-        if scraper.is_stopped:
-            break
+def _fetch_legals(document_ids):
+    """Fetch property addresses from the legals dataset for given document IDs."""
+    if not document_ids:
+        return {}
+
+    legals_map = {}
+    # Batch in groups of 50
+    for i in range(0, len(document_ids), 50):
+        batch = document_ids[i:i + 50]
+        ids_str = ','.join(f"'{d}'" for d in batch)
+        url = _soda_url('legals')
+        params = {
+            '$where': f"document_id in({ids_str})",
+            '$select': 'document_id,borough,block,lot,street_number,street_name',
+            '$limit': 5000,
+        }
         try:
-            # Extract address — try multiple field names
-            address = str(item.get('address', '')).strip()
-            if not address:
-                house = item.get('house_number', '')
-                street = item.get('street_name', '')
-                address = f'{house} {street}'.strip()
-
-            if not address:
+            resp = requests.get(url, params=params, headers=_headers(), timeout=30)
+            if resp.status_code != 200:
                 continue
-
-            borough_code = str(item.get('borough', ''))
-            borough_name = BOROUGH_NAMES.get(borough_code, borough_code)
-            zip_code = item.get('zip_code', '')
-            sale_price = item.get('sale_price', '')
-            sale_date_str = item.get('sale_date', '')
-            sale_date = _parse_date(sale_date_str)
-            building_class = item.get('building_class_at_time_of_sale', '')
-
-            # Determine property type from building class
-            prop_type = 'residential'
-            if building_class and building_class[0] not in 'ABCR':
-                prop_type = 'commercial'
-
-            price_display = _format_currency(sale_price)
-            tier = _price_tier(sale_price)
-
-            # Build lead content
-            content_parts = [
-                f'Property Sold: {address}',
-                f'Borough: {borough_name}',
-            ]
-            if price_display:
-                content_parts.append(f'Sale Price: {price_display}')
-            else:
-                content_parts.append('Sale Price: Undisclosed')
-            content_parts.append(f'Type: {prop_type.title()}')
-            if sale_date:
-                days_ago = (timezone.now() - sale_date).days
-                content_parts.append(f'Closed: {days_ago} days ago')
-            content_parts.append(f'Price Tier: {tier.title()}')
-            content_parts.append(
-                f'New homeowner needs: {", ".join(SALE_SERVICES[:7])}'
-            )
-
-            content = '\n'.join(content_parts)
-            source_url = _soda_url(DATASET_SALES)
-
-            raw_data = {
-                'source_type': 'property_sale',
-                'data_source': 'nyc_rolling_sales',
-                'address': address,
-                'borough': borough_name,
-                'zip_code': zip_code,
-                'sale_price': str(sale_price),
-                'sale_date': sale_date_str,
-                'building_class': building_class,
-                'property_type': prop_type,
-                'price_tier': tier,
-                'region': 'nyc',
-                'services_mapped': SALE_SERVICES,
-            }
-
-            if dry_run:
-                logger.info(
-                    f'[DRY RUN] NYC sale: {address}, {borough_name} — '
-                    f'{price_display or "undisclosed"}'
-                )
-                stats['created'] += 1
-                continue
-
-            if remote and ingest_url:
-                payload = {
-                    'platform': 'public_records',
-                    'source_url': source_url,
-                    'source_content': content,
-                    'author': '',
-                    'confidence': 'high',
-                    'detected_category': 'PROPERTY_SALE',
-                    'raw_data': raw_data,
-                }
-                ok, status_code, body = _post_lead_remote(
-                    ingest_url, api_key, payload,
-                )
-                if ok:
-                    if status_code == 201:
-                        stats['created'] += 1
-                    else:
-                        stats['duplicates'] += 1
-                else:
-                    stats['errors'] += 1
-                continue
-
-            lead, created, num_assigned = process_lead(
-                platform='public_records',
-                source_url=source_url,
-                content=content,
-                author='',
-                posted_at=sale_date,
-                raw_data=raw_data,
-                state='NY',
-                region=borough_name,
-                source_group='public_records',
-                source_type='property_sales',
-                contact_address=address,
-            )
-
-            if lead and created:
-                lead.confidence = 'high'
-                lead.detected_location = f'{address}, {borough_name}, NY'
-                if zip_code:
-                    lead.detected_zip = str(zip_code)
-                lead.save(update_fields=['confidence', 'detected_location', 'detected_zip'])
-                stats['created'] += 1
-                stats['assigned'] += num_assigned
-            else:
-                stats['duplicates'] += 1
-
-        except RateLimitHit:
-            break
+            for item in resp.json():
+                doc_id = item.get('document_id', '')
+                if doc_id and doc_id not in legals_map:
+                    street_num = item.get('street_number', '').strip()
+                    street_name = item.get('street_name', '').strip()
+                    addr = f'{street_num} {street_name}'.strip()
+                    if addr:
+                        legals_map[doc_id] = {
+                            'address': addr,
+                            'block': item.get('block', ''),
+                            'lot': item.get('lot', ''),
+                        }
         except Exception as e:
-            logger.error(f'[ny_property_sales] NYC sale error: {e}')
-            stats['errors'] += 1
+            logger.warning(f'[ny_property_sales] Error fetching legals batch: {e}')
+
+    logger.info(f'[ny_property_sales] Fetched addresses for {len(legals_map)} documents')
+    return legals_map
 
 
-# -------------------------------------------------------------------
-# Source: Long Island county assessor websites
-# -------------------------------------------------------------------
+def _fetch_parties(document_ids):
+    """Fetch buyer names from the parties dataset (party_type=2 = buyer/grantee)."""
+    if not document_ids:
+        return {}
 
-def _scrape_county_assessor(scraper, county_key, county_config):
-    """
-    Scrape a Long Island county assessor website for recent sales.
-    Uses generic table parsing as a fallback.
-
-    Returns list of sale dicts.
-    """
-    url = county_config.get('search_url') or county_config.get('assessor_url')
-    if not url:
-        return []
-
-    try:
-        resp = scraper.get(url)
-    except RateLimitHit:
-        raise
-    except Exception as e:
-        logger.error(
-            f'[ny_property_sales] Failed to fetch {county_config["name"]}: {e}'
-        )
-        return []
-
-    if not resp or resp.status_code != 200:
-        logger.warning(
-            f'[ny_property_sales] {county_config["name"]} returned '
-            f'{resp.status_code if resp else "no response"}'
-        )
-        return []
-
-    soup = BeautifulSoup(resp.text, 'html.parser')
-    sales = []
-
-    # Strategy 1: Look for property sales tables
-    tables = soup.find_all('table')
-    for table in tables:
-        headers = [th.get_text(strip=True).lower() for th in table.find_all('th')]
-        if not headers:
-            first_row = table.find('tr')
-            if first_row:
-                headers = [
-                    td.get_text(strip=True).lower()
-                    for td in first_row.find_all(['td', 'th'])
-                ]
-
-        # Check if this looks like a sales/property table
-        sale_keywords = ['address', 'price', 'sale', 'date', 'buyer',
-                         'parcel', 'grantee', 'consideration']
-        if not any(any(kw in h for kw in sale_keywords) for h in headers):
-            continue
-
-        # Map header positions
-        col_map = {}
-        for i, h in enumerate(headers):
-            if 'address' in h or 'location' in h or 'property' in h:
-                col_map.setdefault('address', i)
-            elif 'price' in h or 'amount' in h or 'consideration' in h:
-                col_map.setdefault('sale_price', i)
-            elif 'date' in h:
-                col_map.setdefault('sale_date', i)
-            elif 'buyer' in h or 'grantee' in h or 'purchaser' in h:
-                col_map.setdefault('buyer', i)
-            elif 'type' in h or 'class' in h:
-                col_map.setdefault('property_type', i)
-
-        rows = table.find_all('tr')[1:]
-        for row in rows:
-            cells = row.find_all('td')
-            if not cells or len(cells) < 3:
-                continue
-
-            sale = {
-                'address': _safe_cell(cells, col_map.get('address')),
-                'sale_price': _safe_cell(cells, col_map.get('sale_price')),
-                'sale_date': _safe_cell(cells, col_map.get('sale_date')),
-                'buyer': _safe_cell(cells, col_map.get('buyer')),
-                'property_type': _safe_cell(cells, col_map.get('property_type')),
-            }
-            if sale['address']:
-                sales.append(sale)
-
-    # Strategy 2: Try generic column-based extraction
-    if not sales:
-        for table in tables:
-            rows = table.find_all('tr')
-            for row in rows[1:]:
-                cells = row.find_all('td')
-                if len(cells) < 3:
-                    continue
-                sale = {
-                    'address': cells[0].get_text(strip=True) if len(cells) > 0 else '',
-                    'sale_price': cells[1].get_text(strip=True) if len(cells) > 1 else '',
-                    'sale_date': cells[2].get_text(strip=True) if len(cells) > 2 else '',
-                    'buyer': cells[3].get_text(strip=True) if len(cells) > 3 else '',
-                    'property_type': '',
-                }
-                if sale['address']:
-                    sales.append(sale)
-
-    return sales
-
-
-def _monitor_li_county(scraper, county_key, days, dry_run, remote, stats,
-                       ingest_url, api_key):
-    """Long Island county property sales via assessor websites."""
-    config = LI_COUNTY_SOURCES.get(county_key)
-    if not config:
-        logger.warning(f'[ny_property_sales] Unknown county: {county_key}')
-        stats['errors'] += 1
-        return
-
-    county_name = config['name']
-    logger.info(f'[ny_property_sales] Scraping {county_name}...')
-
-    try:
-        sales = _scrape_county_assessor(scraper, county_key, config)
-    except RateLimitHit:
-        logger.warning(f'[ny_property_sales] Rate limited on {county_name}')
-        return
-    except Exception as e:
-        logger.error(f'[ny_property_sales] {county_name} error: {e}')
-        stats['errors'] += 1
-        return
-
-    stats['items_scraped'] += len(sales)
-    logger.info(f'[ny_property_sales] {county_name}: found {len(sales)} sales')
-
-    cutoff = timezone.now() - timedelta(days=days)
-
-    for sale in sales:
-        if scraper.is_stopped:
-            break
+    parties_map = {}
+    for i in range(0, len(document_ids), 50):
+        batch = document_ids[i:i + 50]
+        ids_str = ','.join(f"'{d}'" for d in batch)
+        url = _soda_url('parties')
+        params = {
+            '$where': f"document_id in({ids_str}) AND party_type='2'",
+            '$select': 'document_id,name',
+            '$limit': 5000,
+        }
         try:
-            address = sale.get('address', '')
-            if not address:
+            resp = requests.get(url, params=params, headers=_headers(), timeout=30)
+            if resp.status_code != 200:
                 continue
-
-            sale_price = sale.get('sale_price', '')
-            sale_date = _parse_date(sale.get('sale_date', ''))
-            buyer = sale.get('buyer', '')
-            prop_type = sale.get('property_type', '')
-
-            # Skip old sales
-            if sale_date and sale_date < cutoff:
-                continue
-
-            price_display = _format_currency(sale_price)
-            tier = _price_tier(sale_price)
-
-            # Build lead content
-            content_parts = [
-                f'Property Sold: {address}',
-                f'County: {county_name}, NY',
-            ]
-            if price_display:
-                content_parts.append(f'Sale Price: {price_display}')
-            if sale_date:
-                days_ago = (timezone.now() - sale_date).days
-                content_parts.append(f'Closed: {days_ago} days ago')
-            if buyer:
-                content_parts.append(f'Buyer: {buyer}')
-            if prop_type:
-                content_parts.append(f'Property Type: {prop_type}')
-            content_parts.append(f'Price Tier: {tier.title()}')
-            content_parts.append(
-                f'New homeowner needs: {", ".join(SALE_SERVICES[:7])}'
-            )
-
-            content = '\n'.join(content_parts)
-            source_url = config.get('assessor_url', '')
-
-            raw_data = {
-                'source_type': 'property_sale',
-                'data_source': f'li_{county_key}',
-                'address': address,
-                'sale_price': sale_price,
-                'sale_date': sale.get('sale_date', ''),
-                'buyer': buyer,
-                'property_type': prop_type,
-                'county': county_name,
-                'state': 'NY',
-                'price_tier': tier,
-                'region': county_key,
-                'services_mapped': SALE_SERVICES,
-            }
-
-            if dry_run:
-                logger.info(
-                    f'[DRY RUN] {county_name} sale: {address} — '
-                    f'{price_display or "no price"}'
-                )
-                stats['created'] += 1
-                continue
-
-            if remote and ingest_url:
-                payload = {
-                    'platform': 'public_records',
-                    'source_url': source_url,
-                    'source_content': content,
-                    'author': buyer,
-                    'confidence': 'high',
-                    'detected_category': 'PROPERTY_SALE',
-                    'raw_data': raw_data,
-                }
-                ok, status_code, body = _post_lead_remote(
-                    ingest_url, api_key, payload,
-                )
-                if ok:
-                    if status_code == 201:
-                        stats['created'] += 1
-                    else:
-                        stats['duplicates'] += 1
-                else:
-                    stats['errors'] += 1
-                continue
-
-            lead, created, num_assigned = process_lead(
-                platform='public_records',
-                source_url=source_url,
-                content=content,
-                author=buyer,
-                posted_at=sale_date,
-                raw_data=raw_data,
-                state='NY',
-                region=county_name,
-                source_group='public_records',
-                source_type='property_sales',
-                contact_name=buyer,
-                contact_address=address,
-            )
-
-            if lead and created:
-                lead.confidence = 'high'
-                lead.save(update_fields=['confidence'])
-                stats['created'] += 1
-                stats['assigned'] += num_assigned
-            else:
-                stats['duplicates'] += 1
-
-        except RateLimitHit:
-            break
+            for item in resp.json():
+                doc_id = item.get('document_id', '')
+                name = item.get('name', '').strip()
+                if doc_id and name and doc_id not in parties_map:
+                    parties_map[doc_id] = name
         except Exception as e:
-            logger.error(
-                f'[ny_property_sales] {county_name} sale error: {e}'
-            )
-            stats['errors'] += 1
+            logger.warning(f'[ny_property_sales] Error fetching parties batch: {e}')
+
+    logger.info(f'[ny_property_sales] Fetched buyer names for {len(parties_map)} documents')
+    return parties_map
 
 
-# -------------------------------------------------------------------
-# Main monitor function
-# -------------------------------------------------------------------
-
-def monitor_ny_property_sales(source='nyc', county=None, days=30,
-                              dry_run=False, remote=False):
+def monitor_ny_property_sales(days=30, borough=None, dry_run=False):
     """
-    Monitor NY property sales from ACRIS and Long Island county records.
+    Monitor NYC property sales via ACRIS SODA API.
 
-    Two data sources:
-      - 'nyc': NYC Rolling Sales / ACRIS via Open Data SODA API
-      - 'long_island': Nassau and Suffolk county assessor websites
-      - 'all': both sources
+    Queries three ACRIS datasets: master for recent deed recordings,
+    legals for addresses, parties for buyer names.
 
     Args:
-        source: 'nyc', 'long_island', or 'all'
-        county: for Long Island, specific county ('nassau' or 'suffolk').
-                None = all available counties.
         days: how many days back to search (default: 30)
+        borough: filter by borough name (manhattan/bronx/brooklyn/queens)
         dry_run: if True, log matches without creating Lead records
-        remote: if True, POST leads to REMOTE_INGEST_URL
 
     Returns:
-        dict with counts: sources_checked, items_scraped, created,
-                         duplicates, assigned, errors
+        dict with counts
     """
-    scraper = PropertySalesScraper()
-
-    # Check cooldown
-    allowed, reason = scraper.check_cooldown()
-    if not allowed and not dry_run:
-        logger.info(reason)
-        return {
-            'sources_checked': 0, 'items_scraped': 0, 'created': 0,
-            'duplicates': 0, 'assigned': 0, 'errors': 0,
-            'skipped_reason': reason,
-        }
-
-    # Resolve remote config
-    ingest_url = ''
-    ingest_key = ''
-    if remote:
-        ingest_url = getattr(settings, 'REMOTE_INGEST_URL', '')
-        ingest_key = getattr(settings, 'INGEST_API_KEY', '')
-        if not ingest_url or not ingest_key:
-            logger.error(
-                '[Remote] REMOTE_INGEST_URL and INGEST_API_KEY must be set '
-                'in .env for --remote mode'
-            )
-            return {
-                'sources_checked': 0, 'items_scraped': 0, 'created': 0,
-                'duplicates': 0, 'assigned': 0, 'errors': 1,
-            }
-
     stats = {
-        'sources_checked': 0,
+        'sources_checked': 1,
         'items_scraped': 0,
         'created': 0,
         'duplicates': 0,
@@ -679,58 +248,100 @@ def monitor_ny_property_sales(source='nyc', county=None, days=30,
         'errors': 0,
     }
 
-    valid_sources = {'nyc', 'long_island', 'all', 'nassau', 'suffolk'}
-    if source not in valid_sources:
-        logger.error(
-            f'[ny_property_sales] Invalid source: {source}. '
-            f'Valid: {", ".join(valid_sources)}'
-        )
-        return {
-            'sources_checked': 0, 'items_scraped': 0, 'created': 0,
-            'duplicates': 0, 'assigned': 0, 'errors': 1,
-        }
+    # Step 1: Fetch master records (deeds only)
+    master_records = _fetch_master_records(days, borough=borough)
+    if not master_records:
+        logger.info('[ny_property_sales] No master records found')
+        return stats
 
-    logger.info(
-        f'[ny_property_sales] Starting — source={source}, '
-        f'county={county or "all"}, days={days}'
-    )
+    stats['items_scraped'] = len(master_records)
+    doc_ids = [r.get('document_id', '') for r in master_records if r.get('document_id')]
 
-    # ------- NYC ACRIS / Rolling Sales -------
-    if source in ('nyc', 'all'):
-        stats['sources_checked'] += 1
-        _monitor_nyc(
-            scraper, days, dry_run, remote, stats, ingest_url, ingest_key,
-        )
+    # Step 2: Fetch addresses and buyer names
+    legals_map = _fetch_legals(doc_ids)
+    parties_map = _fetch_parties(doc_ids)
 
-    # ------- Long Island counties -------
-    if source in ('long_island', 'all', 'nassau', 'suffolk'):
-        # Backward compat: source='nassau' or 'suffolk' directly
-        if source in ('nassau', 'suffolk'):
-            counties_to_scrape = [source]
-        elif county:
-            county_key = county.lower().strip()
-            if county_key not in LI_COUNTY_SOURCES:
-                logger.error(
-                    f'[ny_property_sales] Unknown county: {county}. '
-                    f'Valid: {", ".join(LI_COUNTY_SOURCES.keys())}'
-                )
-                stats['errors'] += 1
-                counties_to_scrape = []
-            else:
-                counties_to_scrape = [county_key]
-        else:
-            counties_to_scrape = list(LI_COUNTY_SOURCES.keys())
+    # Step 3: Process each sale
+    printed = 0
+    for record in master_records:
+        doc_id = record.get('document_id', '')
+        if not doc_id:
+            continue
 
-        counties_to_scrape = scraper.shuffle(counties_to_scrape)
+        legal = legals_map.get(doc_id, {})
+        address = legal.get('address', '')
+        if not address:
+            continue
 
-        for county_key in counties_to_scrape:
-            if scraper.is_stopped:
-                break
-            stats['sources_checked'] += 1
-            _monitor_li_county(
-                scraper, county_key, days, dry_run, remote, stats,
-                ingest_url, ingest_key,
+        buyer = parties_map.get(doc_id, '')
+        boro_code = str(record.get('recorded_borough', ''))
+        boro_name = BOROUGH_NAMES.get(boro_code, boro_code)
+        sale_price = record.get('document_amt', '')
+        sale_date_str = record.get('recorded_datetime', '')
+        sale_date = _parse_date(sale_date_str)
+        price_display = _format_currency(sale_price)
+        tier = _price_tier(sale_price)
+
+        full_address = f'{address}, {boro_name}, NY'
+
+        content_parts = [
+            f'Property Sold: {full_address}',
+            f'Borough: {boro_name}',
+        ]
+        if price_display:
+            content_parts.append(f'Sale Price: {price_display}')
+        if sale_date:
+            days_ago = (timezone.now() - sale_date).days
+            content_parts.append(f'Closed: {days_ago} days ago')
+        if buyer:
+            content_parts.append(f'Buyer: {buyer}')
+        content_parts.append(f'Price Tier: {tier.title()}')
+        content_parts.append(f'New homeowner needs: {", ".join(SALE_SERVICES[:7])}')
+        content = '\n'.join(content_parts)
+
+        if dry_run:
+            if printed < 5:
+                print(f'\n  [{boro_name}] {full_address}')
+                print(f'    Price: {price_display or "undisclosed"}  Buyer: {buyer or "unknown"}')
+                if sale_date:
+                    print(f'    Recorded: {sale_date.strftime("%Y-%m-%d")}  Tier: {tier}')
+                printed += 1
+            stats['created'] += 1
+            continue
+
+        try:
+            lead, created, num_assigned = process_lead(
+                platform='public_records',
+                source_url=_soda_url('master'),
+                content=content,
+                author=buyer,
+                posted_at=sale_date,
+                raw_data={
+                    'data_source': 'acris',
+                    'document_id': doc_id,
+                    'address': full_address,
+                    'borough': boro_name,
+                    'sale_price': str(sale_price),
+                    'buyer': buyer,
+                    'price_tier': tier,
+                    'block': legal.get('block', ''),
+                    'lot': legal.get('lot', ''),
+                },
+                state='NY',
+                region=boro_name,
+                source_group='public_records',
+                source_type='property_sales',
+                contact_name=buyer,
+                contact_address=full_address,
             )
+            if created:
+                stats['created'] += 1
+                stats['assigned'] += num_assigned
+            else:
+                stats['duplicates'] += 1
+        except Exception as e:
+            logger.error(f'[ny_property_sales] Error processing sale: {e}')
+            stats['errors'] += 1
 
     logger.info(f'NY property sales monitor complete: {stats}')
     return stats

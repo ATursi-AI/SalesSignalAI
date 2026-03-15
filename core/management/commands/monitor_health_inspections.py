@@ -1,32 +1,30 @@
 """
-Management command to run the health inspections monitor.
+Management command to monitor NYC restaurant health inspections via SODA API.
+
 Usage:
-    python manage.py monitor_health_inspections
-    python manage.py monitor_health_inspections --dry-run
-    python manage.py monitor_health_inspections --max-age 14
-    python manage.py monitor_health_inspections --source-id 1
+    python manage.py monitor_health_inspections --days 30 --dry-run
+    python manage.py monitor_health_inspections --borough manhattan --days 14
+    python manage.py monitor_health_inspections --days 60
 """
 from django.core.management.base import BaseCommand
 
-from core.models import HealthInspectionSource
-from core.utils.monitors.health_inspections import monitor_health_inspections
+from core.utils.monitors.ny_health_violations import monitor_ny_health_violations
 
 
 class Command(BaseCommand):
     help = (
-        'Scrape health department databases for restaurant inspection failures. '
-        'Failed inspections = forced demand for cleaning, pest control, plumbing. '
-        'Configure sources via HealthInspectionSource model in admin.'
+        'Monitor NYC restaurant health inspections via DOHMH SODA API. '
+        'Failed inspections = forced demand for cleaning, pest control, plumbing, HVAC.'
     )
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--max-age', type=int, default=30,
-            help='Skip inspections older than this many days (default: 30)',
+            '--borough', type=str, default=None,
+            help='Filter by borough (manhattan/bronx/brooklyn/queens/staten_island)',
         )
         parser.add_argument(
-            '--source-id', type=int, action='append', dest='source_ids',
-            help='Only scrape specific source IDs (can repeat)',
+            '--days', type=int, default=30,
+            help='Look back this many days (default: 30)',
         )
         parser.add_argument(
             '--dry-run', action='store_true',
@@ -34,28 +32,21 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        sources = HealthInspectionSource.objects.filter(is_active=True)
-        if options['source_ids']:
-            sources = sources.filter(id__in=options['source_ids'])
-
-        self.stdout.write(self.style.HTTP_INFO('Starting Health Inspections monitor...'))
-        self.stdout.write(f"  Active sources: {sources.count()}")
-        self.stdout.write(f"  Max age: {options['max_age']} days")
+        self.stdout.write(self.style.HTTP_INFO('Starting NYC Health Inspections monitor...'))
+        self.stdout.write(f"  Source: DOHMH SODA API (43nn-pn8j)")
+        self.stdout.write(f"  Borough: {options['borough'] or 'all'}")
+        self.stdout.write(f"  Days:   {options['days']}")
         if options['dry_run']:
             self.stdout.write(self.style.WARNING('  DRY RUN MODE'))
 
-        stats = monitor_health_inspections(
-            source_ids=options.get('source_ids'),
-            max_age_days=options['max_age'],
+        stats = monitor_ny_health_violations(
+            days=options['days'],
+            borough=options['borough'],
             dry_run=options['dry_run'],
         )
 
-        if 'skipped_reason' in stats:
-            self.stdout.write(self.style.WARNING(f"  Skipped: {stats['skipped_reason']}"))
-            return
-
         self.stdout.write('')
-        self.stdout.write(self.style.SUCCESS('Health Inspections Monitor Results:'))
+        self.stdout.write(self.style.SUCCESS('NYC Health Inspections Monitor Results:'))
         self.stdout.write(f"  Sources checked:    {stats['sources_checked']}")
         self.stdout.write(f"  Inspections scraped:{stats['items_scraped']}")
         self.stdout.write(f"  Leads created:      {stats['created']}")

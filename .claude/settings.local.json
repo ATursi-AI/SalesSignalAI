@@ -135,7 +135,10 @@
       "Bash(venv/Scripts/python.exe manage.py monitor_nextdoor_search --help)",
       "Bash(venv/Scripts/python.exe manage.py monitor_nextdoor_search --days 7 --keywords \"plumber,electrician,hvac,house cleaning\" --headed --force --dry-run)",
       "Bash(venv/Scripts/python.exe manage.py monitor_nextdoor_search --days 7 --keywords \"plumber,electrician\" --headed --force --dry-run)",
-      "Bash(venv/Scripts/python.exe manage.py monitor_nextdoor_search --days 7 --keywords \"electrician,hvac,roofer\" --headed --force --dry-run)"
+      "Bash(venv/Scripts/python.exe manage.py monitor_nextdoor_search --days 7 --keywords \"electrician,hvac,roofer\" --headed --force --dry-run)",
+      "Bash(venv/Scripts/python.exe manage.py monitor_health_inspections --days 30 --dry-run)",
+      "Bash(venv/Scripts/python.exe manage.py monitor_ny_business_filings --days 30 --dry-run)",
+      "Bash(venv/Scripts/python.exe manage.py monitor_property_sales_ny --days 30 --dry-run)"
     ]
   }
 }

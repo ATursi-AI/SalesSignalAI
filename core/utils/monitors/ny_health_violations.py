@@ -1,375 +1,131 @@
 """
-NY health department violation monitor for SalesSignal AI.
+NYC restaurant health inspection monitor for SalesSignal AI.
 
-Monitors health department violation data from multiple sources:
-  a) NYC — Restaurant inspection results via NYC Open Data (SODA API)
-     Dataset: 43nn-pn8j (DOHMH New York City Restaurant Inspection Results)
-  b) Long Island — Nassau/Suffolk county health department sites (HTML scrape)
+Uses the NYC Open Data SODA API to query DOHMH restaurant inspection results:
 
-Health violations are HIGH-URGENCY leads because restaurants risk closure
-if they don't fix violations before the follow-up inspection.
+  Dataset: 43nn-pn8j (https://data.cityofnewyork.us/resource/43nn-pn8j.json)
 
-Critical violations (critical_flag='Critical') -> urgency='hot'
-Non-critical violations -> urgency='warm'
+Filters:
+  - inspection_date >= N days ago
+  - violation_code IS NOT NULL
+  - inspection_date != '1900-01-01T00:00:00.000' (bad data)
 
-Lead categories: Commercial Cleaning, Pest Control, HVAC, Kitchen Equipment Repair
+Urgency:
+  - critical_flag='Critical' OR score >= 28 = HOT
+  - score 14-27 = WARM
+  - score < 14 = new
+
+Health violations are high-urgency leads — restaurants risk closure
+if they don't fix violations before follow-up inspection.
 """
 import logging
-import re
 from datetime import datetime, timedelta
 
-from bs4 import BeautifulSoup
+import requests
+from django.conf import settings
 from django.utils import timezone
 
-from .base import BaseScraper, RateLimitHit
 from .lead_processor import process_lead
 
 logger = logging.getLogger(__name__)
 
 # -------------------------------------------------------------------
-# NYC Open Data configuration
+# NYC Open Data SODA endpoint
 # -------------------------------------------------------------------
-NYC_OPEN_DATA_BASE = 'https://data.cityofnewyork.us/resource'
-NYC_RESTAURANT_INSPECTIONS_DATASET = '43nn-pn8j'
+SODA_URL = 'https://data.cityofnewyork.us/resource/43nn-pn8j.json'
 
-# Long Island health department URLs (HTML scrape targets)
-LI_HEALTH_URLS = {
-    'nassau': 'https://www.nassaucountyny.gov/health-inspections',
-    'suffolk': 'https://www.suffolkcountyny.gov/health-inspections',
-}
-
-# Borough code mapping for NYC data
+# Borough mapping
 BORO_MAP = {
-    '1': 'Manhattan',
-    '2': 'Bronx',
-    '3': 'Brooklyn',
-    '4': 'Queens',
-    '5': 'Staten Island',
-    'MANHATTAN': 'Manhattan',
-    'BRONX': 'Bronx',
-    'BROOKLYN': 'Brooklyn',
-    'QUEENS': 'Queens',
-    'STATEN ISLAND': 'Staten Island',
+    'MANHATTAN': 'Manhattan', 'BRONX': 'Bronx', 'BROOKLYN': 'Brooklyn',
+    'QUEENS': 'Queens', 'STATEN ISLAND': 'Staten Island',
+    '1': 'Manhattan', '2': 'Bronx', '3': 'Brooklyn',
+    '4': 'Queens', '5': 'Staten Island',
+}
+BORO_FILTER = {
+    'manhattan': 'Manhattan', 'bronx': 'Bronx', 'brooklyn': 'Brooklyn',
+    'queens': 'Queens', 'staten_island': 'Staten Island',
+    'staten island': 'Staten Island',
 }
 
-# Violation description keywords -> services needed
+# Violation keywords -> services needed
 VIOLATION_SERVICE_MAP = {
     'pest': ['pest control', 'exterminator'],
     'rodent': ['pest control', 'exterminator'],
     'mice': ['pest control', 'exterminator'],
-    'rat': ['pest control', 'exterminator'],
     'roach': ['pest control', 'exterminator'],
-    'cockroach': ['pest control', 'exterminator'],
-    'insect': ['pest control', 'exterminator'],
     'fly': ['pest control', 'exterminator'],
     'vermin': ['pest control', 'exterminator'],
     'plumbing': ['plumber'],
     'leak': ['plumber'],
     'drain': ['plumber', 'drain cleaning'],
-    'sewage': ['plumber', 'sewer service'],
     'ventilation': ['HVAC'],
     'exhaust': ['HVAC'],
     'hood': ['commercial kitchen cleaning', 'HVAC'],
     'temperature': ['HVAC', 'refrigeration repair'],
     'refriger': ['refrigeration repair', 'kitchen equipment repair'],
-    'cooler': ['refrigeration repair', 'kitchen equipment repair'],
-    'freezer': ['refrigeration repair', 'kitchen equipment repair'],
-    'cold holding': ['refrigeration repair', 'kitchen equipment repair'],
-    'hot holding': ['kitchen equipment repair'],
+    'cooler': ['refrigeration repair'],
+    'freezer': ['refrigeration repair'],
     'cleaning': ['commercial cleaning', 'deep cleaning'],
     'sanit': ['commercial cleaning', 'deep cleaning'],
-    'wash': ['commercial cleaning', 'plumber'],
     'floor': ['commercial cleaning', 'flooring'],
-    'ceiling': ['general contractor'],
     'wall': ['painter', 'general contractor'],
     'mold': ['mold remediation'],
     'grease': ['grease trap cleaning', 'commercial kitchen cleaning'],
     'fire': ['fire safety', 'electrician'],
-    'extinguisher': ['fire safety'],
     'electrical': ['electrician'],
-    'lighting': ['electrician'],
     'trash': ['commercial cleaning', 'waste management'],
-    'garbage': ['commercial cleaning', 'waste management'],
     'restroom': ['plumber', 'commercial cleaning'],
-    'hand wash': ['plumber', 'commercial cleaning'],
 }
 
-# Default services for any health violation
 DEFAULT_SERVICES = ['commercial cleaning', 'pest control', 'HVAC', 'kitchen equipment repair']
 
 
-class HealthViolationScraper(BaseScraper):
-    MONITOR_NAME = 'ny_health_violation'
-    DELAY_MIN = 3.0
-    DELAY_MAX = 8.0
-    MAX_REQUESTS_PER_RUN = 40
-    MAX_PER_DOMAIN = 20
-    COOLDOWN_MINUTES = 360  # 6 hours
-    RESPECT_ROBOTS = True
+def _detect_services(violation_text):
+    if not violation_text:
+        return DEFAULT_SERVICES
+    text_lower = violation_text.lower()
+    services = set()
+    for key, service_list in VIOLATION_SERVICE_MAP.items():
+        if key in text_lower:
+            services.update(service_list)
+    return list(services) if services else DEFAULT_SERVICES
 
 
 def _parse_date(date_str):
-    """Parse common date formats from health department data."""
     if not date_str:
         return None
-
     date_str = date_str.strip()
-    formats = [
-        '%Y-%m-%d', '%m/%d/%Y', '%m/%d/%y',
-        '%Y-%m-%dT%H:%M:%S', '%m-%d-%Y',
-        '%b %d, %Y', '%B %d, %Y',
-        '%d-%b-%Y', '%Y/%m/%d',
-    ]
-
-    for fmt in formats:
+    for fmt in ['%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d']:
         try:
             dt = datetime.strptime(date_str, fmt)
             return timezone.make_aware(dt) if timezone.is_naive(dt) else dt
         except ValueError:
             continue
-
-    # ISO format fallback
-    try:
-        dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-        return timezone.make_aware(dt) if timezone.is_naive(dt) else dt
-    except (ValueError, TypeError):
-        pass
-
     return None
 
 
-def _detect_services(violation_text):
-    """Map violation description text to relevant services needed."""
-    if not violation_text:
-        return DEFAULT_SERVICES
-
-    text_lower = violation_text.lower()
-    services = set()
-
-    for key, service_list in VIOLATION_SERVICE_MAP.items():
-        if key in text_lower:
-            services.update(service_list)
-
-    return list(services) if services else DEFAULT_SERVICES
+def _headers():
+    h = {}
+    token = getattr(settings, 'NYC_OPEN_DATA_APP_TOKEN', '')
+    if token:
+        h['X-App-Token'] = token
+    return h
 
 
-def _build_nyc_address(record):
-    """Build full address from NYC Open Data inspection fields."""
-    parts = []
-    building = record.get('building', '').strip()
-    street = record.get('street', '').strip()
-    if building and street:
-        parts.append(f'{building} {street}')
-    elif street:
-        parts.append(street)
-
-    boro = record.get('boro', '')
-    boro_name = BORO_MAP.get(str(boro).upper(), str(boro))
-    if boro_name:
-        parts.append(boro_name)
-
-    parts.append('NY')
-
-    zipcode = record.get('zipcode', '').strip()
-    if zipcode:
-        parts.append(zipcode)
-
-    return ', '.join(parts)
-
-
-def _fetch_nyc_inspections(scraper, days):
+def monitor_ny_health_violations(days=30, borough=None, dry_run=False):
     """
-    Fetch NYC restaurant inspection results from NYC Open Data SODA API.
-    Returns list of violation dicts grouped by restaurant.
-    """
-    cutoff_date = (timezone.now() - timedelta(days=days)).strftime('%Y-%m-%dT%H:%M:%S')
-
-    # Query for recent inspections with violations
-    url = (
-        f'{NYC_OPEN_DATA_BASE}/{NYC_RESTAURANT_INSPECTIONS_DATASET}.json'
-        f'?$where=inspection_date > \'{cutoff_date}\''
-        f'&$limit=1000'
-        f'&$order=inspection_date DESC'
-    )
-
-    try:
-        resp = scraper.get(url)
-    except RateLimitHit:
-        raise
-    except Exception as e:
-        logger.error(f'[ny_health_violation] Error fetching NYC Open Data: {e}')
-        return []
-
-    if not resp or resp.status_code != 200:
-        logger.warning(
-            f'[ny_health_violation] NYC Open Data returned '
-            f'{resp.status_code if resp else "None"}'
-        )
-        return []
-
-    try:
-        data = resp.json()
-    except Exception:
-        logger.error('[ny_health_violation] Failed to parse NYC Open Data JSON')
-        return []
-
-    if not isinstance(data, list):
-        return []
-
-    # Group violations by restaurant (CAMIS is unique restaurant ID)
-    restaurants = {}
-    for record in data:
-        camis = record.get('camis', '')
-        if not camis:
-            continue
-
-        if camis not in restaurants:
-            restaurants[camis] = {
-                'camis': camis,
-                'business_name': record.get('dba', '').strip(),
-                'address': _build_nyc_address(record),
-                'boro': BORO_MAP.get(
-                    str(record.get('boro', '')).upper(),
-                    str(record.get('boro', '')),
-                ),
-                'zipcode': record.get('zipcode', '').strip(),
-                'cuisine': record.get('cuisine_description', '').strip(),
-                'inspection_date': record.get('inspection_date', ''),
-                'score': record.get('score', ''),
-                'grade': record.get('grade', ''),
-                'violations': [],
-                'has_critical': False,
-                'source': 'nyc_open_data',
-            }
-
-        violation_desc = record.get('violation_description', '').strip()
-        violation_code = record.get('violation_code', '').strip()
-        critical_flag = record.get('critical_flag', '').strip()
-
-        if violation_desc:
-            restaurants[camis]['violations'].append({
-                'code': violation_code,
-                'description': violation_desc,
-                'critical': critical_flag.lower() == 'critical',
-            })
-            if critical_flag.lower() == 'critical':
-                restaurants[camis]['has_critical'] = True
-
-    logger.info(
-        f'[ny_health_violation] Fetched {len(data)} violation records for '
-        f'{len(restaurants)} restaurants from NYC Open Data'
-    )
-    return list(restaurants.values())
-
-
-def _scrape_li_health_inspections(scraper, county):
-    """
-    Scrape Long Island (Nassau/Suffolk) county health department sites.
-    Returns list of violation dicts.
-    """
-    county_lower = county.lower() if county else ''
-    url = LI_HEALTH_URLS.get(county_lower)
-    if not url:
-        logger.warning(f'[ny_health_violation] No URL configured for county: {county}')
-        return []
-
-    try:
-        resp = scraper.get(url)
-    except RateLimitHit:
-        raise
-    except Exception as e:
-        logger.error(f'[ny_health_violation] Error fetching {county} health dept: {e}')
-        return []
-
-    if not resp or resp.status_code != 200:
-        logger.warning(
-            f'[ny_health_violation] {county} health dept returned '
-            f'{resp.status_code if resp else "None"}'
-        )
-        return []
-
-    soup = BeautifulSoup(resp.text, 'html.parser')
-    table = soup.select_one('table.inspection-results') or soup.select_one('table')
-    if not table:
-        logger.warning(f'[ny_health_violation] No table found on {county} health dept page')
-        return []
-
-    rows = table.select('tr')
-    restaurants = []
-
-    for row in rows[1:]:  # skip header
-        cells = row.select('td')
-        if len(cells) < 3:
-            continue
-
-        try:
-            biz_name = cells[0].get_text(strip=True)
-            address = cells[1].get_text(strip=True) if len(cells) > 1 else ''
-            inspection_date = cells[2].get_text(strip=True) if len(cells) > 2 else ''
-            violations_text = cells[3].get_text(strip=True) if len(cells) > 3 else ''
-            score = cells[4].get_text(strip=True) if len(cells) > 4 else ''
-
-            if not biz_name:
-                continue
-
-            # Check for critical keywords
-            has_critical = any(
-                term in violations_text.lower()
-                for term in ('critical', 'imminent', 'closure', 'shut down')
-            )
-
-            restaurants.append({
-                'business_name': biz_name,
-                'address': f'{address}, {county.title()} County, NY' if address else '',
-                'boro': '',
-                'zipcode': '',
-                'cuisine': '',
-                'inspection_date': inspection_date,
-                'score': score,
-                'grade': '',
-                'violations': [{'description': violations_text, 'critical': has_critical}],
-                'has_critical': has_critical,
-                'source': f'{county_lower}_health_dept',
-            })
-        except (IndexError, AttributeError):
-            continue
-
-    logger.info(f'[ny_health_violation] Scraped {len(restaurants)} records from {county} health dept')
-    return restaurants
-
-
-def monitor_ny_health_violations(source='nyc', county=None, days=30, dry_run=False, remote=False):
-    """
-    Monitor NY health department violations for restaurant failures.
-
-    Health violations are high-urgency leads — restaurants must fix violations
-    before follow-up inspection or face closure.
+    Monitor NYC restaurant health inspections via SODA API.
 
     Args:
-        source: Data source — 'nyc' for NYC Open Data, 'li' for Long Island,
-                'all' for both
-        county: County filter for Long Island ('nassau', 'suffolk').
-                Ignored for NYC source.
-        days: How many days back to search (default: 30)
-        dry_run: If True, log matches without creating Lead records
-        remote: If True, skip HTML scraping and use only API sources
+        days: how many days back to search (default: 30)
+        borough: filter by borough name (manhattan/bronx/brooklyn/queens)
+        dry_run: if True, log matches without creating Lead records
 
     Returns:
-        dict with counts: sources_checked, items_scraped, created,
-                         duplicates, assigned, errors
+        dict with counts
     """
-    scraper = HealthViolationScraper()
-
-    # Check cooldown
-    allowed, reason = scraper.check_cooldown()
-    if not allowed:
-        logger.info(reason)
-        return {'sources_checked': 0, 'items_scraped': 0, 'created': 0,
-                'duplicates': 0, 'assigned': 0, 'errors': 0,
-                'skipped_reason': reason}
-
     stats = {
-        'sources_checked': 0,
+        'sources_checked': 1,
         'items_scraped': 0,
         'created': 0,
         'duplicates': 0,
@@ -377,191 +133,223 @@ def monitor_ny_health_violations(source='nyc', county=None, days=30, dry_run=Fal
         'errors': 0,
     }
 
-    all_restaurants = []
-    cutoff = timezone.now() - timedelta(days=days)
+    since = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%dT00:00:00')
 
-    # Source 1: NYC Open Data
-    if source in ('nyc', 'all'):
-        stats['sources_checked'] += 1
-        try:
-            nyc_results = _fetch_nyc_inspections(scraper, days)
-            all_restaurants.extend(nyc_results)
-        except RateLimitHit:
-            logger.warning('[ny_health_violation] Rate limited on NYC Open Data')
-        except Exception as e:
-            logger.error(f'[ny_health_violation] Error with NYC Open Data: {e}')
+    where_parts = [
+        f"inspection_date >= '{since}'",
+        "violation_code IS NOT NULL",
+        "inspection_date != '1900-01-01T00:00:00.000'",
+    ]
+    if borough:
+        boro_val = BORO_FILTER.get(borough.lower(), borough)
+        where_parts.append(f"boro = '{boro_val}'")
+
+    params = {
+        '$where': ' AND '.join(where_parts),
+        '$select': (
+            'camis,dba,boro,building,street,zipcode,phone,'
+            'cuisine_description,inspection_date,violation_code,'
+            'violation_description,critical_flag,score,grade'
+        ),
+        '$limit': 5000,
+        '$order': 'inspection_date DESC',
+    }
+
+    logger.info(f'[ny_health] Querying: days={days}, borough={borough or "all"}')
+
+    try:
+        resp = requests.get(SODA_URL, params=params, headers=_headers(), timeout=60)
+        if resp.status_code != 200:
+            logger.error(f'[ny_health] SODA API returned {resp.status_code}')
             stats['errors'] += 1
+            return stats
+        data = resp.json()
+    except Exception as e:
+        logger.error(f'[ny_health] SODA API error: {e}')
+        stats['errors'] += 1
+        return stats
 
-    # Source 2: Long Island county health departments (HTML scrape)
-    if source in ('li', 'all') and not remote and not scraper.is_stopped:
-        counties_to_check = []
-        if county:
-            counties_to_check = [county.lower()]
-        else:
-            counties_to_check = ['nassau', 'suffolk']
+    if not isinstance(data, list):
+        logger.error('[ny_health] Unexpected API response format')
+        stats['errors'] += 1
+        return stats
 
-        for cty in counties_to_check:
-            if scraper.is_stopped:
-                break
-            stats['sources_checked'] += 1
-            try:
-                li_results = _scrape_li_health_inspections(scraper, cty)
-                all_restaurants.extend(li_results)
-            except RateLimitHit:
-                logger.warning(f'[ny_health_violation] Rate limited on {cty} health dept')
-                break
-            except Exception as e:
-                logger.error(f'[ny_health_violation] Error with {cty} health dept: {e}')
-                stats['errors'] += 1
+    logger.info(f'[ny_health] Fetched {len(data)} violation records')
+    stats['items_scraped'] = len(data)
 
-    stats['items_scraped'] = len(all_restaurants)
+    # Group violations by restaurant (CAMIS = unique restaurant ID)
+    restaurants = {}
+    for record in data:
+        camis = record.get('camis', '')
+        if not camis:
+            continue
 
-    # Process each restaurant with violations
-    seen = set()
-    for restaurant in all_restaurants:
+        if camis not in restaurants:
+            boro_raw = str(record.get('boro', '')).strip().upper()
+            boro_name = BORO_MAP.get(boro_raw, boro_raw)
+            building = record.get('building', '').strip()
+            street = record.get('street', '').strip()
+            zipcode = record.get('zipcode', '').strip()
+            addr_parts = []
+            if building and street:
+                addr_parts.append(f'{building} {street}')
+            elif street:
+                addr_parts.append(street)
+            if boro_name:
+                addr_parts.append(boro_name)
+            addr_parts.append('NY')
+            if zipcode:
+                addr_parts.append(zipcode)
+
+            restaurants[camis] = {
+                'camis': camis,
+                'dba': record.get('dba', '').strip(),
+                'address': ', '.join(addr_parts),
+                'boro': boro_name,
+                'zipcode': zipcode,
+                'phone': record.get('phone', '').strip(),
+                'cuisine': record.get('cuisine_description', '').strip(),
+                'inspection_date': record.get('inspection_date', ''),
+                'score': record.get('score', ''),
+                'grade': record.get('grade', ''),
+                'violations': [],
+                'has_critical': False,
+            }
+
+        violation_desc = record.get('violation_description', '').strip()
+        violation_code = record.get('violation_code', '').strip()
+        critical_flag = record.get('critical_flag', '').strip()
+
+        if violation_desc or violation_code:
+            is_critical = critical_flag.lower() == 'critical'
+            restaurants[camis]['violations'].append({
+                'code': violation_code,
+                'description': violation_desc,
+                'critical': is_critical,
+            })
+            if is_critical:
+                restaurants[camis]['has_critical'] = True
+
+    logger.info(f'[ny_health] Grouped into {len(restaurants)} restaurants')
+
+    # Process each restaurant
+    printed = 0
+    for camis, rest in restaurants.items():
+        dba = rest['dba']
+        if not dba or not rest['violations']:
+            continue
+
+        address = rest['address']
+        inspection_date = _parse_date(rest['inspection_date'])
+        score_str = rest['score']
+        grade = rest['grade']
+        cuisine = rest['cuisine']
+        phone = rest['phone']
+        has_critical = rest['has_critical']
+        violations = rest['violations']
+
+        # Parse score for urgency
         try:
-            biz_name = restaurant.get('business_name', '').strip()
-            address = restaurant.get('address', '').strip()
-            violations = restaurant.get('violations', [])
-            has_critical = restaurant.get('has_critical', False)
-            inspection_date_str = restaurant.get('inspection_date', '')
-            score = restaurant.get('score', '')
-            grade = restaurant.get('grade', '')
-            cuisine = restaurant.get('cuisine', '')
-            camis = restaurant.get('camis', '')
+            score = int(score_str)
+        except (ValueError, TypeError):
+            score = 0
 
-            if not biz_name:
-                continue
+        # Urgency scoring
+        if has_critical or score >= 28:
+            urgency = 'hot'
+            urgency_note = 'CRITICAL violation or score >= 28 — restaurant risks closure'
+        elif score >= 14:
+            urgency = 'warm'
+            urgency_note = f'Score {score} — must fix before follow-up inspection'
+        else:
+            urgency = 'new'
+            urgency_note = 'Minor violations'
 
-            # Must have violations to be a lead
-            if not violations:
-                continue
+        critical_count = sum(1 for v in violations if v.get('critical'))
+        total_violations = len(violations)
 
-            # Dedup by restaurant identity
-            dedup_key = f'{biz_name.lower()}|{address.lower()}|{inspection_date_str}'
-            if dedup_key in seen:
-                continue
-            seen.add(dedup_key)
+        all_violation_text = ' '.join(v.get('description', '') for v in violations)
+        services = _detect_services(all_violation_text)
 
-            # Parse inspection date
-            inspection_date = _parse_date(inspection_date_str)
-            if inspection_date and inspection_date < cutoff:
-                continue
+        content_parts = [
+            f'HEALTH VIOLATION: {dba}',
+        ]
+        if cuisine:
+            content_parts.append(f'Cuisine: {cuisine}')
+        if address:
+            content_parts.append(f'Address: {address}')
+        if phone:
+            content_parts.append(f'Phone: {phone}')
+        if score_str:
+            content_parts.append(f'Score: {score_str}')
+        if grade:
+            content_parts.append(f'Grade: {grade}')
+        if inspection_date:
+            days_ago = (timezone.now() - inspection_date).days
+            content_parts.append(f'Inspected: {days_ago} days ago')
+        content_parts.append(f'Violations: {total_violations} total ({critical_count} critical)')
 
-            # Combine violation descriptions
-            all_violation_text = ' '.join(
-                v.get('description', '') for v in violations
-            )
+        for v in violations[:5]:
+            desc = v.get('description', '')
+            if desc:
+                prefix = '[CRITICAL] ' if v.get('critical') else ''
+                content_parts.append(f'  - {prefix}{desc[:200]}')
 
-            # Detect services from violation text
-            services = _detect_services(all_violation_text)
+        content_parts.append(f'Urgency: {urgency_note}')
+        content_parts.append(f'Services needed: {", ".join(services[:6])}')
+        content = '\n'.join(content_parts)
 
-            # Determine urgency
-            if has_critical:
-                urgency_level = 'hot'
-                urgency_note = 'CRITICAL violation — restaurant risks closure'
-            else:
-                urgency_level = 'warm'
-                urgency_note = 'Non-critical violation — must fix before follow-up'
+        if dry_run:
+            if printed < 5:
+                boro = rest['boro']
+                print(f'\n  [{boro}] {dba}')
+                print(f'    Address: {address}')
+                print(f'    Score: {score_str}  Grade: {grade}  Violations: {total_violations} ({critical_count} critical)')
+                print(f'    Urgency: {urgency.upper()} — {urgency_note}')
+                if phone:
+                    print(f'    Phone: {phone}')
+                printed += 1
+            stats['created'] += 1
+            continue
 
-            # Count critical vs non-critical
-            critical_count = sum(1 for v in violations if v.get('critical'))
-            total_violations = len(violations)
-
-            # Build lead content
-            content_parts = [
-                f'HEALTH VIOLATION: {biz_name}',
-            ]
-            if cuisine:
-                content_parts.append(f'Cuisine: {cuisine}')
-            if address:
-                content_parts.append(f'Address: {address}')
-            if score:
-                content_parts.append(f'Score: {score}')
-            if grade:
-                content_parts.append(f'Grade: {grade}')
-            if inspection_date:
-                days_ago = (timezone.now() - inspection_date).days
-                content_parts.append(f'Inspected: {days_ago} days ago')
-
-            content_parts.append(
-                f'Violations: {total_violations} total '
-                f'({critical_count} critical)'
-            )
-
-            # Include top violation descriptions (truncated)
-            for v in violations[:5]:
-                desc = v.get('description', '')
-                if desc:
-                    prefix = '[CRITICAL] ' if v.get('critical') else ''
-                    content_parts.append(f'  - {prefix}{desc[:200]}')
-
-            content_parts.append(f'Urgency: {urgency_note}')
-            content_parts.append(f'Services needed: {", ".join(services[:6])}')
-
-            content = '\n'.join(content_parts)
-
-            source_url = (
-                f'{NYC_OPEN_DATA_BASE}/{NYC_RESTAURANT_INSPECTIONS_DATASET}'
-                if restaurant.get('source') == 'nyc_open_data'
-                else LI_HEALTH_URLS.get(restaurant.get('source', '').replace('_health_dept', ''), '')
-            )
-
-            if dry_run:
-                logger.info(
-                    f'[DRY RUN] Would create health violation lead: '
-                    f'{biz_name} ({critical_count} critical, {total_violations} total)'
-                )
-                stats['created'] += 1
-                continue
-
+        try:
             lead, created, num_assigned = process_lead(
                 platform='public_records',
-                source_url=source_url,
+                source_url=SODA_URL,
                 content=content,
                 author='',
                 posted_at=inspection_date,
                 raw_data={
-                    'source_type': 'health_violation',
-                    'business_name': biz_name,
-                    'address': address,
+                    'data_source': 'nyc_dohmh',
                     'camis': camis,
+                    'business_name': dba,
+                    'address': address,
                     'cuisine': cuisine,
-                    'inspection_date': inspection_date_str,
-                    'score': score,
+                    'score': score_str,
                     'grade': grade,
                     'critical_count': critical_count,
                     'total_violations': total_violations,
                     'has_critical': has_critical,
-                    'urgency_level': urgency_level,
-                    'violation_descriptions': [
-                        v.get('description', '')[:300] for v in violations[:10]
-                    ],
+                    'urgency': urgency,
+                    'phone': phone,
                     'services_mapped': services,
-                    'data_source': restaurant.get('source', ''),
                 },
                 state='NY',
-                region=restaurant.get('boro', ''),
+                region=rest['boro'],
                 source_group='public_records',
                 source_type='health_inspections',
-                contact_business=biz_name,
+                contact_business=dba,
+                contact_phone=phone,
                 contact_address=address,
             )
-
             if created:
                 stats['created'] += 1
                 stats['assigned'] += num_assigned
             else:
                 stats['duplicates'] += 1
-
-        except RateLimitHit:
-            break
         except Exception as e:
-            logger.error(
-                f'[ny_health_violation] Error processing violation for '
-                f'{restaurant.get("business_name", "unknown")}: {e}'
-            )
+            logger.error(f'[ny_health] Error processing {dba}: {e}')
             stats['errors'] += 1
 
-    logger.info(f'NY health violation monitor complete: {stats}')
+    logger.info(f'NY health violations monitor complete: {stats}')
     return stats

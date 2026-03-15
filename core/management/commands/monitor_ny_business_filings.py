@@ -1,10 +1,10 @@
 """
-Management command to monitor NY business filings.
+Management command to monitor NY business filings via SODA API.
 
 Usage:
-    python manage.py monitor_ny_business_filings --county nassau --days 7 --dry-run
-    python manage.py monitor_ny_business_filings --county suffolk --days 14
-    python manage.py monitor_ny_business_filings --remote
+    python manage.py monitor_ny_business_filings --days 30 --dry-run
+    python manage.py monitor_ny_business_filings --county "NEW YORK,KINGS" --days 14
+    python manage.py monitor_ny_business_filings --county all --days 60
 """
 from django.core.management.base import BaseCommand
 
@@ -13,50 +13,37 @@ from core.utils.monitors.ny_business_filings import monitor_ny_business_filings
 
 class Command(BaseCommand):
     help = (
-        'Monitor NY Secretary of State business filings for new incorporations, '
-        'LLCs, and DBAs that signal new business openings.'
+        'Monitor NY Department of State business filings via SODA API. '
+        'New incorporations, LLCs, and foreign authority applications signal new business openings.'
     )
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--county', type=str, default='nassau',
-            help='County to search (default: nassau)',
+            '--county', type=str, default=None,
+            help='County filter — single name, comma-separated list, or "all" (default: NYC + Nassau + Suffolk)',
         )
         parser.add_argument(
-            '--days', type=int, default=7,
-            help='Look back this many days (default: 7)',
+            '--days', type=int, default=30,
+            help='Look back this many days (default: 30)',
         )
         parser.add_argument(
             '--dry-run', action='store_true',
             help='Log matches without creating Lead records',
         )
-        parser.add_argument(
-            '--remote', action='store_true',
-            help='POST leads to remote ingest URL',
-        )
 
     def handle(self, *args, **options):
         self.stdout.write(self.style.HTTP_INFO('Starting NY Business Filings monitor...'))
-        self.stdout.write(f"  County: {options['county']}")
+        self.stdout.write(f"  Source: NY DOS SODA API (k4vb-judh)")
+        self.stdout.write(f"  County: {options['county'] or 'default (NYC + LI)'}")
         self.stdout.write(f"  Days:   {options['days']}")
         if options['dry_run']:
             self.stdout.write(self.style.WARNING('  DRY RUN MODE'))
-        if options['remote']:
-            from django.conf import settings as django_settings
-            self.stdout.write(self.style.WARNING(
-                f'  REMOTE MODE — posting to {django_settings.REMOTE_INGEST_URL}'
-            ))
 
         stats = monitor_ny_business_filings(
             county=options['county'],
             days=options['days'],
             dry_run=options['dry_run'],
-            remote=options['remote'],
         )
-
-        if 'skipped_reason' in stats:
-            self.stdout.write(self.style.WARNING(f"  Skipped: {stats['skipped_reason']}"))
-            return
 
         self.stdout.write('')
         self.stdout.write(self.style.SUCCESS('NY Business Filings Monitor Results:'))

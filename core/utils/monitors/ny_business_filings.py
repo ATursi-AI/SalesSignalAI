@@ -1,67 +1,77 @@
 """
-NY Department of State business filing monitor for SalesSignal AI.
+NY business filings monitor for SalesSignal AI.
 
-Scrapes the NY DOS Corporation Search portal for recently filed
-LLCs, Corporations, and DBAs. New businesses need services before
-they even open — insurance, accounting, legal, cleaning, IT, signage.
+Uses the NY Open Data SODA API to query the Department of State
+Corporation and Business Entity Database:
 
-Source: appext20.dos.ny.gov/corp_public/CORPSEARCH.ENTITY_SEARCH_ENTRY
-The search form POSTs to CORPSEARCH.ENTITY_INFORMATION with date range
-and county filters. Results are parsed from HTML tables.
+  Dataset: k4vb-judh (https://data.ny.gov/resource/k4vb-judh.json)
 
-Targeted counties: Nassau, Suffolk, Queens, Kings, New York, Bronx,
-Richmond, Westchester — configurable via function parameter.
+Filters:
+  - filing_date >= N days ago
+  - cnty_prin_ofc IN target counties
+  - filing_type containing INCORPORATION, ORGANIZATION, or APPLICATION FOR AUTHORITY
+
+New businesses need services before they even open:
+  Insurance, Accounting, Legal, Commercial Cleaning, IT, Signage, HVAC
 """
-import json
 import logging
-import re
 from datetime import datetime, timedelta
 
-from bs4 import BeautifulSoup
+import requests
 from django.conf import settings
 from django.utils import timezone
 
-from .base import BaseScraper, RateLimitHit
 from .lead_processor import process_lead
 
 logger = logging.getLogger(__name__)
 
 # -------------------------------------------------------------------
-# Configuration
+# NY Open Data SODA endpoint
 # -------------------------------------------------------------------
+SODA_URL = 'https://data.ny.gov/resource/k4vb-judh.json'
 
-DOS_SEARCH_URL = (
-    'https://appext20.dos.ny.gov/corp_public/CORPSEARCH.ENTITY_SEARCH_ENTRY'
-)
-DOS_RESULTS_URL = (
-    'https://appext20.dos.ny.gov/corp_public/CORPSEARCH.ENTITY_INFORMATION'
-)
-
-# Entity type mapping — what the DOS portal returns
-ENTITY_TYPES = {
-    'DOMESTIC LIMITED LIABILITY COMPANY': 'LLC',
-    'DOMESTIC BUSINESS CORPORATION': 'CORP',
-    'DOMESTIC NOT-FOR-PROFIT CORPORATION': 'NONPROFIT',
-    'FOREIGN LIMITED LIABILITY COMPANY': 'LLC (Foreign)',
-    'FOREIGN BUSINESS CORPORATION': 'CORP (Foreign)',
-    'ASSUMED NAME': 'DBA',
-    'TRADE NAME': 'DBA',
-}
-
-# Counties available on the DOS search form
-VALID_COUNTIES = [
-    'NASSAU', 'SUFFOLK', 'QUEENS', 'KINGS', 'NEW YORK', 'BRONX',
-    'RICHMOND', 'WESTCHESTER', 'ROCKLAND', 'ORANGE', 'DUTCHESS',
-    'PUTNAM', 'ALBANY', 'ERIE', 'MONROE', 'ONONDAGA',
+# Counties we target (SODA field: cnty_prin_ofc — mixed case in API)
+DEFAULT_COUNTIES = [
+    'New York', 'Bronx', 'Kings', 'Queens',
+    'Nassau', 'Suffolk',
 ]
 
-# New business filing -> lead service categories
+# Filing types that indicate a NEW business
+NEW_BUSINESS_FILING_TYPES = [
+    'INCORPORATION',
+    'ORGANIZATION',
+    'APPLICATION FOR AUTHORITY',
+]
+
+# Entity type mapping
+ENTITY_TYPES = {
+    'DOMESTIC LIMITED LIABILITY COMPANY': 'LLC',
+    'DOMESTIC BUSINESS CORPORATION': 'Corp',
+    'DOMESTIC NOT-FOR-PROFIT CORPORATION': 'Nonprofit',
+    'FOREIGN LIMITED LIABILITY COMPANY': 'LLC (Foreign)',
+    'FOREIGN BUSINESS CORPORATION': 'Corp (Foreign)',
+    'LIMITED PARTNERSHIP': 'LP',
+    'FOREIGN LIMITED PARTNERSHIP': 'LP (Foreign)',
+}
+
+# County -> display name (keys match API casing)
+COUNTY_DISPLAY = {
+    'New York': 'Manhattan',
+    'Kings': 'Brooklyn',
+    'Queens': 'Queens',
+    'Bronx': 'Bronx',
+    'Richmond': 'Staten Island',
+    'Nassau': 'Nassau County',
+    'Suffolk': 'Suffolk County',
+}
+
+# Services every new business needs
 NEW_BUSINESS_SERVICES = [
     'Insurance', 'Accountant', 'Lawyer', 'Commercial Cleaning',
     'IT Support', 'Web Design', 'Signage', 'HVAC', 'Security',
 ]
 
-# Business name keywords -> additional specific services
+# Business name keywords -> additional services
 BUSINESS_NAME_SERVICE_MAP = {
     'dental': ['commercial cleaning', 'medical waste', 'plumber', 'HVAC'],
     'medical': ['commercial cleaning', 'medical waste', 'HVAC', 'IT support'],
@@ -75,273 +85,78 @@ BUSINESS_NAME_SERVICE_MAP = {
     'retail': ['commercial cleaning', 'security', 'signage', 'IT support'],
     'consulting': ['IT support', 'office cleaning', 'insurance'],
     'law': ['IT support', 'office cleaning', 'insurance', 'security'],
-    'accounting': ['IT support', 'office cleaning', 'insurance'],
     'construction': ['insurance', 'accounting', 'IT support'],
     'landscaping': ['insurance', 'accounting', 'equipment repair'],
-    'plumbing': ['insurance', 'accounting', 'IT support'],
     'daycare': ['commercial cleaning', 'pest control', 'security', 'insurance'],
-    'veterinar': ['commercial cleaning', 'pest control', 'HVAC', 'plumber'],
     'auto': ['commercial cleaning', 'signage', 'security', 'HVAC'],
-    'hotel': ['commercial cleaning', 'HVAC', 'pest control', 'security', 'landscaping'],
 }
 
 
-class NYBusinessFilingScraper(BaseScraper):
-    MONITOR_NAME = 'ny_business_filing'
-    DELAY_MIN = 4.0
-    DELAY_MAX = 10.0
-    MAX_REQUESTS_PER_RUN = 25
-    MAX_PER_DOMAIN = 20
-    COOLDOWN_MINUTES = 360  # 6 hours
-    RESPECT_ROBOTS = True
-
-
 def _detect_services_from_name(business_name):
-    """Map a business name to likely services needed."""
     if not business_name:
         return NEW_BUSINESS_SERVICES
-
     name_lower = business_name.lower()
     services = set()
-
     for key, service_list in BUSINESS_NAME_SERVICE_MAP.items():
         if key in name_lower:
             services.update(service_list)
-
     return list(services) if services else NEW_BUSINESS_SERVICES
 
 
 def _normalize_entity_type(raw_type):
-    """Normalize the DOS entity type to a short label."""
     if not raw_type:
         return 'Unknown'
     raw_upper = raw_type.strip().upper()
     for key, label in ENTITY_TYPES.items():
         if key in raw_upper:
             return label
-    return raw_type.strip()
+    return raw_type.strip()[:40]
 
 
 def _parse_date(date_str):
-    """Parse common date formats from DOS portal."""
     if not date_str:
         return None
-
     date_str = date_str.strip()
-    formats = [
-        '%m/%d/%Y', '%Y-%m-%d', '%m/%d/%y',
-        '%m-%d-%Y', '%b %d, %Y', '%B %d, %Y',
-    ]
-
-    for fmt in formats:
+    for fmt in ['%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d', '%m/%d/%Y']:
         try:
             dt = datetime.strptime(date_str, fmt)
             return timezone.make_aware(dt) if timezone.is_naive(dt) else dt
         except ValueError:
             continue
-
     return None
 
 
-def _build_search_payload(county, date_from, date_to):
-    """Build the POST form data for the DOS entity search."""
-    return {
-        'p_entity_name': '',
-        'p_name_type': 'STARTS WITH',
-        'p_search_type': 'BEGINS',
-        'p_filing_date_from': date_from.strftime('%m/%d/%Y'),
-        'p_filing_date_to': date_to.strftime('%m/%d/%Y'),
-        'p_county': county.upper(),
-    }
+def _is_new_business_filing(filing_type):
+    """Return True if this filing type indicates a new business."""
+    if not filing_type:
+        return False
+    ft_upper = filing_type.upper()
+    return any(t in ft_upper for t in NEW_BUSINESS_FILING_TYPES)
 
 
-def _scrape_filings(scraper, county, date_from, date_to):
+def _headers():
+    h = {}
+    token = getattr(settings, 'NY_OPEN_DATA_APP_TOKEN', '')
+    if token:
+        h['X-App-Token'] = token
+    return h
+
+
+def monitor_ny_business_filings(county=None, days=30, dry_run=False):
     """
-    POST to the NY DOS search form and parse the results table.
-    Returns list of filing dicts.
-    """
-    payload = _build_search_payload(county, date_from, date_to)
-
-    # First, GET the search page to establish session cookies
-    try:
-        entry_resp = scraper.get(DOS_SEARCH_URL)
-        if not entry_resp or entry_resp.status_code != 200:
-            logger.warning(f'[ny_business_filing] Could not load search form')
-            return []
-    except RateLimitHit:
-        raise
-    except Exception as e:
-        logger.error(f'[ny_business_filing] Search form error: {e}')
-        return []
-
-    # POST the search — use the session from BaseScraper
-    try:
-        scraper._session.headers['User-Agent'] = scraper._session.headers.get(
-            'User-Agent', 'Mozilla/5.0'
-        )
-        resp = scraper._session.post(
-            DOS_RESULTS_URL,
-            data=payload,
-            timeout=scraper.TIMEOUT,
-        )
-        scraper._request_count += 1
-
-        if resp.status_code in (429, 403):
-            scraper._stopped = True
-            raise RateLimitHit(
-                f'{resp.status_code} from DOS portal — run stopped'
-            )
-
-        if resp.status_code != 200:
-            logger.warning(
-                f'[ny_business_filing] Search returned {resp.status_code}'
-            )
-            return []
-    except RateLimitHit:
-        raise
-    except Exception as e:
-        logger.error(f'[ny_business_filing] Search POST failed: {e}')
-        return []
-
-    # Parse the HTML results
-    soup = BeautifulSoup(resp.text, 'html.parser')
-    filings = []
-
-    # The DOS portal renders results in a table
-    tables = soup.find_all('table')
-    result_table = None
-    for table in tables:
-        headers = [th.get_text(strip=True).lower() for th in table.find_all('th')]
-        if any('entity' in h or 'name' in h for h in headers):
-            result_table = table
-            break
-
-    if not result_table:
-        # Try finding any table with filing data
-        for table in tables:
-            rows = table.find_all('tr')
-            if len(rows) > 2:
-                result_table = table
-                break
-
-    if not result_table:
-        logger.info(f'[ny_business_filing] No results table found for {county}')
-        return []
-
-    rows = result_table.find_all('tr')
-    for row in rows[1:]:  # skip header
-        cells = row.find_all('td')
-        if len(cells) < 3:
-            continue
-
-        try:
-            filing = {
-                'business_name': cells[0].get_text(strip=True) if len(cells) > 0 else '',
-                'entity_type': cells[1].get_text(strip=True) if len(cells) > 1 else '',
-                'filing_date': cells[2].get_text(strip=True) if len(cells) > 2 else '',
-                'county': county.upper(),
-                'registered_agent': cells[3].get_text(strip=True) if len(cells) > 3 else '',
-                'address': cells[4].get_text(strip=True) if len(cells) > 4 else '',
-                'status': cells[5].get_text(strip=True) if len(cells) > 5 else '',
-            }
-
-            # Also check for detail links
-            link = cells[0].find('a')
-            if link and link.get('href'):
-                filing['detail_url'] = link['href']
-
-            if filing['business_name']:
-                filings.append(filing)
-        except (IndexError, AttributeError):
-            continue
-
-    logger.info(
-        f'[ny_business_filing] Parsed {len(filings)} filings for {county}'
-    )
-    return filings
-
-
-def _post_lead_remote(ingest_url, api_key, lead_data):
-    """POST a lead to a remote SalesSignal instance via the ingest API."""
-    import requests as req
-    headers = {
-        'Authorization': f'Bearer {api_key}',
-        'Content-Type': 'application/json',
-    }
-    try:
-        resp = req.post(
-            ingest_url,
-            data=json.dumps(lead_data),
-            headers=headers,
-            timeout=15,
-        )
-        try:
-            body = resp.json()
-        except (ValueError, json.JSONDecodeError):
-            body = {'raw': resp.text[:200]}
-        return resp.status_code in (201, 409), resp.status_code, body
-    except req.RequestException as e:
-        logger.error(f'[Remote] POST failed: {e}')
-        return False, 0, {'error': str(e)}
-
-
-# -------------------------------------------------------------------
-# Main monitor function
-# -------------------------------------------------------------------
-
-def monitor_ny_business_filings(county='nassau', days=7, dry_run=False, remote=False):
-    """
-    Monitor NY Department of State for new business filings.
-
-    Searches the DOS Corporation Search portal by county and date range,
-    parses results, and creates leads for each new filing.
+    Monitor NY Department of State for new business filings via SODA API.
 
     Args:
-        county: county name (default: nassau). Use 'all' for all valid counties.
-        days: how many days back to search (default: 7)
+        county: county filter — single county name, comma-separated list,
+                or None for all default counties
+        days: how many days back to search (default: 30)
         dry_run: if True, log matches without creating Lead records
-        remote: if True, POST leads to REMOTE_INGEST_URL instead of local DB
 
     Returns:
-        dict with counts: sources_checked, items_scraped, created,
-                         duplicates, assigned, errors
+        dict with counts
     """
-    scraper = NYBusinessFilingScraper()
-
-    # Check cooldown
-    allowed, reason = scraper.check_cooldown()
-    if not allowed:
-        logger.info(reason)
-        return {
-            'sources_checked': 0, 'items_scraped': 0, 'created': 0,
-            'duplicates': 0, 'assigned': 0, 'errors': 0,
-            'skipped_reason': reason,
-        }
-
-    # Resolve remote config
-    ingest_url = ''
-    ingest_key = ''
-    if remote:
-        ingest_url = getattr(settings, 'REMOTE_INGEST_URL', '')
-        ingest_key = getattr(settings, 'INGEST_API_KEY', '')
-        if not ingest_url or not ingest_key:
-            logger.error(
-                '[Remote] REMOTE_INGEST_URL and INGEST_API_KEY must be set '
-                'in .env for --remote mode'
-            )
-            return {
-                'sources_checked': 0, 'items_scraped': 0, 'created': 0,
-                'duplicates': 0, 'assigned': 0, 'errors': 1,
-            }
-
-    # Determine counties to search
-    if county.lower() == 'all':
-        counties = VALID_COUNTIES
-    else:
-        counties = [c.strip().upper() for c in county.split(',')]
-
     stats = {
-        'sources_checked': 0,
+        'sources_checked': 1,
         'items_scraped': 0,
         'created': 0,
         'duplicates': 0,
@@ -349,155 +164,142 @@ def monitor_ny_business_filings(county='nassau', days=7, dry_run=False, remote=F
         'errors': 0,
     }
 
-    date_to = datetime.now()
-    date_from = date_to - timedelta(days=days)
+    # Determine counties to query
+    if county and county.lower() != 'all':
+        counties = [c.strip().title() for c in county.split(',')]
+    else:
+        counties = DEFAULT_COUNTIES
 
-    counties = scraper.shuffle(counties)
+    since = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%dT00:00:00')
 
-    for county_name in counties:
-        if scraper.is_stopped:
-            break
+    # Build SODA query
+    counties_str = ','.join(f"'{c}'" for c in counties)
+    where = (
+        f"filing_date >= '{since}' "
+        f"AND cnty_prin_ofc in({counties_str})"
+    )
 
-        if county_name not in VALID_COUNTIES:
-            logger.warning(
-                f'[ny_business_filing] Unknown county: {county_name}, skipping'
-            )
+    params = {
+        '$where': where,
+        '$select': (
+            'dos_id,filing_type,entity_type,corp_name,filing_date,'
+            'cnty_prin_ofc,sop_name,sop_addr1,sop_city,sop_state,sop_zip5,'
+            'filer_name'
+        ),
+        '$limit': 2000,
+        '$order': 'filing_date DESC',
+    }
+
+    logger.info(
+        f'[ny_business_filings] Querying: counties={counties}, days={days}'
+    )
+
+    try:
+        resp = requests.get(SODA_URL, params=params, headers=_headers(), timeout=60)
+        if resp.status_code != 200:
+            logger.error(f'[ny_business_filings] SODA API returned {resp.status_code}')
+            stats['errors'] += 1
+            return stats
+        items = resp.json()
+    except Exception as e:
+        logger.error(f'[ny_business_filings] SODA API error: {e}')
+        stats['errors'] += 1
+        return stats
+
+    logger.info(f'[ny_business_filings] Fetched {len(items)} filings')
+    stats['items_scraped'] = len(items)
+
+    # Filter for new business filings only
+    printed = 0
+    for item in items:
+        filing_type = item.get('filing_type', '')
+        if not _is_new_business_filing(filing_type):
             continue
 
-        stats['sources_checked'] += 1
-        logger.info(
-            f'[ny_business_filing] Searching {county_name} county '
-            f'({date_from.strftime("%m/%d/%Y")} - {date_to.strftime("%m/%d/%Y")})'
-        )
+        name = item.get('corp_name', '').strip()
+        if not name:
+            continue
+
+        filing_date_str = item.get('filing_date', '')
+        filing_date = _parse_date(filing_date_str)
+        entity_type = _normalize_entity_type(item.get('entity_type', ''))
+        county_name = item.get('cnty_prin_ofc', '').strip()
+        display_county = COUNTY_DISPLAY.get(county_name, county_name)
+
+        # Service of process address = registered address
+        sop_name = item.get('sop_name', '').strip()
+        sop_addr = item.get('sop_addr1', '').strip()
+        sop_city = item.get('sop_city', '').strip()
+        sop_state = item.get('sop_state', '').strip()
+        sop_zip = item.get('sop_zip5', '').strip()
+        full_address = ', '.join(filter(None, [sop_addr, sop_city, sop_state, sop_zip]))
+
+        filer = item.get('filer_name', '').strip()
+        dos_id = item.get('dos_id', '')
+
+        services = _detect_services_from_name(name)
+
+        content_parts = [
+            f'New Business Filing: {name}',
+            f'Entity Type: {entity_type}',
+            f'Filing Type: {filing_type}',
+            f'County: {display_county}, NY',
+        ]
+        if filing_date:
+            content_parts.append(f'Filed: {filing_date.strftime("%m/%d/%Y")}')
+        if full_address:
+            content_parts.append(f'Registered Address: {full_address}')
+        if sop_name:
+            content_parts.append(f'Registered Agent: {sop_name}')
+        content_parts.append(f'Services likely needed: {", ".join(services[:7])}')
+        content = '\n'.join(content_parts)
+
+        if dry_run:
+            if printed < 5:
+                print(f'\n  [{display_county}] {name}')
+                print(f'    Type: {entity_type}  Filing: {filing_type}')
+                print(f'    Address: {full_address or "(none)"}')
+                if filing_date:
+                    print(f'    Date: {filing_date.strftime("%Y-%m-%d")}')
+                printed += 1
+            stats['created'] += 1
+            continue
 
         try:
-            filings = _scrape_filings(scraper, county_name, date_from, date_to)
-        except RateLimitHit:
-            logger.warning('[ny_business_filing] Rate limited, stopping run')
-            break
+            lead, created, num_assigned = process_lead(
+                platform='public_records',
+                source_url=SODA_URL,
+                content=content,
+                author='',
+                posted_at=filing_date,
+                raw_data={
+                    'data_source': 'ny_dos_soda',
+                    'dos_id': dos_id,
+                    'business_name': name,
+                    'entity_type': entity_type,
+                    'filing_type': filing_type,
+                    'county': county_name,
+                    'address': full_address,
+                    'registered_agent': sop_name,
+                    'filer': filer,
+                    'services_mapped': services,
+                },
+                state='NY',
+                region=display_county,
+                source_group='public_records',
+                source_type='business_filings',
+                contact_name=sop_name or filer,
+                contact_business=name,
+                contact_address=full_address,
+            )
+            if created:
+                stats['created'] += 1
+                stats['assigned'] += num_assigned
+            else:
+                stats['duplicates'] += 1
         except Exception as e:
-            logger.error(f'[ny_business_filing] Error scraping {county_name}: {e}')
+            logger.error(f'[ny_business_filings] Error processing {name}: {e}')
             stats['errors'] += 1
-            continue
 
-        stats['items_scraped'] += len(filings)
-
-        for filing in filings:
-            try:
-                name = filing.get('business_name', '')
-                if not name:
-                    continue
-
-                filing_date = _parse_date(filing.get('filing_date', ''))
-                entity_type = _normalize_entity_type(filing.get('entity_type', ''))
-                address = filing.get('address', '')
-                agent = filing.get('registered_agent', '')
-
-                # Detect services from business name
-                services = _detect_services_from_name(name)
-
-                # Build lead content
-                content_parts = [
-                    f'New Business Filing: {name}',
-                    f'Entity Type: {entity_type}',
-                    f'County: {county_name}, NY',
-                ]
-                if filing_date:
-                    content_parts.append(
-                        f'Filed: {filing_date.strftime("%m/%d/%Y")}'
-                    )
-                if address:
-                    content_parts.append(f'Registered Address: {address}')
-                if agent:
-                    content_parts.append(f'Registered Agent: {agent}')
-                content_parts.append(
-                    f'Services likely needed: {", ".join(services[:7])}'
-                )
-
-                content = '\n'.join(content_parts)
-                source_url = DOS_SEARCH_URL
-
-                if dry_run:
-                    logger.info(
-                        f'[DRY RUN] Would create filing lead: '
-                        f'{name} ({entity_type}) in {county_name}'
-                    )
-                    stats['created'] += 1
-                    continue
-
-                # Remote mode
-                if remote:
-                    payload = {
-                        'platform': 'public_records',
-                        'source_url': source_url,
-                        'source_content': content,
-                        'author': '',
-                        'confidence': 'high',
-                        'detected_category': 'NEW_BUSINESS_FILING',
-                        'raw_data': {
-                            'source_type': 'ny_business_filing',
-                            'business_name': name,
-                            'entity_type': entity_type,
-                            'county': county_name,
-                            'state': 'NY',
-                            'address': address,
-                            'registered_agent': agent,
-                            'services_mapped': services,
-                        },
-                    }
-                    ok, status_code, body = _post_lead_remote(
-                        ingest_url, ingest_key, payload,
-                    )
-                    if ok:
-                        if status_code == 201:
-                            stats['created'] += 1
-                        else:
-                            stats['duplicates'] += 1
-                    else:
-                        stats['errors'] += 1
-                    continue
-
-                # Local mode — create lead via standard pipeline
-                lead, created, num_assigned = process_lead(
-                    platform='public_records',
-                    source_url=source_url,
-                    content=content,
-                    author='',
-                    posted_at=filing_date,
-                    raw_data={
-                        'source_type': 'ny_business_filing',
-                        'business_name': name,
-                        'entity_type': entity_type,
-                        'county': county_name,
-                        'state': 'NY',
-                        'address': address,
-                        'registered_agent': agent,
-                        'services_mapped': services,
-                        'detected_category': 'NEW_BUSINESS_FILING',
-                    },
-                    state='NY',
-                    region=county_name,
-                    source_group='public_records',
-                    source_type='business_filings',
-                    contact_name=agent,
-                    contact_business=name,
-                    contact_address=address,
-                )
-
-                if created:
-                    stats['created'] += 1
-                    stats['assigned'] += num_assigned
-                else:
-                    stats['duplicates'] += 1
-
-            except RateLimitHit:
-                break
-            except Exception as e:
-                logger.error(
-                    f'[ny_business_filing] Error processing filing '
-                    f'{filing.get("business_name", "?")}: {e}'
-                )
-                stats['errors'] += 1
-
-    logger.info(f'NY business filing monitor complete: {stats}')
+    logger.info(f'NY business filings monitor complete: {stats}')
     return stats
