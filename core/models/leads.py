@@ -63,6 +63,34 @@ class Lead(models.Model):
         ('low', 'Low'),
     ]
 
+    SOURCE_GROUP_CHOICES = [
+        ('public_records', 'Public Records'),
+        ('social_media', 'Social Media'),
+        ('reviews', 'Review Sites'),
+        ('weather', 'Weather/Events'),
+    ]
+
+    SOURCE_TYPE_CHOICES = [
+        # Public Records
+        ('violations', 'DOB Violations'),
+        ('permits', 'DOB Permits'),
+        ('permits_now', 'DOB Permits (NOW)'),
+        ('property_sales', 'Property Sales'),
+        ('health_inspections', 'Health Inspections'),
+        ('liquor_licenses', 'Liquor Licenses'),
+        ('business_filings', 'Business Filings'),
+        # Social Media
+        ('reddit', 'Reddit'),
+        ('nextdoor', 'Nextdoor'),
+        ('facebook', 'Facebook Groups'),
+        # Reviews
+        ('google_reviews', 'Google Reviews'),
+        ('no_website', 'No Website Detected'),
+        ('google_qa', 'Google Q&A'),
+        # Weather
+        ('noaa', 'NOAA Weather'),
+    ]
+
     platform = models.CharField(max_length=50, choices=PLATFORM_CHOICES)
     source_url = models.URLField(max_length=500)
     source_content = models.TextField()
@@ -89,6 +117,25 @@ class Lead(models.Model):
     discovered_at = models.DateTimeField(auto_now_add=True)
     raw_data = models.JSONField(default=dict)
     content_hash = models.CharField(max_length=64, unique=True)
+
+    # State/region for multi-state support
+    state = models.CharField(max_length=2, blank=True, default='NY',
+                             help_text='Two-letter state code', db_index=True)
+    region = models.CharField(max_length=100, blank=True,
+                              help_text='Sub-region: borough, county, city')
+
+    # Source classification
+    source_group = models.CharField(max_length=50, choices=SOURCE_GROUP_CHOICES,
+                                    default='public_records', db_index=True)
+    source_type = models.CharField(max_length=50, choices=SOURCE_TYPE_CHOICES,
+                                   blank=True, db_index=True)
+
+    # Standardized contact info
+    contact_name = models.CharField(max_length=200, blank=True)
+    contact_phone = models.CharField(max_length=20, blank=True)
+    contact_email = models.EmailField(blank=True)
+    contact_business = models.CharField(max_length=200, blank=True)
+    contact_address = models.TextField(blank=True)
 
     class Meta:
         ordering = ['-discovered_at']

@@ -386,7 +386,8 @@ def calculate_urgency(posted_at):
         return 'stale', 20
 
 
-def process_lead(platform, source_url, content, author='', posted_at=None, raw_data=None):
+def process_lead(platform, source_url, content, author='', posted_at=None,
+                  raw_data=None, **extra_fields):
     """
     Full lead processing pipeline:
     1. Deduplicate via content hash
@@ -395,6 +396,10 @@ def process_lead(platform, source_url, content, author='', posted_at=None, raw_d
     4. Calculate urgency
     5. Create Lead record
     6. Assign to matching businesses
+
+    Optional extra_fields kwargs are set directly on the Lead after creation.
+    Supported: state, region, source_group, source_type, contact_name,
+    contact_phone, contact_email, contact_business, contact_address.
 
     Returns (lead, created, num_assignments) or (None, False, 0) if duplicate.
     """
@@ -419,6 +424,17 @@ def process_lead(platform, source_url, content, author='', posted_at=None, raw_d
     # Calculate urgency
     urgency_level, urgency_score = calculate_urgency(posted_at)
 
+    # Separate known Lead fields from extra_fields
+    lead_kwargs = {}
+    valid_extra = {
+        'state', 'region', 'source_group', 'source_type',
+        'contact_name', 'contact_phone', 'contact_email',
+        'contact_business', 'contact_address',
+    }
+    for k, v in extra_fields.items():
+        if k in valid_extra and v:
+            lead_kwargs[k] = v
+
     # Create Lead
     lead = Lead.objects.create(
         platform=platform,
@@ -435,6 +451,7 @@ def process_lead(platform, source_url, content, author='', posted_at=None, raw_d
         confidence=confidence,
         content_hash=content_hash,
         raw_data=raw_data or {},
+        **lead_kwargs,
     )
 
     logger.info(f"Created lead #{lead.id}: [{urgency_level.upper()}] {platform} - {content[:60]}")

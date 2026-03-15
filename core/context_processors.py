@@ -1,3 +1,5 @@
+from django.db.models import Q
+
 from core.models.outreach import OutreachEmail, OutreachProspect
 
 
@@ -26,4 +28,43 @@ def crm_counts(request):
 
     return {
         'inbox_unread_count': unread if unread > 0 else 0,
+    }
+
+
+def lead_sidebar_counts(request):
+    """Provide unreviewed lead counts by source_group and source_type for sidebar."""
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return {}
+
+    from core.models.leads import Lead
+
+    base = Lead.objects.filter(review_status='unreviewed')
+
+    # Source type counts
+    from django.db.models import Count
+    type_counts = dict(
+        base.values_list('source_type')
+        .annotate(c=Count('id'))
+        .values_list('source_type', 'c')
+    )
+
+    # Group counts
+    group_counts = dict(
+        base.values_list('source_group')
+        .annotate(c=Count('id'))
+        .values_list('source_group', 'c')
+    )
+
+    # Urgency counts
+    urgency_counts = dict(
+        base.values_list('urgency_level')
+        .annotate(c=Count('id'))
+        .values_list('urgency_level', 'c')
+    )
+
+    return {
+        'lead_type_counts': type_counts,
+        'lead_group_counts': group_counts,
+        'lead_urgency_counts': urgency_counts,
+        'lead_total_unreviewed': sum(group_counts.values()),
     }

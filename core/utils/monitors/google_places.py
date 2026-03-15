@@ -357,6 +357,7 @@ def _process_negative_reviews(place, place_detail, category, city,
             })
             continue
 
+        phone = place_detail.get('nationalPhoneNumber', '')
         lead, created, num_assigned = process_lead(
             platform='google_reviews',
             source_url=source_url,
@@ -372,6 +373,11 @@ def _process_negative_reviews(place, place_detail, category, city,
                 'place_id': place.get('id', ''),
                 'type': 'negative_review',
             },
+            source_group='reviews',
+            source_type='google_reviews',
+            contact_business=biz_name,
+            contact_phone=phone,
+            contact_address=address,
         )
         if created:
             stats['created'] += 1
@@ -585,6 +591,7 @@ def _process_qna(place_detail, category, city, dry_run, stats):
             })
             continue
 
+        phone = place_detail.get('nationalPhoneNumber', '')
         lead, created, num_assigned = process_lead(
             platform='google_qna',
             source_url=source_url,
@@ -597,6 +604,11 @@ def _process_qna(place_detail, category, city, dry_run, stats):
                 'place_id': place_detail.get('id', ''),
                 'type': 'qna_question',
             },
+            source_group='reviews',
+            source_type='google_qa',
+            contact_business=biz_name,
+            contact_phone=phone,
+            contact_address=address,
         )
         if created:
             stats['created'] += 1

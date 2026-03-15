@@ -387,6 +387,12 @@ def monitor_permits(source_ids=None, max_age_days=30, dry_run=False):
                         'state': source.state,
                         'services_mapped': services,
                     },
+                    state=source.state or '',
+                    region=source.county or '',
+                    source_group='public_records',
+                    source_type='permits',
+                    contact_name=owner,
+                    contact_address=address,
                 )
 
                 if created:

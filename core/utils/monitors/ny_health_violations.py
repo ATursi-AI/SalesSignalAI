@@ -540,6 +540,12 @@ def monitor_ny_health_violations(source='nyc', county=None, days=30, dry_run=Fal
                     'services_mapped': services,
                     'data_source': restaurant.get('source', ''),
                 },
+                state='NY',
+                region=restaurant.get('boro', ''),
+                source_group='public_records',
+                source_type='health_inspections',
+                contact_business=biz_name,
+                contact_address=address,
             )
 
             if created:

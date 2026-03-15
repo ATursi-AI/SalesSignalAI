@@ -475,6 +475,13 @@ def monitor_ny_business_filings(county='nassau', days=7, dry_run=False, remote=F
                         'services_mapped': services,
                         'detected_category': 'NEW_BUSINESS_FILING',
                     },
+                    state='NY',
+                    region=county_name,
+                    source_group='public_records',
+                    source_type='business_filings',
+                    contact_name=agent,
+                    contact_business=name,
+                    contact_address=address,
                 )
 
                 if created:

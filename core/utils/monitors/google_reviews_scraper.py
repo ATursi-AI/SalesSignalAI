@@ -685,6 +685,8 @@ def _process_businesses(businesses, category, search_term, city, max_reviews,
                     'business_status': biz_status,
                     'type': 'negative_review',
                 },
+                source_group='reviews',
+                source_type='google_reviews',
             )
 
             if created:

@@ -384,6 +384,12 @@ def monitor_code_violations(source_ids=None, max_age_days=30, dry_run=False):
                         'state': source.state,
                         'services_mapped': services,
                     },
+                    state=source.state or '',
+                    region=source.municipality or '',
+                    source_group='public_records',
+                    source_type='violations',
+                    contact_name=owner,
+                    contact_address=address,
                 )
 
                 if created:

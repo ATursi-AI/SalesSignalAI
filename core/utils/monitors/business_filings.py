@@ -379,6 +379,12 @@ def monitor_business_filings(source_ids=None, max_age_days=30, dry_run=False):
                         'state_name': source.state_name,
                         'services_mapped': services,
                     },
+                    state=source.state or '',
+                    region=source.state_name or '',
+                    source_group='public_records',
+                    source_type='business_filings',
+                    contact_business=name,
+                    contact_address=address,
                 )
 
                 if created:

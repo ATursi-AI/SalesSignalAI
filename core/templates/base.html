@@ -116,11 +116,46 @@
                 {% endif %}
 
                 {% if user.is_staff %}
-                <div class="sidebar-section-label">Staff</div>
+                <div class="sidebar-section-label">Leads</div>
                 <a href="{% url 'admin_lead_repository' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_lead_repository' %}active{% endif %}">
-                    <i class="bi bi-database-fill"></i>
-                    <span>Lead Repository</span>
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Command Center</span>
+                    {% if lead_total_unreviewed %}<span class="sidebar-badge">{{ lead_total_unreviewed }}</span>{% endif %}
                 </a>
+
+                <div class="sidebar-section-label" style="margin-top:6px">Sources</div>
+                <a href="{% url 'leads_source_group' group='public-records' %}" class="sidebar-link {% if request.resolver_match.url_name == 'leads_source_group' and 'public-records' in request.path %}active{% endif %}">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>Public Records</span>
+                    {% if lead_group_counts.public_records %}<span class="sidebar-badge">{{ lead_group_counts.public_records }}</span>{% endif %}
+                </a>
+                <div class="sidebar-sub-links {% if 'public-records' in request.path %}open{% endif %}">
+                    <a href="{% url 'leads_source_group' group='public-records' %}?type=violations" class="sidebar-sub-link">Violations {% if lead_type_counts.violations %}<span class="sidebar-badge-sm">{{ lead_type_counts.violations }}</span>{% endif %}</a>
+                    <a href="{% url 'leads_source_group' group='public-records' %}?type=permits" class="sidebar-sub-link">Permits {% if lead_type_counts.permits %}<span class="sidebar-badge-sm">{{ lead_type_counts.permits }}</span>{% endif %}</a>
+                    <a href="{% url 'leads_source_group' group='public-records' %}?type=permits_now" class="sidebar-sub-link">Permits (NOW) {% if lead_type_counts.permits_now %}<span class="sidebar-badge-sm">{{ lead_type_counts.permits_now }}</span>{% endif %}</a>
+                    <a href="{% url 'leads_source_group' group='public-records' %}?type=property_sales" class="sidebar-sub-link">Property Sales {% if lead_type_counts.property_sales %}<span class="sidebar-badge-sm">{{ lead_type_counts.property_sales }}</span>{% endif %}</a>
+                    <a href="{% url 'leads_source_group' group='public-records' %}?type=health_inspections" class="sidebar-sub-link">Health Inspections {% if lead_type_counts.health_inspections %}<span class="sidebar-badge-sm">{{ lead_type_counts.health_inspections }}</span>{% endif %}</a>
+                    <a href="{% url 'leads_source_group' group='public-records' %}?type=liquor_licenses" class="sidebar-sub-link">Liquor Licenses {% if lead_type_counts.liquor_licenses %}<span class="sidebar-badge-sm">{{ lead_type_counts.liquor_licenses }}</span>{% endif %}</a>
+                    <a href="{% url 'leads_source_group' group='public-records' %}?type=business_filings" class="sidebar-sub-link">Business Filings {% if lead_type_counts.business_filings %}<span class="sidebar-badge-sm">{{ lead_type_counts.business_filings }}</span>{% endif %}</a>
+                </div>
+
+                <a href="{% url 'leads_source_group' group='social-media' %}" class="sidebar-link {% if request.resolver_match.url_name == 'leads_source_group' and 'social-media' in request.path %}active{% endif %}">
+                    <i class="bi bi-chat-dots"></i>
+                    <span>Social Media</span>
+                    {% if lead_group_counts.social_media %}<span class="sidebar-badge">{{ lead_group_counts.social_media }}</span>{% endif %}
+                </a>
+                <a href="{% url 'leads_source_group' group='reviews' %}" class="sidebar-link {% if request.resolver_match.url_name == 'leads_source_group' and 'reviews' in request.path %}active{% endif %}">
+                    <i class="bi bi-star"></i>
+                    <span>Reviews</span>
+                    {% if lead_group_counts.reviews %}<span class="sidebar-badge">{{ lead_group_counts.reviews }}</span>{% endif %}
+                </a>
+                <a href="{% url 'leads_source_group' group='weather' %}" class="sidebar-link {% if request.resolver_match.url_name == 'leads_source_group' and 'weather' in request.path %}active{% endif %}">
+                    <i class="bi bi-cloud-lightning"></i>
+                    <span>Weather</span>
+                    {% if lead_group_counts.weather %}<span class="sidebar-badge">{{ lead_group_counts.weather }}</span>{% endif %}
+                </a>
+
+                <div class="sidebar-section-label" style="margin-top:6px">Tools</div>
                 <a href="{% url 'monitor_health' %}" class="sidebar-link {% if request.resolver_match.url_name == 'monitor_health' %}active{% endif %}">
                     <i class="bi bi-activity"></i>
                     <span>Monitor Health</span>

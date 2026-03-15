@@ -253,6 +253,8 @@ def monitor_reddit(subreddits=None, sort='new', limit=50, max_age_hours=48):
                         'score': post['score'],
                         'num_comments': post['num_comments'],
                     },
+                    source_group='social_media',
+                    source_type='reddit',
                 )
 
                 if created:

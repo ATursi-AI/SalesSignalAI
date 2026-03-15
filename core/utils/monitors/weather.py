@@ -267,6 +267,8 @@ def monitor_weather(states=None, dry_run=False):
                         'services_mapped': services,
                         'expires': alert.get('expires', ''),
                     },
+                    source_group='weather',
+                    source_type='noaa',
                 )
 
                 if created:

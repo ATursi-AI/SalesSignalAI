@@ -197,6 +197,8 @@ def monitor_facebook_apify(group_ids=None, max_posts_per_group=20,
                         'post_text': text[:500],
                         'source': 'apify',
                     },
+                    source_group='social_media',
+                    source_type='facebook',
                 )
 
                 if created:

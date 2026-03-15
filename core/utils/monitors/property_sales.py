@@ -403,6 +403,12 @@ def monitor_property_sales(source_ids=None, max_age_days=30, dry_run=False):
                         'county': source.county,
                         'state': source.state,
                     },
+                    state=source.state or '',
+                    region=source.county or '',
+                    source_group='public_records',
+                    source_type='property_sales',
+                    contact_name=buyer,
+                    contact_address=address,
                 )
 
                 if created:

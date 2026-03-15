@@ -122,7 +122,17 @@
       "Bash(venv/Scripts/python.exe -c \"import py_compile; py_compile.compile\\(''core/utils/monitors/nyc_dob.py'', doraise=True\\); print\\(''OK''\\)\")",
       "Bash(venv/Scripts/python.exe -c \"import py_compile; py_compile.compile\\(''core/views/sales.py'', doraise=True\\); print\\(''OK''\\)\")",
       "Bash(venv/Scripts/python.exe manage.py check --no-color)",
-      "Bash(venv/Scripts/python.exe manage.py monitor_nyc_dob --type permits --borough queens --days 30 --dry-run)"
+      "Bash(venv/Scripts/python.exe manage.py monitor_nyc_dob --type permits --borough queens --days 30 --dry-run)",
+      "Bash(grep -E \"\\\\.py$\")",
+      "WebFetch(domain:data.ny.gov)",
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name lead_repository_redesign)",
+      "Bash(venv/Scripts/python.exe manage.py migrate core)",
+      "Read(//c/Users/aturs/Documents/AI_Engineering_Course/SalesSignalAI/**)",
+      "Bash(ls -1 core/management/commands/monitor_*.py)",
+      "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.dev venv/Scripts/python.exe -c \":*)",
+      "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe manage.py check --no-color)",
+      "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe manage.py monitor_nyc_dob --type violations --borough queens --days 30 --dry-run)",
+      "Bash(venv/Scripts/python.exe manage.py monitor_nextdoor_search --help)"
     ]
   }
 }

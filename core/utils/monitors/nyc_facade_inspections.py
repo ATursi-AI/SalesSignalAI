@@ -549,6 +549,12 @@ def monitor_nyc_facade_inspections(borough=None, dry_run=False, remote=False):
                     'services_mapped': services,
                     'data_source': filing.get('source', ''),
                 },
+                state='NY',
+                region=borough_name,
+                source_group='public_records',
+                source_type='violations',
+                contact_name=owner,
+                contact_address=address,
             )
 
             if created:

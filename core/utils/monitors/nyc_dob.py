@@ -462,6 +462,14 @@ def _monitor_permits(scraper, borough, days, dry_run, remote, stats,
                 author=owner_display,
                 posted_at=filing_date,
                 raw_data=raw_data,
+                state='NY',
+                region=borough_name,
+                source_group='public_records',
+                source_type='permits',
+                contact_name=owner_name,
+                contact_phone=owner_phone.strip() if has_phone else '',
+                contact_business=owner_biz,
+                contact_address=address,
             )
 
             if lead and created:
@@ -493,13 +501,20 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
     """Sub-monitor: NYC DOB ECB Violations (dataset 6bgk-3dad).
 
     Dates are YYYYMMDD text — string comparison works correctly for these.
-    Fields: ecb_violation_number, boro, violation_type, severity,
-            respondent_name, respondent_house_number, respondent_street,
-            respondent_city, respondent_zip, violation_description,
-            penality_imposed, issue_date, ecb_violation_status
+    API field names (note: penality_imposed is misspelled in the API):
+        ecb_violation_number, boro, violation_type, severity,
+        respondent_name, respondent_house_number, respondent_street,
+        respondent_city, respondent_zip, violation_description,
+        penality_imposed, issue_date, ecb_violation_status,
+        balance_due, amount_paid, hearing_date, hearing_status,
+        section_law_description1, bin, block, lot
     """
     since = (datetime.now() - timedelta(days=days)).strftime('%Y%m%d')
-    where = f"issue_date > '{since}' AND ecb_violation_status = 'ACTIVE'"
+    # Filter: recent + active only (exclude resolved with $0 balance)
+    where = (
+        f"issue_date > '{since}' "
+        f"AND ecb_violation_status != 'RESOLVE'"
+    )
 
     if borough:
         boro_code = BOROUGH_CODE_MAP.get(borough.lower(), '')
@@ -531,8 +546,9 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
             street = item.get('respondent_street', '')
             city = item.get('respondent_city', '')
             resp_zip = item.get('respondent_zip', '')
-            penalty = item.get('penality_imposed', '')
+            penalty = item.get('penality_imposed', '')  # API misspelling
             balance = item.get('balance_due', '')
+            amount_paid = item.get('amount_paid', '')
             boro_code = item.get('boro', '')
             bin_num = item.get('bin', '')
             block = item.get('block', '')
@@ -540,9 +556,28 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
             hearing_date_str = item.get('hearing_date', '')
             hearing_status = item.get('hearing_status', '')
             section_law = item.get('section_law_description1', '')
+            ecb_status = item.get('ecb_violation_status', '')
+
+            # Skip fully resolved violations (balance_due = 0)
+            try:
+                balance_amt = float(balance) if balance else 0
+            except (ValueError, TypeError):
+                balance_amt = 0
+            if ecb_status == 'RESOLVE' and balance_amt == 0:
+                continue
 
             borough_name = BOROUGH_NAMES.get(boro_code, 'NYC')
-            address = _build_address(house_num, street, city or borough_name)
+            # Build full respondent address
+            addr_parts = []
+            if house_num:
+                addr_parts.append(str(house_num).strip())
+            if street:
+                addr_parts.append(str(street).strip())
+            address_line = ' '.join(addr_parts)
+            resp_city = city or borough_name
+            full_address_parts = [p for p in [address_line, resp_city, 'NY', resp_zip] if p]
+            contact_addr = ', '.join(full_address_parts)
+            address = _build_address(house_num, street, resp_city)
             violation_date = _parse_soda_date(violation_date_str)
             services = _detect_violation_services(v_type, description or '')
             age_text = _days_ago_text(violation_date)
@@ -552,10 +587,12 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
 
             penalty_str = f'${int(float(penalty)):,}' if penalty else ''
             balance_str = f'${int(float(balance)):,}' if balance else ''
+            paid_str = f'${int(float(amount_paid)):,}' if amount_paid else ''
 
-            # Penalty-based urgency scoring
+            # Urgency scoring: penalty amount + severity
             penalty_amount = float(penalty) if penalty else 0
-            if penalty_amount >= 10_000:
+            severity_upper = (severity or '').upper()
+            if penalty_amount >= 10_000 or severity_upper in ('HAZARDOUS', 'HZRDOUS'):
                 urgency_level = 'hot'
                 urgency_score = 95
             elif penalty_amount >= 1_000:
@@ -570,6 +607,7 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
                 f'NYC DOB VIOLATION: {v_type}',
                 f'Issued: {violation_date_str}{f" ({age_text})" if age_text else ""}',
                 f'Severity: {severity}',
+                f'Status: {ecb_status}',
                 f'Address: {address}',
             ]
             if resp_zip:
@@ -588,6 +626,8 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
                 content_parts.append(f'Penalty: {penalty_str}')
             if balance_str:
                 content_parts.append(f'Balance Due: {balance_str}')
+            if paid_str:
+                content_parts.append(f'Amount Paid: {paid_str}')
             if hearing_date_str:
                 hearing_date = _parse_soda_date(hearing_date_str)
                 h_age = _days_ago_text(hearing_date) if hearing_date else ''
@@ -602,6 +642,7 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
                 'ecb_violation_number': ecb_num,
                 'violation_type': v_type,
                 'severity': severity,
+                'ecb_violation_status': ecb_status,
                 'address': address,
                 'block': block,
                 'lot': lot,
@@ -613,6 +654,7 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
                 'section_law': section_law,
                 'penalty': penalty,
                 'balance_due': balance,
+                'amount_paid': amount_paid,
                 'hearing_date': hearing_date_str,
                 'hearing_status': hearing_status,
                 'issue_date': violation_date_str,
@@ -627,7 +669,7 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
                     f'[DRY RUN] Violation: {address} | {v_type} | '
                     f'{severity} | Respondent: {respondent or "N/A"} | '
                     f'Issued: {violation_date_str} ({age_text}) | '
-                    f'Penalty: {penalty_str or "N/A"} | '
+                    f'Penalty: {penalty_str or "N/A"} | Balance: {balance_str or "N/A"} | '
                     f'Urgency: {urgency_level.upper()}'
                 )
                 stats['created'] += 1
@@ -663,6 +705,12 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
                 author=respondent,
                 posted_at=violation_date,
                 raw_data=raw_data,
+                state='NY',
+                region=borough_name,
+                source_group='public_records',
+                source_type='violations',
+                contact_name=respondent,
+                contact_address=contact_addr,
             )
 
             if lead and created:
@@ -827,6 +875,12 @@ def _monitor_certificates(scraper, borough, days, dry_run, remote, stats,
                 author=owner_display,
                 posted_at=co_date,
                 raw_data=raw_data,
+                state='NY',
+                region=borough_name,
+                source_group='public_records',
+                source_type='permits',
+                contact_name=owner_display,
+                contact_address=address,
             )
 
             if lead and created:

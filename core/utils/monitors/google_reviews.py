@@ -322,6 +322,8 @@ def monitor_google_reviews(competitors=None, max_age_hours=168, dry_run=False):
                         'ai_analysis': analysis,
                         'relative_time': review.get('relative_time', ''),
                     },
+                    source_group='reviews',
+                    source_type='google_reviews',
                 )
 
                 if created:

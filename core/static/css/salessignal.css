@@ -2891,6 +2891,40 @@ textarea.form-control-dark {
     margin-left: auto;
 }
 
+/* Sidebar sub-links (collapsible source sub-navigation) */
+.sidebar-sub-links {
+    display: none;
+    flex-direction: column;
+    padding-left: 2.2rem;
+}
+.sidebar-sub-links.open {
+    display: flex;
+}
+.sidebar-sub-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    padding: 0.3rem 0.75rem;
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+    transition: color 0.15s, background 0.15s;
+}
+.sidebar-sub-link:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+.sidebar-badge-sm {
+    background: rgba(255, 71, 87, 0.15);
+    color: var(--accent-coral);
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 0.1rem 0.4rem;
+    border-radius: 9999px;
+    margin-left: auto;
+}
+
 /* Pipeline Stats Bar */
 .pipeline-stats-bar {
     display: flex;

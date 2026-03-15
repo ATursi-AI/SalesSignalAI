@@ -262,6 +262,8 @@ def monitor_nextdoor(locations=None, max_posts=50,
                     'title': title[:200],
                     'source': 'apify',
                 },
+                source_group='social_media',
+                source_type='nextdoor',
             )
 
             if created:

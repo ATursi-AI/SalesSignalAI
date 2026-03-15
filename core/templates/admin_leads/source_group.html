@@ -1,0 +1,701 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ group_label }}{% endblock %}
+{% block page_title %}<i class="bi {{ group_icon }}"></i> {{ group_label }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Type Tabs ── */
+.type-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.type-tab {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 8px 16px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+.type-tab:hover { border-color: var(--accent-blue); color: var(--text-primary); }
+.type-tab.active { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+.type-tab .tab-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 1px 7px;
+}
+.type-tab.active .tab-count { background: rgba(255,255,255,0.25); }
+
+/* ── Filters Bar ── */
+.filters-bar {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+}
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.filter-group label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+.filter-group select, .filter-group input {
+    background: var(--bg-base);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 6px 8px;
+    font-size: 0.8rem;
+    font-family: inherit;
+    min-width: 110px;
+}
+.filter-group select:focus, .filter-group input:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+}
+.btn-filter-clear {
+    background: transparent;
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+.btn-filter-clear:hover { border-color: var(--accent-coral); color: var(--accent-coral); }
+
+/* ── Bulk Actions ── */
+.bulk-bar {
+    background: var(--accent-blue);
+    color: #fff;
+    border-radius: var(--radius-sm);
+    padding: 8px 14px;
+    margin-bottom: 10px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+.bulk-bar.visible { display: flex; }
+.bulk-bar button {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    border-radius: var(--radius-sm);
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+.bulk-bar button:hover { background: rgba(255,255,255,0.35); }
+.bulk-bar select {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    border-radius: var(--radius-sm);
+    padding: 4px 8px;
+    font-size: 0.78rem;
+    font-family: inherit;
+}
+.bulk-bar select option { color: #000; }
+.bulk-bar .bulk-spacer { flex: 1; }
+.bulk-bar .btn-bulk-delete { background: rgba(255,71,87,0.35); border-color: rgba(255,71,87,0.5); }
+
+/* ── Stats Row ── */
+.stats-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+.stats-row .stat-pill {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+}
+
+/* ── Lead Table ── */
+.lead-table-wrap {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+.lead-table { width: 100%; border-collapse: collapse; }
+.lead-table th {
+    background: var(--bg-elevated);
+    padding: 8px 10px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    font-weight: 700;
+    text-align: left;
+    border-bottom: 1px solid var(--border-subtle);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+}
+.lead-table th:hover { color: var(--text-primary); }
+.lead-table th .sort-icon { margin-left: 3px; font-size: 0.6rem; opacity: 0.5; }
+.lead-table th.sorted .sort-icon { opacity: 1; color: var(--accent-blue); }
+.lead-table td {
+    padding: 8px 10px;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    vertical-align: middle;
+}
+.lead-table tbody tr { transition: background 0.1s; }
+.lead-table tbody tr:hover { background: var(--bg-hover); }
+.lead-table tbody tr.expanded { background: var(--bg-elevated); }
+.lead-table td.cb-cell { width: 32px; text-align: center; }
+.lead-table input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--accent-blue); cursor: pointer; }
+
+.platform-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 5px;
+    font-size: 0.7rem; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+
+.lead-title-link {
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 500;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.3;
+    font-size: 0.82rem;
+}
+.lead-title-link:hover { color: var(--accent-blue); text-decoration: underline; }
+
+/* Badges */
+.badge {
+    display: inline-block; padding: 2px 7px; border-radius: 10px;
+    font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.3px; white-space: nowrap;
+}
+.badge-cat { background: rgba(59,130,246,0.15); color: var(--accent-blue); border: 1px solid rgba(59,130,246,0.25); }
+.badge-high { background: rgba(16,185,129,0.15); color: var(--accent-emerald); border: 1px solid rgba(16,185,129,0.3); }
+.badge-medium { background: rgba(245,158,11,0.15); color: var(--accent-amber); border: 1px solid rgba(245,158,11,0.3); }
+.badge-low { background: rgba(107,107,128,0.15); color: var(--text-muted); border: 1px solid rgba(107,107,128,0.3); }
+.badge-hot { background: rgba(255,71,87,0.2); color: var(--accent-coral); border: 1px solid rgba(255,71,87,0.35); }
+.badge-warm { background: rgba(245,158,11,0.15); color: var(--accent-amber); border: 1px solid rgba(245,158,11,0.3); }
+.badge-new { background: rgba(59,130,246,0.15); color: var(--accent-blue); border: 1px solid rgba(59,130,246,0.25); }
+.badge-stale { background: rgba(107,107,128,0.1); color: var(--text-muted); border: 1px solid rgba(107,107,128,0.2); }
+.badge-unreviewed { background: rgba(107,107,128,0.12); color: var(--text-muted); border: 1px solid rgba(107,107,128,0.25); }
+.badge-approved { background: rgba(16,185,129,0.15); color: var(--accent-emerald); border: 1px solid rgba(16,185,129,0.3); }
+.badge-rejected { background: rgba(255,71,87,0.15); color: var(--accent-coral); border: 1px solid rgba(255,71,87,0.3); }
+.badge-assigned { background: rgba(139,92,246,0.15); color: #A78BFA; border: 1px solid rgba(139,92,246,0.3); }
+
+/* ── Detail Panel ── */
+.detail-row td { padding: 0 !important; border-bottom: 2px solid var(--accent-blue) !important; }
+.detail-panel {
+    background: var(--bg-base); padding: 18px 20px;
+    display: grid; grid-template-columns: 1fr 300px; gap: 20px;
+}
+.detail-content h4 { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 6px 0; }
+.detail-text {
+    font-size: 0.85rem; line-height: 1.5; color: var(--text-primary);
+    white-space: pre-wrap; word-break: break-word; max-height: 280px; overflow-y: auto;
+    background: var(--bg-surface); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);
+}
+.keyword-pills { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.keyword-pill {
+    background: rgba(59,130,246,0.12); color: var(--accent-blue);
+    border: 1px solid rgba(59,130,246,0.2); border-radius: 12px;
+    padding: 2px 8px; font-size: 0.72rem; font-weight: 600;
+}
+.detail-actions { display: flex; flex-direction: column; gap: 10px; }
+.detail-actions h4 { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 0; }
+.detail-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.detail-meta-item { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 6px 10px; }
+.detail-meta-item .meta-label { font-size: 0.65rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.4px; }
+.detail-meta-item .meta-value { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-top: 1px; }
+.action-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn-approve, .btn-reject, .btn-unreview, .btn-delete-detail {
+    border-radius: var(--radius-sm); padding: 5px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.15s;
+}
+.btn-approve { background: rgba(16,185,129,0.15); color: var(--accent-emerald); border: 1px solid rgba(16,185,129,0.3); }
+.btn-reject { background: rgba(255,71,87,0.12); color: var(--accent-coral); border: 1px solid rgba(255,71,87,0.25); }
+.btn-unreview { background: rgba(107,107,128,0.12); color: var(--text-secondary); border: 1px solid rgba(107,107,128,0.25); }
+.btn-delete-detail { background: rgba(255,71,87,0.12); color: var(--accent-coral); border: 1px solid rgba(255,71,87,0.25); }
+.btn-delete-row { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 3px 5px; border-radius: var(--radius-sm); font-size: 0.85rem; }
+.btn-delete-row:hover { color: var(--accent-coral); background: rgba(255,71,87,0.12); }
+.assign-row { display: flex; gap: 6px; align-items: center; }
+.assign-row select { flex: 1; background: var(--bg-base); border: 1px solid var(--border-light); color: var(--text-primary); border-radius: var(--radius-sm); padding: 5px 8px; font-size: 0.78rem; }
+.assign-row button { background: rgba(139,92,246,0.15); color: #A78BFA; border: 1px solid rgba(139,92,246,0.3); border-radius: var(--radius-sm); padding: 5px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.assigned-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.2);
+    border-radius: 12px; padding: 2px 8px; font-size: 0.72rem; color: #A78BFA; margin: 2px 2px 0 0;
+}
+.assigned-chip .remove-assign { cursor: pointer; opacity: 0.6; font-size: 0.85rem; }
+.assigned-chip .remove-assign:hover { opacity: 1; color: var(--accent-coral); }
+
+/* ── Contact info in lead row ── */
+.contact-cell { font-size: 0.78rem; color: var(--text-secondary); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.contact-cell a { color: var(--accent-blue); text-decoration: none; }
+.contact-cell a:hover { text-decoration: underline; }
+
+/* ── Pagination ── */
+.pagination-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; font-size: 0.8rem; color: var(--text-secondary); }
+.pagination-buttons { display: flex; gap: 4px; }
+.pagination-buttons button {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle); color: var(--text-primary);
+    border-radius: var(--radius-sm); padding: 5px 10px; font-size: 0.8rem; cursor: pointer;
+}
+.pagination-buttons button:hover { border-color: var(--accent-blue); }
+.pagination-buttons button:disabled { opacity: 0.4; cursor: not-allowed; }
+.pagination-buttons button.active-page { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+
+/* ── Loading & Empty ── */
+.table-container { position: relative; min-height: 200px; }
+.loading-overlay { position: absolute; inset: 0; background: rgba(10,10,15,0.6); display: flex; align-items: center; justify-content: center; z-index: 10; border-radius: var(--radius-md); }
+.loading-spinner { width: 28px; height: 28px; border: 3px solid var(--border-light); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty-state { text-align: center; padding: 50px 20px; color: var(--text-muted); }
+.empty-state i { font-size: 2.5rem; opacity: 0.3; }
+.empty-state p { margin-top: 10px; font-size: 0.9rem; }
+
+@media (max-width: 1200px) { .detail-panel { grid-template-columns: 1fr; } }
+@media (max-width: 768px) {
+    .type-tabs { flex-direction: column; }
+    .filters-bar { flex-direction: column; }
+    .filter-group select, .filter-group input { min-width: 100%; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Type Tabs -->
+<div class="type-tabs">
+    <div class="type-tab active" data-type="" onclick="selectTab(this, '')">
+        All
+        <span class="tab-count">{{ total_count }}</span>
+    </div>
+    {% for tab in type_tabs %}
+    <div class="type-tab" data-type="{{ tab.key }}" onclick="selectTab(this, '{{ tab.key }}')">
+        {{ tab.label }}
+        <span class="tab-count">{{ tab.count }}</span>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Filters Bar -->
+<div class="filters-bar">
+    <div class="filter-group">
+        <label>Urgency</label>
+        <select id="filterUrgency" onchange="applyFilters()">
+            <option value="">All</option>
+            <option value="hot">HOT</option>
+            <option value="warm">WARM</option>
+            <option value="new">NEW</option>
+            <option value="stale">Stale</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Confidence</label>
+        <select id="filterConfidence" onchange="applyFilters()">
+            <option value="">All</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Status</label>
+        <select id="filterStatus" onchange="applyFilters()">
+            <option value="">All</option>
+            <option value="unreviewed" selected>Unreviewed</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="assigned">Assigned</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Location</label>
+        <input type="text" id="filterLocation" placeholder="City, ZIP, borough..." oninput="debounceApply()">
+    </div>
+    <div class="filter-group">
+        <label>Search</label>
+        <input type="text" id="filterSearch" placeholder="Content, name..." oninput="debounceApply()">
+    </div>
+    <button class="btn-filter-clear" onclick="clearFilters()"><i class="bi bi-x-lg"></i> Clear</button>
+</div>
+
+<!-- Bulk Action Bar -->
+<div class="bulk-bar" id="bulkBar">
+    <span id="bulkCount">0</span> selected
+    <button onclick="bulkAction('approve')"><i class="bi bi-check-lg"></i> Approve</button>
+    <button onclick="bulkAction('reject')"><i class="bi bi-x-lg"></i> Reject</button>
+    <select id="bulkAssignBiz">
+        <option value="">Assign to...</option>
+        {% for biz in businesses %}
+        <option value="{{ biz.id }}">{{ biz.business_name }}</option>
+        {% endfor %}
+    </select>
+    <button onclick="bulkAction('assign')"><i class="bi bi-person-plus"></i> Assign</button>
+    <button class="btn-bulk-delete" onclick="bulkDelete()"><i class="bi bi-trash3"></i> Delete</button>
+    <div class="bulk-spacer"></div>
+    <button onclick="clearSelection()"><i class="bi bi-x-circle"></i> Deselect</button>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-row">
+    <span>Showing <span class="stat-pill" id="showingCount">0</span> of <span class="stat-pill" id="totalCount">0</span></span>
+    <span>Page <span class="stat-pill" id="pageNum">1</span></span>
+</div>
+
+<!-- Lead Table -->
+<div class="table-container" id="tableContainer">
+    <div class="lead-table-wrap">
+        <table class="lead-table">
+            <thead>
+                <tr>
+                    <th class="cb-cell"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
+                    <th>Src</th>
+                    <th onclick="setSort('-discovered_at')" class="sorted">Title <span class="sort-icon"><i class="bi bi-arrow-down"></i></span></th>
+                    <th>Location</th>
+                    <th>Contact</th>
+                    <th onclick="setSort('-urgency_score')">Urgency <span class="sort-icon"><i class="bi bi-arrow-down-up"></i></span></th>
+                    <th onclick="setSort('-discovered_at')">Time <span class="sort-icon"><i class="bi bi-arrow-down-up"></i></span></th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="leadTableBody"></tbody>
+        </table>
+    </div>
+    <div class="loading-overlay" id="loadingOverlay" style="display:none;">
+        <div class="loading-spinner"></div>
+    </div>
+</div>
+
+<!-- Pagination -->
+<div class="pagination-bar">
+    <div id="paginationInfo"></div>
+    <div class="pagination-buttons" id="paginationButtons"></div>
+</div>
+
+<script>
+const GROUP_KEY = '{{ group_key }}';
+const BUSINESSES = [{% for biz in businesses %}{ id: {{ biz.id }}, name: "{{ biz.business_name|escapejs }}" },{% endfor %}];
+const SALESPEOPLE = [{% for sp in salespeople %}{ id: {{ sp.id }}, name: "{{ sp.user.get_full_name|default:sp.user.username|escapejs }}" },{% endfor %}];
+
+const PLATFORM_COLORS = {
+    craigslist:'#7B2FBE', reddit:'#FF4500', google_qna:'#4285F4', google_reviews:'#4285F4',
+    google_maps:'#34A853', yelp_review:'#D32323', facebook:'#1877F2', nextdoor:'#8ED500',
+    twitter:'#1DA1F2', public_records:'#E67E22', permit:'#E67E22', property_sale:'#2980B9',
+    business_filing:'#27AE60', weather_alert:'#E74C3C', code_violation:'#F1C40F',
+    health_inspection:'#E91E63', manual:'#6B6B80', bbb:'#005A78', patch:'#D64933',
+};
+const PLATFORM_ICONS = {
+    reddit:'bi-reddit', facebook:'bi-facebook', nextdoor:'bi-houses', public_records:'bi-file-earmark-text',
+    permit:'bi-building', property_sale:'bi-house-door', business_filing:'bi-file-earmark-text',
+    weather_alert:'bi-cloud-lightning', code_violation:'bi-exclamation-triangle',
+    health_inspection:'bi-heart-pulse', google_reviews:'bi-google', google_qna:'bi-google',
+    google_maps:'bi-geo-alt-fill', manual:'bi-pencil-square', craigslist:'bi-list-ul',
+    yelp_review:'bi-star', bbb:'bi-shield-check', patch:'bi-newspaper',
+};
+
+let currentSort = '-discovered_at';
+let currentPage = 1;
+let currentType = '';
+let selectedLeads = new Set();
+let expandedLead = null;
+let debounceTimer = null;
+
+// Check URL params for initial type filter
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    const typeParam = params.get('type');
+    if (typeParam) {
+        currentType = typeParam;
+        document.querySelectorAll('.type-tab').forEach(t => {
+            t.classList.toggle('active', t.dataset.type === typeParam);
+        });
+    }
+})();
+
+function getCsrf() { const m = document.cookie.match(/csrftoken=([^;]+)/); return m ? m[1] : ''; }
+function escHtml(s) { if (!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function selectTab(el, type) {
+    document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    currentType = type;
+    applyFilters();
+}
+
+function applyFilters(page) { currentPage = page || 1; fetchLeads(); }
+function debounceApply() { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => applyFilters(), 400); }
+function setSort(field) {
+    currentSort = currentSort === field ? (field.startsWith('-') ? field.slice(1) : '-' + field) : field;
+    fetchLeads();
+}
+
+async function fetchLeads() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    const params = new URLSearchParams();
+    params.set('page', currentPage);
+    params.set('sort', currentSort);
+    params.set('group', GROUP_KEY);
+
+    if (currentType) params.set('type', currentType);
+
+    const urgency = document.getElementById('filterUrgency').value;
+    const confidence = document.getElementById('filterConfidence').value;
+    const status = document.getElementById('filterStatus').value;
+    const location = document.getElementById('filterLocation').value;
+    const search = document.getElementById('filterSearch').value;
+
+    if (urgency) params.set('urgency', urgency);
+    if (confidence) params.set('confidence', confidence);
+    if (status) params.set('status', status);
+    if (location) params.set('location', location);
+    if (search) params.set('search', search);
+
+    try {
+        const resp = await fetch(`/admin-leads/api/?${params}`);
+        const data = await resp.json();
+        renderLeads(data);
+    } catch (e) { console.error('Fetch error:', e); }
+    finally { document.getElementById('loadingOverlay').style.display = 'none'; }
+}
+
+function renderLeads(data) {
+    const tbody = document.getElementById('leadTableBody');
+    expandedLead = null;
+    if (!data.leads.length) {
+        tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><i class="bi bi-inbox"></i><p>No leads match your filters</p></div></td></tr>';
+    } else {
+        tbody.innerHTML = data.leads.map(renderLeadRow).join('');
+    }
+    document.getElementById('showingCount').textContent = data.leads.length;
+    document.getElementById('totalCount').textContent = data.total;
+    document.getElementById('pageNum').textContent = data.page;
+
+    const from = (data.page - 1) * data.per_page + 1;
+    const to = Math.min(data.page * data.per_page, data.total);
+    const info = document.getElementById('paginationInfo');
+    info.textContent = data.total > 0 ? `${from}-${to} of ${data.total}` : 'No results';
+
+    const btns = document.getElementById('paginationButtons');
+    let html = '';
+    if (data.total_pages > 1) {
+        html += `<button ${data.page<=1?'disabled':''} onclick="applyFilters(1)" title="First"><i class="bi bi-chevron-double-left"></i></button>`;
+        html += `<button ${data.page<=1?'disabled':''} onclick="applyFilters(${data.page-1})" title="Prev"><i class="bi bi-chevron-left"></i></button>`;
+        const start = Math.max(1, data.page - 3), end = Math.min(data.total_pages, data.page + 3);
+        for (let i = start; i <= end; i++) html += `<button class="${i===data.page?'active-page':''}" onclick="applyFilters(${i})">${i}</button>`;
+        html += `<button ${data.page>=data.total_pages?'disabled':''} onclick="applyFilters(${data.page+1})" title="Next"><i class="bi bi-chevron-right"></i></button>`;
+        html += `<button ${data.page>=data.total_pages?'disabled':''} onclick="applyFilters(${data.total_pages})" title="Last"><i class="bi bi-chevron-double-right"></i></button>`;
+    }
+    btns.innerHTML = html;
+    updateBulkBar();
+}
+
+function renderLeadRow(lead) {
+    const color = PLATFORM_COLORS[lead.platform] || '#6B6B80';
+    const icon = PLATFORM_ICONS[lead.platform] || 'bi-globe';
+    const checked = selectedLeads.has(lead.id) ? 'checked' : '';
+    const contact = lead.contact_name || lead.contact_business || lead.author || '-';
+    const phone = lead.contact_phone ? `<br><a href="tel:${lead.contact_phone}">${escHtml(lead.contact_phone)}</a>` : '';
+
+    return `
+        <tr data-lead-id="${lead.id}" onclick="toggleDetail(${lead.id}, event)">
+            <td class="cb-cell" onclick="event.stopPropagation()">
+                <input type="checkbox" value="${lead.id}" ${checked} onchange="toggleSelect(${lead.id}, this)">
+            </td>
+            <td>
+                <div class="platform-icon" style="background:${color}" title="${lead.platform_display}">
+                    <i class="${icon}"></i>
+                </div>
+            </td>
+            <td>
+                <a href="${lead.source_url}" target="_blank" rel="noopener" class="lead-title-link" onclick="event.stopPropagation()">${escHtml(lead.title)}</a>
+            </td>
+            <td style="font-size:0.78rem;color:var(--text-secondary)">${escHtml(lead.location) || '-'}</td>
+            <td class="contact-cell">${escHtml(contact)}${phone}</td>
+            <td><span class="badge badge-${lead.urgency}">${lead.urgency.toUpperCase()}</span></td>
+            <td style="white-space:nowrap;font-size:0.78rem;color:var(--text-secondary)">${lead.time_ago}</td>
+            <td><span class="badge badge-${lead.review_status}">${lead.review_status}</span></td>
+            <td class="cb-cell" onclick="event.stopPropagation()">
+                <button class="btn-delete-row" onclick="deleteLead(${lead.id})" title="Delete"><i class="bi bi-trash3"></i></button>
+            </td>
+        </tr>`;
+}
+
+/* Detail Panel */
+async function toggleDetail(leadId, event) {
+    if (event && (event.target.tagName === 'A' || event.target.tagName === 'INPUT')) return;
+    const tbody = document.getElementById('leadTableBody');
+    const oldDetail = tbody.querySelector('.detail-row');
+    if (oldDetail) {
+        const oldId = parseInt(oldDetail.id.replace('detail-', ''));
+        oldDetail.remove();
+        tbody.querySelector(`tr[data-lead-id="${oldId}"]`)?.classList.remove('expanded');
+        if (oldId === leadId) { expandedLead = null; return; }
+    }
+    try {
+        const resp = await fetch(`/admin-leads/detail/${leadId}/`);
+        const lead = await resp.json();
+        const row = tbody.querySelector(`tr[data-lead-id="${leadId}"]`);
+        if (!row) return;
+        row.classList.add('expanded');
+        const tr = document.createElement('tr');
+        tr.className = 'detail-row'; tr.id = 'detail-' + leadId;
+        tr.innerHTML = `<td colspan="9">${buildDetailPanel(lead)}</td>`;
+        row.insertAdjacentElement('afterend', tr);
+        expandedLead = leadId;
+    } catch (e) { console.error('Detail fetch error:', e); }
+}
+
+function buildDetailPanel(lead) {
+    const keywords = (lead.matched_keywords||[]).map(kw => `<span class="keyword-pill">${escHtml(kw)}</span>`).join('');
+    const rawData = lead.raw_data && Object.keys(lead.raw_data).length
+        ? Object.entries(lead.raw_data).map(([k,v]) => `<span style="color:var(--text-muted)">${escHtml(k)}:</span> ${escHtml(String(v))}`).join(' &middot; ') : '';
+    const assignments = (lead.assignments||[]).map(a => `
+        <span class="assigned-chip">${escHtml(a.business_name)} (${a.status})
+            <span class="remove-assign" onclick="unassignLead(${lead.id}, ${a.business_id})">&times;</span>
+        </span>`).join('');
+    const bizOpts = BUSINESSES.map(b => `<option value="${b.id}">${escHtml(b.name)}</option>`).join('');
+
+    let contactHtml = '';
+    if (lead.contact_name || lead.contact_phone || lead.contact_email || lead.contact_business || lead.contact_address) {
+        contactHtml = `<h4 style="margin-top:12px">Contact Info</h4><div style="font-size:0.85rem">`;
+        if (lead.contact_name) contactHtml += `<div><strong>Name:</strong> ${escHtml(lead.contact_name)}</div>`;
+        if (lead.contact_business) contactHtml += `<div><strong>Business:</strong> ${escHtml(lead.contact_business)}</div>`;
+        if (lead.contact_phone) contactHtml += `<div><strong>Phone:</strong> <a href="tel:${lead.contact_phone}" style="color:var(--accent-blue)">${escHtml(lead.contact_phone)}</a></div>`;
+        if (lead.contact_email) contactHtml += `<div><strong>Email:</strong> <a href="mailto:${lead.contact_email}" style="color:var(--accent-blue)">${escHtml(lead.contact_email)}</a></div>`;
+        if (lead.contact_address) contactHtml += `<div><strong>Address:</strong> ${escHtml(lead.contact_address)}</div>`;
+        contactHtml += `</div>`;
+    }
+
+    return `
+    <div class="detail-panel">
+        <div class="detail-content">
+            <h4>Source Content</h4>
+            <div class="detail-text">${escHtml(lead.source_content)}</div>
+            ${keywords ? `<h4 style="margin-top:12px">Keywords</h4><div class="keyword-pills">${keywords}</div>` : ''}
+            ${contactHtml}
+            ${rawData ? `<h4 style="margin-top:12px">Raw Data</h4><div style="font-size:0.78rem;color:var(--text-secondary)">${rawData}</div>` : ''}
+        </div>
+        <div class="detail-actions">
+            <h4>Metadata</h4>
+            <div class="detail-meta-grid">
+                <div class="detail-meta-item"><div class="meta-label">Platform</div><div class="meta-value">${escHtml(lead.platform_display)}</div></div>
+                <div class="detail-meta-item"><div class="meta-label">Source Type</div><div class="meta-value">${escHtml(lead.source_type||'-')}</div></div>
+                <div class="detail-meta-item"><div class="meta-label">Urgency</div><div class="meta-value"><span class="badge badge-${lead.urgency_level}">${lead.urgency_level.toUpperCase()}</span> (${lead.urgency_score})</div></div>
+                <div class="detail-meta-item"><div class="meta-label">Confidence</div><div class="meta-value"><span class="badge badge-${lead.confidence}">${lead.confidence}</span></div></div>
+                <div class="detail-meta-item"><div class="meta-label">State</div><div class="meta-value">${escHtml(lead.state||'-')}</div></div>
+                <div class="detail-meta-item"><div class="meta-label">Region</div><div class="meta-value">${escHtml(lead.region||lead.detected_location||'-')}</div></div>
+            </div>
+            <h4 style="margin-top:14px">Actions</h4>
+            <div class="action-buttons">
+                <button class="btn-approve" onclick="leadAction(${lead.id},'approve')"><i class="bi bi-check-lg"></i> Approve</button>
+                <button class="btn-reject" onclick="leadAction(${lead.id},'reject')"><i class="bi bi-x-lg"></i> Reject</button>
+                <button class="btn-unreview" onclick="leadAction(${lead.id},'unreview')"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+                <button class="btn-delete-detail" onclick="deleteLead(${lead.id})"><i class="bi bi-trash3"></i> Delete</button>
+            </div>
+            <h4 style="margin-top:14px">Assign</h4>
+            <div class="assign-row">
+                <select id="assignSelect-${lead.id}"><option value="">Select business...</option>${bizOpts}</select>
+                <button onclick="assignLead(${lead.id})"><i class="bi bi-person-plus"></i> Assign</button>
+            </div>
+            ${assignments ? `<div style="margin-top:6px">${assignments}</div>` : ''}
+            ${SALESPEOPLE.length ? `
+            <h4 style="margin-top:14px">Sales Pipeline</h4>
+            <div class="assign-row">
+                <select id="salesSelect-${lead.id}"><option value="">Select salesperson...</option>${SALESPEOPLE.map(sp=>`<option value="${sp.id}">${escHtml(sp.name)}</option>`).join('')}</select>
+                <button onclick="sendToSales(${lead.id})" style="background:rgba(16,185,129,0.15);color:var(--accent-emerald);border-color:rgba(16,185,129,0.3)"><i class="bi bi-arrow-right-circle"></i> Send</button>
+            </div>` : ''}
+            <a href="${escHtml(lead.source_url)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;font-size:0.78rem;color:var(--accent-blue)"><i class="bi bi-box-arrow-up-right"></i> Source</a>
+        </div>
+    </div>`;
+}
+
+/* Actions */
+async function leadAction(id, action) {
+    try { const r = await fetch(`/admin-leads/detail/${id}/action/`, { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()}, body:JSON.stringify({action}) }); const d = await r.json(); if(d.ok) fetchLeads(); } catch(e){console.error(e);}
+}
+async function assignLead(id) {
+    const biz = document.getElementById('assignSelect-'+id).value; if(!biz) return;
+    try { const r = await fetch(`/admin-leads/detail/${id}/action/`, { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()}, body:JSON.stringify({action:'assign',business_id:parseInt(biz)}) }); const d = await r.json(); if(d.ok) fetchLeads(); else if(d.error) alert(d.error); } catch(e){console.error(e);}
+}
+async function unassignLead(id, bizId) {
+    try { const r = await fetch(`/admin-leads/detail/${id}/action/`, { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()}, body:JSON.stringify({action:'unassign',business_id:bizId}) }); const d = await r.json(); if(d.ok) fetchLeads(); } catch(e){console.error(e);}
+}
+async function sendToSales(id) {
+    const sp = document.getElementById('salesSelect-'+id).value; if(!sp) return;
+    try { const r = await fetch(`/admin-leads/detail/${id}/action/`, { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()}, body:JSON.stringify({action:'send_to_sales',salesperson_id:parseInt(sp)}) }); const d = await r.json(); if(d.ok){alert(d.message);fetchLeads();} else if(d.error) alert(d.error); } catch(e){console.error(e);}
+}
+async function deleteLead(id) {
+    if(!confirm('Delete this lead permanently?')) return;
+    try { const r = await fetch(`/admin-leads/detail/${id}/action/`, { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()}, body:JSON.stringify({action:'delete'}) }); const d = await r.json(); if(d.ok){selectedLeads.delete(id);fetchLeads();} } catch(e){console.error(e);}
+}
+async function bulkDelete() {
+    const ids = Array.from(selectedLeads); if(!ids.length) return;
+    if(!confirm(`Delete ${ids.length} leads permanently?`)) return;
+    try { const r = await fetch('/admin-leads/bulk/', { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()}, body:JSON.stringify({lead_ids:ids,action:'delete'}) }); const d = await r.json(); if(d.ok){clearSelection();fetchLeads();} } catch(e){console.error(e);}
+}
+
+function toggleSelect(id, cb) { if(cb.checked) selectedLeads.add(id); else selectedLeads.delete(id); updateBulkBar(); }
+function toggleSelectAll(cb) {
+    document.querySelectorAll('#leadTableBody input[type="checkbox"]').forEach(b => { const id=parseInt(b.value); if(cb.checked){b.checked=true;selectedLeads.add(id);}else{b.checked=false;selectedLeads.delete(id);} });
+    updateBulkBar();
+}
+function clearSelection() { selectedLeads.clear(); document.querySelectorAll('#leadTableBody input[type="checkbox"]').forEach(b=>b.checked=false); document.getElementById('selectAll').checked=false; updateBulkBar(); }
+function updateBulkBar() { const c=selectedLeads.size; document.getElementById('bulkCount').textContent=c; document.getElementById('bulkBar').classList.toggle('visible',c>0); }
+async function bulkAction(action) {
+    const ids = Array.from(selectedLeads); if(!ids.length) return;
+    const body = {lead_ids:ids, action};
+    if(action==='assign'){const biz=document.getElementById('bulkAssignBiz').value;if(!biz){alert('Select a business');return;}body.business_id=parseInt(biz);}
+    try { const r = await fetch('/admin-leads/bulk/', { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()}, body:JSON.stringify(body) }); const d = await r.json(); if(d.ok){clearSelection();fetchLeads();} } catch(e){console.error(e);}
+}
+
+function clearFilters() {
+    document.getElementById('filterUrgency').value = '';
+    document.getElementById('filterConfidence').value = '';
+    document.getElementById('filterStatus').value = '';
+    document.getElementById('filterLocation').value = '';
+    document.getElementById('filterSearch').value = '';
+    applyFilters();
+}
+
+fetchLeads();
+</script>
+{% endblock %}

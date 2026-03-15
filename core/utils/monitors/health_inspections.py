@@ -416,6 +416,12 @@ def monitor_health_inspections(source_ids=None, max_age_days=30, dry_run=False):
                         'state': source.state,
                         'services_mapped': services,
                     },
+                    state=source.state or '',
+                    region=source.jurisdiction or '',
+                    source_group='public_records',
+                    source_type='health_inspections',
+                    contact_business=name,
+                    contact_address=address,
                 )
 
                 if created:

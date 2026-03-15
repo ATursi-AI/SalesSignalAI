@@ -801,6 +801,8 @@ def monitor_nextdoor_playwright(
                             'source': 'playwright',
                             'search_term': post.get('search_term', ''),
                         },
+                        source_group='social_media',
+                        source_type='nextdoor',
                     )
                     if created:
                         stats['created'] += 1

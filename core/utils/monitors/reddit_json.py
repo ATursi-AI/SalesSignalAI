@@ -419,6 +419,8 @@ def monitor_reddit(subreddits=None, max_age_hours=48, dry_run=False, remote=Fals
                         'num_comments': post.get('num_comments', 0),
                         'flair': post.get('link_flair_text', ''),
                     },
+                    source_group='social_media',
+                    source_type='reddit',
                 )
 
                 if created:

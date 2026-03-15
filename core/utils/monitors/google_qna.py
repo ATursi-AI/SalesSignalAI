@@ -282,6 +282,8 @@ def monitor_google_qna(competitors=None, max_age_hours=168, dry_run=False):
                         'is_negative': is_negative,
                         'relative_time': review.get('relative_time', ''),
                     },
+                    source_group='reviews',
+                    source_type='google_qa',
                 )
 
                 if created:

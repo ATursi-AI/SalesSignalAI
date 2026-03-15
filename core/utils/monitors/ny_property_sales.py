@@ -341,6 +341,11 @@ def _monitor_nyc(scraper, days, dry_run, remote, stats, ingest_url, api_key):
                 author='',
                 posted_at=sale_date,
                 raw_data=raw_data,
+                state='NY',
+                region=borough_name,
+                source_group='public_records',
+                source_type='property_sales',
+                contact_address=address,
             )
 
             if lead and created:
@@ -586,6 +591,12 @@ def _monitor_li_county(scraper, county_key, days, dry_run, remote, stats,
                 author=buyer,
                 posted_at=sale_date,
                 raw_data=raw_data,
+                state='NY',
+                region=county_name,
+                source_group='public_records',
+                source_type='property_sales',
+                contact_name=buyer,
+                contact_address=address,
             )
 
             if lead and created:

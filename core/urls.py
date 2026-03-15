@@ -76,11 +76,12 @@ urlpatterns = [
     path('settings/theme/', user_settings.save_theme, name='save_theme'),
     path('settings/dismiss-welcome/', user_settings.dismiss_welcome, name='dismiss_welcome'),
 
-    # Lead Repository (staff only)
+    # Lead Repository — Command Center + Source Groups (staff only)
     path('admin-leads/', admin_leads.lead_repository, name='admin_lead_repository'),
     path('admin-leads/api/', admin_leads.lead_repository_api, name='admin_lead_repository_api'),
-    path('admin-leads/<int:lead_id>/', admin_leads.lead_detail_api, name='admin_lead_detail_api'),
-    path('admin-leads/<int:lead_id>/action/', admin_leads.lead_action, name='admin_lead_action'),
+    path('admin-leads/<str:group>/', admin_leads.source_group_page, name='leads_source_group'),
+    path('admin-leads/detail/<int:lead_id>/', admin_leads.lead_detail_api, name='admin_lead_detail_api'),
+    path('admin-leads/detail/<int:lead_id>/action/', admin_leads.lead_action, name='admin_lead_action'),
     path('admin-leads/bulk/', admin_leads.lead_bulk_action, name='admin_lead_bulk_action'),
 
     # Monitor Health (staff only)

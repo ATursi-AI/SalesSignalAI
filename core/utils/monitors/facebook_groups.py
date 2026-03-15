@@ -404,6 +404,8 @@ def monitor_facebook_groups(group_ids=None, max_per_group=MAX_POSTS_PER_GROUP,
                             'group_id': group.group_id,
                             'post_text': text[:500],
                         },
+                        source_group='social_media',
+                        source_type='facebook',
                     )
 
                     if created:
