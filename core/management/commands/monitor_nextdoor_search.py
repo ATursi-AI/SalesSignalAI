@@ -107,7 +107,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('Nextdoor Search Monitor Results:'))
         self.stdout.write(f'  Keywords searched:  {stats.get("keywords_searched", 0)}')
         self.stdout.write(f'  Posts found:        {stats.get("posts_found", 0)}')
-        self.stdout.write(f'  Request posts:      {stats.get("request_posts", 0)}')
+        self.stdout.write(f'  Request posts:      {stats.get("requests_found", 0)}')
 
         if dry_run:
             self.stdout.write(f'  Would create:       {stats.get("created", 0)}')

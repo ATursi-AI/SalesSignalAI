@@ -132,7 +132,10 @@
       "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.dev venv/Scripts/python.exe -c \":*)",
       "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe manage.py check --no-color)",
       "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.base venv/Scripts/python.exe manage.py monitor_nyc_dob --type violations --borough queens --days 30 --dry-run)",
-      "Bash(venv/Scripts/python.exe manage.py monitor_nextdoor_search --help)"
+      "Bash(venv/Scripts/python.exe manage.py monitor_nextdoor_search --help)",
+      "Bash(venv/Scripts/python.exe manage.py monitor_nextdoor_search --days 7 --keywords \"plumber,electrician,hvac,house cleaning\" --headed --force --dry-run)",
+      "Bash(venv/Scripts/python.exe manage.py monitor_nextdoor_search --days 7 --keywords \"plumber,electrician\" --headed --force --dry-run)",
+      "Bash(venv/Scripts/python.exe manage.py monitor_nextdoor_search --days 7 --keywords \"electrician,hvac,roofer\" --headed --force --dry-run)"
     ]
   }
 }

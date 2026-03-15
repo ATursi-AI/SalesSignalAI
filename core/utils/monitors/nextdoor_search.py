@@ -20,6 +20,7 @@ Usage:
     python manage.py monitor_nextdoor_search --keywords "plumber,electrician"
     python manage.py monitor_nextdoor_search --remote
 """
+import asyncio
 import json
 import logging
 import random
@@ -35,6 +36,14 @@ from core.models.monitoring import MonitorRun
 from .lead_processor import process_lead
 
 logger = logging.getLogger(__name__)
+
+
+def _print(msg):
+    """Print with safe encoding for Windows console."""
+    try:
+        print(msg)
+    except UnicodeEncodeError:
+        print(msg.encode('ascii', errors='replace').decode('ascii'))
 
 # Paths (shared with nextdoor_playwright)
 BASE_DIR = Path(settings.BASE_DIR)
@@ -61,6 +70,19 @@ REQUEST_SIGNALS = [
     'looking to hire', 'need help finding', 'know a good',
     'reliable', 'affordable', 'in the area', 'near me',
     'quote for', 'estimate for', 'anyone used',
+    'recommendations for', 'recommendation for', 'recommendations?',
+    'any suggestion', 'who should i call', 'who can i call',
+    'help me find', 'trying to find', 'searching for',
+    'any good', 'know of any', 'know any', 'anyone recommend',
+    'please share', 'please suggest', 'who would you',
+    'who do you recommend', 'need to find', 'need to get',
+    'need to hire', 'can someone recommend', 'can you recommend',
+    'needs to be', 'needs replacing', 'needs repair',
+    'who has a good', 'does anyone know',
+    'in need of', 'we need', 'i need',
+    'need licensed', 'need certified',
+    'need someone to', 'need somebody to',
+    'need to replace', 'need to install', 'need to fix', 'need to repair',
 ]
 
 # Phrases indicating a RESPONSE post (filter these out)
@@ -74,6 +96,13 @@ RESPONSE_SIGNALS = [
     'pm me', 'dm me', 'message me', 'i can help',
     'we offer', 'our company', 'my company', 'we specialize',
     'free estimate', 'call us', 'reach us at',
+    'i work cleaning', 'i offer', 'i provide', 'my name is',
+    'we provide', 'i am a', "i'm a licensed", "i'm a certified",
+    'years of experience', 'contact me', 'text me',
+    'book now', 'book your', 'schedule your', 'schedule a',
+    'visit our', 'visit us', 'check us out',
+    'hire me', 'hire us', 'affordable rates', 'competitive rates',
+    'satisfaction guaranteed', 'licensed and insured', 'fully insured',
 ]
 
 # User agents for anti-detection
@@ -86,24 +115,46 @@ USER_AGENTS = [
 ]
 
 
-def _is_request_post(text):
-    """Return True if text is a service REQUEST (not a response/ad)."""
+def _is_request_post(text, keyword='', verbose=False):
+    """Return True if text is a service REQUEST (not a response/ad).
+
+    When verbose=True, returns (bool, reason_str) tuple instead.
+    """
     text_lower = text.lower()
 
-    # Must contain at least one request signal
-    has_request = any(sig in text_lower for sig in REQUEST_SIGNALS)
-    if not has_request:
+    # Find matching signals
+    matched_request = [sig for sig in REQUEST_SIGNALS if sig in text_lower]
+    matched_response = [sig for sig in RESPONSE_SIGNALS if sig in text_lower]
+
+    # If dominated by response/self-promo signals, reject immediately
+    if len(matched_response) >= 2 and len(matched_response) > len(matched_request):
+        reason = (
+            f'REJECTED: self-promo/response ({len(matched_response)}: {matched_response[:3]}) '
+            f'vs request ({len(matched_request)}: {matched_request[:3]})'
+        )
+        if verbose:
+            return False, reason
         return False
 
-    # Check if it's actually a response/self-promotion
-    response_count = sum(1 for sig in RESPONSE_SIGNALS if sig in text_lower)
-    request_count = sum(1 for sig in REQUEST_SIGNALS if sig in text_lower)
-
-    # If more response signals than request signals, it's a response
-    if response_count > request_count:
+    # If any response signal but zero request signals, it's a response/ad
+    if matched_response and not matched_request:
+        reason = f'REJECTED: response-only post. Response signals: {matched_response[:3]}'
+        if verbose:
+            return False, reason
         return False
 
-    return True
+    # Accept if has at least one request signal
+    if matched_request:
+        reason = f'ACCEPTED: request signals={matched_request[:3]}, response signals={matched_response[:3]}'
+        if verbose:
+            return True, reason
+        return True
+
+    # No signals at all — reject
+    reason = 'REJECTED: no request or response signals found'
+    if verbose:
+        return False, reason
+    return False
 
 
 def _score_confidence(text, keyword):
@@ -272,29 +323,61 @@ async def _search_keyword(page, keyword, stats):
     Search Nextdoor for "{keyword} recommendations" and extract posts.
 
     Flow:
-      1. Navigate to search URL
-      2. Click "Posts" tab to filter
-      3. Extract posts from results
-      4. Filter for requests only
+      1. Navigate to about:blank to reset SPA state
+      2. Navigate to search URL (full page load)
+      3. Click "Posts" tab to filter
+      4. Scroll and extract posts
     """
     search_query = f'{keyword} recommendations'
     search_url = f'https://nextdoor.com/search/?query={quote_plus(search_query)}'
 
     logger.info(f'  Searching: "{search_query}"')
 
+    # ── Reset SPA state by navigating to blank page first ──
     try:
-        await page.goto(search_url, wait_until='domcontentloaded')
-        await _human_delay(page, 3000, 5000)
+        await page.goto('about:blank', wait_until='domcontentloaded')
+        await page.wait_for_timeout(500)
+    except Exception:
+        pass
+
+    # ── Navigate to search URL (forces full page load after blank) ──
+    try:
+        await page.goto(search_url, wait_until='domcontentloaded', timeout=20000)
     except Exception as e:
         logger.warning(f'  Navigation failed for "{keyword}": {e}')
         return []
+    await _human_delay(page, 3000, 5000)
 
-    # Try to click "Posts" tab to filter results
+    current_url = page.url
+    _print(f'  [{keyword}] Page URL: {current_url}')
+
+    # ── Wait for search results to render, then click "Posts" tab ──
+    posts_tab_clicked = False
+    # Wait for any dwell-tracker or tab to appear (sign that search rendered)
+    try:
+        await page.wait_for_selector(
+            '[data-testid="tab-posts"], [data-testid^="dwell-tracker"]',
+            timeout=10000
+        )
+    except Exception:
+        _print(f'  [{keyword}] Search results slow to render — reloading page...')
+        # Force a full page reload to re-trigger server-side rendering
+        try:
+            await page.reload(wait_until='domcontentloaded', timeout=15000)
+            await _human_delay(page, 3000, 5000)
+            await page.wait_for_selector(
+                '[data-testid="tab-posts"], [data-testid^="dwell-tracker"]',
+                timeout=10000
+            )
+        except Exception:
+            _print(f'  [{keyword}] Still no results after reload')
+            await _human_delay(page, 2000, 3000)
+
     posts_tab_selectors = [
+        '[data-testid="tab-posts"]',
         'button:has-text("Posts")',
         'a:has-text("Posts")',
         '[role="tab"]:has-text("Posts")',
-        '[data-testid*="posts"]',
         'div[class*="Tab"]:has-text("Posts")',
     ]
     for sel in posts_tab_selectors:
@@ -303,53 +386,154 @@ async def _search_keyword(page, keyword, stats):
             if tab:
                 await tab.click()
                 await _human_delay(page, 2000, 3500)
-                logger.info(f'  Clicked "Posts" tab')
+                _print(f'  [{keyword}] Clicked "Posts" tab via {sel}')
+                posts_tab_clicked = True
                 break
         except Exception:
             continue
+    if not posts_tab_clicked:
+        _print(f'  [{keyword}] WARNING: Could not click Posts tab')
 
-    # Scroll to load more results
-    for _ in range(3):
-        scroll_amount = random.randint(400, 800)
-        await page.mouse.wheel(0, scroll_amount)
-        await _human_delay(page, 800, 1800)
-        # Occasional mouse movement
+    # ── Scroll to load more results (infinite scroll) ──
+    # Count dwell-tracker items before/after scrolling to detect new content
+    count_js = """
+        () => document.querySelectorAll('[data-testid^="dwell-tracker-searchFeedItem"]').length
+    """
+
+    prev_count = await page.evaluate(count_js)
+    _print(f'  [{keyword}] Posts before scroll: {prev_count}')
+
+    for scroll_i in range(5):
+        # Use keyboard End key — works regardless of which element is the scroll container
+        await page.keyboard.press('End')
+        # Wait for new content to load
+        await _human_delay(page, 2000, 3000)
+        # Also try mouse wheel as backup
+        await page.mouse.wheel(0, 3000)
+        await _human_delay(page, 1500, 2500)
+        # Occasional mouse movement for anti-detection
         if random.random() > 0.5:
             await page.mouse.move(random.randint(200, 800), random.randint(200, 600))
-            await _human_delay(page, 200, 500)
 
-    # Extract posts from search results
-    posts = []
+        new_count = await page.evaluate(count_js)
+        _print(f'  [{keyword}] Scroll {scroll_i+1}/5: posts {prev_count} -> {new_count}')
+        if new_count == prev_count:
+            # No new content — wait longer and try once more
+            await _human_delay(page, 2500, 3500)
+            await page.keyboard.press('End')
+            await _human_delay(page, 2000, 3000)
+            new_count = await page.evaluate(count_js)
+            if new_count == prev_count:
+                _print(f'  [{keyword}]   No more content')
+                break
+        prev_count = new_count
 
-    # Try structured selectors first
+    # ── DOM inspection: find all post containers ──
+    # Dump counts for all candidate selectors so we can see what works
     post_selectors = [
         'article',
         '[data-testid*="post"]',
         '[data-testid*="story"]',
         '[data-testid*="search-result"]',
+        '[data-testid*="result"]',
         'div[class*="Post"]',
         'div[class*="post-"]',
         'div[class*="story"]',
+        'div[class*="Story"]',
         'div[class*="SearchResult"]',
+        'div[class*="search-result"]',
         'div[class*="FeedCard"]',
+        'div[class*="feed-card"]',
+        'div[class*="ContentCard"]',
+        'div[class*="content-card"]',
+        'div[class*="Card"]',
     ]
 
-    elements = []
-    for sel in post_selectors:
-        try:
-            found = await page.query_selector_all(sel)
-            if found and len(found) >= 2:
-                # Verify these are real content blocks
-                sample = await found[0].inner_text()
-                if sample and len(sample.strip()) > 30:
-                    elements = found
-                    logger.info(f'  Found {len(found)} elements via {sel}')
-                    break
-        except Exception:
-            continue
+    _print(f'  [{keyword}] DOM selector counts:')
 
-    if not elements:
-        # Fallback: grab text blocks from main content
+    # Best selector: dwell-tracker items are the actual search result cards
+    dwell_selectors = await page.query_selector_all('[data-testid^="dwell-tracker-searchFeedItem"]')
+    _print(f'    dwell-tracker-searchFeedItem: {len(dwell_selectors)}')
+
+    elements = []
+    winning_sel = None
+
+    if len(dwell_selectors) >= 2:
+        elements = dwell_selectors
+        winning_sel = 'dwell-tracker-searchFeedItem'
+    else:
+        # Try generic selectors
+        for sel in post_selectors:
+            try:
+                found = await page.query_selector_all(sel)
+                count = len(found) if found else 0
+                if count > 0:
+                    _print(f'    {sel}: {count}')
+                # Pick the best: at least 2 elements with real content
+                if found and count >= 2 and not elements:
+                    real_count = 0
+                    for sample_el in found[:5]:
+                        try:
+                            sample = await sample_el.inner_text()
+                            if sample and len(sample.strip()) > 50:
+                                real_count += 1
+                        except Exception:
+                            continue
+                    if real_count >= 2:
+                        elements = found
+                        winning_sel = sel
+            except Exception:
+                continue
+
+    if elements:
+        _print(f'  [{keyword}] Using selector: {winning_sel} ({len(elements)} elements)')
+    else:
+        # Fallback: inspect the actual DOM structure
+        _print(f'  [{keyword}] No structured selectors matched — trying DOM walk')
+
+        # Dump top-level data-testid values to discover Nextdoor's schema
+        try:
+            testids = await page.evaluate("""
+                () => {
+                    const els = document.querySelectorAll('[data-testid]');
+                    const ids = new Set();
+                    els.forEach(el => ids.add(el.getAttribute('data-testid')));
+                    return Array.from(ids).slice(0, 30);
+                }
+            """)
+            if testids:
+                _print(f'  [{keyword}] data-testid values on page: {testids}')
+        except Exception:
+            pass
+
+        # Dump class names that appear on many elements (likely post containers)
+        try:
+            class_counts = await page.evaluate("""
+                () => {
+                    const counts = {};
+                    document.querySelectorAll('div[class]').forEach(el => {
+                        el.classList.forEach(cls => {
+                            if (cls.length > 3 && cls.length < 50) {
+                                counts[cls] = (counts[cls] || 0) + 1;
+                            }
+                        });
+                    });
+                    // Return classes with 3-30 occurrences (likely repeated post containers)
+                    return Object.entries(counts)
+                        .filter(([_, c]) => c >= 3 && c <= 50)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 20)
+                        .map(([cls, c]) => `${cls}: ${c}`);
+                }
+            """)
+            if class_counts:
+                _print(f'  [{keyword}] Repeated CSS classes (3-50 occurrences):')
+                for cc in class_counts:
+                    _print(f'    {cc}')
+        except Exception:
+            pass
+
+        # Fallback: walk main content for text blocks
         try:
             for sel in ['main', '[role="main"]', '#content', 'body']:
                 container = await page.query_selector(sel)
@@ -365,22 +549,48 @@ async def _search_keyword(page, keyword, stats):
                     except Exception:
                         continue
                 if len(substantial) >= 2:
-                    elements = substantial[:15]
+                    elements = substantial
+                    _print(f'  [{keyword}] Fallback: {len(elements)} text blocks via {sel}')
                     break
         except Exception:
             pass
 
-    # Parse each element
-    for element in elements[:15]:
+    # ── Junk patterns — navigation, menus, browser warnings ──
+    JUNK_PATTERNS = [
+        'you\'re using an old browser',
+        'upgrade to one of the supported',
+        'home for sale & free local news',
+        'most relevant distance all time',
+        'all posts businesses pages',
+        'post settings help center',
+        'invite neighbors',
+        'sign up free',
+        'download the app',
+        'cookie policy',
+        'privacy policy',
+        'terms of service',
+    ]
+
+    # ── Parse each element ──
+    posts = []
+    for element in elements[:40]:
         try:
             post = await _extract_post(element, page, keyword)
-            if post:
-                posts.append(post)
+            if not post:
+                continue
+            # Filter out navigation/UI elements
+            text_lower = post['text'].lower()
+            if any(junk in text_lower for junk in JUNK_PATTERNS):
+                continue
+            # Must have at least 100 chars of real content
+            if len(post['text'].strip()) < 100:
+                continue
+            posts.append(post)
         except Exception:
             continue
 
+    _print(f'  [{keyword}] Final: {len(posts)} valid posts from {len(elements)} elements')
     stats['items_scraped'] += len(posts)
-    logger.info(f'  Extracted {len(posts)} posts for "{keyword}"')
     return posts
 
 
@@ -534,9 +744,10 @@ async def _run_search(email, password, keywords, headed=False):
             cookies = await context.cookies()
             _save_cookies(cookies)
 
-        # Search each keyword
+        # Search each keyword — reuse the same page with about:blank reset
         for i, keyword in enumerate(keywords):
             logger.info(f'[{i+1}/{len(keywords)}] Keyword: {keyword}')
+
             try:
                 posts = await _search_keyword(page, keyword, stats)
                 all_posts.extend(posts)
@@ -686,8 +897,8 @@ def monitor_nextdoor_search(
 
         logger.info(f'Unique posts after dedup: {len(unique_posts)}')
 
-        # Process posts
-        for post in unique_posts:
+        # Process posts — verbose logging for first 10
+        for idx, post in enumerate(unique_posts):
             text = post.get('text', '')
             author = post.get('author', '')
             neighborhood = post.get('neighborhood', '')
@@ -695,8 +906,17 @@ def monitor_nextdoor_search(
             keyword = post.get('keyword', '')
             comment_count = post.get('comment_count', 0)
 
-            # Filter: keep only REQUEST posts
-            if not _is_request_post(text):
+            # Filter: keep only REQUEST posts (verbose for first 10)
+            is_request, reason = _is_request_post(text, keyword=keyword, verbose=True)
+
+            if idx < 10:
+                preview = text.replace('\n', ' ')[:200]
+                _print(f'\n--- POST {idx+1} [{keyword}] ---')
+                _print(f'  Author: {author or "(none)"}')
+                _print(f'  Text: {preview}')
+                _print(f'  Verdict: {reason}')
+
+            if not is_request:
                 stats['responses_filtered'] += 1
                 continue
 
