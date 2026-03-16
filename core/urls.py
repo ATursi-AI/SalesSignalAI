@@ -1,10 +1,12 @@
 from django.urls import path
 from core.views import landing, auth, onboarding, dashboard, leads, competitors, territory, campaigns, analytics
 from core.views import monitor_health, webhooks, user_settings, admin_leads, ingest_api, crm
-from core.views import sales_admin, sales
+from core.views import sales_admin, sales, industries
 
 urlpatterns = [
     path('', landing.landing_page, name='landing'),
+    path('industries/', industries.industry_index, name='industry_index'),
+    path('industries/<slug:slug>/', industries.industry_detail, name='industry_detail'),
     path('auth/register/', auth.register_view, name='register'),
     path('auth/login/', auth.login_view, name='login'),
     path('auth/logout/', auth.logout_view, name='logout'),

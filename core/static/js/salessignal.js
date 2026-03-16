@@ -123,20 +123,20 @@ function initOnboarding() {
 function initThemeIcon() {
     var icon = document.getElementById('theme-icon');
     if (!icon) return;
-    var theme = document.documentElement.getAttribute('data-theme') || 'dark';
-    icon.className = theme === 'light' ? 'bi bi-moon-stars' : 'bi bi-sun';
+    var theme = document.documentElement.getAttribute('data-theme') || 'light';
+    icon.className = theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
 }
 
 function toggleTheme() {
     var html = document.documentElement;
-    var current = html.getAttribute('data-theme') || 'dark';
+    var current = html.getAttribute('data-theme') || 'light';
     var next = current === 'dark' ? 'light' : 'dark';
 
     html.setAttribute('data-theme', next);
     document.cookie = 'theme=' + next + ';path=/;max-age=31536000;SameSite=Lax';
 
     var icon = document.getElementById('theme-icon');
-    if (icon) icon.className = next === 'light' ? 'bi bi-moon-stars' : 'bi bi-sun';
+    if (icon) icon.className = next === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
 
     // Save to server if logged in
     fetch('/settings/theme/', {

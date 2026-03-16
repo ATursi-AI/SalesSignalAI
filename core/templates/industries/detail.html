@@ -1,0 +1,209 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ industry.name }} Leads | Sales Signal AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'css/salessignal.css' %}">
+</head>
+<body class="landing-page">
+
+    <!-- Navigation -->
+    <nav class="landing-nav">
+        <a href="/" class="brand" style="text-decoration: none; color: inherit;">
+            <div class="brand-icon"><i class="bi bi-broadcast"></i></div>
+            <span class="brand-name">Sales Signal AI</span>
+        </a>
+        <div class="landing-nav-links" id="landing-nav-links">
+            <a href="/#how-it-works">How it Works</a>
+            <a href="/#features">Features</a>
+            <div class="nav-dropdown">
+                <a href="{% url 'industry_index' %}" class="nav-dropdown-trigger">Industries <i class="bi bi-chevron-down" style="font-size: 0.7rem;"></i></a>
+                <div class="nav-dropdown-menu">
+                    {% for ind in industries %}
+                    <a href="{% url 'industry_detail' ind.slug %}"><i class="{{ ind.icon }}"></i> {{ ind.name }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            <a href="/#pricing">Pricing</a>
+            <a href="{% url 'login' %}" class="btn-secondary btn-sm">Log In</a>
+            <a href="{% url 'register' %}" class="btn-primary-glow btn-sm">Get Started</a>
+        </div>
+        <button class="landing-hamburger" id="landing-hamburger" onclick="toggleLandingMenu()" aria-label="Open menu">
+            <i class="bi bi-list" id="landing-menu-icon"></i>
+        </button>
+    </nav>
+
+    <!-- Mobile nav overlay -->
+    <div class="landing-mobile-menu" id="landing-mobile-menu">
+        <a href="/#how-it-works" onclick="closeLandingMenu()">How it Works</a>
+        <a href="/#features" onclick="closeLandingMenu()">Features</a>
+        <a href="{% url 'industry_index' %}" onclick="closeLandingMenu()">Industries</a>
+        <a href="/#pricing" onclick="closeLandingMenu()">Pricing</a>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid rgba(0,0,0,0.06);">
+            <a href="{% url 'login' %}" class="btn-secondary" style="justify-content: center;">Log In</a>
+            <a href="{% url 'register' %}" class="btn-primary-glow" style="justify-content: center;">Get Started</a>
+        </div>
+    </div>
+
+    <!-- Hero -->
+    <section class="industry-hero-section" style="--industry-color: {{ industry.color }};">
+        <div class="hero-bg-glow"></div>
+        <div class="signal-rings">
+            <div class="signal-ring" style="border-color: {{ industry.color }}40;"></div>
+            <div class="signal-ring" style="border-color: {{ industry.color }}30;"></div>
+            <div class="signal-ring" style="border-color: {{ industry.color }}20;"></div>
+        </div>
+        <div class="animate-fade-in-up" style="position: relative; z-index: 1;">
+            <div class="industry-hero-icon" style="background: {{ industry.color }}15; color: {{ industry.color }};">
+                <i class="{{ industry.icon }}"></i>
+            </div>
+            <h1 class="industry-hero-title">{{ industry.headline }}</h1>
+            <p class="industry-hero-stat">{{ industry.stat_line }}</p>
+            <p class="industry-hero-desc">{{ industry.description }}</p>
+            <div class="hero-cta">
+                <a href="{% url 'register' %}" class="btn-primary-glow" style="padding: 0.85rem 2.5rem; font-size: 1rem;">
+                    Get Started Free
+                </a>
+                <a href="#leads" class="btn-secondary" style="padding: 0.85rem 2rem; font-size: 1rem;">
+                    See Example Leads
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Lead Examples -->
+    <section class="live-preview-section" id="leads">
+        <div class="section-label mb-2 animate-on-scroll" style="color: {{ industry.color }};">
+            <i class="{{ industry.icon }}"></i> {{ industry.name }} Leads
+        </div>
+        <h2 class="animate-on-scroll" style="font-family: 'Exo 2', sans-serif; font-size: 2.25rem; text-align: center; margin-bottom: 0.75rem;">
+            Leads Your Competitors Don't See
+        </h2>
+        <p class="animate-on-scroll" style="color: #4a4a68; text-align: center; margin-bottom: 3rem; font-size: 1.05rem;">
+            Real leads detected by SalesSignal AI — delivered to your dashboard in real-time.
+        </p>
+
+        <div class="preview-lead-stream animate-on-scroll">
+            {% for lead in industry.leads %}
+            <div class="preview-lead-card">
+                <div class="preview-lead-left">
+                    <span class="preview-pill preview-pill-{{ lead.pill_color }}"><i class="{{ lead.pill_icon }}"></i> {{ lead.pill }}</span>
+                    <span class="preview-urgency preview-urgency-{% if lead.urgency == 'hot' %}hot{% else %}warm{% endif %}">
+                        {% if lead.urgency == 'hot' %}<i class="bi bi-fire"></i> HOT{% else %}<i class="bi bi-circle-fill"></i> WARM{% endif %}
+                    </span>
+                </div>
+                <div class="preview-lead-body">
+                    <div class="preview-lead-title">{{ lead.title }}</div>
+                    <div class="preview-lead-detail">{{ lead.detail1|safe }}</div>
+                    <div class="preview-lead-detail">{{ lead.detail2 }}</div>
+                </div>
+                <div class="preview-lead-time">{{ lead.time }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Data Sources -->
+    <section class="industry-sources-section">
+        <div class="section-label mb-2 animate-on-scroll" style="color: #3B82F6;">Data Sources</div>
+        <h2 class="animate-on-scroll" style="font-family: 'Exo 2', sans-serif; font-size: 2.25rem; text-align: center; margin-bottom: 0.75rem;">
+            Where Your Leads Come From
+        </h2>
+        <p class="animate-on-scroll" style="color: #4a4a68; text-align: center; margin-bottom: 3rem; font-size: 1.05rem;">
+            We monitor these sources 24/7 so you don't have to.
+        </p>
+
+        <div class="industry-sources-grid animate-on-scroll">
+            {% for source in industry.sources %}
+            <div class="industry-source-card">
+                <div class="industry-source-icon" style="color: {{ industry.color }}; background: {{ industry.color }}10;">
+                    <i class="{{ source.icon }}"></i>
+                </div>
+                <h4>{{ source.name }}</h4>
+                <p>{{ source.desc }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- How It Works (abbreviated) -->
+    <section class="pipeline-section">
+        <div class="section-label mb-2 animate-on-scroll" style="color: #3B82F6;">How It Works</div>
+        <h2 class="section-title animate-on-scroll">From Signal to Sale in 3 Steps</h2>
+
+        <div class="pipeline-flow animate-on-scroll">
+            <div class="pipeline-stage pipeline-stage-detect">
+                <div class="pipeline-stage-number">Step 01 — Detect</div>
+                <h3>We Find Them</h3>
+                <p>Our AI monitors public records, community forums, and review sites 24/7. When a {{ industry.name|lower }} lead appears, we catch it in minutes.</p>
+            </div>
+            <div class="pipeline-connector"><i class="bi bi-arrow-right"></i></div>
+            <div class="pipeline-stage pipeline-stage-contact">
+                <div class="pipeline-stage-number" style="color: #F59E0B;">Step 02 — Contact</div>
+                <h3>We Reach Out</h3>
+                <p>AI-personalized email reaches them before they start Googling. You approve it, or let it fly on autopilot.</p>
+            </div>
+            <div class="pipeline-connector"><i class="bi bi-arrow-right"></i></div>
+            <div class="pipeline-stage pipeline-stage-connect">
+                <div class="pipeline-stage-number" style="color: #10B981;">Step 03 — Connect</div>
+                <h3>We Call Them</h3>
+                <p>Our sales team follows up by phone. Real humans book the appointment. You show up and close.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <div class="animate-on-scroll" style="position: relative; z-index: 1;">
+            <h2 style="font-family: 'Exo 2', sans-serif; font-size: 2.5rem; margin-bottom: 1rem; color: #1a1a2e;">
+                Ready To Never Miss A Sale Again?
+            </h2>
+            <p style="color: #4a4a68; font-size: 1.15rem; margin-bottom: 2rem; max-width: 500px; margin-left: auto; margin-right: auto;">
+                Your competitors are getting the call because they saw the lead first. Change that today.
+            </p>
+            <a href="{% url 'register' %}" class="btn-primary-glow" style="padding: 1rem 3rem; font-size: 1.1rem;">
+                Get Started
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+        <div class="footer-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="mailto:hello@salessignalai.com">Contact</a>
+            <a href="{% url 'industry_index' %}">All Industries</a>
+            <a href="{% url 'login' %}">Dashboard</a>
+        </div>
+        <div class="footer-copy">
+            &copy; 2026 Sales Signal AI. All rights reserved.
+        </div>
+    </footer>
+
+    <script src="{% static 'js/salessignal.js' %}"></script>
+    <script>
+    function toggleLandingMenu() {
+        var menu = document.getElementById('landing-mobile-menu');
+        var icon = document.getElementById('landing-menu-icon');
+        if (menu.classList.contains('open')) {
+            menu.classList.remove('open');
+            icon.className = 'bi bi-list';
+        } else {
+            menu.classList.add('open');
+            icon.className = 'bi bi-x-lg';
+        }
+    }
+    function closeLandingMenu() {
+        document.getElementById('landing-mobile-menu').classList.remove('open');
+        document.getElementById('landing-menu-icon').className = 'bi bi-list';
+    }
+    </script>
+</body>
+</html>

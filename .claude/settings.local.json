@@ -138,7 +138,21 @@
       "Bash(venv/Scripts/python.exe manage.py monitor_nextdoor_search --days 7 --keywords \"electrician,hvac,roofer\" --headed --force --dry-run)",
       "Bash(venv/Scripts/python.exe manage.py monitor_health_inspections --days 30 --dry-run)",
       "Bash(venv/Scripts/python.exe manage.py monitor_ny_business_filings --days 30 --dry-run)",
-      "Bash(venv/Scripts/python.exe manage.py monitor_property_sales_ny --days 30 --dry-run)"
+      "Bash(venv/Scripts/python.exe manage.py monitor_property_sales_ny --days 30 --dry-run)",
+      "Bash(find /c/Users/aturs/Documents/AI_Engineering_Course/SalesSignalAI -path ./venv -prune -o -name *.html -type f -print)",
+      "Bash(venv/Scripts/python.exe manage.py runserver 8000)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8000/)",
+      "WebFetch(domain:127.0.0.1)",
+      "Bash(curl -s http://127.0.0.1:8000/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8000/static/css/salessignal.css)",
+      "Bash(curl -s http://127.0.0.1:8000/static/css/salessignal.css)",
+      "Bash(curl -s http://127.0.0.1:8000/auth/login/)",
+      "Bash(venv/Scripts/python.exe manage.py shell -c \"from django.contrib.auth import get_user_model; User = get_user_model\\(\\); users = User.objects.filter\\(is_superuser=True\\); print\\([\\(u.username, u.email, u.is_active\\) for u in users]\\)\")",
+      "WebFetch(domain:pinpointe.com)",
+      "WebFetch(domain:www.zoho.com)",
+      "Bash(venv/Scripts/python.exe -c \"from core.views.industries import INDUSTRIES, INDUSTRY_LIST; print\\(f''{len\\(INDUSTRIES\\)} industries, {len\\(INDUSTRY_LIST\\)} in list''\\); [print\\(f''  /{i[\"\"slug\"\"]}/''\\) for i in INDUSTRY_LIST]\")",
+      "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.dev venv/Scripts/python.exe manage.py check)",
+      "Bash(venv/Scripts/python.exe manage.py show_urls)"
     ]
   }
 }

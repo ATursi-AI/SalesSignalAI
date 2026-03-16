@@ -1,0 +1,130 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Industries We Serve | Sales Signal AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'css/salessignal.css' %}">
+</head>
+<body class="landing-page">
+
+    <!-- Navigation -->
+    <nav class="landing-nav">
+        <a href="/" class="brand" style="text-decoration: none; color: inherit;">
+            <div class="brand-icon"><i class="bi bi-broadcast"></i></div>
+            <span class="brand-name">Sales Signal AI</span>
+        </a>
+        <div class="landing-nav-links" id="landing-nav-links">
+            <a href="/#how-it-works">How it Works</a>
+            <a href="/#features">Features</a>
+            <div class="nav-dropdown">
+                <a href="{% url 'industry_index' %}" class="nav-dropdown-trigger active">Industries <i class="bi bi-chevron-down" style="font-size: 0.7rem;"></i></a>
+                <div class="nav-dropdown-menu">
+                    {% for ind in industries %}
+                    <a href="{% url 'industry_detail' ind.slug %}"><i class="{{ ind.icon }}"></i> {{ ind.name }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            <a href="/#pricing">Pricing</a>
+            <a href="{% url 'login' %}" class="btn-secondary btn-sm">Log In</a>
+            <a href="{% url 'register' %}" class="btn-primary-glow btn-sm">Get Started</a>
+        </div>
+        <button class="landing-hamburger" id="landing-hamburger" onclick="toggleLandingMenu()" aria-label="Open menu">
+            <i class="bi bi-list" id="landing-menu-icon"></i>
+        </button>
+    </nav>
+
+    <!-- Mobile nav -->
+    <div class="landing-mobile-menu" id="landing-mobile-menu">
+        <a href="/#how-it-works" onclick="closeLandingMenu()">How it Works</a>
+        <a href="/#features" onclick="closeLandingMenu()">Features</a>
+        <a href="{% url 'industry_index' %}" onclick="closeLandingMenu()">Industries</a>
+        <a href="/#pricing" onclick="closeLandingMenu()">Pricing</a>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid rgba(0,0,0,0.06);">
+            <a href="{% url 'login' %}" class="btn-secondary" style="justify-content: center;">Log In</a>
+            <a href="{% url 'register' %}" class="btn-primary-glow" style="justify-content: center;">Get Started</a>
+        </div>
+    </div>
+
+    <!-- Hero -->
+    <section class="industry-index-hero">
+        <div class="hero-bg-glow"></div>
+        <div class="animate-fade-in-up" style="position: relative; z-index: 1;">
+            <h1 class="industry-index-title">Built For Your Industry</h1>
+            <p class="industry-index-subtitle">
+                SalesSignal AI delivers leads tailored to your specific trade — from the data sources that matter most to your business.
+            </p>
+        </div>
+    </section>
+
+    <!-- Industry Cards Grid -->
+    <section class="industry-index-grid-section">
+        <div class="industry-index-grid">
+            {% for ind in industries %}
+            <a href="{% url 'industry_detail' ind.slug %}" class="industry-index-card animate-on-scroll" style="--card-color: {{ ind.color }};">
+                <div class="industry-index-card-icon" style="background: {{ ind.color }}12; color: {{ ind.color }};">
+                    <i class="{{ ind.icon }}"></i>
+                </div>
+                <h3>{{ ind.name }}</h3>
+                <p>{{ ind.headline }}</p>
+                <span class="industry-index-card-link" style="color: {{ ind.color }};">
+                    See {{ ind.name }} leads <i class="bi bi-arrow-right"></i>
+                </span>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <div class="animate-on-scroll" style="position: relative; z-index: 1;">
+            <h2 style="font-family: 'Exo 2', sans-serif; font-size: 2.5rem; margin-bottom: 1rem; color: #1a1a2e;">
+                Ready To Never Miss A Sale Again?
+            </h2>
+            <p style="color: #4a4a68; font-size: 1.15rem; margin-bottom: 2rem; max-width: 500px; margin-left: auto; margin-right: auto;">
+                Your competitors are getting the call because they saw the lead first. Change that today.
+            </p>
+            <a href="{% url 'register' %}" class="btn-primary-glow" style="padding: 1rem 3rem; font-size: 1.1rem;">
+                Get Started
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+        <div class="footer-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="mailto:hello@salessignalai.com">Contact</a>
+            <a href="{% url 'login' %}">Dashboard</a>
+        </div>
+        <div class="footer-copy">
+            &copy; 2026 Sales Signal AI. All rights reserved.
+        </div>
+    </footer>
+
+    <script src="{% static 'js/salessignal.js' %}"></script>
+    <script>
+    function toggleLandingMenu() {
+        var menu = document.getElementById('landing-mobile-menu');
+        var icon = document.getElementById('landing-menu-icon');
+        if (menu.classList.contains('open')) {
+            menu.classList.remove('open');
+            icon.className = 'bi bi-list';
+        } else {
+            menu.classList.add('open');
+            icon.className = 'bi bi-x-lg';
+        }
+    }
+    function closeLandingMenu() {
+        document.getElementById('landing-mobile-menu').classList.remove('open');
+        document.getElementById('landing-menu-icon').className = 'bi bi-list';
+    }
+    </script>
+</body>
+</html>
