@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Call Center{% endblock %}
+{% block page_title %}Call Center{% endblock %}
+
+{% block extra_css %}
+<style>
+.cc-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
+.cc-stat { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 18px; text-align: center; }
+.cc-stat-value { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 2rem; color: var(--accent-blue); }
+.cc-stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+.cc-stat.highlight { border-color: #059669; }
+.cc-stat.highlight .cc-stat-value { color: #059669; }
+
+.cc-section-title { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.1rem; margin: 24px 0 12px; }
+
+.cc-table { width: 100%; border-collapse: collapse; background: var(--bg-surface); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-subtle); }
+.cc-table th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); padding: 10px 14px; text-align: left; background: var(--bg-page); border-bottom: 1px solid var(--border-subtle); }
+.cc-table td { padding: 10px 14px; font-size: 0.85rem; border-bottom: 1px solid var(--border-subtle); }
+.cc-table tr:last-child td { border-bottom: none; }
+.cc-badge { padding: 3px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; }
+.cc-badge-inbound { background: #DBEAFE; color: #1D4ED8; }
+.cc-badge-outbound { background: #D1FAE5; color: #059669; }
+.cc-badge-yes { background: #D1FAE5; color: #059669; }
+.cc-badge-completed { background: #D1FAE5; color: #059669; }
+.cc-badge-no-answer { background: #FEF3C7; color: #92400E; }
+.cc-badge-failed { background: #FEE2E2; color: #DC2626; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Stats -->
+<div class="cc-stats">
+    <div class="cc-stat">
+        <div class="cc-stat-value">{{ stats.calls_today }}</div>
+        <div class="cc-stat-label">Calls Today</div>
+    </div>
+    <div class="cc-stat">
+        <div class="cc-stat-value">{{ stats.calls_answered }}</div>
+        <div class="cc-stat-label">Answered</div>
+    </div>
+    <div class="cc-stat">
+        <div class="cc-stat-value">{{ stats.avg_duration|floatformat:0 }}s</div>
+        <div class="cc-stat-label">Avg Duration</div>
+    </div>
+    <div class="cc-stat">
+        <div class="cc-stat-value">{{ stats.sms_sent }}</div>
+        <div class="cc-stat-label">SMS Sent</div>
+    </div>
+    <div class="cc-stat highlight">
+        <div class="cc-stat-value">{{ stats.yes_responses }}</div>
+        <div class="cc-stat-label">YES Responses</div>
+    </div>
+    <div class="cc-stat highlight">
+        <div class="cc-stat-value">{{ stats.appointments }}</div>
+        <div class="cc-stat-label">Appointments</div>
+    </div>
+</div>
+
+<!-- Recent Calls -->
+<div class="cc-section-title"><i class="bi bi-telephone"></i> Recent Calls</div>
+<table class="cc-table">
+    <thead>
+        <tr><th>Direction</th><th>From</th><th>To</th><th>Status</th><th>Duration</th><th>Disposition</th><th>Time</th></tr>
+    </thead>
+    <tbody>
+        {% for call in recent_calls %}
+        <tr>
+            <td><span class="cc-badge cc-badge-{{ call.direction }}">{{ call.get_direction_display }}</span></td>
+            <td>{{ call.from_number }}</td>
+            <td>{{ call.to_number }}</td>
+            <td><span class="cc-badge cc-badge-{{ call.status }}">{{ call.status }}</span></td>
+            <td>{{ call.duration }}s</td>
+            <td>{{ call.get_disposition_display|default:"-" }}</td>
+            <td>{{ call.started_at|timesince }} ago</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:20px;">No calls yet</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Recent SMS -->
+<div class="cc-section-title"><i class="bi bi-chat-dots"></i> Recent Inbound SMS</div>
+<table class="cc-table">
+    <thead>
+        <tr><th>From</th><th>Message</th><th>YES?</th><th>Time</th></tr>
+    </thead>
+    <tbody>
+        {% for sms in recent_sms %}
+        <tr>
+            <td>{{ sms.from_number }}</td>
+            <td>{{ sms.body|truncatechars:100 }}</td>
+            <td>{% if sms.is_yes_response %}<span class="cc-badge cc-badge-yes">YES</span>{% endif %}</td>
+            <td>{{ sms.sent_at|timesince }} ago</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px;">No inbound SMS yet</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

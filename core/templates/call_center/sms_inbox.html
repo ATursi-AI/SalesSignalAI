@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}SMS Inbox{% endblock %}
+{% block page_title %}SMS Inbox{% endblock %}
+
+{% block extra_css %}
+<style>
+.sms-layout { display: grid; grid-template-columns: 340px 1fr; height: calc(100vh - 80px); gap: 0; }
+.sms-sidebar { border-right: 1px solid var(--border-subtle); overflow-y: auto; background: var(--bg-page); }
+.sms-main { display: flex; flex-direction: column; background: var(--bg-surface); }
+
+/* Filters */
+.sms-filters { padding: 12px 16px; border-bottom: 1px solid var(--border-subtle); display: flex; gap: 6px; flex-wrap: wrap; }
+.sms-filter-btn { padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 1px solid var(--border-subtle); background: var(--bg-surface); cursor: pointer; color: var(--text-secondary); }
+.sms-filter-btn.active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+
+/* Conversation list */
+.sms-convo { padding: 14px 16px; border-bottom: 1px solid var(--border-subtle); cursor: pointer; transition: background 0.1s; }
+.sms-convo:hover, .sms-convo.active { background: var(--bg-surface); }
+.sms-convo-name { font-weight: 600; font-size: 0.9rem; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; }
+.sms-convo-preview { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sms-convo-time { font-size: 0.7rem; color: var(--text-muted); float: right; }
+.sms-badge-unread { background: var(--accent-blue); color: white; font-size: 0.65rem; padding: 1px 6px; border-radius: 10px; }
+.sms-badge-yes { background: #059669; color: white; font-size: 0.6rem; padding: 1px 5px; border-radius: 8px; }
+.sms-badge-optout { background: #DC2626; color: white; font-size: 0.6rem; padding: 1px 5px; border-radius: 8px; }
+
+/* Thread view */
+.sms-thread-header { padding: 14px 20px; border-bottom: 1px solid var(--border-subtle); font-weight: 600; display: flex; align-items: center; justify-content: space-between; }
+.sms-thread { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+.sms-bubble { max-width: 70%; padding: 10px 14px; border-radius: 16px; font-size: 0.9rem; line-height: 1.5; word-break: break-word; }
+.sms-bubble.inbound { background: var(--bg-page); align-self: flex-start; border-bottom-left-radius: 4px; }
+.sms-bubble.outbound { background: var(--accent-blue); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+.sms-bubble-time { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+.sms-bubble.outbound .sms-bubble-time { color: rgba(255,255,255,0.7); }
+.sms-empty { display: flex; align-items: center; justify-content: center; flex: 1; color: var(--text-muted); font-size: 0.95rem; }
+
+/* Reply box */
+.sms-reply { padding: 12px 16px; border-top: 1px solid var(--border-subtle); display: flex; gap: 10px; }
+.sms-reply input { flex: 1; padding: 10px 14px; border: 1px solid var(--border-subtle); border-radius: 20px; font-size: 0.9rem; font-family: inherit; }
+.sms-reply input:focus { outline: none; border-color: var(--accent-blue); }
+.sms-reply button { padding: 10px 20px; border-radius: 20px; background: var(--accent-blue); color: white; border: none; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+.sms-reply button:hover { opacity: 0.9; }
+
+@media (max-width: 768px) {
+    .sms-layout { grid-template-columns: 1fr; }
+    .sms-sidebar { max-height: 300px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sms-layout">
+    <div class="sms-sidebar">
+        <div class="sms-filters">
+            <button class="sms-filter-btn active" onclick="filterConvos('all', this)">All</button>
+            <button class="sms-filter-btn" onclick="filterConvos('unread', this)">Unread</button>
+            <button class="sms-filter-btn" onclick="filterConvos('yes', this)">YES</button>
+            <button class="sms-filter-btn" onclick="filterConvos('optout', this)">Opt-Out</button>
+        </div>
+        <div id="convoList"></div>
+    </div>
+    <div class="sms-main">
+        <div class="sms-thread-header" id="threadHeader" style="display:none;">
+            <span id="threadName"></span>
+            <span id="threadPhone" style="font-size:0.8rem;color:var(--text-muted);font-weight:400;"></span>
+        </div>
+        <div class="sms-thread" id="threadMessages">
+            <div class="sms-empty"><i class="bi bi-chat-dots" style="font-size:2rem;margin-right:10px;"></i> Select a conversation</div>
+        </div>
+        <div class="sms-reply" id="replyBox" style="display:none;">
+            <input type="text" id="replyInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendReply()">
+            <button onclick="sendReply()"><i class="bi bi-send-fill"></i> Send</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var currentPhone = null;
+var currentFilter = 'all';
+
+function getCsrf() { const m = document.cookie.match(/csrftoken=([^;]+)/); return m ? m[1] : ''; }
+
+function filterConvos(filter, btn) {
+    currentFilter = filter;
+    document.querySelectorAll('.sms-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadConversations();
+}
+
+async function loadConversations() {
+    const r = await fetch(`/sales/sms-inbox/api/?filter=${currentFilter}`);
+    const d = await r.json();
+    const list = document.getElementById('convoList');
+    if (!d.conversations || !d.conversations.length) {
+        list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">No conversations</div>';
+        return;
+    }
+    list.innerHTML = d.conversations.map(c => `
+        <div class="sms-convo ${currentPhone === c.phone ? 'active' : ''}" onclick="openThread('${c.phone}', '${c.name.replace(/'/g, "\\'")}')">
+            <div class="sms-convo-name">
+                ${c.name}
+                ${c.unread ? `<span class="sms-badge-unread">${c.unread}</span>` : ''}
+                ${c.has_yes ? '<span class="sms-badge-yes">YES</span>' : ''}
+                ${c.is_opted_out ? '<span class="sms-badge-optout">OPT-OUT</span>' : ''}
+                <span class="sms-convo-time">${c.last_at ? new Date(c.last_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : ''}</span>
+            </div>
+            <div class="sms-convo-preview">${c.last_message}</div>
+        </div>
+    `).join('');
+}
+
+async function openThread(phone, name) {
+    currentPhone = phone;
+    document.getElementById('threadHeader').style.display = 'flex';
+    document.getElementById('threadName').textContent = name;
+    document.getElementById('threadPhone').textContent = phone;
+    document.getElementById('replyBox').style.display = 'flex';
+
+    // Highlight active
+    document.querySelectorAll('.sms-convo').forEach(c => c.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+
+    const r = await fetch(`/api/sms/thread/${encodeURIComponent(phone)}/`);
+    const d = await r.json();
+    const container = document.getElementById('threadMessages');
+
+    if (!d.messages || !d.messages.length) {
+        container.innerHTML = '<div class="sms-empty">No messages yet</div>';
+        return;
+    }
+
+    container.innerHTML = d.messages.map(m => `
+        <div class="sms-bubble ${m.direction}">
+            ${m.body}
+            <div class="sms-bubble-time">${new Date(m.sent_at).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</div>
+        </div>
+    `).join('');
+
+    container.scrollTop = container.scrollHeight;
+    loadConversations(); // Refresh unread counts
+}
+
+async function sendReply() {
+    if (!currentPhone) return;
+    const input = document.getElementById('replyInput');
+    const body = input.value.trim();
+    if (!body) return;
+
+    input.value = '';
+    const r = await fetch('/api/sms/reply/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()},
+        body: JSON.stringify({to: currentPhone, body: body})
+    });
+    const d = await r.json();
+    if (d.ok) {
+        openThread(currentPhone, document.getElementById('threadName').textContent);
+    } else {
+        alert(d.error || 'Failed to send');
+    }
+}
+
+loadConversations();
+// Auto-refresh every 15 seconds
+setInterval(loadConversations, 15000);
+</script>
+{% endblock %}

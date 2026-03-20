@@ -110,6 +110,18 @@
                     <i class="bi bi-graph-up"></i>
                     <span>{% if user.is_superuser %}Team Stats{% else %}My Stats{% endif %}</span>
                 </a>
+                <a href="{% url 'softphone' %}" class="sidebar-link {% if request.resolver_match.url_name == 'softphone' %}active{% endif %}">
+                    <i class="bi bi-telephone-fill"></i>
+                    <span>Phone</span>
+                </a>
+                <a href="{% url 'sms_inbox' %}" class="sidebar-link {% if request.resolver_match.url_name == 'sms_inbox' %}active{% endif %}">
+                    <i class="bi bi-chat-text-fill"></i>
+                    <span>SMS Inbox</span>
+                </a>
+                <a href="{% url 'my_calls' %}" class="sidebar-link {% if request.resolver_match.url_name == 'my_calls' %}active{% endif %}">
+                    <i class="bi bi-clock-history"></i>
+                    <span>My Calls</span>
+                </a>
                 {% endif %}
 
                 {% if user.is_superuser %}
@@ -125,6 +137,10 @@
                 <a href="{% url 'sales_admin_assign' %}" class="sidebar-link {% if request.resolver_match.url_name == 'sales_admin_assign' %}active{% endif %}">
                     <i class="bi bi-box-arrow-in-right"></i>
                     <span>Assign Prospects</span>
+                </a>
+                <a href="{% url 'call_center_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'call_center_dashboard' %}active{% endif %}">
+                    <i class="bi bi-headset"></i>
+                    <span>Call Center</span>
                 </a>
                 {% endif %}
 

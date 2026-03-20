@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}My Calls{% endblock %}
+{% block page_title %}My Calls{% endblock %}
+
+{% block extra_css %}
+<style>
+.mc-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.mc-stat { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 16px; text-align: center; }
+.mc-stat-value { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.75rem; color: var(--accent-blue); }
+.mc-stat-label { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; }
+.mc-section { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.05rem; margin: 20px 0 10px; }
+.mc-table { width: 100%; border-collapse: collapse; background: var(--bg-surface); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-subtle); margin-bottom: 24px; }
+.mc-table th { font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); padding: 9px 12px; text-align: left; background: var(--bg-page); }
+.mc-table td { padding: 9px 12px; font-size: 0.83rem; border-bottom: 1px solid var(--border-subtle); }
+.mc-table tr:last-child td { border-bottom: none; }
+.mc-badge { padding: 2px 7px; border-radius: 6px; font-size: 0.68rem; font-weight: 600; }
+.mc-badge-inbound { background: #DBEAFE; color: #1D4ED8; }
+.mc-badge-outbound { background: #D1FAE5; color: #059669; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mc-stats">
+    <div class="mc-stat"><div class="mc-stat-value">{{ stats.calls_today }}</div><div class="mc-stat-label">Calls Today</div></div>
+    <div class="mc-stat"><div class="mc-stat-value">{{ stats.calls_answered }}</div><div class="mc-stat-label">Answered</div></div>
+    <div class="mc-stat"><div class="mc-stat-value">{{ stats.sms_sent }}</div><div class="mc-stat-label">SMS Sent</div></div>
+    <div class="mc-stat"><div class="mc-stat-value">{{ stats.appointments }}</div><div class="mc-stat-label">Appointments</div></div>
+</div>
+
+<div class="mc-section"><i class="bi bi-telephone"></i> Call History</div>
+<table class="mc-table">
+    <thead><tr><th>Dir</th><th>Number</th><th>Status</th><th>Duration</th><th>Disposition</th><th>Notes</th><th>When</th></tr></thead>
+    <tbody>
+        {% for call in calls %}
+        <tr>
+            <td><span class="mc-badge mc-badge-{{ call.direction }}">{{ call.direction|upper }}</span></td>
+            <td>{% if call.direction == 'outbound' %}{{ call.to_number }}{% else %}{{ call.from_number }}{% endif %}</td>
+            <td>{{ call.status }}</td>
+            <td>{{ call.duration }}s</td>
+            <td>{{ call.get_disposition_display|default:"-" }}</td>
+            <td>{{ call.notes|truncatechars:60|default:"-" }}</td>
+            <td>{{ call.started_at|timesince }} ago</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:16px;">No calls yet</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="mc-section"><i class="bi bi-chat-dots"></i> SMS History</div>
+<table class="mc-table">
+    <thead><tr><th>Dir</th><th>Number</th><th>Message</th><th>When</th></tr></thead>
+    <tbody>
+        {% for sms in sms_list %}
+        <tr>
+            <td><span class="mc-badge mc-badge-{{ sms.direction }}">{{ sms.direction|upper }}</span></td>
+            <td>{% if sms.direction == 'outbound' %}{{ sms.to_number }}{% else %}{{ sms.from_number }}{% endif %}</td>
+            <td>{{ sms.body|truncatechars:120 }}</td>
+            <td>{{ sms.sent_at|timesince }} ago</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px;">No SMS yet</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

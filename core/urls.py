@@ -1,7 +1,7 @@
 from django.urls import path
 from core.views import landing, auth, onboarding, dashboard, leads, competitors, territory, campaigns, analytics
 from core.views import monitor_health, webhooks, user_settings, admin_leads, ingest_api, crm
-from core.views import sales_admin, sales, industries, prospect_videos, static_pages, seo
+from core.views import sales_admin, sales, industries, prospect_videos, static_pages, seo, call_center
 
 urlpatterns = [
     path('', landing.landing_page, name='landing'),
@@ -122,6 +122,28 @@ urlpatterns = [
     path('admin/prospect-videos/<int:video_id>/stats/', prospect_videos.prospect_video_stats, name='prospect_video_stats'),
     path('api/prospect-video-track/', prospect_videos.prospect_video_track, name='prospect_video_track'),
     path('api/prospect-video-intake/', prospect_videos.prospect_video_intake, name='prospect_video_intake'),
+
+    # SignalWire Webhooks (called by SignalWire — no auth)
+    path('api/signalwire/sms-webhook/', call_center.sms_webhook, name='signalwire_sms_webhook'),
+    path('api/signalwire/voice-webhook/', call_center.voice_webhook, name='signalwire_voice_webhook'),
+    path('api/signalwire/call-status-webhook/', call_center.call_status_webhook, name='signalwire_call_status_webhook'),
+    path('api/signalwire/transcription-webhook/', call_center.transcription_webhook, name='signalwire_transcription_webhook'),
+
+    # SMS API (staff)
+    path('api/sms/send/', call_center.api_send_sms, name='api_send_sms'),
+    path('api/sms/send-bulk/', call_center.api_send_bulk_sms, name='api_send_bulk_sms'),
+    path('api/sms/reply/', call_center.api_sms_reply, name='api_sms_reply'),
+    path('api/sms/thread/<str:phone>/', call_center.api_sms_thread, name='api_sms_thread'),
+
+    # Call API (staff)
+    path('api/calls/<int:call_id>/disposition/', call_center.api_call_disposition, name='api_call_disposition'),
+
+    # Call Center Pages
+    path('sales/sms-inbox/', call_center.sms_inbox, name='sms_inbox'),
+    path('sales/sms-inbox/api/', call_center.sms_inbox_api, name='sms_inbox_api'),
+    path('sales/phone/', call_center.softphone, name='softphone'),
+    path('sales/call-center/', call_center.call_center_dashboard, name='call_center_dashboard'),
+    path('sales/my-calls/', call_center.my_calls, name='my_calls'),
 
     # Webhooks & Compliance
     path('webhooks/sendgrid/', webhooks.sendgrid_webhook, name='sendgrid_webhook'),

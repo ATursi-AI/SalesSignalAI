@@ -11,7 +11,34 @@ from core.models import (
     CodeViolationSource, HealthInspectionSource,
     LicensingBoardSource, CourtRecordSource,
     ProspectVideo,
+    CallLog, SMSMessage, SMSOptOut,
 )
+
+
+@admin.register(CallLog)
+class CallLogAdmin(admin.ModelAdmin):
+    list_display = ['call_sid', 'direction', 'from_number', 'to_number', 'status', 'duration', 'disposition', 'started_at']
+    list_filter = ['direction', 'status', 'disposition']
+    search_fields = ['from_number', 'to_number', 'call_sid']
+    raw_id_fields = ['lead', 'salesperson']
+
+
+@admin.register(SMSMessage)
+class SMSMessageAdmin(admin.ModelAdmin):
+    list_display = ['direction', 'from_number', 'to_number', 'body_preview', 'status', 'is_yes_response', 'sent_at']
+    list_filter = ['direction', 'status', 'is_yes_response', 'is_opt_out']
+    search_fields = ['from_number', 'to_number', 'body']
+    raw_id_fields = ['lead', 'salesperson']
+
+    def body_preview(self, obj):
+        return obj.body[:80]
+    body_preview.short_description = 'Message'
+
+
+@admin.register(SMSOptOut)
+class SMSOptOutAdmin(admin.ModelAdmin):
+    list_display = ['phone_number', 'opted_out_at']
+    search_fields = ['phone_number']
 
 
 class ServiceSubcategoryInline(admin.TabularInline):

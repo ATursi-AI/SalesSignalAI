@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block title %}Phone{% endblock %}
+{% block page_title %}Softphone{% endblock %}
+
+{% block extra_css %}
+<style>
+.phone-layout { display: grid; grid-template-columns: 380px 1fr; gap: 20px; min-height: calc(100vh - 120px); }
+
+/* Dial Pad */
+.dialpad-card { background: var(--bg-surface); border-radius: 16px; border: 1px solid var(--border-subtle); padding: 28px 24px; text-align: center; }
+.dialpad-number { width: 100%; padding: 14px; font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 600; text-align: center; border: 1px solid var(--border-subtle); border-radius: 12px; margin-bottom: 16px; }
+.dialpad-number:focus { outline: none; border-color: var(--accent-blue); }
+.dialpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+.dialpad-btn { padding: 16px; font-size: 1.3rem; font-weight: 600; border: 1px solid var(--border-subtle); border-radius: 12px; background: var(--bg-page); cursor: pointer; transition: background 0.1s; }
+.dialpad-btn:hover { background: var(--border-subtle); }
+.dialpad-btn sub { font-size: 0.55rem; display: block; font-weight: 400; color: var(--text-muted); margin-top: -2px; }
+
+.call-actions { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+.btn-call { padding: 14px 36px; border-radius: 30px; font-weight: 700; font-size: 1rem; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.btn-call-green { background: #059669; color: white; }
+.btn-call-green:hover { background: #047857; }
+.btn-call-red { background: #DC2626; color: white; display: none; }
+.btn-call-red:hover { background: #B91C1C; }
+
+.call-controls { display: none; justify-content: center; gap: 12px; margin-bottom: 16px; }
+.call-controls.active { display: flex; }
+.call-ctrl { width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--border-subtle); background: var(--bg-page); cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
+.call-ctrl:hover { background: var(--border-subtle); }
+.call-ctrl.active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+
+.call-status { text-align: center; margin-bottom: 12px; }
+.call-status-text { font-size: 0.85rem; color: var(--text-muted); }
+.call-timer { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; font-weight: 600; color: var(--text-primary); }
+
+/* Lead Context */
+.lead-context-card { background: var(--bg-surface); border-radius: 16px; border: 1px solid var(--border-subtle); padding: 24px; }
+.lead-context-empty { text-align: center; color: var(--text-muted); padding: 40px 20px; }
+.lead-context-empty i { font-size: 2.5rem; display: block; margin-bottom: 12px; }
+.lead-context-title { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px; }
+.lead-detail-row { display: flex; gap: 8px; margin-bottom: 8px; font-size: 0.85rem; }
+.lead-detail-label { color: var(--text-muted); min-width: 80px; }
+.lead-detail-value { font-weight: 500; }
+
+.call-notes { width: 100%; min-height: 80px; padding: 10px; border: 1px solid var(--border-subtle); border-radius: 10px; font-family: inherit; font-size: 0.85rem; resize: vertical; margin-top: 12px; }
+.call-notes:focus { outline: none; border-color: var(--accent-blue); }
+
+.disposition-btns { display: none; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.disposition-btns.active { display: flex; }
+.dispo-btn { padding: 8px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 600; border: 1px solid var(--border-subtle); background: var(--bg-page); cursor: pointer; }
+.dispo-btn:hover { border-color: var(--accent-blue); }
+.dispo-btn.selected { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+
+.call-history { margin-top: 20px; }
+.call-history h3 { font-family: 'Exo 2', sans-serif; font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; }
+.call-log-entry { padding: 8px 0; border-bottom: 1px solid var(--border-subtle); font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
+.call-log-entry:last-child { border-bottom: none; }
+
+@media (max-width: 768px) {
+    .phone-layout { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="phone-layout">
+    <!-- Left: Dial Pad -->
+    <div class="dialpad-card">
+        <div class="call-status" id="callStatus" style="display:none;">
+            <div class="call-status-text" id="callStatusText">Calling...</div>
+            <div class="call-timer" id="callTimer">00:00</div>
+        </div>
+
+        <input type="tel" class="dialpad-number" id="dialNumber" placeholder="Enter number" autocomplete="off">
+
+        <div class="dialpad-grid">
+            <button class="dialpad-btn" onclick="pressKey('1')">1</button>
+            <button class="dialpad-btn" onclick="pressKey('2')">2<sub>ABC</sub></button>
+            <button class="dialpad-btn" onclick="pressKey('3')">3<sub>DEF</sub></button>
+            <button class="dialpad-btn" onclick="pressKey('4')">4<sub>GHI</sub></button>
+            <button class="dialpad-btn" onclick="pressKey('5')">5<sub>JKL</sub></button>
+            <button class="dialpad-btn" onclick="pressKey('6')">6<sub>MNO</sub></button>
+            <button class="dialpad-btn" onclick="pressKey('7')">7<sub>PQRS</sub></button>
+            <button class="dialpad-btn" onclick="pressKey('8')">8<sub>TUV</sub></button>
+            <button class="dialpad-btn" onclick="pressKey('9')">9<sub>WXYZ</sub></button>
+            <button class="dialpad-btn" onclick="pressKey('*')">*</button>
+            <button class="dialpad-btn" onclick="pressKey('0')">0<sub>+</sub></button>
+            <button class="dialpad-btn" onclick="pressKey('#')">#</button>
+        </div>
+
+        <div class="call-actions">
+            <button class="btn-call btn-call-green" id="btnCall" onclick="startCall()"><i class="bi bi-telephone-fill"></i> Call</button>
+            <button class="btn-call btn-call-red" id="btnHangup" onclick="endCall()"><i class="bi bi-telephone-x-fill"></i> Hang Up</button>
+        </div>
+
+        <div class="call-controls" id="callControls">
+            <button class="call-ctrl" id="btnMute" onclick="toggleMute()" title="Mute"><i class="bi bi-mic-mute-fill"></i></button>
+            <button class="call-ctrl" id="btnHold" onclick="toggleHold()" title="Hold"><i class="bi bi-pause-fill"></i></button>
+        </div>
+    </div>
+
+    <!-- Right: Lead Context -->
+    <div class="lead-context-card">
+        <div class="lead-context-empty" id="leadContextEmpty">
+            <i class="bi bi-person-badge"></i>
+            Lead info will appear here when you call a number linked to a lead.
+        </div>
+        <div id="leadContext" style="display:none;">
+            <div class="lead-context-title" id="leadTitle"></div>
+            <div id="leadDetails"></div>
+
+            <textarea class="call-notes" id="callNotes" placeholder="Call notes..."></textarea>
+
+            <div class="disposition-btns" id="dispositionBtns">
+                <button class="dispo-btn" onclick="setDisposition('interested', this)">Interested</button>
+                <button class="dispo-btn" onclick="setDisposition('not_interested', this)">Not Interested</button>
+                <button class="dispo-btn" onclick="setDisposition('callback', this)">Callback</button>
+                <button class="dispo-btn" onclick="setDisposition('wrong_number', this)">Wrong Number</button>
+                <button class="dispo-btn" onclick="setDisposition('no_answer', this)">No Answer</button>
+                <button class="dispo-btn" onclick="setDisposition('left_voicemail', this)">Left Voicemail</button>
+                <button class="dispo-btn" onclick="setDisposition('appointment_booked', this)" style="background:#D1FAE5;border-color:#059669;color:#059669;">Appointment Booked</button>
+            </div>
+
+            <div class="call-history" id="callHistory"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var callActive = false;
+var callTimerInterval = null;
+var callSeconds = 0;
+var currentCallId = null;
+var selectedDisposition = '';
+
+function getCsrf() { const m = document.cookie.match(/csrftoken=([^;]+)/); return m ? m[1] : ''; }
+
+function pressKey(key) {
+    document.getElementById('dialNumber').value += key;
+}
+
+function startCall() {
+    var number = document.getElementById('dialNumber').value.trim();
+    if (!number) return;
+
+    callActive = true;
+    callSeconds = 0;
+    document.getElementById('btnCall').style.display = 'none';
+    document.getElementById('btnHangup').style.display = 'flex';
+    document.getElementById('callControls').classList.add('active');
+    document.getElementById('callStatus').style.display = 'block';
+    document.getElementById('callStatusText').textContent = 'Calling ' + number + '...';
+    document.getElementById('callTimer').textContent = '00:00';
+
+    callTimerInterval = setInterval(function() {
+        callSeconds++;
+        var m = Math.floor(callSeconds / 60).toString().padStart(2, '0');
+        var s = (callSeconds % 60).toString().padStart(2, '0');
+        document.getElementById('callTimer').textContent = m + ':' + s;
+    }, 1000);
+
+    // Note: Actual WebRTC call would use SignalWire JS SDK here.
+    // For now, this is the UI framework — connect to SignalWire when credentials are configured.
+    document.getElementById('callStatusText').textContent = 'Connected';
+}
+
+function endCall() {
+    callActive = false;
+    clearInterval(callTimerInterval);
+    document.getElementById('btnCall').style.display = 'flex';
+    document.getElementById('btnHangup').style.display = 'none';
+    document.getElementById('callControls').classList.remove('active');
+    document.getElementById('callStatusText').textContent = 'Call ended — ' + document.getElementById('callTimer').textContent;
+
+    // Show disposition buttons
+    document.getElementById('dispositionBtns').classList.add('active');
+}
+
+function toggleMute() {
+    var btn = document.getElementById('btnMute');
+    btn.classList.toggle('active');
+}
+
+function toggleHold() {
+    var btn = document.getElementById('btnHold');
+    btn.classList.toggle('active');
+    if (btn.classList.contains('active')) {
+        document.getElementById('callStatusText').textContent = 'On Hold';
+    } else {
+        document.getElementById('callStatusText').textContent = 'Connected';
+    }
+}
+
+function setDisposition(dispo, btn) {
+    selectedDisposition = dispo;
+    document.querySelectorAll('.dispo-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+
+    if (currentCallId) {
+        fetch('/api/calls/' + currentCallId + '/disposition/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()},
+            body: JSON.stringify({disposition: dispo, notes: document.getElementById('callNotes').value})
+        });
+    }
+}
+
+// Check URL params for click-to-call
+var params = new URLSearchParams(window.location.search);
+if (params.get('number')) {
+    document.getElementById('dialNumber').value = params.get('number');
+}
+</script>
+{% endblock %}

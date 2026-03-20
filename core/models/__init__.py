@@ -14,6 +14,7 @@ from .monitoring import (
     TrackedGoogleBusiness,
 )
 from .prospect_videos import ProspectVideo
+from .call_center import CallLog, SMSMessage, SMSOptOut
 
 __all__ = [
     'ServiceCategory', 'ServiceSubcategory', 'BusinessProfile', 'UserKeyword',
@@ -30,4 +31,5 @@ __all__ = [
     'LicensingBoardSource', 'CourtRecordSource',
     'TrackedGoogleBusiness',
     'ProspectVideo',
+    'CallLog', 'SMSMessage', 'SMSOptOut',
 ]
