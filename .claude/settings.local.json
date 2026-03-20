@@ -156,7 +156,8 @@
       "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.local venv/Scripts/python.exe -c \":*)",
       "Bash(venv/Scripts/python.exe manage.py monitor_property_sales_ny --days 60 --dry-run)",
       "Bash(venv/Scripts/pip install:*)",
-      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name call_center_models)"
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name call_center_models)",
+      "Bash(find /c/Users/aturs/Documents/AI_Engineering_Course/SalesSignalAI -type f \\\\\\(-name *map* -o -name *google* \\\\\\))"
     ]
   }
 }

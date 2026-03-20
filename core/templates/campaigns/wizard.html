@@ -4,6 +4,28 @@
 {% block title %}New Campaign{% endblock %}
 {% block page_title %}Create Campaign{% endblock %}
 
+{% block extra_css %}
+<style>
+.prospect-tab { padding: 8px 16px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; border: 1px solid var(--border-subtle); background: var(--bg-page); cursor: pointer; color: var(--text-secondary); display: flex; align-items: center; gap: 5px; }
+.prospect-tab:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+.prospect-tab.active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+.prospect-tab-panel { display: none; }
+.prospect-tab-panel.active { display: block; }
+.lead-row, .contact-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border-subtle); font-size: 0.83rem; cursor: pointer; transition: background 0.1s; }
+.lead-row:hover, .contact-row:hover { background: rgba(13,148,136,0.04); }
+.lead-row:last-child, .contact-row:last-child { border-bottom: none; }
+.lead-row input[type="checkbox"], .contact-row input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent-blue); }
+.lead-row .lead-meta { flex: 1; min-width: 0; }
+.lead-row .lead-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lead-row .lead-detail { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lead-urgency { padding: 2px 7px; border-radius: 6px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; }
+.lead-urgency-hot { background: #FEE2E2; color: #DC2626; }
+.lead-urgency-warm { background: #FEF3C7; color: #92400E; }
+.lead-urgency-new { background: #DBEAFE; color: #1D4ED8; }
+.lead-source-pill { padding: 2px 7px; border-radius: 6px; font-size: 0.65rem; font-weight: 600; background: #F0FDFA; color: #0D9488; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div style="max-width: 760px;">
 
@@ -209,19 +231,76 @@
         <div class="wizard-panel" id="step-4">
             <div class="glass-card-static" style="padding: 2rem;">
                 <h3><i class="bi bi-4-circle" style="color: var(--accent-blue);"></i> Find Prospects</h3>
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">Search Google Maps to build your prospect list, or use existing prospects.</p>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">Import leads, search Google Maps, upload a CSV, or pull from your contacts.</p>
 
-                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-                    <input type="text" id="prospect-query" class="form-input" placeholder="e.g. plumbing companies, HVAC contractors" style="flex: 1;">
-                    <button type="button" class="btn-secondary" onclick="scrapeProspects()" id="scrape-btn">
-                        <i class="bi bi-search"></i> Search Google Maps
-                    </button>
+                <!-- Source Tabs -->
+                <div style="display: flex; gap: 6px; margin-bottom: 1.25rem; flex-wrap: wrap;">
+                    <button type="button" class="prospect-tab active" onclick="switchProspectTab('leads', this)"><i class="bi bi-lightning-fill"></i> Lead Feed</button>
+                    <button type="button" class="prospect-tab" onclick="switchProspectTab('gmaps', this)"><i class="bi bi-google"></i> Google Maps</button>
+                    <button type="button" class="prospect-tab" onclick="switchProspectTab('csv', this)"><i class="bi bi-file-earmark-arrow-up"></i> Upload CSV</button>
+                    <button type="button" class="prospect-tab" onclick="switchProspectTab('contacts', this)"><i class="bi bi-people-fill"></i> Contacts</button>
                 </div>
-                <div id="scrape-status" style="margin-bottom: 1rem;"></div>
 
-                <div id="prospect-list" style="margin-top: 1rem;">
-                    <div style="text-align:center; color: var(--text-muted); padding: 2rem 0; font-size: 0.85rem;">
-                        Search to find prospects, or skip to use existing prospects from your database.
+                <!-- Tab: Lead Feed -->
+                <div class="prospect-tab-panel active" id="tab-leads">
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem; flex-wrap: wrap;">
+                        <select id="lead-source-filter" class="form-select-sm" onchange="loadLeadFeed()" style="min-width:140px;">
+                            <option value="">All Sources</option>
+                            <option value="violations">Violations</option>
+                            <option value="permits">Permits</option>
+                            <option value="health_inspections">Health Inspections</option>
+                            <option value="property_sales">Property Sales</option>
+                            <option value="business_filings">Business Filings</option>
+                            <option value="liquor_licenses">Liquor Licenses</option>
+                            <option value="nextdoor">Social Media</option>
+                        </select>
+                        <select id="lead-urgency-filter" class="form-select-sm" onchange="loadLeadFeed()" style="min-width:100px;">
+                            <option value="">All Urgency</option>
+                            <option value="hot">HOT</option>
+                            <option value="warm">WARM</option>
+                            <option value="new">NEW</option>
+                        </select>
+                        <input type="text" id="lead-region-filter" class="form-input" placeholder="Borough / County..." style="max-width:160px;" oninput="clearTimeout(window._lrt);window._lrt=setTimeout(loadLeadFeed,400)">
+                        <button type="button" class="btn-secondary btn-sm" onclick="selectAllLeads()" style="margin-left:auto;"><i class="bi bi-check2-all"></i> Select All</button>
+                    </div>
+                    <div id="lead-feed-list" style="max-height: 340px; overflow-y: auto; border: 1px solid var(--border-subtle); border-radius: 10px;"></div>
+                    <div style="margin-top: 0.75rem; display: flex; align-items: center; gap: 10px;">
+                        <span id="lead-selected-count" style="font-size: 0.8rem; color: var(--text-muted);">0 selected</span>
+                        <button type="button" class="btn-primary-glow btn-sm" onclick="importSelectedLeads()" style="margin-left:auto;"><i class="bi bi-plus-lg"></i> Add Selected to Campaign</button>
+                    </div>
+                </div>
+
+                <!-- Tab: Google Maps -->
+                <div class="prospect-tab-panel" id="tab-gmaps">
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                        <input type="text" id="prospect-query" class="form-input" placeholder="e.g. plumbing companies, HVAC contractors" style="flex: 1;">
+                        <button type="button" class="btn-secondary" onclick="scrapeProspects()" id="scrape-btn">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                    <div id="scrape-status" style="margin-bottom: 0.5rem;"></div>
+                    <div id="prospect-list" style="max-height: 340px; overflow-y: auto;"></div>
+                </div>
+
+                <!-- Tab: Upload CSV -->
+                <div class="prospect-tab-panel" id="tab-csv">
+                    <div style="background: var(--bg-page); border: 2px dashed var(--border-subtle); border-radius: 12px; padding: 2rem; text-align: center; margin-bottom: 1rem;">
+                        <i class="bi bi-file-earmark-spreadsheet" style="font-size: 2rem; color: var(--accent-blue); display: block; margin-bottom: 0.5rem;"></i>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Upload a CSV file with your prospect list</p>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1rem;">Expected columns: <strong>business_name, contact_name, email, phone, address</strong></p>
+                        <input type="file" id="csv-file" accept=".csv" style="display:none;" onchange="uploadCSV()">
+                        <button type="button" class="btn-secondary" onclick="document.getElementById('csv-file').click()"><i class="bi bi-upload"></i> Choose CSV File</button>
+                    </div>
+                    <div id="csv-status"></div>
+                </div>
+
+                <!-- Tab: Existing Contacts -->
+                <div class="prospect-tab-panel" id="tab-contacts">
+                    <div id="contacts-list" style="max-height: 340px; overflow-y: auto; border: 1px solid var(--border-subtle); border-radius: 10px;"></div>
+                    <div style="margin-top: 0.75rem; display: flex; align-items: center; gap: 10px;">
+                        <span id="contact-selected-count" style="font-size: 0.8rem; color: var(--text-muted);">0 selected</span>
+                        <button type="button" class="btn-secondary btn-sm" onclick="selectAllContacts()" style="margin-left:auto; margin-right: 6px;"><i class="bi bi-check2-all"></i> Select All</button>
+                        <button type="button" class="btn-primary-glow btn-sm" onclick="importSelectedContacts()"><i class="bi bi-plus-lg"></i> Add to Campaign</button>
                     </div>
                 </div>
 
@@ -416,5 +495,206 @@ function esc(s) {
     d.textContent = s || '';
     return d.innerHTML;
 }
+
+/* ── Prospect Tab Switching ── */
+var selectedLeadIds = new Set();
+var selectedContactIds = new Set();
+
+function switchProspectTab(tab, btn) {
+    document.querySelectorAll('.prospect-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.prospect-tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + tab).classList.add('active');
+
+    if (tab === 'leads') loadLeadFeed();
+    else if (tab === 'contacts') loadContacts();
+}
+
+/* ── Lead Feed Import ── */
+function loadLeadFeed() {
+    const source = document.getElementById('lead-source-filter').value;
+    const urgency = document.getElementById('lead-urgency-filter').value;
+    const region = document.getElementById('lead-region-filter').value.trim();
+
+    let url = '/campaigns/leads-api/?';
+    if (source) url += 'source_type=' + source + '&';
+    if (urgency) url += 'urgency=' + urgency + '&';
+    if (region) url += 'region=' + encodeURIComponent(region) + '&';
+
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            const c = document.getElementById('lead-feed-list');
+            if (!data.leads || !data.leads.length) {
+                c.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-muted);font-size:0.85rem;">No leads found matching filters.</div>';
+                return;
+            }
+            let html = '';
+            data.leads.forEach(l => {
+                const checked = selectedLeadIds.has(l.id) ? 'checked' : '';
+                const hasEmail = l.email ? '' : ' style="opacity:0.5;" title="No email — cannot add to campaign"';
+                const urgClass = l.urgency === 'hot' ? 'hot' : l.urgency === 'warm' ? 'warm' : 'new';
+                html += `<label class="lead-row"${hasEmail}>
+                    <input type="checkbox" value="${l.id}" ${checked} ${l.email ? '' : 'disabled'} onchange="toggleLeadSelect(${l.id}, this.checked)">
+                    <div class="lead-meta">
+                        <div class="lead-name">${esc(l.business || l.name || 'Unknown')}</div>
+                        <div class="lead-detail">${esc(l.name)}${l.phone ? ' · ' + esc(l.phone) : ''}${l.email ? ' · ' + esc(l.email) : ''} · ${esc(l.location)}</div>
+                    </div>
+                    <span class="lead-source-pill">${esc(l.source_type)}</span>
+                    <span class="lead-urgency lead-urgency-${urgClass}">${l.urgency.toUpperCase()}</span>
+                </label>`;
+            });
+            c.innerHTML = html;
+            updateLeadCount();
+        });
+}
+
+function toggleLeadSelect(id, checked) {
+    if (checked) selectedLeadIds.add(id); else selectedLeadIds.delete(id);
+    updateLeadCount();
+}
+
+function selectAllLeads() {
+    const cbs = document.querySelectorAll('#lead-feed-list input[type="checkbox"]:not(:disabled)');
+    const allChecked = Array.from(cbs).every(cb => cb.checked);
+    cbs.forEach(cb => {
+        cb.checked = !allChecked;
+        const id = parseInt(cb.value);
+        if (!allChecked) selectedLeadIds.add(id); else selectedLeadIds.delete(id);
+    });
+    updateLeadCount();
+}
+
+function updateLeadCount() {
+    document.getElementById('lead-selected-count').textContent = selectedLeadIds.size + ' selected';
+}
+
+function importSelectedLeads() {
+    if (!selectedLeadIds.size) { alert('Select at least one lead.'); return; }
+    if (!campaignId) { alert('Please complete previous steps first to create the campaign.'); return; }
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch('/campaigns/' + campaignId + '/import-leads/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+        body: JSON.stringify({lead_ids: Array.from(selectedLeadIds)})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            alert('Added ' + data.added + ' prospects to campaign.' + (data.skipped ? ' (' + data.skipped + ' skipped — no email or duplicate)' : ''));
+            selectedLeadIds.clear();
+            loadLeadFeed();
+        } else {
+            alert(data.error || 'Error importing leads.');
+        }
+    });
+}
+
+/* ── Contacts Import ── */
+function loadContacts() {
+    fetch('/campaigns/contacts-api/')
+        .then(r => r.json())
+        .then(data => {
+            const c = document.getElementById('contacts-list');
+            if (!data.contacts || !data.contacts.length) {
+                c.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-muted);font-size:0.85rem;">No CRM contacts found.</div>';
+                return;
+            }
+            let html = '';
+            data.contacts.forEach(ct => {
+                const checked = selectedContactIds.has(ct.id) ? 'checked' : '';
+                const hasEmail = ct.email ? '' : ' style="opacity:0.5;" title="No email"';
+                html += `<label class="contact-row"${hasEmail}>
+                    <input type="checkbox" value="${ct.id}" ${checked} ${ct.email ? '' : 'disabled'} onchange="toggleContactSelect(${ct.id}, this.checked)">
+                    <div style="flex:1;">
+                        <div style="font-weight:600;font-size:0.88rem;">${esc(ct.name)}</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);">${esc(ct.email)}${ct.phone ? ' · ' + esc(ct.phone) : ''}</div>
+                    </div>
+                    <span class="lead-source-pill">${esc(ct.source)}</span>
+                </label>`;
+            });
+            c.innerHTML = html;
+            updateContactCount();
+        });
+}
+
+function toggleContactSelect(id, checked) {
+    if (checked) selectedContactIds.add(id); else selectedContactIds.delete(id);
+    updateContactCount();
+}
+
+function selectAllContacts() {
+    const cbs = document.querySelectorAll('#contacts-list input[type="checkbox"]:not(:disabled)');
+    const allChecked = Array.from(cbs).every(cb => cb.checked);
+    cbs.forEach(cb => {
+        cb.checked = !allChecked;
+        const id = parseInt(cb.value);
+        if (!allChecked) selectedContactIds.add(id); else selectedContactIds.delete(id);
+    });
+    updateContactCount();
+}
+
+function updateContactCount() {
+    document.getElementById('contact-selected-count').textContent = selectedContactIds.size + ' selected';
+}
+
+function importSelectedContacts() {
+    if (!selectedContactIds.size) { alert('Select at least one contact.'); return; }
+    if (!campaignId) { alert('Please complete previous steps first.'); return; }
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch('/campaigns/' + campaignId + '/import-contacts/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+        body: JSON.stringify({contact_ids: Array.from(selectedContactIds)})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            alert('Added ' + data.added + ' contacts.' + (data.skipped ? ' (' + data.skipped + ' skipped)' : ''));
+            selectedContactIds.clear();
+            loadContacts();
+        } else {
+            alert(data.error || 'Error importing contacts.');
+        }
+    });
+}
+
+/* ── CSV Upload ── */
+function uploadCSV() {
+    const file = document.getElementById('csv-file').files[0];
+    if (!file) return;
+    if (!campaignId) { alert('Please complete previous steps first to create the campaign.'); return; }
+
+    const formData = new FormData();
+    formData.set('csv_file', file);
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    document.getElementById('csv-status').innerHTML = '<div class="alert-dark alert-info"><i class="bi bi-hourglass-split"></i> Uploading and parsing...</div>';
+
+    fetch('/campaigns/' + campaignId + '/import-csv/', {
+        method: 'POST',
+        body: formData,
+        headers: {'X-CSRFToken': csrfToken},
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            document.getElementById('csv-status').innerHTML = `<div class="alert-dark alert-success"><i class="bi bi-check-circle"></i> Added ${data.added} prospects from CSV.${data.skipped ? ' (' + data.skipped + ' skipped — no email or duplicate)' : ''}</div>`;
+        } else {
+            document.getElementById('csv-status').innerHTML = `<div class="alert-dark alert-error"><i class="bi bi-exclamation-circle"></i> ${data.error}</div>`;
+        }
+        document.getElementById('csv-file').value = '';
+    })
+    .catch(() => {
+        document.getElementById('csv-status').innerHTML = '<div class="alert-dark alert-error"><i class="bi bi-exclamation-circle"></i> Upload failed.</div>';
+    });
+}
+
+/* Load lead feed by default when step 4 opens */
+var _origGoToStep = goToWizardStep;
+goToWizardStep = function(step) {
+    _origGoToStep(step);
+    if (step === 4) loadLeadFeed();
+};
 </script>
 {% endblock %}

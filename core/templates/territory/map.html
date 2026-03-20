@@ -83,9 +83,9 @@
     const CENTER_LAT = {{ center_lat }};
     const CENTER_LNG = {{ center_lng }};
 
-    // Dark tile layer
-    const darkTiles = L.tileLayer(
-        'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    // Light tile layer
+    const lightTiles = L.tileLayer(
+        'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
             subdomains: 'abcd',
             maxZoom: 19,
@@ -95,7 +95,7 @@
     const map = L.map('territory-map', {
         center: [CENTER_LAT, CENTER_LNG],
         zoom: 10,
-        layers: [darkTiles],
+        layers: [lightTiles],
         zoomControl: true,
     });
 
@@ -164,7 +164,7 @@
                             <a href="${p.detail_url}" class="map-popup-link">View Lead <i class="bi bi-arrow-right"></i></a>
                         </div>
                     `;
-                    marker.bindPopup(popupHtml, { maxWidth: 300, className: 'dark-popup' });
+                    marker.bindPopup(popupHtml, { maxWidth: 300, className: 'map-popup-styled' });
                     markers.addLayer(marker);
                 });
 

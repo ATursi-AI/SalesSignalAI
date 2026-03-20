@@ -8,6 +8,7 @@ from django.db.models import Q, Count, Sum
 
 from core.models import (
     OutreachCampaign, OutreachEmail, ProspectBusiness, ServiceCategory,
+    Lead, Contact,
 )
 from core.models.outreach import OutreachProspect, GeneratedEmail
 from core.utils.scrapers.google_maps import scrape_prospects
@@ -547,3 +548,212 @@ def prospect_list_api(request):
         })
 
     return JsonResponse({'prospects': data, 'total': prospects.count()})
+
+
+@login_required
+def campaign_leads_api(request):
+    """AJAX endpoint returning leads for importing into campaigns."""
+    leads = Lead.objects.all().order_by('-discovered_at')
+
+    source_type = request.GET.get('source_type', '')
+    if source_type:
+        leads = leads.filter(source_type=source_type)
+
+    urgency = request.GET.get('urgency', '')
+    if urgency:
+        leads = leads.filter(urgency_level=urgency)
+
+    region = request.GET.get('region', '')
+    if region:
+        leads = leads.filter(Q(region__icontains=region) | Q(detected_location__icontains=region))
+
+    data = []
+    for lead in leads[:200]:
+        data.append({
+            'id': lead.id,
+            'business': lead.contact_business or '',
+            'name': lead.contact_name or lead.source_author or '',
+            'phone': lead.contact_phone or '',
+            'email': lead.contact_email or '',
+            'source_type': lead.get_source_type_display() if lead.source_type else lead.get_platform_display(),
+            'urgency': lead.urgency_level,
+            'location': lead.detected_location or lead.region or '',
+            'date': lead.discovered_at.strftime('%b %d') if lead.discovered_at else '',
+        })
+
+    return JsonResponse({'leads': data, 'total': leads.count()})
+
+
+@login_required
+def campaign_import_leads(request, campaign_id):
+    """Import selected leads into a campaign as OutreachProspects."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    profile = _get_business(request)
+    if not profile:
+        return JsonResponse({'error': 'No business profile'}, status=403)
+
+    campaign = get_object_or_404(OutreachCampaign, id=campaign_id, business=profile)
+    data = json.loads(request.body)
+    lead_ids = data.get('lead_ids', [])
+
+    if not lead_ids:
+        return JsonResponse({'error': 'No leads selected'}, status=400)
+
+    leads = Lead.objects.filter(pk__in=lead_ids)
+    added = 0
+    skipped = 0
+
+    for lead in leads:
+        email = lead.contact_email
+        if not email:
+            skipped += 1
+            continue
+        if OutreachProspect.objects.filter(campaign=campaign, contact_email=email).exists():
+            skipped += 1
+            continue
+
+        OutreachProspect.objects.create(
+            campaign=campaign,
+            business_name=lead.contact_business or lead.source_author or 'Unknown',
+            contact_name=lead.contact_name or '',
+            contact_email=email,
+            contact_phone=lead.contact_phone or '',
+            website_url='',
+            source='lead_import',
+            status='new',
+        )
+        added += 1
+
+    campaign.total_prospects = campaign.prospects.count()
+    campaign.save(update_fields=['total_prospects'])
+
+    return JsonResponse({'ok': True, 'added': added, 'skipped': skipped})
+
+
+@login_required
+def campaign_contacts_api(request):
+    """AJAX endpoint returning CRM contacts for campaign import."""
+    profile = _get_business(request)
+    if not profile:
+        return JsonResponse({'contacts': [], 'total': 0})
+
+    contacts = Contact.objects.filter(business=profile).order_by('-created_at')
+
+    data = []
+    for c in contacts[:200]:
+        data.append({
+            'id': c.id,
+            'name': c.name,
+            'email': c.email or '',
+            'phone': c.phone or '',
+            'source': c.get_source_display(),
+            'stage': c.get_stage_display(),
+        })
+
+    return JsonResponse({'contacts': data, 'total': contacts.count()})
+
+
+@login_required
+def campaign_import_contacts(request, campaign_id):
+    """Import selected CRM contacts into a campaign."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    profile = _get_business(request)
+    if not profile:
+        return JsonResponse({'error': 'No business profile'}, status=403)
+
+    campaign = get_object_or_404(OutreachCampaign, id=campaign_id, business=profile)
+    data = json.loads(request.body)
+    contact_ids = data.get('contact_ids', [])
+
+    if not contact_ids:
+        return JsonResponse({'error': 'No contacts selected'}, status=400)
+
+    contacts = Contact.objects.filter(pk__in=contact_ids, business=profile)
+    added = 0
+    skipped = 0
+
+    for c in contacts:
+        if not c.email:
+            skipped += 1
+            continue
+        if OutreachProspect.objects.filter(campaign=campaign, contact_email=c.email).exists():
+            skipped += 1
+            continue
+
+        OutreachProspect.objects.create(
+            campaign=campaign,
+            business_name=c.name,
+            contact_name=c.name,
+            contact_email=c.email,
+            contact_phone=c.phone or '',
+            source='crm_import',
+            status='new',
+        )
+        added += 1
+
+    campaign.total_prospects = campaign.prospects.count()
+    campaign.save(update_fields=['total_prospects'])
+
+    return JsonResponse({'ok': True, 'added': added, 'skipped': skipped})
+
+
+@login_required
+def campaign_import_csv(request, campaign_id):
+    """Import prospects from CSV upload into a campaign."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    import csv
+    import io
+
+    profile = _get_business(request)
+    if not profile:
+        return JsonResponse({'error': 'No business profile'}, status=403)
+
+    campaign = get_object_or_404(OutreachCampaign, id=campaign_id, business=profile)
+    csv_file = request.FILES.get('csv_file')
+
+    if not csv_file:
+        return JsonResponse({'error': 'No file uploaded'}, status=400)
+
+    try:
+        decoded = csv_file.read().decode('utf-8-sig')
+        reader = csv.DictReader(io.StringIO(decoded))
+        added = 0
+        skipped = 0
+
+        for row in reader:
+            email = (row.get('email', '') or row.get('Email', '') or '').strip()
+            if not email:
+                skipped += 1
+                continue
+            if OutreachProspect.objects.filter(campaign=campaign, contact_email=email).exists():
+                skipped += 1
+                continue
+
+            business_name = (row.get('business_name', '') or row.get('Business Name', '') or row.get('company', '') or '').strip()
+            contact_name = (row.get('contact_name', '') or row.get('Contact Name', '') or row.get('name', '') or row.get('Name', '') or '').strip()
+            phone = (row.get('phone', '') or row.get('Phone', '') or '').strip()
+
+            OutreachProspect.objects.create(
+                campaign=campaign,
+                business_name=business_name or contact_name or email,
+                contact_name=contact_name,
+                contact_email=email,
+                contact_phone=phone,
+                source='csv_upload',
+                status='new',
+            )
+            added += 1
+
+        campaign.total_prospects = campaign.prospects.count()
+        campaign.save(update_fields=['total_prospects'])
+
+        return JsonResponse({'ok': True, 'added': added, 'skipped': skipped})
+
+    except Exception as e:
+        return JsonResponse({'error': f'Error parsing CSV: {str(e)}'}, status=400)
