@@ -2,6 +2,7 @@ from django.urls import path
 from core.views import landing, auth, onboarding, dashboard, leads, competitors, territory, campaigns, analytics
 from core.views import monitor_health, webhooks, user_settings, admin_leads, ingest_api, crm
 from core.views import sales_admin, sales, industries, prospect_videos, static_pages, seo, call_center
+from core.views import service_pages
 
 urlpatterns = [
     path('', landing.landing_page, name='landing'),
@@ -13,6 +14,17 @@ urlpatterns = [
     path('google2568d017b4e7e9e5.html', seo.google_verification, name='google_verification'),
     path('industries/', industries.industry_index, name='industry_index'),
     path('industries/<slug:slug>/', industries.industry_detail, name='industry_detail'),
+
+    # Service Landing Pages
+    path('find/<slug:trade_slug>/<slug:area_slug>/', service_pages.service_landing_page, name='service_landing_page'),
+    path('pro/<slug:customer_slug>/<slug:area_slug>/', service_pages.service_landing_page_branded, name='service_landing_page_branded'),
+    path('api/service-page-submit/', service_pages.service_page_submit, name='service_page_submit'),
+    path('admin/service-pages/', service_pages.service_page_list, name='service_page_list'),
+    path('admin/service-pages/create/', service_pages.service_page_create, name='service_page_create'),
+    path('admin/service-pages/bulk-create/', service_pages.service_page_bulk_create, name='service_page_bulk_create'),
+    path('admin/service-pages/<int:page_id>/edit/', service_pages.service_page_edit, name='service_page_edit'),
+    path('admin/service-pages/submissions/', service_pages.service_page_submissions, name='service_page_submissions'),
+    path('admin/service-pages/submissions/<int:submission_id>/action/', service_pages.service_page_submission_action, name='service_page_submission_action'),
     path('auth/register/', auth.register_view, name='register'),
     path('auth/login/', auth.login_view, name='login'),
     path('auth/logout/', auth.logout_view, name='logout'),

@@ -1,6 +1,8 @@
 from django.http import HttpResponse
 from django.utils import timezone
 
+from core.models import ServiceLandingPage
+
 
 INDUSTRY_SLUGS = [
     'commercial-cleaning', 'plumbing', 'electrical', 'hvac',
@@ -28,6 +30,25 @@ def sitemap_xml(request):
             'priority': '0.7',
             'changefreq': 'monthly',
         })
+
+    # Service landing pages
+    active_pages = ServiceLandingPage.objects.filter(
+        status='active',
+    ).select_related('trade', 'area')
+
+    for page in active_pages:
+        if page.page_type == 'salessignal':
+            urls.append({
+                'loc': f'/find/{page.trade.slug}/{page.area.slug}/',
+                'priority': '0.8',
+                'changefreq': 'weekly',
+            })
+        elif page.page_type == 'customer':
+            urls.append({
+                'loc': f'/pro/{page.slug}/',
+                'priority': '0.7',
+                'changefreq': 'weekly',
+            })
 
     xml_parts = ['<?xml version="1.0" encoding="UTF-8"?>']
     xml_parts.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')

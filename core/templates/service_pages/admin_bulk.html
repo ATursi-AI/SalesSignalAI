@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Bulk Create Service Pages{% endblock %}
+{% block page_title %}Bulk Create Service Pages{% endblock %}
+
+{% block extra_css %}
+<style>
+.bulk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+.bulk-panel { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 20px; max-height: 500px; overflow-y: auto; }
+.bulk-panel h3 { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1rem; margin-bottom: 14px; }
+.bulk-group-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 700; margin: 14px 0 6px; }
+.bulk-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 0.85rem; }
+.bulk-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent-blue); cursor: pointer; }
+.bulk-item label { cursor: pointer; }
+.bulk-select-btns { display: flex; gap: 6px; margin-bottom: 10px; }
+.bulk-select-btns button { background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 4px 10px; font-size: 0.75rem; cursor: pointer; color: var(--text-secondary); font-weight: 600; }
+.bulk-select-btns button:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+.bulk-result { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 20px; margin-top: 20px; display: none; }
+@media (max-width: 768px) { .bulk-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<form id="bulk-form">
+    {% csrf_token %}
+
+    <div class="bulk-grid">
+        <!-- Trades -->
+        <div class="bulk-panel">
+            <h3><i class="bi bi-briefcase-fill" style="color:var(--accent-blue);"></i> Step 1: Select Trades</h3>
+            <div class="bulk-select-btns">
+                <button type="button" onclick="toggleAll('trade', true)">Select All</button>
+                <button type="button" onclick="toggleAll('trade', false)">Deselect All</button>
+            </div>
+
+            {% regroup trades by get_category_type_display as trade_groups %}
+            {% for group in trade_groups %}
+            <div class="bulk-group-label">{{ group.grouper }}</div>
+            {% for t in group.list %}
+            <div class="bulk-item">
+                <input type="checkbox" name="trade_ids" value="{{ t.id }}" id="trade-{{ t.id }}" class="trade-cb">
+                <label for="trade-{{ t.id }}"><i class="{{ t.icon }}" style="color:var(--accent-blue);margin-right:4px;"></i> {{ t.name }}</label>
+            </div>
+            {% endfor %}
+            {% endfor %}
+        </div>
+
+        <!-- Areas -->
+        <div class="bulk-panel">
+            <h3><i class="bi bi-geo-alt-fill" style="color:var(--accent-emerald);"></i> Step 2: Select Areas</h3>
+            <div class="bulk-select-btns">
+                <button type="button" onclick="toggleAll('area', true)">Select All</button>
+                <button type="button" onclick="toggleAll('area', false)">Deselect All</button>
+            </div>
+
+            {% for group_name, area_list in area_groups.items %}
+            <div class="bulk-group-label">{{ group_name }}s</div>
+            {% for a in area_list %}
+            <div class="bulk-item">
+                <input type="checkbox" name="area_ids" value="{{ a.id }}" id="area-{{ a.id }}" class="area-cb">
+                <label for="area-{{ a.id }}">{{ a.name }}, {{ a.state }}{% if a.county %} <span style="color:var(--text-muted);font-size:0.75rem;">({{ a.county }})</span>{% endif %}</label>
+            </div>
+            {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Options -->
+    <div class="glass-card-static" style="padding:20px;margin-bottom:20px;">
+        <h3 style="font-family:'Exo 2',sans-serif;font-weight:800;font-size:1rem;margin-bottom:14px;">
+            <i class="bi bi-gear-fill" style="color:var(--accent-amber);"></i> Step 3: Options
+        </h3>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end;">
+            <div>
+                <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">Page Type</label>
+                <select name="page_type" class="form-input" style="min-width:180px;">
+                    <option value="salessignal">SalesSignal Owned</option>
+                    <option value="customer">Customer Branded</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">Customer (if branded)</label>
+                <select name="customer_id" class="form-input" style="min-width:200px;">
+                    <option value="">None</option>
+                    {% for c in customers %}
+                    <option value="{{ c.id }}">{{ c.business_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview & Generate -->
+    <div style="display:flex;gap:12px;align-items:center;">
+        <button type="button" onclick="previewBulk()" class="btn-secondary" style="padding:12px 24px;font-size:0.9rem;border-radius:10px;">
+            <i class="bi bi-eye"></i> Preview
+        </button>
+        <button type="button" onclick="generateBulk()" class="btn-primary-glow" style="padding:12px 24px;font-size:0.9rem;border-radius:10px;" id="generate-btn">
+            <i class="bi bi-grid-3x3-gap-fill"></i> Generate All
+        </button>
+        <span id="preview-count" style="font-size:0.9rem;color:var(--text-muted);"></span>
+    </div>
+
+    <div class="bulk-result" id="bulk-result"></div>
+</form>
+
+<script>
+function toggleAll(type, checked) {
+    document.querySelectorAll('.' + type + '-cb').forEach(cb => cb.checked = checked);
+    updateCount();
+}
+
+function updateCount() {
+    var trades = document.querySelectorAll('.trade-cb:checked').length;
+    var areas = document.querySelectorAll('.area-cb:checked').length;
+    var total = trades * areas;
+    document.getElementById('preview-count').textContent = total > 0
+        ? trades + ' trades x ' + areas + ' areas = ' + total + ' pages'
+        : '';
+}
+
+document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.addEventListener('change', updateCount));
+
+function previewBulk() { updateCount(); }
+
+function generateBulk() {
+    var trades = document.querySelectorAll('.trade-cb:checked');
+    var areas = document.querySelectorAll('.area-cb:checked');
+    if (!trades.length || !areas.length) {
+        alert('Select at least one trade and one area.');
+        return;
+    }
+    if (!confirm('Generate ' + (trades.length * areas.length) + ' landing pages?')) return;
+
+    var btn = document.getElementById('generate-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
+
+    var form = document.getElementById('bulk-form');
+    var formData = new FormData(form);
+    var csrfToken = formData.get('csrfmiddlewaretoken');
+
+    fetch('{% url "service_page_bulk_create" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {'X-CSRFToken': csrfToken},
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-grid-3x3-gap-fill"></i> Generate All';
+        var result = document.getElementById('bulk-result');
+        result.style.display = 'block';
+        if (data.ok) {
+            result.innerHTML = '<div style="color:var(--accent-emerald);font-weight:600;font-size:1.1rem;margin-bottom:8px;"><i class="bi bi-check-circle-fill"></i> Done!</div>' +
+                '<p>' + data.created + ' pages created, ' + data.skipped + ' skipped (already exist).</p>' +
+                '<a href="{% url "service_page_list" %}" style="color:var(--accent-blue);font-weight:600;">View all pages →</a>';
+        } else {
+            result.innerHTML = '<div style="color:var(--accent-coral);">' + (data.error || 'Error') + '</div>';
+        }
+    })
+    .catch(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-grid-3x3-gap-fill"></i> Generate All';
+    });
+}
+</script>
+{% endblock %}

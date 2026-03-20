@@ -657,6 +657,13 @@
     <button onclick="clearSelection()"><i class="bi bi-x-circle"></i> Deselect</button>
 </div>
 
+<!-- Delete All Bar -->
+<div style="display:flex; justify-content:flex-end; margin-bottom:8px;">
+    <button onclick="deleteAllLeads()" style="background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.3);color:var(--accent-coral);border-radius:var(--radius-sm);padding:6px 14px;font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='rgba(255,71,87,0.2)'" onmouseout="this.style.background='rgba(255,71,87,0.1)'">
+        <i class="bi bi-trash3-fill"></i> Delete All Leads
+    </button>
+</div>
+
 <!-- Stats Row -->
 <div class="stats-row">
     <span>Showing <span class="stat-pill" id="showingCount">0</span> of <span class="stat-pill" id="totalCount">0</span> leads</span>
@@ -939,7 +946,7 @@ async function toggleDetail(leadId, event) {
 
     // Fetch detail
     try {
-        const resp = await fetch(`/admin-leads/${leadId}/`);
+        const resp = await fetch(`/admin-leads/detail/${leadId}/`);
         const lead = await resp.json();
 
         const row = tbody.querySelector(`tr[data-lead-id="${leadId}"]`);
@@ -1061,7 +1068,7 @@ function buildDetailPanel(lead) {
 /* ── Actions ── */
 async function leadAction(leadId, action) {
     try {
-        const resp = await fetch(`/admin-leads/${leadId}/action/`, {
+        const resp = await fetch(`/admin-leads/detail/${leadId}/action/`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()},
             body: JSON.stringify({action}),
@@ -1150,6 +1157,22 @@ async function bulkDelete() {
             fetchLeads();
         } else if (data.error) alert(data.error);
     } catch (e) { console.error(e); }
+}
+
+async function deleteAllLeads() {
+    const total = document.getElementById('totalCount').textContent;
+    if (!confirm(`DELETE ALL ${total} LEADS from the database?\n\nThis cannot be undone.`)) return;
+    if (!confirm('Are you absolutely sure? This will permanently delete ALL leads.')) return;
+    try {
+        const resp = await fetch('/admin-leads/delete-all/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()},
+            body: JSON.stringify({confirm: 'DELETE_ALL_LEADS'}),
+        });
+        const data = await resp.json();
+        if (data.ok) { alert(`Deleted ${data.deleted} leads.`); clearSelection(); fetchLeads(); }
+        else { alert(data.error || 'Failed to delete.'); }
+    } catch (e) { console.error(e); alert('Error deleting leads.'); }
 }
 
 /* ── Selection & Bulk ── */

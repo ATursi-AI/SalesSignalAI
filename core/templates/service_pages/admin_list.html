@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Service Landing Pages{% endblock %}
+{% block page_title %}Service Landing Pages{% endblock %}
+
+{% block content %}
+<div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+    <div class="glass-card-static" style="padding:16px 20px;flex:1;min-width:140px;text-align:center;">
+        <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.75rem;color:var(--accent-emerald);">{{ total_active }}</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);text-transform:uppercase;">Active Pages</div>
+    </div>
+    <div class="glass-card-static" style="padding:16px 20px;flex:1;min-width:140px;text-align:center;">
+        <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.75rem;color:var(--accent-amber);">{{ total_draft }}</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);text-transform:uppercase;">Drafts</div>
+    </div>
+    <div class="glass-card-static" style="padding:16px 20px;flex:1;min-width:140px;text-align:center;">
+        <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.75rem;color:var(--accent-blue);">{{ total_submissions }}</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);text-transform:uppercase;">Submissions</div>
+    </div>
+</div>
+
+<div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+    <a href="{% url 'service_page_create' %}" class="btn-primary-glow" style="padding:10px 20px;font-size:0.85rem;text-decoration:none;border-radius:8px;display:inline-flex;align-items:center;gap:6px;">
+        <i class="bi bi-plus-lg"></i> New Page
+    </a>
+    <a href="{% url 'service_page_bulk_create' %}" class="btn-secondary" style="padding:10px 20px;font-size:0.85rem;text-decoration:none;border-radius:8px;display:inline-flex;align-items:center;gap:6px;">
+        <i class="bi bi-grid-3x3-gap-fill"></i> Bulk Create
+    </a>
+    <a href="{% url 'service_page_submissions' %}" class="btn-secondary" style="padding:10px 20px;font-size:0.85rem;text-decoration:none;border-radius:8px;display:inline-flex;align-items:center;gap:6px;">
+        <i class="bi bi-inbox-fill"></i> Submissions
+    </a>
+</div>
+
+<!-- Filters -->
+<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+    <select onchange="location.href='?status='+this.value" style="padding:7px 12px;border-radius:8px;border:1px solid var(--border-subtle);background:var(--bg-surface);color:var(--text-primary);font-size:0.82rem;">
+        <option value="">All Status</option>
+        <option value="active">Active</option>
+        <option value="draft">Draft</option>
+        <option value="paused">Paused</option>
+    </select>
+    <select onchange="location.href='?trade='+this.value" style="padding:7px 12px;border-radius:8px;border:1px solid var(--border-subtle);background:var(--bg-surface);color:var(--text-primary);font-size:0.82rem;">
+        <option value="">All Trades</option>
+        {% for t in trades %}
+        <option value="{{ t.slug }}">{{ t.name }}</option>
+        {% endfor %}
+    </select>
+    <select onchange="location.href='?page_type='+this.value" style="padding:7px 12px;border-radius:8px;border:1px solid var(--border-subtle);background:var(--bg-surface);color:var(--text-primary);font-size:0.82rem;">
+        <option value="">All Types</option>
+        <option value="salessignal">SalesSignal</option>
+        <option value="customer">Customer</option>
+    </select>
+</div>
+
+<!-- Page Table -->
+<div class="glass-card-static" style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+        <thead>
+            <tr style="border-bottom:1px solid var(--border-subtle);">
+                <th style="padding:10px 12px;text-align:left;color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;">Trade</th>
+                <th style="padding:10px 12px;text-align:left;color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;">Area</th>
+                <th style="padding:10px 12px;text-align:left;color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;">Type</th>
+                <th style="padding:10px 12px;text-align:left;color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;">Status</th>
+                <th style="padding:10px 12px;text-align:center;color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;">Views</th>
+                <th style="padding:10px 12px;text-align:center;color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;">Submissions</th>
+                <th style="padding:10px 12px;text-align:left;color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;">URL</th>
+                <th style="padding:10px 12px;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in pages %}
+            <tr style="border-bottom:1px solid var(--border-subtle);">
+                <td style="padding:10px 12px;font-weight:600;">{{ p.trade.name }}</td>
+                <td style="padding:10px 12px;">{{ p.area.name }}, {{ p.area.state }}</td>
+                <td style="padding:10px 12px;">
+                    {% if p.page_type == 'customer' %}
+                    <span style="background:rgba(139,92,246,0.15);color:#A78BFA;padding:2px 8px;border-radius:8px;font-size:0.72rem;font-weight:700;">CUSTOMER</span>
+                    {% else %}
+                    <span style="background:rgba(13,148,136,0.15);color:#0D9488;padding:2px 8px;border-radius:8px;font-size:0.72rem;font-weight:700;">OURS</span>
+                    {% endif %}
+                </td>
+                <td style="padding:10px 12px;">
+                    {% if p.status == 'active' %}
+                    <span style="background:rgba(16,185,129,0.15);color:var(--accent-emerald);padding:2px 8px;border-radius:8px;font-size:0.72rem;font-weight:700;">ACTIVE</span>
+                    {% elif p.status == 'draft' %}
+                    <span style="background:rgba(245,158,11,0.15);color:var(--accent-amber);padding:2px 8px;border-radius:8px;font-size:0.72rem;font-weight:700;">DRAFT</span>
+                    {% else %}
+                    <span style="background:rgba(107,107,128,0.15);color:var(--text-muted);padding:2px 8px;border-radius:8px;font-size:0.72rem;font-weight:700;">PAUSED</span>
+                    {% endif %}
+                </td>
+                <td style="padding:10px 12px;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:600;">{{ p.page_views }}</td>
+                <td style="padding:10px 12px;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:600;">{{ p.form_submissions }}</td>
+                <td style="padding:10px 12px;">
+                    <a href="/find/{{ p.trade.slug }}/{{ p.area.slug }}/" target="_blank" style="font-size:0.78rem;color:var(--accent-blue);text-decoration:none;">/find/{{ p.trade.slug }}/{{ p.area.slug }}/</a>
+                </td>
+                <td style="padding:10px 12px;">
+                    <a href="{% url 'service_page_edit' page_id=p.pk %}" style="color:var(--accent-blue);font-size:0.82rem;text-decoration:none;font-weight:600;">Edit</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" style="padding:40px;text-align:center;color:var(--text-muted);">
+                    No landing pages yet. <a href="{% url 'service_page_bulk_create' %}">Bulk create some!</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

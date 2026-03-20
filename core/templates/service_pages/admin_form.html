@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}{% if editing %}Edit{% else %}Create{% endif %} Service Page{% endblock %}
+{% block page_title %}{% if editing %}Edit{% else %}Create{% endif %} Service Landing Page{% endblock %}
+
+{% block content %}
+<div style="max-width:800px;">
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="glass-card-static" style="padding:24px;margin-bottom:20px;">
+            <h3 style="font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:16px;">
+                <i class="bi bi-geo-alt-fill" style="color:var(--accent-blue);"></i> Trade &amp; Area
+            </h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div>
+                    <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">Trade</label>
+                    <select name="trade_id" class="form-input" required>
+                        <option value="">Select trade...</option>
+                        {% for t in trades %}
+                        <option value="{{ t.id }}" {% if page and page.trade_id == t.id %}selected{% endif %}>{{ t.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">Area</label>
+                    <select name="area_id" class="form-input" required>
+                        <option value="">Select area...</option>
+                        {% for a in areas %}
+                        <option value="{{ a.id }}" {% if page and page.area_id == a.id %}selected{% endif %}>{{ a.name }}, {{ a.state }} ({{ a.get_area_type_display }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">Page Type</label>
+                    <select name="page_type" class="form-input">
+                        <option value="salessignal" {% if page and page.page_type == 'salessignal' %}selected{% endif %}>SalesSignal Owned</option>
+                        <option value="customer" {% if page and page.page_type == 'customer' %}selected{% endif %}>Customer Branded</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">URL Slug</label>
+                    <input type="text" name="slug" class="form-input" value="{{ page.slug|default:'' }}" placeholder="Auto-generated if blank">
+                </div>
+            </div>
+            <div style="margin-top:14px;">
+                <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;cursor:pointer;">
+                    <input type="checkbox" name="show_live_stats" {% if not page or page.show_live_stats %}checked{% endif %}> Show live stats from monitors
+                </label>
+            </div>
+        </div>
+
+        <div class="glass-card-static" style="padding:24px;margin-bottom:20px;">
+            <h3 style="font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:16px;">
+                <i class="bi bi-search" style="color:var(--accent-emerald);"></i> SEO Content
+            </h3>
+            <div style="display:flex;flex-direction:column;gap:14px;">
+                <div>
+                    <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">Page Title</label>
+                    <input type="text" name="page_title" class="form-input" value="{{ page.page_title|default:'' }}" placeholder="Auto-generated if blank">
+                </div>
+                <div>
+                    <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">Meta Description</label>
+                    <input type="text" name="meta_description" class="form-input" value="{{ page.meta_description|default:'' }}" placeholder="Auto-generated if blank" maxlength="300">
+                </div>
+                <div>
+                    <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">H1 Headline</label>
+                    <input type="text" name="h1_headline" class="form-input" value="{{ page.h1_headline|default:'' }}" placeholder="Auto-generated if blank">
+                </div>
+                <div>
+                    <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">Hero Subheadline</label>
+                    <input type="text" name="hero_subheadline" class="form-input" value="{{ page.hero_subheadline|default:'' }}" placeholder="Auto-generated if blank">
+                </div>
+                <div>
+                    <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">Services Offered (one per line)</label>
+                    <textarea name="services_offered" class="form-input" rows="5" placeholder="Auto-generated from trade keywords if blank">{{ page.services_offered|default:'' }}</textarea>
+                </div>
+                <div>
+                    <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">About Section</label>
+                    <textarea name="about_section" class="form-input" rows="4" placeholder="Auto-generated if blank">{{ page.about_section|default:'' }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card-static" style="padding:24px;margin-bottom:20px;">
+            <h3 style="font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:16px;">
+                <i class="bi bi-shop" style="color:var(--accent-amber);"></i> Customer Branding
+            </h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div>
+                    <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">Customer</label>
+                    <select name="customer_id" class="form-input">
+                        <option value="">None (SalesSignal owned)</option>
+                        {% for c in customers %}
+                        <option value="{{ c.id }}" {% if page and page.customer_id == c.id %}selected{% endif %}>{{ c.business_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">Business Name</label>
+                    <input type="text" name="branded_business_name" class="form-input" value="{{ page.branded_business_name|default:'' }}">
+                </div>
+                <div>
+                    <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">Phone</label>
+                    <input type="text" name="branded_phone" class="form-input" value="{{ page.branded_phone|default:'' }}">
+                </div>
+                <div>
+                    <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">Years in Business</label>
+                    <input type="number" name="branded_years_in_business" class="form-input" value="{{ page.branded_years_in_business|default:'' }}">
+                </div>
+                <div>
+                    <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">License Number</label>
+                    <input type="text" name="branded_license_number" class="form-input" value="{{ page.branded_license_number|default:'' }}">
+                </div>
+                <div>
+                    <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">Tagline</label>
+                    <input type="text" name="branded_tagline" class="form-input" value="{{ page.branded_tagline|default:'' }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card-static" style="padding:24px;margin-bottom:20px;">
+            <h3 style="font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:16px;">
+                <i class="bi bi-telephone-fill" style="color:var(--accent-coral);"></i> Phone Routing
+            </h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div>
+                    <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">SignalWire Phone</label>
+                    <input type="text" name="signalwire_phone" class="form-input" value="{{ page.signalwire_phone|default:'' }}" placeholder="Auto-assigned">
+                </div>
+                <div>
+                    <label style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;">Forward To</label>
+                    <input type="text" name="forward_to_phone" class="form-input" value="{{ page.forward_to_phone|default:'' }}">
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:10px;">
+            <button type="submit" name="action" value="save" class="btn-primary-glow" style="padding:12px 28px;font-size:0.9rem;border-radius:10px;">
+                <i class="bi bi-check-lg"></i> Save
+            </button>
+            {% if editing %}
+            {% if page.status == 'draft' or page.status == 'paused' %}
+            <button type="submit" name="action" value="activate" class="btn-secondary" style="padding:12px 20px;font-size:0.9rem;border-radius:10px;background:rgba(16,185,129,0.15);color:var(--accent-emerald);border:1px solid rgba(16,185,129,0.3);">
+                <i class="bi bi-check-circle"></i> Activate
+            </button>
+            {% else %}
+            <button type="submit" name="action" value="pause" class="btn-secondary" style="padding:12px 20px;font-size:0.9rem;border-radius:10px;">
+                <i class="bi bi-pause-circle"></i> Pause
+            </button>
+            {% endif %}
+            <button type="submit" name="action" value="delete" class="btn-secondary" style="padding:12px 20px;font-size:0.9rem;border-radius:10px;color:var(--accent-coral);border-color:rgba(255,71,87,0.3);" onclick="return confirm('Delete this page?')">
+                <i class="bi bi-trash3"></i> Delete
+            </button>
+            {% endif %}
+            <a href="{% url 'service_page_list' %}" class="btn-secondary" style="padding:12px 20px;font-size:0.9rem;border-radius:10px;text-decoration:none;">Cancel</a>
+        </div>
+
+        {% if editing %}
+        <div class="glass-card-static" style="padding:16px 20px;margin-top:20px;font-size:0.82rem;color:var(--text-muted);">
+            <strong>Stats:</strong> {{ page.page_views }} views &middot; {{ page.form_submissions }} submissions &middot; {{ page.phone_calls }} calls
+            <br><strong>URL:</strong> <a href="/find/{{ page.trade.slug }}/{{ page.area.slug }}/" target="_blank">/find/{{ page.trade.slug }}/{{ page.area.slug }}/</a>
+            <br><strong>Created:</strong> {{ page.created_at|date:"M d, Y" }} &middot; <strong>Updated:</strong> {{ page.updated_at|date:"M d, Y" }}
+        </div>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

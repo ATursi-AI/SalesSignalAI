@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Service Page Submissions{% endblock %}
+{% block page_title %}Service Page Submissions{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:16px;">
+    <a href="{% url 'service_page_list' %}" class="btn-secondary" style="padding:8px 16px;font-size:0.82rem;text-decoration:none;border-radius:8px;">
+        <i class="bi bi-arrow-left"></i> Back to Pages
+    </a>
+</div>
+
+<div class="glass-card-static" style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+        <thead>
+            <tr style="border-bottom:1px solid var(--border-subtle);">
+                <th style="padding:10px 12px;text-align:left;color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;">Name</th>
+                <th style="padding:10px 12px;text-align:left;color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;">Phone</th>
+                <th style="padding:10px 12px;text-align:left;color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;">Trade / Area</th>
+                <th style="padding:10px 12px;text-align:left;color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;">Urgency</th>
+                <th style="padding:10px 12px;text-align:left;color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;">Problem</th>
+                <th style="padding:10px 12px;text-align:left;color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;">Status</th>
+                <th style="padding:10px 12px;text-align:left;color:var(--text-muted);font-size:0.72rem;text-transform:uppercase;">Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sub in submissions %}
+            <tr style="border-bottom:1px solid var(--border-subtle);">
+                <td style="padding:10px 12px;font-weight:600;">{{ sub.name }}{% if sub.email %}<br><span style="font-size:0.78rem;color:var(--text-muted);font-weight:400;">{{ sub.email }}</span>{% endif %}</td>
+                <td style="padding:10px 12px;"><a href="tel:{{ sub.phone }}" style="color:var(--accent-blue);text-decoration:none;">{{ sub.phone }}</a></td>
+                <td style="padding:10px 12px;">{{ sub.landing_page.trade.name }}<br><span style="font-size:0.78rem;color:var(--text-muted);">{{ sub.landing_page.area.name }}</span></td>
+                <td style="padding:10px 12px;">
+                    {% if sub.urgency == 'emergency' %}
+                    <span style="background:rgba(255,71,87,0.2);color:var(--accent-coral);padding:2px 8px;border-radius:8px;font-size:0.72rem;font-weight:700;">EMERGENCY</span>
+                    {% elif sub.urgency == 'today' %}
+                    <span style="background:rgba(245,158,11,0.15);color:var(--accent-amber);padding:2px 8px;border-radius:8px;font-size:0.72rem;font-weight:700;">TODAY</span>
+                    {% else %}
+                    <span style="background:rgba(59,130,246,0.15);color:var(--accent-blue);padding:2px 8px;border-radius:8px;font-size:0.72rem;font-weight:700;">{{ sub.get_urgency_display|upper }}</span>
+                    {% endif %}
+                </td>
+                <td style="padding:10px 12px;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ sub.problem_description }}</td>
+                <td style="padding:10px 12px;">
+                    <span style="font-size:0.72rem;font-weight:700;text-transform:uppercase;">{{ sub.status }}</span>
+                </td>
+                <td style="padding:10px 12px;white-space:nowrap;font-size:0.8rem;color:var(--text-muted);">{{ sub.submitted_at|timesince }} ago</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="padding:40px;text-align:center;color:var(--text-muted);">No submissions yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
