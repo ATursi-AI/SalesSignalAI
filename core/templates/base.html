@@ -12,7 +12,20 @@
     })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0D9488">
+    <meta name="author" content="SalesSignal AI">
+    <meta name="robots" content="noindex, nofollow">
     <title>{% block title %}Dashboard{% endblock %} | SalesSignal AI</title>
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}">
+    <link rel="manifest" href="{% static 'site.webmanifest' %}">
+    <meta name="msapplication-config" content="{% static 'browserconfig.xml' %}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -159,6 +172,10 @@
                 <a href="{% url 'monitor_health' %}" class="sidebar-link {% if request.resolver_match.url_name == 'monitor_health' %}active{% endif %}">
                     <i class="bi bi-activity"></i>
                     <span>Monitor Health</span>
+                </a>
+                <a href="{% url 'prospect_video_list' %}" class="sidebar-link {% if 'prospect_video' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-camera-video-fill"></i>
+                    <span>Video Pages</span>
                 </a>
                 {% endif %}
 

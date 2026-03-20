@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0D9488"/>
+  <!-- Broadcast/signal icon - simplified -->
+  <g transform="translate(256,256)" fill="none" stroke="white" stroke-width="36" stroke-linecap="round">
+    <!-- Center dot -->
+    <circle cx="0" cy="0" r="28" fill="white" stroke="none"/>
+    <!-- Inner ring -->
+    <path d="M-70,-70 A99,99 0 0,1 70,-70" />
+    <path d="M70,70 A99,99 0 0,1 -70,70" />
+    <!-- Outer ring -->
+    <path d="M-130,-130 A184,184 0 0,1 130,-130" />
+    <path d="M130,130 A184,184 0 0,1 -130,130" />
+  </g>
+</svg>

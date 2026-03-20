@@ -1,0 +1,663 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ video.get_display_headline }} | {% if is_white_label %}{{ video.customer_business_name }}{% else %}SalesSignal AI{% endif %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --pv-bg: #FAFBFC;
+            --pv-surface: #FFFFFF;
+            --pv-text: #1A1A2E;
+            --pv-text-secondary: #64748B;
+            --pv-accent: #0D9488;
+            --pv-accent-light: #CCFBF1;
+            --pv-border: #E2E8F0;
+            --pv-radius: 16px;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--pv-bg);
+            color: var(--pv-text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* ── Top Bar ── */
+        .pv-topbar {
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: {% if is_white_label %}center{% else %}flex-start{% endif %};
+        }
+        .pv-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--pv-text);
+        }
+        .pv-logo-icon {
+            width: 36px; height: 36px;
+            background: var(--pv-accent);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+        }
+        .pv-logo-text {
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+
+        /* ── Main Container ── */
+        .pv-container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 20px 60px;
+        }
+
+        /* ── Hero ── */
+        .pv-hero {
+            text-align: center;
+            padding: 24px 0 32px;
+        }
+        .pv-headline {
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 900;
+            font-size: clamp(1.75rem, 5vw, 2.5rem);
+            line-height: 1.2;
+            margin-bottom: 12px;
+            color: var(--pv-text);
+        }
+        .pv-subheadline {
+            font-size: 1.1rem;
+            color: var(--pv-text-secondary);
+            max-width: 560px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        /* ── Video ── */
+        .pv-video-wrapper {
+            background: var(--pv-surface);
+            border-radius: var(--pv-radius);
+            border: 1px solid var(--pv-border);
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            margin-bottom: 32px;
+        }
+        .pv-video-embed {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 */
+            height: 0;
+        }
+        .pv-video-embed iframe,
+        .pv-video-embed video {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            border: none;
+        }
+
+        /* ── Pitch Section ── */
+        .pv-pitch {
+            background: var(--pv-surface);
+            border-radius: var(--pv-radius);
+            border: 1px solid var(--pv-border);
+            padding: 32px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .pv-pitch-text {
+            font-size: 1.15rem;
+            color: var(--pv-text);
+            margin-bottom: 12px;
+            line-height: 1.7;
+        }
+        .pv-pitch-sub {
+            font-size: 0.95rem;
+            color: var(--pv-text-secondary);
+            margin-bottom: 24px;
+            line-height: 1.65;
+        }
+
+        /* ── Customer Card (white-label) ── */
+        .pv-customer-card {
+            background: var(--pv-surface);
+            border-radius: var(--pv-radius);
+            border: 2px solid var(--pv-accent);
+            padding: 32px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .pv-customer-name {
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 800;
+            font-size: 1.5rem;
+            margin-bottom: 4px;
+        }
+        .pv-customer-serving {
+            color: var(--pv-text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+        }
+        .pv-customer-phone {
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 700;
+            font-size: 1.75rem;
+            color: var(--pv-accent);
+            margin-bottom: 20px;
+            display: block;
+            text-decoration: none;
+        }
+        .pv-customer-phone:hover { text-decoration: underline; }
+
+        /* ── CTA Button ── */
+        .pv-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--pv-accent);
+            color: white;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 700;
+            font-size: 1.15rem;
+            padding: 16px 40px;
+            border-radius: 12px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            box-shadow: 0 4px 16px rgba(13, 148, 136, 0.3);
+        }
+        .pv-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(13, 148, 136, 0.4);
+        }
+
+        /* ── Trigger Card ── */
+        .pv-trigger {
+            background: #FFF7ED;
+            border: 1px solid #FED7AA;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+        .pv-trigger-icon {
+            width: 40px; height: 40px;
+            background: #FB923C;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .pv-trigger-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #9A3412;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .pv-trigger-text {
+            font-size: 0.95rem;
+            color: #78350F;
+            line-height: 1.6;
+        }
+
+        /* ── Intake Form ── */
+        .pv-intake {
+            background: var(--pv-surface);
+            border-radius: var(--pv-radius);
+            border: 2px solid var(--pv-accent);
+            padding: 36px 32px;
+            margin-bottom: 24px;
+            display: none;
+        }
+        .pv-intake.visible { display: block; }
+        .pv-intake-title {
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 800;
+            font-size: 1.35rem;
+            text-align: center;
+            margin-bottom: 6px;
+            color: var(--pv-text);
+        }
+        .pv-intake-sub {
+            text-align: center;
+            color: var(--pv-text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+        .pv-form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .pv-form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .pv-form-field.full { grid-column: 1 / -1; }
+        .pv-form-field label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--pv-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .pv-form-field input,
+        .pv-form-field select,
+        .pv-form-field textarea {
+            padding: 12px 14px;
+            border: 1px solid var(--pv-border);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: var(--pv-text);
+            background: var(--pv-bg);
+            transition: border-color 0.15s;
+        }
+        .pv-form-field input:focus,
+        .pv-form-field select:focus,
+        .pv-form-field textarea:focus {
+            outline: none;
+            border-color: var(--pv-accent);
+        }
+        .pv-form-field textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+        .pv-form-field .pv-required { color: #DC2626; }
+        .pv-form-submit {
+            margin-top: 8px;
+            text-align: center;
+        }
+        .pv-form-error {
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            color: #DC2626;
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            display: none;
+            text-align: center;
+        }
+
+        /* Confirmation */
+        .pv-confirmation {
+            background: var(--pv-surface);
+            border-radius: var(--pv-radius);
+            border: 2px solid #059669;
+            padding: 48px 32px;
+            margin-bottom: 24px;
+            text-align: center;
+            display: none;
+        }
+        .pv-confirmation.visible { display: block; }
+        .pv-confirm-icon {
+            width: 64px; height: 64px;
+            background: #D1FAE5;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #059669;
+            margin-bottom: 16px;
+        }
+        .pv-confirm-title {
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: #059669;
+            margin-bottom: 8px;
+        }
+        .pv-confirm-text {
+            font-size: 1.05rem;
+            color: var(--pv-text-secondary);
+            line-height: 1.7;
+        }
+
+        /* ── Footer ── */
+        .pv-footer {
+            text-align: center;
+            padding: 32px 0;
+            color: var(--pv-text-secondary);
+            font-size: 0.8rem;
+        }
+        .pv-footer a {
+            color: var(--pv-accent);
+            text-decoration: none;
+        }
+
+        /* ── Mobile ── */
+        @media (max-width: 600px) {
+            .pv-container { padding: 0 16px 40px; }
+            .pv-pitch { padding: 24px 20px; }
+            .pv-customer-card { padding: 24px 20px; }
+            .pv-intake { padding: 28px 20px; }
+            .pv-form-row { grid-template-columns: 1fr; }
+            .pv-cta {
+                width: 100%;
+                justify-content: center;
+                font-size: 1.1rem;
+                padding: 18px 24px;
+            }
+            .pv-customer-phone { font-size: 1.5rem; }
+            .pv-trigger { flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="pv-topbar">
+        {% if not is_white_label %}
+        <a href="/" class="pv-logo">
+            <div class="pv-logo-icon"><i class="bi bi-broadcast"></i></div>
+            <span class="pv-logo-text">SalesSignal AI</span>
+        </a>
+        {% elif video.customer_business_name %}
+        <span class="pv-logo">
+            <span class="pv-logo-text">{{ video.customer_business_name }}</span>
+        </span>
+        {% endif %}
+    </div>
+
+    <div class="pv-container">
+        <!-- Hero -->
+        <div class="pv-hero">
+            <h1 class="pv-headline">{{ video.get_display_headline }}</h1>
+            {% if video.custom_message %}
+            <p class="pv-subheadline">{{ video.custom_message }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Video -->
+        <div class="pv-video-wrapper">
+            <div class="pv-video-embed" id="video-container">
+                {% if youtube_embed %}
+                <iframe
+                    id="pv-player"
+                    src="{{ youtube_embed }}"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen></iframe>
+                {% else %}
+                <video id="pv-player" controls playsinline preload="metadata"
+                    {% if video.video_thumbnail_url %}poster="{{ video.video_thumbnail_url }}"{% endif %}>
+                    <source src="{{ video.video_url }}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if is_white_label %}
+        <!-- White-label: Customer card -->
+        <div class="pv-customer-card">
+            <div class="pv-customer-name">{{ video.customer_business_name }}</div>
+            <div class="pv-customer-serving">Serving {{ video.prospect_city }}, {{ video.prospect_state }}</div>
+            {% if video.customer_phone %}
+            <a href="tel:{{ video.customer_phone }}" class="pv-customer-phone">
+                <i class="bi bi-telephone-fill"></i> {{ video.customer_phone }}
+            </a>
+            {% endif %}
+            <a href="{% if video.cta_url %}{{ video.cta_url }}{% else %}tel:{{ video.customer_phone }}{% endif %}"
+               class="pv-cta" id="cta-button">
+                <i class="bi bi-calendar-check"></i> {{ video.cta_text }}
+            </a>
+        </div>
+
+        {% else %}
+        <!-- Our prospecting pitch -->
+        <div class="pv-pitch" id="pitch-section">
+            <p class="pv-pitch-text">
+                People in {{ video.prospect_city }} are actively looking for a {{ video.prospect_trade|lower }} right now.
+            </p>
+            <p class="pv-pitch-sub">
+                SalesSignal AI monitors 37+ data sources 24/7 to find people who need your service — before they start Googling.
+            </p>
+            {% if video.cta_url %}
+            <a href="{{ video.cta_url }}" class="pv-cta" id="cta-button">
+                <i class="bi bi-calendar-check"></i> {{ video.cta_text }}
+            </a>
+            {% else %}
+            <button type="button" class="pv-cta" id="cta-button" onclick="showIntakeForm()">
+                <i class="bi bi-calendar-check"></i> {{ video.cta_text }}
+            </button>
+            {% endif %}
+        </div>
+
+        {% if not video.cta_url %}
+        <!-- Inline Intake Form (hidden until CTA click) -->
+        <div class="pv-intake" id="intake-form-section">
+            <div class="pv-intake-title">Let's Get You More Customers</div>
+            <div class="pv-intake-sub">Tell us about your business and Andrew will call you within 1 hour.</div>
+
+            <div class="pv-form-error" id="intake-error"></div>
+
+            <form id="intake-form" onsubmit="submitIntake(event)">
+                <div class="pv-form-row">
+                    <div class="pv-form-field">
+                        <label>Business Name</label>
+                        <input type="text" id="intake-biz" value="{{ video.prospect_business_name }}">
+                    </div>
+                    <div class="pv-form-field">
+                        <label>Your Name</label>
+                        <input type="text" id="intake-name" value="{{ video.prospect_owner_name }}">
+                    </div>
+                </div>
+                <div class="pv-form-row">
+                    <div class="pv-form-field">
+                        <label>Phone <span class="pv-required">*</span></label>
+                        <input type="tel" id="intake-phone" required placeholder="(555) 123-4567"
+                               value="{{ video.prospect_phone }}">
+                    </div>
+                    <div class="pv-form-field">
+                        <label>Email <span class="pv-required">*</span></label>
+                        <input type="email" id="intake-email" required placeholder="you@business.com"
+                               value="{{ video.prospect_email }}">
+                    </div>
+                </div>
+                <div class="pv-form-row">
+                    <div class="pv-form-field">
+                        <label>What service do you provide?</label>
+                        <select id="intake-service">
+                            <option value="">Select...</option>
+                            <option value="Plumbing" {% if video.prospect_trade == 'Plumbing' %}selected{% endif %}>Plumbing</option>
+                            <option value="Electrical" {% if video.prospect_trade == 'Electrical' %}selected{% endif %}>Electrical</option>
+                            <option value="HVAC" {% if video.prospect_trade == 'HVAC' %}selected{% endif %}>HVAC</option>
+                            <option value="Commercial Cleaning" {% if video.prospect_trade == 'Commercial Cleaning' %}selected{% endif %}>Commercial Cleaning</option>
+                            <option value="Roofing" {% if video.prospect_trade == 'Roofing' %}selected{% endif %}>Roofing</option>
+                            <option value="General Contracting" {% if video.prospect_trade == 'General Contracting' %}selected{% endif %}>General Contracting</option>
+                            <option value="Pest Control" {% if video.prospect_trade == 'Pest Control' %}selected{% endif %}>Pest Control</option>
+                            <option value="Landscaping" {% if video.prospect_trade == 'Landscaping' %}selected{% endif %}>Landscaping</option>
+                            <option value="Moving" {% if video.prospect_trade == 'Moving' %}selected{% endif %}>Moving</option>
+                            <option value="Insurance" {% if video.prospect_trade == 'Insurance' %}selected{% endif %}>Insurance</option>
+                            <option value="Legal" {% if video.prospect_trade == 'Legal' %}selected{% endif %}>Legal</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="pv-form-field">
+                        <label>How do you currently get customers?</label>
+                        <input type="text" id="intake-how" placeholder="Referrals, Google, word of mouth...">
+                    </div>
+                </div>
+                <div class="pv-form-submit">
+                    <button type="submit" class="pv-cta" id="intake-submit-btn">
+                        <i class="bi bi-telephone-fill"></i> Get My Free Consultation
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Confirmation (hidden until form submit) -->
+        <div class="pv-confirmation" id="intake-confirmation">
+            <div class="pv-confirm-icon"><i class="bi bi-check-lg"></i></div>
+            <div class="pv-confirm-title">Thanks! We Got It.</div>
+            <div class="pv-confirm-text">Andrew will call you within 1 hour.<br>Keep an eye on your phone.</div>
+        </div>
+        {% endif %}
+
+        {% endif %}
+
+        {% if video.trigger_detail %}
+        <!-- Trigger Context -->
+        <div class="pv-trigger">
+            <div class="pv-trigger-icon"><i class="bi bi-info-lg"></i></div>
+            <div>
+                <div class="pv-trigger-label">Why we reached out</div>
+                <div class="pv-trigger-text">{{ video.trigger_detail }}</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <div class="pv-footer">
+        {% if not is_white_label %}
+        Powered by <a href="/">SalesSignal AI</a>
+        {% endif %}
+    </div>
+
+    <!-- Tracking & Intake Form -->
+    <script>
+    (function() {
+        var slug = '{{ video.slug }}';
+        var trackUrl = '/api/prospect-video-track/';
+        var playTracked = false;
+
+        function track(event) {
+            fetch(trackUrl, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({slug: slug, event: event})
+            }).catch(function(){});
+        }
+
+        // Track page view
+        track('view');
+
+        // Track video play
+        var player = document.getElementById('pv-player');
+        if (player) {
+            if (player.tagName === 'VIDEO') {
+                player.addEventListener('play', function() {
+                    if (!playTracked) { track('play'); playTracked = true; }
+                });
+            } else if (player.tagName === 'IFRAME') {
+                window.addEventListener('message', function(e) {
+                    try {
+                        var data = JSON.parse(e.data);
+                        if (data.event === 'onStateChange' && data.info === 1 && !playTracked) {
+                            track('play');
+                            playTracked = true;
+                        }
+                    } catch(err) {}
+                });
+            }
+        }
+
+        // Track CTA click
+        var ctaBtn = document.getElementById('cta-button');
+        if (ctaBtn) {
+            ctaBtn.addEventListener('click', function() {
+                track('cta_click');
+            });
+        }
+    })();
+
+    // Show intake form (slides down, hides CTA)
+    function showIntakeForm() {
+        var form = document.getElementById('intake-form-section');
+        if (form) {
+            form.classList.add('visible');
+            form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Hide the CTA button since form is now visible
+            var btn = document.getElementById('cta-button');
+            if (btn) btn.style.display = 'none';
+        }
+    }
+
+    // Submit intake form
+    function submitIntake(e) {
+        e.preventDefault();
+
+        var phone = document.getElementById('intake-phone').value.trim();
+        var email = document.getElementById('intake-email').value.trim();
+        var errorEl = document.getElementById('intake-error');
+
+        // Validate
+        if (!phone || !email) {
+            errorEl.textContent = 'Phone and email are required.';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        // Disable button
+        var submitBtn = document.getElementById('intake-submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Sending...';
+
+        var payload = {
+            slug: '{{ video.slug }}',
+            business_name: document.getElementById('intake-biz').value.trim(),
+            owner_name: document.getElementById('intake-name').value.trim(),
+            phone: phone,
+            email: email,
+            service: document.getElementById('intake-service').value,
+            how_get_customers: document.getElementById('intake-how').value.trim()
+        };
+
+        fetch('/api/prospect-video-intake/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                // Hide form, show confirmation
+                document.getElementById('intake-form-section').style.display = 'none';
+                document.getElementById('pitch-section').style.display = 'none';
+                var confirm = document.getElementById('intake-confirmation');
+                confirm.classList.add('visible');
+                confirm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                errorEl.textContent = data.error || 'Something went wrong. Please try again.';
+                errorEl.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-telephone-fill"></i> Get My Free Consultation';
+            }
+        })
+        .catch(function() {
+            errorEl.textContent = 'Connection error. Please try again.';
+            errorEl.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-telephone-fill"></i> Get My Free Consultation';
+        });
+    }
+    </script>
+</body>
+</html>

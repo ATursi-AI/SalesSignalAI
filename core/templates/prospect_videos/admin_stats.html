@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Stats: {{ video.prospect_business_name }}{% endblock %}
+{% block page_title %}Video Page Stats{% endblock %}
+
+{% block extra_css %}
+<style>
+.pvs-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+}
+.pvs-back:hover { color: var(--accent-blue); }
+
+.pvs-header {
+    margin-bottom: 24px;
+}
+.pvs-header h2 {
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+    margin: 0 0 4px;
+}
+.pvs-header p {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.pvs-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.pvs-stat-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    text-align: center;
+}
+.pvs-stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 2.5rem;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+.pvs-stat-value.teal { color: #0D9488; }
+.pvs-stat-value.blue { color: #3B82F6; }
+.pvs-stat-value.amber { color: #F59E0B; }
+.pvs-stat-value.green { color: #059669; }
+.pvs-stat-value.purple { color: #8B5CF6; }
+
+.pvs-stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.pvs-stat-icon {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+    opacity: 0.5;
+}
+
+/* Funnel */
+.pvs-funnel {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    margin-bottom: 24px;
+}
+.pvs-funnel h3 {
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 20px;
+}
+.pvs-funnel-step {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+.pvs-funnel-bar-wrap {
+    flex: 1;
+    height: 32px;
+    background: var(--bg-elevated);
+    border-radius: 8px;
+    overflow: hidden;
+}
+.pvs-funnel-bar {
+    height: 100%;
+    border-radius: 8px;
+    transition: width 0.5s ease;
+    min-width: 4px;
+}
+.pvs-funnel-label {
+    width: 100px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+.pvs-funnel-count {
+    width: 60px;
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+/* Details */
+.pvs-details {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 24px;
+}
+.pvs-details h3 {
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 16px;
+}
+.pvs-detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 0.85rem;
+}
+.pvs-detail-row:last-child { border-bottom: none; }
+.pvs-detail-label { color: var(--text-secondary); }
+.pvs-detail-value { font-weight: 600; }
+
+.pvs-status {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+.pvs-status-draft { background: #F1F5F9; color: #64748B; }
+.pvs-status-active { background: #CCFBF1; color: #0D9488; }
+.pvs-status-responded { background: #DBEAFE; color: #2563EB; }
+.pvs-status-converted { background: #D1FAE5; color: #059669; }
+.pvs-status-closed { background: #FEE2E2; color: #DC2626; }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'prospect_video_edit' video.pk %}" class="pvs-back">
+    <i class="bi bi-arrow-left"></i> Back to {{ video.prospect_business_name }}
+</a>
+
+<div class="pvs-header">
+    <h2><i class="bi bi-graph-up" style="color: var(--accent-blue); margin-right: 8px;"></i>{{ video.prospect_business_name }}</h2>
+    <p>/demo/{{ video.slug }}/ &bull; Created {{ video.created_at|date:"M j, Y" }}</p>
+</div>
+
+<!-- Stats Cards -->
+<div class="pvs-stats-grid">
+    <div class="pvs-stat-card">
+        <div class="pvs-stat-icon"><i class="bi bi-eye"></i></div>
+        <div class="pvs-stat-value teal">{{ video.page_views }}</div>
+        <div class="pvs-stat-label">Page Views</div>
+    </div>
+    <div class="pvs-stat-card">
+        <div class="pvs-stat-icon"><i class="bi bi-play-circle"></i></div>
+        <div class="pvs-stat-value blue">{{ video.video_plays }}</div>
+        <div class="pvs-stat-label">Video Plays</div>
+    </div>
+    <div class="pvs-stat-card">
+        <div class="pvs-stat-icon"><i class="bi bi-cursor"></i></div>
+        <div class="pvs-stat-value amber">{{ video.cta_clicks }}</div>
+        <div class="pvs-stat-label">CTA Clicks</div>
+    </div>
+    <div class="pvs-stat-card">
+        <div class="pvs-stat-icon"><i class="bi bi-percent"></i></div>
+        <div class="pvs-stat-value purple">
+            {% if video.page_views > 0 %}
+                {% widthratio video.video_plays video.page_views 100 %}%
+            {% else %}
+                0%
+            {% endif %}
+        </div>
+        <div class="pvs-stat-label">Play Rate</div>
+    </div>
+    <div class="pvs-stat-card">
+        <div class="pvs-stat-icon"><i class="bi bi-arrow-right-circle"></i></div>
+        <div class="pvs-stat-value green">
+            {% if video.video_plays > 0 %}
+                {% widthratio video.cta_clicks video.video_plays 100 %}%
+            {% else %}
+                0%
+            {% endif %}
+        </div>
+        <div class="pvs-stat-label">CTA Rate</div>
+    </div>
+</div>
+
+<!-- Funnel -->
+<div class="pvs-funnel">
+    <h3><i class="bi bi-funnel" style="color: var(--accent-blue); margin-right: 6px;"></i> Engagement Funnel</h3>
+    {% with max_val=video.page_views|default:1 %}
+    <div class="pvs-funnel-step">
+        <span class="pvs-funnel-label">Views</span>
+        <div class="pvs-funnel-bar-wrap">
+            <div class="pvs-funnel-bar" style="width: 100%; background: #0D9488;"></div>
+        </div>
+        <span class="pvs-funnel-count">{{ video.page_views }}</span>
+    </div>
+    <div class="pvs-funnel-step">
+        <span class="pvs-funnel-label">Plays</span>
+        <div class="pvs-funnel-bar-wrap">
+            <div class="pvs-funnel-bar" style="width: {% widthratio video.video_plays max_val 100 %}%; background: #3B82F6;"></div>
+        </div>
+        <span class="pvs-funnel-count">{{ video.video_plays }}</span>
+    </div>
+    <div class="pvs-funnel-step">
+        <span class="pvs-funnel-label">CTA Clicks</span>
+        <div class="pvs-funnel-bar-wrap">
+            <div class="pvs-funnel-bar" style="width: {% widthratio video.cta_clicks max_val 100 %}%; background: #F59E0B;"></div>
+        </div>
+        <span class="pvs-funnel-count">{{ video.cta_clicks }}</span>
+    </div>
+    {% endwith %}
+</div>
+
+<!-- Details -->
+<div class="pvs-details">
+    <h3><i class="bi bi-info-circle" style="color: var(--accent-blue); margin-right: 6px;"></i> Page Details</h3>
+    <div class="pvs-detail-row">
+        <span class="pvs-detail-label">Status</span>
+        <span class="pvs-status pvs-status-{{ video.status }}">{{ video.status }}</span>
+    </div>
+    <div class="pvs-detail-row">
+        <span class="pvs-detail-label">Trade</span>
+        <span class="pvs-detail-value">{{ video.prospect_trade }}</span>
+    </div>
+    <div class="pvs-detail-row">
+        <span class="pvs-detail-label">Location</span>
+        <span class="pvs-detail-value">{{ video.prospect_city }}, {{ video.prospect_state }}</span>
+    </div>
+    <div class="pvs-detail-row">
+        <span class="pvs-detail-label">SMS Sent</span>
+        <span class="pvs-detail-value">
+            {% if video.sms_sent %}
+                <span style="color: #059669;"><i class="bi bi-check-circle-fill"></i> {{ video.sms_sent_at|date:"M j, Y g:i A" }}</span>
+            {% else %}
+                <span style="color: var(--text-secondary);">Not yet</span>
+            {% endif %}
+        </span>
+    </div>
+    <div class="pvs-detail-row">
+        <span class="pvs-detail-label">Email Sent</span>
+        <span class="pvs-detail-value">
+            {% if video.email_sent %}
+                <span style="color: #059669;"><i class="bi bi-check-circle-fill"></i> {{ video.email_sent_at|date:"M j, Y g:i A" }}</span>
+            {% else %}
+                <span style="color: var(--text-secondary);">Not yet</span>
+            {% endif %}
+        </span>
+    </div>
+    <div class="pvs-detail-row">
+        <span class="pvs-detail-label">Created</span>
+        <span class="pvs-detail-value">{{ video.created_at|date:"M j, Y g:i A" }}</span>
+    </div>
+    {% if video.trigger_type %}
+    <div class="pvs-detail-row">
+        <span class="pvs-detail-label">Trigger</span>
+        <span class="pvs-detail-value">{{ video.get_trigger_type_display }}</span>
+    </div>
+    {% endif %}
+    {% if video.customer_business_name %}
+    <div class="pvs-detail-row">
+        <span class="pvs-detail-label">On Behalf Of</span>
+        <span class="pvs-detail-value">{{ video.customer_business_name }}</span>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

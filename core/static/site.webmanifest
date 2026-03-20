@@ -1,0 +1,11 @@
+{
+  "name": "SalesSignal AI",
+  "short_name": "SalesSignal",
+  "icons": [
+    {"src": "/static/images/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "/static/images/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png"}
+  ],
+  "theme_color": "#0D9488",
+  "background_color": "#FAFBFC",
+  "display": "standalone"
+}

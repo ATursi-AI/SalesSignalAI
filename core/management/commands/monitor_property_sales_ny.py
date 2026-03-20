@@ -1,9 +1,12 @@
 """
 Management command to monitor NYC property sales via ACRIS SODA API.
 
+NOTE: ACRIS data has a ~3-4 week recording delay. Use --days 45+ to ensure
+you capture recent recordings. --days 14 will likely return 0 results.
+
 Usage:
-    python manage.py monitor_property_sales_ny --days 30 --dry-run
-    python manage.py monitor_property_sales_ny --borough manhattan --days 14
+    python manage.py monitor_property_sales_ny --days 45 --dry-run
+    python manage.py monitor_property_sales_ny --borough manhattan
     python manage.py monitor_property_sales_ny --days 60
 """
 from django.core.management.base import BaseCommand
@@ -23,8 +26,8 @@ class Command(BaseCommand):
             help='Filter by borough (manhattan/bronx/brooklyn/queens/staten_island)',
         )
         parser.add_argument(
-            '--days', type=int, default=30,
-            help='Look back this many days (default: 30)',
+            '--days', type=int, default=45,
+            help='Look back this many days (default: 45 — ACRIS has ~3-4 week lag)',
         )
         parser.add_argument(
             '--dry-run', action='store_true',

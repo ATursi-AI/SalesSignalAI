@@ -9,6 +9,7 @@ from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
 from core.models.leads import Lead, LeadAssignment
@@ -187,6 +188,7 @@ def _apply_filters(qs, request):
 # -------------------------------------------------------------------
 
 @staff_member_required
+@ensure_csrf_cookie
 def lead_repository(request):
     """Command Center — dashboard with urgency cards, source overview, unified feed."""
     categories = (
@@ -266,6 +268,7 @@ def lead_repository(request):
 # -------------------------------------------------------------------
 
 @staff_member_required
+@ensure_csrf_cookie
 def source_group_page(request, group):
     """Source group page with sub-tabs for each source type."""
     group_key = GROUP_SLUG_MAP.get(group)
@@ -548,3 +551,15 @@ def lead_bulk_action(request):
         return JsonResponse({'ok': True, 'deleted': deleted_count})
 
     return JsonResponse({'error': 'Unknown action'}, status=400)
+
+
+@staff_member_required
+@require_POST
+def lead_delete_all(request):
+    """Delete ALL leads from the database. Requires confirmation token."""
+    data = json.loads(request.body)
+    confirm = data.get('confirm')
+    if confirm != 'DELETE_ALL_LEADS':
+        return JsonResponse({'error': 'Confirmation required'}, status=400)
+    deleted_count, _ = Lead.objects.all().delete()
+    return JsonResponse({'ok': True, 'deleted': deleted_count})

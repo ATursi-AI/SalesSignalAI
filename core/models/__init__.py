@@ -13,6 +13,7 @@ from .monitoring import (
     LicensingBoardSource, CourtRecordSource,
     TrackedGoogleBusiness,
 )
+from .prospect_videos import ProspectVideo
 
 __all__ = [
     'ServiceCategory', 'ServiceSubcategory', 'BusinessProfile', 'UserKeyword',
@@ -28,4 +29,5 @@ __all__ = [
     'CodeViolationSource', 'HealthInspectionSource',
     'LicensingBoardSource', 'CourtRecordSource',
     'TrackedGoogleBusiness',
+    'ProspectVideo',
 ]

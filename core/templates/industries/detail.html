@@ -4,7 +4,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ industry.name }} Leads | Sales Signal AI</title>
+    <title>{{ industry.name }} Leads — Sales Signal AI | Find {{ industry.name }} Customers Automatically</title>
+    <meta name="description" content="{{ industry.meta_description }}">
+    <meta name="theme-color" content="#0D9488">
+    <meta name="author" content="SalesSignal AI">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://salessignalai.com/industries/{{ industry.slug }}/">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://salessignalai.com/industries/{{ industry.slug }}/">
+    <meta property="og:title" content="{{ industry.name }} Leads — Sales Signal AI">
+    <meta property="og:description" content="{{ industry.meta_description }}">
+    <meta property="og:image" content="https://salessignalai.com/static/images/og-image.png">
+    <meta property="og:site_name" content="SalesSignal AI">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ industry.name }} Leads — Sales Signal AI">
+    <meta name="twitter:description" content="{{ industry.meta_description }}">
+    <meta name="twitter:image" content="https://salessignalai.com/static/images/og-image.png">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}">
+    <link rel="manifest" href="{% static 'site.webmanifest' %}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -176,8 +204,9 @@
     <!-- Footer -->
     <footer class="landing-footer">
         <div class="footer-links">
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
+            <a href="{% url 'about_page' %}">About</a>
+            <a href="{% url 'privacy_page' %}">Privacy Policy</a>
+            <a href="{% url 'terms_page' %}">Terms of Service</a>
             <a href="mailto:hello@salessignalai.com">Contact</a>
             <a href="{% url 'industry_index' %}">All Industries</a>
             <a href="{% url 'login' %}">Dashboard</a>

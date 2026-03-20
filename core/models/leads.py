@@ -89,6 +89,8 @@ class Lead(models.Model):
         ('google_qa', 'Google Q&A'),
         # Weather
         ('noaa', 'NOAA Weather'),
+        # Prospect Video
+        ('prospect_video', 'Prospect Video Intake'),
     ]
 
     platform = models.CharField(max_length=50, choices=PLATFORM_CHOICES)

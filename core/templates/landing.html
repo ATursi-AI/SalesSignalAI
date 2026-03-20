@@ -4,7 +4,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales Signal AI — Humans Backed By AI</title>
+    <title>Sales Signal AI — Humans Backed By AI | Real-Time Lead Generation for Service Businesses</title>
+    <meta name="description" content="SalesSignal AI monitors 37+ data sources 24/7 to find people who need your service right now. Public records, social channels, review sites — leads delivered in real-time with AI email campaigns and human phone follow-up. Plumbing, cleaning, electrical, HVAC, and 50+ service categories.">
+    <meta name="keywords" content="lead generation, AI lead generation, local service leads, plumber leads, cleaning leads, electrical leads, HVAC leads, contractor leads, real-time leads, building violation leads, permit leads, property sale leads, business filing leads, service business marketing, humans backed by AI">
+    <meta name="theme-color" content="#0D9488">
+    <meta name="author" content="SalesSignal AI">
+    <meta name="robots" content="index, follow">
+    <meta name="google-site-verification" content="VERIFICATION_CODE_HERE">
+    <link rel="canonical" href="https://salessignalai.com/">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://salessignalai.com/">
+    <meta property="og:title" content="Sales Signal AI — Humans Backed By AI">
+    <meta property="og:description" content="We find people who need your service today and get them on the phone with you tomorrow. 37+ data sources. AI email campaigns. Human phone follow-up.">
+    <meta property="og:image" content="https://salessignalai.com/static/images/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="SalesSignal AI">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Sales Signal AI — Humans Backed By AI">
+    <meta name="twitter:description" content="We find people who need your service today and get them on the phone with you tomorrow.">
+    <meta name="twitter:image" content="https://salessignalai.com/static/images/og-image.png">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}">
+    <link rel="manifest" href="{% static 'site.webmanifest' %}">
+    <meta name="msapplication-config" content="{% static 'browserconfig.xml' %}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -439,8 +473,9 @@
     <!-- Footer -->
     <footer class="landing-footer">
         <div class="footer-links">
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
+            <a href="{% url 'about_page' %}">About</a>
+            <a href="{% url 'privacy_page' %}">Privacy Policy</a>
+            <a href="{% url 'terms_page' %}">Terms of Service</a>
             <a href="mailto:hello@salessignalai.com">Contact</a>
             <a href="{% url 'login' %}">Dashboard</a>
         </div>
@@ -448,6 +483,102 @@
             &copy; 2026 Sales Signal AI. All rights reserved.
         </div>
     </footer>
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "SalesSignal AI",
+      "legalName": "SalesSignal AI LLC",
+      "url": "https://salessignalai.com",
+      "logo": "https://salessignalai.com/static/images/logo.png",
+      "description": "AI-powered real-time lead generation platform for local service businesses. Monitors public records, social channels, and review sites to find customers who need your service right now.",
+      "foundingDate": "2025",
+      "founder": {
+        "@type": "Person",
+        "name": "Andrew Tursi",
+        "jobTitle": "Founder & CEO"
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "New York",
+        "addressRegion": "NY",
+        "addressCountry": "US"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "sales",
+        "url": "https://salessignalai.com"
+      },
+      "sameAs": []
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "SalesSignal AI",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "description": "Real-time lead generation platform monitoring 37+ data sources for local service businesses.",
+      "offers": {
+        "@type": "AggregateOffer",
+        "lowPrice": "149",
+        "highPrice": "649",
+        "priceCurrency": "USD",
+        "offerCount": "5"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is SalesSignal AI?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "SalesSignal AI is a real-time lead generation platform that monitors 37+ data sources including public records, social channels, and review sites to find people who need your service right now. We deliver leads with AI email campaigns and human phone follow-up."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What types of businesses use SalesSignal AI?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "SalesSignal AI serves over 50 service categories including plumbing, electrical, HVAC, commercial cleaning, roofing, pest control, landscaping, insurance, legal, and general contracting."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does SalesSignal AI find leads?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "We monitor public records like building violations, permits, health inspections, property sales, business filings, and liquor license applications. We also scan social channels and review sites for people actively requesting services."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much does SalesSignal AI cost?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Plans start at $149/month for email campaigns. Lead intelligence with CRM starts at $349/month. Full-service plans with human phone follow-up are available at custom pricing. All plans include a $299 setup fee."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What makes SalesSignal AI different from other lead generation services?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Unlike competitors who only scrape Google Maps or send automated emails, SalesSignal AI monitors 37+ data sources including public records and social channels, provides AI-powered email and SMS outreach, and offers real human phone follow-up to book appointments. Humans backed by AI."
+          }
+        }
+      ]
+    }
+    </script>
 
     <script src="{% static 'js/salessignal.js' %}"></script>
     <script>

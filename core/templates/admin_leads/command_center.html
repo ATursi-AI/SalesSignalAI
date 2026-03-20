@@ -233,6 +233,22 @@
     font-family: 'JetBrains Mono', monospace;
     font-weight: 600;
 }
+.btn-delete-all {
+    margin-left: auto;
+    background: rgba(255,71,87,0.1);
+    color: #DC2626;
+    border: 1px solid rgba(255,71,87,0.3);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.15s, color 0.15s;
+}
+.btn-delete-all:hover { background: #DC2626; color: white; }
 
 /* ── Lead Table ── */
 .lead-table-wrap {
@@ -521,6 +537,7 @@
 <div class="stats-row">
     <span>Showing <span class="stat-pill" id="showingCount">0</span> of <span class="stat-pill" id="totalCount">0</span></span>
     <span>Page <span class="stat-pill" id="pageNum">1</span></span>
+    <button class="btn-delete-all" onclick="deleteAllLeads()" title="Delete all leads from database"><i class="bi bi-trash3-fill"></i> Delete All Leads</button>
 </div>
 
 <!-- Lead Table -->
@@ -811,6 +828,17 @@ async function bulkDelete() {
     const ids = Array.from(selectedLeads); if(!ids.length) return;
     if(!confirm(`Delete ${ids.length} leads permanently?`)) return;
     try { const r = await fetch('/admin-leads/bulk/', { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()}, body:JSON.stringify({lead_ids:ids,action:'delete'}) }); const d = await r.json(); if(d.ok){clearSelection();fetchLeads();} } catch(e){console.error(e);}
+}
+async function deleteAllLeads() {
+    const total = document.getElementById('totalCount').textContent;
+    if(!confirm(`DELETE ALL ${total} LEADS from the database?\n\nThis cannot be undone.`)) return;
+    if(!confirm(`Are you absolutely sure? Type OK to confirm you want to delete ALL leads.`)) return;
+    try {
+        const r = await fetch('/admin-leads/delete-all/', { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()}, body:JSON.stringify({confirm:'DELETE_ALL_LEADS'}) });
+        const d = await r.json();
+        if(d.ok){ alert(`Deleted ${d.deleted} leads.`); clearSelection(); fetchLeads(); }
+        else { alert(d.error || 'Failed to delete.'); }
+    } catch(e){ console.error(e); alert('Error deleting leads.'); }
 }
 
 function toggleSelect(id, cb) { if(cb.checked) selectedLeads.add(id); else selectedLeads.delete(id); updateBulkBar(); }

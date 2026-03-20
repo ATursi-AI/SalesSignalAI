@@ -11,6 +11,7 @@ INDUSTRIES = {
         'headline': 'Find Every Business That Needs Cleaning — Before They Search Google',
         'stat_line': '1,409 restaurants in NYC received health violations this month. Each one needs a cleaning service.',
         'description': 'SalesSignal AI monitors health inspections, new business filings, property sales, and community requests to deliver cleaning leads before your competitors even know they exist.',
+        'meta_description': 'Find every restaurant violation, new business opening, and property sale that needs cleaning services. SalesSignal AI delivers commercial cleaning leads in real-time from 37+ sources.',
         'leads': [
             {
                 'pill': 'Health', 'pill_color': 'purple', 'pill_icon': 'bi-clipboard2-pulse',
@@ -60,6 +61,7 @@ INDUSTRIES = {
         'headline': 'Every Permit, Every Violation, Every Homeowner Request — In Your Inbox',
         'stat_line': 'NYC issues 200+ plumbing permits per week. Each one is a job your competitor might get first.',
         'description': 'SalesSignal AI monitors DOB permits, building violations, community forums, and property sales to find people who need a plumber right now.',
+        'meta_description': 'Every plumbing permit, building violation, and homeowner request — delivered to your inbox. SalesSignal AI finds plumbing leads before they search Google.',
         'leads': [
             {
                 'pill': 'Permit', 'pill_color': 'amber', 'pill_icon': 'bi-file-earmark-check',
@@ -109,6 +111,7 @@ INDUSTRIES = {
         'headline': 'Electrical Permits, Violations, and Urgent Requests — Found Automatically',
         'stat_line': 'Every new construction permit requires electrical work. We find them the day they\'re filed.',
         'description': 'SalesSignal AI monitors electrical permits, fire safety violations, new construction filings, and community requests so you\'re always first to know.',
+        'meta_description': 'Electrical permits, fire safety violations, and urgent repair requests — found automatically. Real-time electrical contractor leads from SalesSignal AI.',
         'leads': [
             {
                 'pill': 'Permit', 'pill_color': 'amber', 'pill_icon': 'bi-file-earmark-check',
@@ -158,6 +161,7 @@ INDUSTRIES = {
         'headline': 'Seasonal Demand Spikes. Year-Round Lead Flow.',
         'stat_line': 'When temperatures hit extremes, HVAC requests spike 400%. We detect every one.',
         'description': 'SalesSignal AI monitors HVAC permits, heating and cooling violations, weather alerts that trigger demand surges, and community requests for instant lead delivery.',
+        'meta_description': 'HVAC permits, heating violations, weather-driven demand, and service requests. SalesSignal AI delivers HVAC leads year-round.',
         'leads': [
             {
                 'pill': 'Permit', 'pill_color': 'amber', 'pill_icon': 'bi-file-earmark-check',
@@ -207,6 +211,7 @@ INDUSTRIES = {
         'headline': 'New Buildings, Renovations, and Violations — Every Contractor\'s Pipeline',
         'stat_line': 'NYC filed 3,200+ construction permits last month. How many did you know about?',
         'description': 'SalesSignal AI monitors new building permits, alteration filings, DOB violations requiring remediation, and property sales where new owners need renovation work.',
+        'meta_description': 'New building permits, renovation projects, and building violations that need contractors. SalesSignal AI monitors public records for general contractor leads.',
         'leads': [
             {
                 'pill': 'Permit', 'pill_color': 'blue', 'pill_icon': 'bi-building',
@@ -256,6 +261,7 @@ INDUSTRIES = {
         'headline': 'Every Restaurant Violation. Every Rodent Complaint. Every New Lead.',
         'stat_line': '68% of NYC restaurants cited for pest-related violations need a pest control service within 30 days.',
         'description': 'SalesSignal AI monitors health inspection pest violations, community pest complaints, and new restaurant openings to deliver leads that need you now.',
+        'meta_description': 'Every restaurant pest violation and rodent complaint — detected in real-time. SalesSignal AI delivers pest control leads others can\'t see.',
         'leads': [
             {
                 'pill': 'Health', 'pill_color': 'purple', 'pill_icon': 'bi-clipboard2-pulse',
@@ -305,6 +311,7 @@ INDUSTRIES = {
         'headline': 'New Homeowners, New Construction, Seasonal Demand — Captured',
         'stat_line': 'Every property sale is a landscaping lead. NYC averages 1,200+ residential sales per month.',
         'description': 'SalesSignal AI monitors property sales, new building certificates, community requests, and seasonal weather patterns to deliver landscaping leads year-round.',
+        'meta_description': 'New homeowners, new construction, and seasonal demand — captured. SalesSignal AI finds landscaping leads from property sales and community requests.',
         'leads': [
             {
                 'pill': 'Sale', 'pill_color': 'amber', 'pill_icon': 'bi-house-door-fill',
@@ -354,6 +361,7 @@ INDUSTRIES = {
         'headline': 'Storm Damage, Permits, and Homeowner Requests — First To Know',
         'stat_line': 'After every major storm, roofing requests spike 600%. We detect them in real-time.',
         'description': 'SalesSignal AI monitors weather alerts, roofing permits, facade and roof violations, and community requests so you can respond before the storm clears.',
+        'meta_description': 'Storm damage, roofing permits, and homeowner requests — first to know. SalesSignal AI delivers roofing leads from weather alerts and public records.',
         'leads': [
             {
                 'pill': 'Weather', 'pill_color': 'coral', 'pill_icon': 'bi-cloud-lightning-rain-fill',
@@ -403,6 +411,7 @@ INDUSTRIES = {
         'headline': 'Every Property Sale Is a Moving Lead',
         'stat_line': 'NYC averages 4,000+ property transactions per month. Every one needs a mover.',
         'description': 'SalesSignal AI monitors ACRIS property sales, new certificates of occupancy, and community posts about moving to deliver leads who need movers right now.',
+        'meta_description': 'Every property sale is a moving lead. SalesSignal AI monitors ACRIS property transfers and delivers moving company leads in real-time.',
         'leads': [
             {
                 'pill': 'Sale', 'pill_color': 'amber', 'pill_icon': 'bi-house-door-fill',
@@ -451,6 +460,7 @@ INDUSTRIES = {
         'headline': 'New Businesses, New Homeowners, New Policies Needed',
         'stat_line': 'Every new business filing, property sale, and liquor license application needs insurance.',
         'description': 'SalesSignal AI monitors new business filings, property sales, liquor license applications, and building permits to find people who need insurance policies right now.',
+        'meta_description': 'New businesses, new homeowners, and liquor license applications — all need insurance. SalesSignal AI finds insurance agent leads from public filings.',
         'leads': [
             {
                 'pill': 'Filing', 'pill_color': 'blue', 'pill_icon': 'bi-building',

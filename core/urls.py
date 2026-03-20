@@ -1,10 +1,15 @@
 from django.urls import path
 from core.views import landing, auth, onboarding, dashboard, leads, competitors, territory, campaigns, analytics
 from core.views import monitor_health, webhooks, user_settings, admin_leads, ingest_api, crm
-from core.views import sales_admin, sales, industries
+from core.views import sales_admin, sales, industries, prospect_videos, static_pages, seo
 
 urlpatterns = [
     path('', landing.landing_page, name='landing'),
+    path('about/', static_pages.about_page, name='about_page'),
+    path('privacy/', static_pages.privacy_page, name='privacy_page'),
+    path('terms/', static_pages.terms_page, name='terms_page'),
+    path('sitemap.xml', seo.sitemap_xml, name='sitemap'),
+    path('robots.txt', seo.robots_txt, name='robots_txt'),
     path('industries/', industries.industry_index, name='industry_index'),
     path('industries/<slug:slug>/', industries.industry_detail, name='industry_detail'),
     path('auth/register/', auth.register_view, name='register'),
@@ -85,6 +90,7 @@ urlpatterns = [
     path('admin-leads/detail/<int:lead_id>/', admin_leads.lead_detail_api, name='admin_lead_detail_api'),
     path('admin-leads/detail/<int:lead_id>/action/', admin_leads.lead_action, name='admin_lead_action'),
     path('admin-leads/bulk/', admin_leads.lead_bulk_action, name='admin_lead_bulk_action'),
+    path('admin-leads/delete-all/', admin_leads.lead_delete_all, name='admin_lead_delete_all'),
 
     # Monitor Health (staff only)
     path('monitors/', monitor_health.monitor_health_dashboard, name='monitor_health'),
@@ -106,6 +112,15 @@ urlpatterns = [
     path('sales/prospects/<int:prospect_id>/', sales.prospect_detail, name='sales_prospect_detail'),
     path('sales/today/', sales.today_calls, name='sales_today'),
     path('sales/stats/', sales.stats, name='sales_stats'),
+
+    # Prospect Video Pages
+    path('demo/<slug:slug>/', prospect_videos.prospect_video_landing, name='prospect_video_landing'),
+    path('admin/prospect-videos/', prospect_videos.prospect_video_list, name='prospect_video_list'),
+    path('admin/prospect-videos/create/', prospect_videos.prospect_video_create, name='prospect_video_create'),
+    path('admin/prospect-videos/<int:video_id>/edit/', prospect_videos.prospect_video_edit, name='prospect_video_edit'),
+    path('admin/prospect-videos/<int:video_id>/stats/', prospect_videos.prospect_video_stats, name='prospect_video_stats'),
+    path('api/prospect-video-track/', prospect_videos.prospect_video_track, name='prospect_video_track'),
+    path('api/prospect-video-intake/', prospect_videos.prospect_video_intake, name='prospect_video_intake'),
 
     # Webhooks & Compliance
     path('webhooks/sendgrid/', webhooks.sendgrid_webhook, name='sendgrid_webhook'),

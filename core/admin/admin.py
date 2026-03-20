@@ -10,6 +10,7 @@ from core.models import (
     StateBusinessFilingSource,
     CodeViolationSource, HealthInspectionSource,
     LicensingBoardSource, CourtRecordSource,
+    ProspectVideo,
 )
 
 
@@ -197,3 +198,12 @@ class CourtRecordSourceAdmin(admin.ModelAdmin):
     list_filter = ['state', 'scrape_method', 'is_active']
     search_fields = ['name', 'county', 'state']
     readonly_fields = ['created_at']
+
+
+@admin.register(ProspectVideo)
+class ProspectVideoAdmin(admin.ModelAdmin):
+    list_display = ['prospect_business_name', 'prospect_trade', 'prospect_city', 'status', 'page_views', 'video_plays', 'cta_clicks', 'sms_sent', 'created_at']
+    list_filter = ['status', 'prospect_trade', 'trigger_type', 'sms_sent']
+    search_fields = ['prospect_business_name', 'prospect_owner_name', 'slug']
+    prepopulated_fields = {'slug': ('prospect_business_name',)}
+    readonly_fields = ['created_at', 'page_views', 'video_plays', 'cta_clicks']

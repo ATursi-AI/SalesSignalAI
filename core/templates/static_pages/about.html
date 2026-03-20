@@ -1,0 +1,137 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About — Sales Signal AI</title>
+    <meta name="description" content="SalesSignal AI is an AI-powered lead generation platform for local service businesses. Founded by Andrew Tursi in New York City.">
+    <meta name="theme-color" content="#0D9488">
+    <meta name="author" content="SalesSignal AI">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://salessignalai.com/about/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://salessignalai.com/about/">
+    <meta property="og:title" content="About — Sales Signal AI">
+    <meta property="og:description" content="AI-powered lead generation for local service businesses. Founded by Andrew Tursi in New York City.">
+    <meta property="og:image" content="https://salessignalai.com/static/images/og-image.png">
+    <meta property="og:site_name" content="SalesSignal AI">
+
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}">
+    <link rel="manifest" href="{% static 'site.webmanifest' %}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'css/salessignal.css' %}">
+    <style>
+        .sp-container { max-width: 760px; margin: 0 auto; padding: 0 20px 60px; }
+        .sp-hero { text-align: center; padding: 60px 0 40px; }
+        .sp-hero h1 { font-family: 'Exo 2', sans-serif; font-weight: 900; font-size: 2.5rem; margin-bottom: 12px; }
+        .sp-hero p { color: #64748B; font-size: 1.1rem; max-width: 560px; margin: 0 auto; }
+        .sp-section { margin-bottom: 40px; }
+        .sp-section h2 { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.5rem; margin-bottom: 16px; color: #0D9488; }
+        .sp-section p, .sp-section li { font-size: 1rem; line-height: 1.8; color: #334155; }
+        .sp-section ul { padding-left: 20px; margin-top: 8px; }
+        .sp-section li { margin-bottom: 8px; }
+        .sp-founder { background: #F0FDFA; border: 1px solid #CCFBF1; border-radius: 16px; padding: 32px; margin: 32px 0; }
+        .sp-founder h3 { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.25rem; margin-bottom: 8px; }
+        .sp-founder .sp-title { color: #0D9488; font-weight: 600; margin-bottom: 12px; }
+        @media (max-width: 600px) { .sp-hero h1 { font-size: 1.75rem; } }
+    </style>
+</head>
+<body class="landing-page">
+    <nav class="landing-nav">
+        <a href="/" class="brand" style="text-decoration: none; color: inherit;">
+            <div class="brand-icon"><i class="bi bi-broadcast"></i></div>
+            <span class="brand-name">Sales Signal AI</span>
+        </a>
+        <div class="landing-nav-links" id="landing-nav-links">
+            <a href="/#how-it-works">How it Works</a>
+            <a href="/#features">Features</a>
+            <a href="{% url 'industry_index' %}">Industries</a>
+            <a href="/#pricing">Pricing</a>
+            <a href="{% url 'login' %}" class="btn-secondary btn-sm">Log In</a>
+        </div>
+    </nav>
+
+    <div class="sp-container">
+        <div class="sp-hero">
+            <h1>About SalesSignal AI</h1>
+            <p>Humans backed by AI. AI backed by humans.</p>
+        </div>
+
+        <div class="sp-section">
+            <h2>Our Mission</h2>
+            <p>SalesSignal AI exists to help local service businesses find customers who need them right now. We believe the best leads aren't on some purchased list — they're hidden in public records, social channels, and community forums. We find them before anyone else does.</p>
+        </div>
+
+        <div class="sp-section">
+            <h2>What We Do</h2>
+            <p>We monitor 37+ data sources 24/7 to detect real-time buying signals for service businesses. When a building gets a plumbing violation, a restaurant fails a health inspection, or a homeowner posts "I need an electrician" on Nextdoor — we find it, package it as an actionable lead, and deliver it to the right business.</p>
+            <p style="margin-top: 12px;">Our platform combines:</p>
+            <ul>
+                <li><strong>AI-powered lead detection</strong> across public records, social media, review sites, and weather alerts</li>
+                <li><strong>Automated email outreach</strong> with personalized multi-touch sequences</li>
+                <li><strong>Human phone follow-up</strong> to qualify leads and book appointments</li>
+                <li><strong>Full CRM and sales pipeline</strong> to manage every opportunity from detection to close</li>
+            </ul>
+        </div>
+
+        <div class="sp-section">
+            <h2>Who We Serve</h2>
+            <p>We serve 50+ service categories including plumbing, electrical, HVAC, commercial cleaning, roofing, pest control, landscaping, moving, insurance, and general contracting. If people need your service, we can find them.</p>
+        </div>
+
+        <div class="sp-founder">
+            <h3>Andrew Tursi</h3>
+            <div class="sp-title">Founder & CEO</div>
+            <p>Andrew founded SalesSignal AI in 2025 in New York City with a simple observation: local service businesses were spending thousands on marketing but missing the leads that were hiding in plain sight. By combining public data, AI analysis, and real human follow-up, SalesSignal AI helps service businesses find and close customers they'd never have known about.</p>
+        </div>
+
+        <div class="sp-section">
+            <h2>Contact</h2>
+            <p>Email: <a href="mailto:hello@salessignalai.com" style="color: #0D9488;">hello@salessignalai.com</a></p>
+            <p>Location: New York, NY</p>
+        </div>
+    </div>
+
+    <footer class="landing-footer">
+        <div class="footer-links">
+            <a href="{% url 'about_page' %}">About</a>
+            <a href="{% url 'privacy_page' %}">Privacy Policy</a>
+            <a href="{% url 'terms_page' %}">Terms of Service</a>
+            <a href="mailto:hello@salessignalai.com">Contact</a>
+        </div>
+        <div class="footer-copy">&copy; 2026 Sales Signal AI. All rights reserved.</div>
+    </footer>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "SalesSignal AI",
+      "legalName": "SalesSignal AI LLC",
+      "url": "https://salessignalai.com",
+      "logo": "https://salessignalai.com/static/images/logo.png",
+      "founder": {
+        "@type": "Person",
+        "name": "Andrew Tursi",
+        "jobTitle": "Founder & CEO"
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "New York",
+        "addressRegion": "NY",
+        "addressCountry": "US"
+      }
+    }
+    </script>
+</body>
+</html>

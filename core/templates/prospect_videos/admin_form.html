@@ -1,0 +1,605 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if editing %}Edit{% else %}Create{% endif %} Video Page{% endblock %}
+{% block page_title %}{% if editing %}Edit{% else %}Create{% endif %} Video Page{% endblock %}
+
+{% block extra_css %}
+<style>
+.pvf-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+}
+.pvf-back:hover { color: var(--accent-blue); }
+
+.pvf-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+.pvf-title {
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+}
+
+/* Status + action buttons row */
+.pvf-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.pvf-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+}
+.pvf-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+.pvf-btn-primary {
+    background: var(--accent-blue);
+    color: white;
+    border-color: var(--accent-blue);
+}
+.pvf-btn-primary:hover { opacity: 0.9; color: white; }
+.pvf-btn-green {
+    background: #059669;
+    color: white;
+    border-color: #059669;
+}
+.pvf-btn-green:hover { opacity: 0.9; color: white; }
+
+/* Live URL banner */
+.pvf-live-banner {
+    background: #CCFBF1;
+    border: 1px solid #99F6E4;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.pvf-live-url {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #0D9488;
+}
+.pvf-live-copy {
+    padding: 6px 14px;
+    border-radius: 6px;
+    background: #0D9488;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.8rem;
+    font-family: inherit;
+}
+
+/* Form sections */
+.pvf-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    margin-bottom: 20px;
+}
+.pvf-section-title {
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.pvf-section-title i { color: var(--accent-blue); }
+
+.pvf-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+.pvf-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+.pvf-full { grid-column: 1 / -1; }
+
+.pvf-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.pvf-field label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.pvf-field input,
+.pvf-field select,
+.pvf-field textarea {
+    padding: 10px 14px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: border-color 0.15s;
+}
+.pvf-field input:focus,
+.pvf-field select:focus,
+.pvf-field textarea:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+}
+.pvf-field textarea { resize: vertical; min-height: 80px; }
+.pvf-field .pvf-hint {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+/* Script template box */
+.pvf-script-box {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 12px;
+    position: relative;
+}
+.pvf-script-box pre {
+    white-space: pre-wrap;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+    margin: 0;
+}
+.pvf-script-copy {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-family: inherit;
+}
+.pvf-script-copy:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+/* SMS/Email section */
+.pvf-outreach {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.pvf-outreach-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 16px;
+}
+.pvf-outreach-card h4 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.pvf-outreach-text {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    margin-bottom: 12px;
+    background: var(--bg-base);
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-subtle);
+}
+.pvf-outreach-actions {
+    display: flex;
+    gap: 8px;
+}
+.pvf-sent-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: #059669;
+    font-weight: 600;
+    padding: 4px 10px;
+    background: #D1FAE5;
+    border-radius: 20px;
+}
+
+/* Status dropdown */
+.pvf-status-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.pvf-status-form select {
+    padding: 6px 10px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    font-size: 0.82rem;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-family: inherit;
+}
+
+@media (max-width: 768px) {
+    .pvf-row, .pvf-row-3, .pvf-outreach { grid-template-columns: 1fr; }
+    .pvf-top-bar { flex-direction: column; align-items: flex-start; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'prospect_video_list' %}" class="pvf-back">
+    <i class="bi bi-arrow-left"></i> Back to Video Pages
+</a>
+
+<div class="pvf-top-bar">
+    <h2 class="pvf-title">
+        <i class="bi bi-camera-video-fill" style="color: var(--accent-blue);"></i>
+        {% if editing %}{{ video.prospect_business_name }}{% else %}New Video Page{% endif %}
+    </h2>
+    {% if editing %}
+    <div class="pvf-actions">
+        <form method="post" class="pvf-status-form">
+            {% csrf_token %}
+            <select name="new_status">
+                <option value="draft" {% if video.status == 'draft' %}selected{% endif %}>Draft</option>
+                <option value="active" {% if video.status == 'active' %}selected{% endif %}>Active</option>
+                <option value="responded" {% if video.status == 'responded' %}selected{% endif %}>Responded</option>
+                <option value="converted" {% if video.status == 'converted' %}selected{% endif %}>Converted</option>
+                <option value="closed" {% if video.status == 'closed' %}selected{% endif %}>Closed</option>
+            </select>
+            <button type="submit" name="action" value="update_status" class="pvf-btn">Update Status</button>
+        </form>
+        {% if video.status == 'draft' %}
+        <form method="post" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" name="action" value="activate" class="pvf-btn-green pvf-btn">
+                <i class="bi bi-check-circle"></i> Activate
+            </button>
+        </form>
+        {% endif %}
+        <a href="{% url 'prospect_video_stats' video.pk %}" class="pvf-btn">
+            <i class="bi bi-graph-up"></i> Stats
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% if editing and video.status == 'active' %}
+<div class="pvf-live-banner">
+    <div>
+        <span style="font-weight: 600; color: #0D9488; font-size: 0.8rem;"><i class="bi bi-broadcast"></i> LIVE</span>
+        <span class="pvf-live-url" id="live-url">{{ request.scheme }}://{{ request.get_host }}/demo/{{ video.slug }}/</span>
+    </div>
+    <button class="pvf-live-copy" onclick="copyLiveUrl()"><i class="bi bi-clipboard"></i> Copy URL</button>
+</div>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save">
+
+    <!-- Section 1: Prospect Information -->
+    <div class="pvf-section">
+        <div class="pvf-section-title"><i class="bi bi-building"></i> Prospect Information</div>
+        <div class="pvf-row">
+            <div class="pvf-field">
+                <label>Business Name *</label>
+                <input type="text" name="prospect_business_name" value="{{ video.prospect_business_name|default:'' }}" required>
+            </div>
+            <div class="pvf-field">
+                <label>Owner Name</label>
+                <input type="text" name="prospect_owner_name" value="{{ video.prospect_owner_name|default:'' }}">
+            </div>
+        </div>
+        <div class="pvf-row-3">
+            <div class="pvf-field">
+                <label>Phone</label>
+                <input type="text" name="prospect_phone" value="{{ video.prospect_phone|default:'' }}">
+            </div>
+            <div class="pvf-field">
+                <label>Email</label>
+                <input type="email" name="prospect_email" value="{{ video.prospect_email|default:'' }}">
+            </div>
+            <div class="pvf-field">
+                <label>Trade *</label>
+                <select name="prospect_trade">
+                    <option value="">Select...</option>
+                    {% for t in trade_choices %}
+                    <option value="{{ t }}" {% if video and video.prospect_trade == t %}selected{% endif %}>{{ t }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="pvf-row-3">
+            <div class="pvf-field">
+                <label>City</label>
+                <input type="text" name="prospect_city" value="{{ video.prospect_city|default:'' }}">
+            </div>
+            <div class="pvf-field">
+                <label>State</label>
+                <input type="text" name="prospect_state" value="{{ video.prospect_state|default:'NY' }}" maxlength="2">
+            </div>
+            <div class="pvf-field">
+                <label>&nbsp;</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 2: Video -->
+    <div class="pvf-section">
+        <div class="pvf-section-title"><i class="bi bi-play-circle"></i> Video</div>
+        <div class="pvf-row">
+            <div class="pvf-field">
+                <label>Video URL *</label>
+                <input type="url" name="video_url" value="{{ video.video_url|default:'' }}" required placeholder="YouTube or HeyGen URL">
+            </div>
+            <div class="pvf-field">
+                <label>Thumbnail URL</label>
+                <input type="url" name="video_thumbnail_url" value="{{ video.video_thumbnail_url|default:'' }}" placeholder="Optional thumbnail image">
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 3: Page Content -->
+    <div class="pvf-section">
+        <div class="pvf-section-title"><i class="bi bi-card-text"></i> Page Content</div>
+        <div class="pvf-row">
+            <div class="pvf-field pvf-full">
+                <label>Headline</label>
+                <input type="text" name="headline" value="{{ video.headline|default:'' }}" placeholder="Leave blank to use business name">
+                <span class="pvf-hint">Default: business name</span>
+            </div>
+        </div>
+        <div class="pvf-field" style="margin-bottom: 16px;">
+            <label>Custom Message</label>
+            <textarea name="custom_message" placeholder="Message shown below the video...">{{ video.custom_message|default:'' }}</textarea>
+        </div>
+        <div class="pvf-row">
+            <div class="pvf-field">
+                <label>CTA Button Text</label>
+                <input type="text" name="cta_text" value="{{ video.cta_text|default:'Book a Call' }}">
+            </div>
+            <div class="pvf-field">
+                <label>CTA URL</label>
+                <input type="url" name="cta_url" value="{{ video.cta_url|default:'' }}" placeholder="Leave blank for default">
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 4: On Behalf Of -->
+    <div class="pvf-section">
+        <div class="pvf-section-title"><i class="bi bi-people"></i> On Behalf Of (Optional)</div>
+        <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 16px;">
+            Fill this in if creating a video page for a paying customer's prospect (white-label).
+        </p>
+        <div class="pvf-row">
+            <div class="pvf-field">
+                <label>Customer (from system)</label>
+                <select name="customer_id" id="customer-select">
+                    <option value="">— None (Our Prospecting) —</option>
+                    {% for c in customers %}
+                    <option value="{{ c.pk }}"
+                        data-name="{{ c.business_name }}"
+                        data-phone="{{ c.phone }}"
+                        data-website="{{ c.website }}"
+                        {% if video and video.customer_id == c.pk %}selected{% endif %}>
+                        {{ c.business_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="pvf-field">
+                <label>Customer Business Name</label>
+                <input type="text" name="customer_business_name" id="customer-biz-name" value="{{ video.customer_business_name|default:'' }}">
+            </div>
+        </div>
+        <div class="pvf-row">
+            <div class="pvf-field">
+                <label>Customer Phone</label>
+                <input type="text" name="customer_phone" id="customer-phone" value="{{ video.customer_phone|default:'' }}">
+            </div>
+            <div class="pvf-field">
+                <label>Customer Website</label>
+                <input type="url" name="customer_website" id="customer-website" value="{{ video.customer_website|default:'' }}">
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 5: Trigger -->
+    <div class="pvf-section">
+        <div class="pvf-section-title"><i class="bi bi-lightning"></i> Lead Trigger</div>
+        <div class="pvf-row">
+            <div class="pvf-field">
+                <label>Trigger Type</label>
+                <select name="trigger_type">
+                    {% for val, label in trigger_choices %}
+                    <option value="{{ val }}" {% if video and video.trigger_type == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="pvf-field">
+                <label>Trigger Detail</label>
+                <textarea name="trigger_detail" placeholder="E.g. 'Health inspection score 42, critical violation for pest issues'">{{ video.trigger_detail|default:'' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 6: URL Slug -->
+    <div class="pvf-section">
+        <div class="pvf-section-title"><i class="bi bi-link-45deg"></i> URL</div>
+        <div class="pvf-field">
+            <label>Slug</label>
+            <input type="text" name="slug" id="slug-input" value="{{ video.slug|default:'' }}" placeholder="auto-generates from business name">
+            <span class="pvf-hint">Page will be at: /demo/<span id="slug-preview">{{ video.slug|default:'...' }}</span>/</span>
+        </div>
+    </div>
+
+    <!-- Save -->
+    <div style="display: flex; gap: 12px; margin-top: 8px;">
+        <button type="submit" class="pvf-btn pvf-btn-primary" style="padding: 12px 32px; font-size: 0.95rem;">
+            <i class="bi bi-check-lg"></i> {% if editing %}Save Changes{% else %}Create Video Page{% endif %}
+        </button>
+        <a href="{% url 'prospect_video_list' %}" class="pvf-btn" style="padding: 12px 24px;">Cancel</a>
+    </div>
+</form>
+
+{% if editing %}
+<!-- HeyGen Script Templates -->
+<div class="pvf-section" style="margin-top: 24px;">
+    <div class="pvf-section-title"><i class="bi bi-file-earmark-play"></i> HeyGen Script Template</div>
+    <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 12px;">
+        Copy this script and paste it into HeyGen. Edit as needed before recording.
+    </p>
+    <div class="pvf-script-box">
+        <button class="pvf-script-copy" onclick="copyScript('our-script')"><i class="bi bi-clipboard"></i> Copy</button>
+        <pre id="our-script">{{ our_script }}</pre>
+    </div>
+    {% if customer_script %}
+    <div style="margin-top: 12px; font-size: 0.82rem; color: var(--text-secondary);">Customer white-label version:</div>
+    <div class="pvf-script-box">
+        <button class="pvf-script-copy" onclick="copyScript('customer-script')"><i class="bi bi-clipboard"></i> Copy</button>
+        <pre id="customer-script">{{ customer_script }}</pre>
+    </div>
+    {% endif %}
+</div>
+
+<!-- SMS / Email Outreach -->
+<div class="pvf-section" style="margin-top: 20px;">
+    <div class="pvf-section-title"><i class="bi bi-send"></i> Outreach</div>
+    <div class="pvf-outreach">
+        <div class="pvf-outreach-card">
+            <h4><i class="bi bi-chat-dots" style="color: #3B82F6;"></i> SMS</h4>
+            <div class="pvf-outreach-text" id="sms-text">{{ sms_text }}</div>
+            <div class="pvf-outreach-actions">
+                <button class="pvf-btn" onclick="copyText('sms-text')"><i class="bi bi-clipboard"></i> Copy SMS</button>
+                {% if video.sms_sent %}
+                <span class="pvf-sent-badge"><i class="bi bi-check-circle-fill"></i> Sent {{ video.sms_sent_at|date:"M j, g:i A" }}</span>
+                {% else %}
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" name="action" value="mark_sms_sent" class="pvf-btn pvf-btn-primary">
+                        <i class="bi bi-check"></i> Mark Sent
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        <div class="pvf-outreach-card">
+            <h4><i class="bi bi-envelope" style="color: #8B5CF6;"></i> Email</h4>
+            <div class="pvf-outreach-text" id="email-text">{{ email_text }}</div>
+            <div class="pvf-outreach-actions">
+                <button class="pvf-btn" onclick="copyText('email-text')"><i class="bi bi-clipboard"></i> Copy Email</button>
+                {% if video.email_sent %}
+                <span class="pvf-sent-badge"><i class="bi bi-check-circle-fill"></i> Sent {{ video.email_sent_at|date:"M j, g:i A" }}</span>
+                {% else %}
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" name="action" value="mark_email_sent" class="pvf-btn pvf-btn-primary">
+                        <i class="bi bi-check"></i> Mark Sent
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-generate slug from business name
+var bizInput = document.querySelector('input[name="prospect_business_name"]');
+var slugInput = document.getElementById('slug-input');
+var slugPreview = document.getElementById('slug-preview');
+var editing = {{ editing|yesno:"true,false" }};
+
+if (bizInput && slugInput) {
+    bizInput.addEventListener('input', function() {
+        if (!editing || !slugInput.value) {
+            var slug = this.value.toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-|-$/g, '');
+            slugInput.value = slug;
+            if (slugPreview) slugPreview.textContent = slug || '...';
+        }
+    });
+    slugInput.addEventListener('input', function() {
+        if (slugPreview) slugPreview.textContent = this.value || '...';
+    });
+}
+
+// Auto-fill customer fields from dropdown
+var customerSelect = document.getElementById('customer-select');
+if (customerSelect) {
+    customerSelect.addEventListener('change', function() {
+        var opt = this.options[this.selectedIndex];
+        if (opt.value) {
+            document.getElementById('customer-biz-name').value = opt.dataset.name || '';
+            document.getElementById('customer-phone').value = opt.dataset.phone || '';
+            document.getElementById('customer-website').value = opt.dataset.website || '';
+        }
+    });
+}
+
+function copyLiveUrl() {
+    var url = document.getElementById('live-url').textContent.trim();
+    navigator.clipboard.writeText(url).then(function() { alert('URL copied!'); });
+}
+
+function copyScript(id) {
+    var text = document.getElementById(id).textContent;
+    navigator.clipboard.writeText(text).then(function() { alert('Script copied!'); });
+}
+
+function copyText(id) {
+    var text = document.getElementById(id).textContent;
+    navigator.clipboard.writeText(text).then(function() { alert('Copied!'); });
+}
+</script>
+{% endblock %}

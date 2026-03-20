@@ -152,7 +152,9 @@
       "WebFetch(domain:www.zoho.com)",
       "Bash(venv/Scripts/python.exe -c \"from core.views.industries import INDUSTRIES, INDUSTRY_LIST; print\\(f''{len\\(INDUSTRIES\\)} industries, {len\\(INDUSTRY_LIST\\)} in list''\\); [print\\(f''  /{i[\"\"slug\"\"]}/''\\) for i in INDUSTRY_LIST]\")",
       "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.dev venv/Scripts/python.exe manage.py check)",
-      "Bash(venv/Scripts/python.exe manage.py show_urls)"
+      "Bash(venv/Scripts/python.exe manage.py show_urls)",
+      "Bash(DJANGO_SETTINGS_MODULE=salessignal.settings.local venv/Scripts/python.exe -c \":*)",
+      "Bash(venv/Scripts/python.exe manage.py monitor_property_sales_ny --days 60 --dry-run)"
     ]
   }
 }
