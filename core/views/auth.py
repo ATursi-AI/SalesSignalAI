@@ -6,44 +6,8 @@ from core.models import BusinessProfile
 
 
 def register_view(request):
-    if request.method == 'POST':
-        email = request.POST.get('email', '').strip()
-        password = request.POST.get('password', '')
-        password2 = request.POST.get('password2', '')
-        business_name = request.POST.get('business_name', '').strip()
-
-        if not email or not password or not business_name:
-            messages.error(request, 'All fields are required.')
-            return render(request, 'registration/register.html')
-
-        if password != password2:
-            messages.error(request, 'Passwords do not match.')
-            return render(request, 'registration/register.html')
-
-        if len(password) < 8:
-            messages.error(request, 'Password must be at least 8 characters.')
-            return render(request, 'registration/register.html')
-
-        if User.objects.filter(email=email).exists():
-            messages.error(request, 'Email already registered.')
-            return render(request, 'registration/register.html')
-
-        # Use email as username (truncated to 150 chars for Django's User model)
-        username = email[:150]
-        if User.objects.filter(username=username).exists():
-            messages.error(request, 'Email already registered.')
-            return render(request, 'registration/register.html')
-
-        user = User.objects.create_user(username=username, email=email, password=password)
-        BusinessProfile.objects.create(
-            user=user,
-            business_name=business_name,
-            email=email,
-        )
-        login(request, user)
-        return redirect('onboarding')
-
-    return render(request, 'registration/register.html')
+    """Public registration is disabled. Accounts are created by admin only."""
+    return redirect('login')
 
 
 def login_view(request):
