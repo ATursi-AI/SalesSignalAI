@@ -10,6 +10,7 @@ urlpatterns = [
     path('terms/', static_pages.terms_page, name='terms_page'),
     path('sitemap.xml', seo.sitemap_xml, name='sitemap'),
     path('robots.txt', seo.robots_txt, name='robots_txt'),
+    path('google2568d017b4e7e9e5.html', seo.google_verification, name='google_verification'),
     path('industries/', industries.industry_index, name='industry_index'),
     path('industries/<slug:slug>/', industries.industry_detail, name='industry_detail'),
     path('auth/register/', auth.register_view, name='register'),

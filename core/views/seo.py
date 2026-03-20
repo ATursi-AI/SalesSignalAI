@@ -45,6 +45,13 @@ def sitemap_xml(request):
     return HttpResponse('\n'.join(xml_parts), content_type='application/xml')
 
 
+def google_verification(request):
+    return HttpResponse(
+        'google-site-verification: google2568d017b4e7e9e5.html',
+        content_type='text/html',
+    )
+
+
 def robots_txt(request):
     content = """User-agent: *
 Allow: /
