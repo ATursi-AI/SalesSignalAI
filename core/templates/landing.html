@@ -76,7 +76,7 @@
             </div>
             <a href="#pricing">Pricing</a>
             <a href="{% url 'login' %}" class="btn-secondary btn-sm">Log In</a>
-            <a href="#live-preview" class="btn-primary-glow btn-sm">See It In Action</a>
+            <a href="{% url 'signup' %}" class="btn-primary-glow btn-sm">Sign Up Free</a>
         </div>
         <button class="landing-hamburger" id="landing-hamburger" onclick="toggleLandingMenu()" aria-label="Open menu">
             <i class="bi bi-list" id="landing-menu-icon"></i>
@@ -91,7 +91,7 @@
         <a href="#pricing" onclick="closeLandingMenu()">Pricing</a>
         <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid rgba(0,0,0,0.06);">
             <a href="{% url 'login' %}" class="btn-secondary" style="justify-content: center;">Log In</a>
-            <a href="#live-preview" class="btn-primary-glow" style="justify-content: center;" onclick="closeLandingMenu()">See It In Action</a>
+            <a href="{% url 'signup' %}" class="btn-primary-glow" style="justify-content: center;" onclick="closeLandingMenu()">Sign Up Free</a>
         </div>
     </div>
 
@@ -379,7 +379,7 @@
                     <li><i class="bi bi-check-circle-fill"></i> You handle replies</li>
                 </ul>
                 <div class="pricing-setup">Setup fee: $299</div>
-                <a href="mailto:hello@salessignalai.com" class="btn-secondary w-100" style="justify-content: center;">Get Started</a>
+                <a href="/signup/" class="btn-secondary w-100" style="justify-content: center;">Get Started</a>
             </div>
 
             <!-- Tier 2: Growth (MOST POPULAR) -->
@@ -396,7 +396,7 @@
                     <li><i class="bi bi-check-circle-fill"></i> Territory-based lead filtering</li>
                 </ul>
                 <div class="pricing-setup">Setup fee: $299</div>
-                <a href="mailto:hello@salessignalai.com" class="btn-primary-glow w-100" style="justify-content: center;">Get Started</a>
+                <a href="/signup/" class="btn-primary-glow w-100" style="justify-content: center;">Get Started</a>
             </div>
 
             <!-- Tier 3: Dominate -->
@@ -413,7 +413,7 @@
                     <li><i class="bi bi-check-circle-fill"></i> Multi-territory coverage</li>
                 </ul>
                 <div class="pricing-setup">Setup fee: $299</div>
-                <a href="mailto:hello@salessignalai.com" class="btn-secondary w-100" style="justify-content: center;">Get Started</a>
+                <a href="/signup/" class="btn-secondary w-100" style="justify-content: center;">Get Started</a>
             </div>
 
             <!-- Tier 4: Concierge -->
@@ -428,7 +428,7 @@
                     <li><i class="bi bi-check-circle-fill"></i> Outbound appointment setting</li>
                     <li><i class="bi bi-check-circle-fill"></i> Weekly strategy calls</li>
                 </ul>
-                <a href="mailto:hello@salessignalai.com" class="btn-secondary w-100" style="justify-content: center;">Contact Us</a>
+                <a href="/signup/" class="btn-secondary w-100" style="justify-content: center;">Contact Us</a>
             </div>
 
             <!-- Tier 5: Custom Outbound Programs -->
@@ -443,7 +443,7 @@
                     <li><i class="bi bi-check-circle-fill"></i> Full reporting &amp; analytics</li>
                     <li><i class="bi bi-check-circle-fill"></i> Multi-location &amp; franchise support</li>
                 </ul>
-                <a href="mailto:hello@salessignalai.com" class="btn-secondary w-100" style="justify-content: center;">Contact Us</a>
+                <a href="/signup/" class="btn-secondary w-100" style="justify-content: center;">Contact Us</a>
             </div>
         </div>
 
@@ -464,7 +464,7 @@
             <p style="color: #4a4a68; font-size: 1.15rem; margin-bottom: 2rem; max-width: 500px; margin-left: auto; margin-right: auto;">
                 Your competitors are getting the call because they saw the lead first. Change that today.
             </p>
-            <a href="mailto:hello@salessignalai.com" class="btn-primary-glow" style="padding: 1rem 3rem; font-size: 1.1rem;">
+            <a href="/signup/" class="btn-primary-glow" style="padding: 1rem 3rem; font-size: 1.1rem;">
                 Get Started
             </a>
         </div>
@@ -476,11 +476,12 @@
             <a href="{% url 'about_page' %}">About</a>
             <a href="{% url 'privacy_page' %}">Privacy Policy</a>
             <a href="{% url 'terms_page' %}">Terms of Service</a>
-            <a href="mailto:hello@salessignalai.com">Contact</a>
-            <a href="{% url 'login' %}">Dashboard</a>
+            <a href="{% url 'signup' %}">Sign Up</a>
+            <a href="{% url 'login' %}">Log In</a>
         </div>
         <div class="footer-copy">
             &copy; 2026 Sales Signal AI. All rights reserved.
+            <br>Support: <a href="mailto:support@salessignalai.com" style="color:#0D9488;">support@salessignalai.com</a>
         </div>
     </footer>
 

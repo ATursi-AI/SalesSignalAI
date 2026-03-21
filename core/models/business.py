@@ -57,9 +57,21 @@ class ServiceSubcategory(models.Model):
 
 class BusinessProfile(models.Model):
     TIER_CHOICES = [
-        ('starter', 'Starter'),
-        ('growth', 'Growth'),
-        ('pro', 'Pro'),
+        ('none', 'No Plan'),
+        ('outreach', 'Outreach ($149/mo)'),
+        ('growth', 'Growth ($349/mo)'),
+        ('dominate', 'Dominate ($649/mo)'),
+        ('concierge', 'Concierge (Custom)'),
+        ('custom_outbound', 'Custom Outbound (Custom)'),
+    ]
+
+    ACCOUNT_STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('pending_payment', 'Pending Payment'),
+        ('pending_plan', 'Pending Plan Selection'),
+        ('pending_verification', 'Pending Email Verification'),
+        ('paused', 'Paused'),
+        ('cancelled', 'Cancelled'),
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='business_profile')
@@ -80,10 +92,26 @@ class BusinessProfile(models.Model):
     alert_via_email = models.BooleanField(default=True)
     alert_via_sms = models.BooleanField(default=False)
     alert_phone = models.CharField(max_length=20, blank=True)
-    subscription_tier = models.CharField(max_length=20, choices=TIER_CHOICES, default='starter')
+    subscription_tier = models.CharField(max_length=20, choices=TIER_CHOICES, default='none')
     stripe_customer_id = models.CharField(max_length=100, blank=True)
+    stripe_subscription_id = models.CharField(max_length=100, blank=True)
+    account_status = models.CharField(max_length=30, choices=ACCOUNT_STATUS_CHOICES, default='active')
     is_active = models.BooleanField(default=True)
     onboarding_complete = models.BooleanField(default=False)
+
+    # Sales-assisted signup
+    created_by_sales = models.BooleanField(default=False)
+    must_change_password = models.BooleanField(default=False)
+    temp_password = models.CharField(max_length=20, blank=True)
+
+    # Onboarding data
+    years_in_business = models.IntegerField(null=True, blank=True)
+    num_employees = models.CharField(max_length=20, blank=True)
+    marketing_channels = models.JSONField(default=list, blank=True)
+    marketing_budget = models.CharField(max_length=50, blank=True)
+    biggest_challenge = models.TextField(blank=True)
+    desired_customers_per_month = models.CharField(max_length=20, blank=True)
+    business_description = models.TextField(blank=True)
     email_style_guide = models.TextField(
         blank=True,
         help_text='Describe how you want outreach emails written (tone, style, key points).',

@@ -1,0 +1,26 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification Failed — SalesSignal AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'DM Sans', sans-serif; background: #FAFBFC; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .card { max-width: 440px; width: 100%; background: #fff; border-radius: 16px; border: 1px solid #E2E8F0; padding: 48px 40px; text-align: center; }
+        .card h1 { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.4rem; margin-bottom: 12px; color: #DC2626; }
+        .card p { color: #64748B; margin-bottom: 20px; }
+        .card a { color: #0D9488; font-weight: 600; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Verification Link Expired</h1>
+        <p>This link is invalid or has expired. Please sign up again or contact support.</p>
+        <a href="{% url 'signup' %}">Sign up again</a> &middot; <a href="mailto:support@salessignalai.com">Contact support</a>
+    </div>
+</body>
+</html>

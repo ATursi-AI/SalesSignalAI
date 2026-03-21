@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Account Created{% endblock %}
+{% block page_title %}Account Created{% endblock %}
+
+{% block content %}
+<div style="max-width:600px;">
+    <div class="glass-card-static" style="padding:40px;text-align:center;">
+        <div style="width:64px;height:64px;background:rgba(16,185,129,0.15);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:2rem;color:var(--accent-emerald);margin-bottom:16px;">
+            <i class="bi bi-check-circle-fill"></i>
+        </div>
+
+        <h2 style="font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.5rem;color:var(--accent-emerald);margin-bottom:20px;">Account Created!</h2>
+
+        <div style="text-align:left;background:var(--bg-page);border:1px solid var(--border-subtle);border-radius:10px;padding:20px;margin-bottom:20px;">
+            <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:0.88rem;">
+                <span style="color:var(--text-muted);font-weight:600;">Business:</span>
+                <span>{{ profile.business_name }}</span>
+                <span style="color:var(--text-muted);font-weight:600;">Email:</span>
+                <span>{{ profile.email }}</span>
+                <span style="color:var(--text-muted);font-weight:600;">Plan:</span>
+                <span>{{ profile.get_subscription_tier_display }}</span>
+                <span style="color:var(--text-muted);font-weight:600;">Login:</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;">{{ profile.email }}</span>
+                <span style="color:var(--text-muted);font-weight:600;">Temp Password:</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;background:rgba(245,158,11,0.15);padding:2px 8px;border-radius:6px;color:var(--accent-amber);">{{ temp_password }}</span>
+            </div>
+        </div>
+
+        {% if payment_link %}
+        <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:16px;margin-bottom:20px;text-align:left;">
+            <div style="font-size:0.78rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;margin-bottom:4px;">Payment Link</div>
+            <div style="font-size:0.82rem;word-break:break-all;color:var(--accent-blue);">{{ payment_link }}</div>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-top:8px;">This link was sent to the customer via email.</p>
+        </div>
+        {% endif %}
+
+        {% if payment_method == 'invoice_later' %}
+        <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:0.85rem;color:var(--accent-amber);">
+            <i class="bi bi-clock"></i> Invoice will be sent later. Account is pending payment.
+        </div>
+        {% endif %}
+
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:20px;">
+            Welcome email sent to {{ profile.email }} with login credentials.
+        </p>
+
+        <div style="display:flex;gap:10px;justify-content:center;">
+            <a href="{% url 'sales_create_customer' %}" class="btn-primary-glow" style="padding:12px 24px;font-size:0.9rem;border-radius:10px;text-decoration:none;">
+                <i class="bi bi-plus-lg"></i> Create Another
+            </a>
+            <a href="{% url 'dashboard_home' %}" class="btn-secondary" style="padding:12px 24px;font-size:0.9rem;border-radius:10px;text-decoration:none;">
+                Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

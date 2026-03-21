@@ -2,7 +2,7 @@ from django.urls import path
 from core.views import landing, auth, onboarding, dashboard, leads, competitors, territory, campaigns, analytics
 from core.views import monitor_health, webhooks, user_settings, admin_leads, ingest_api, crm
 from core.views import sales_admin, sales, industries, prospect_videos, static_pages, seo, call_center
-from core.views import service_pages
+from core.views import service_pages, signup
 
 urlpatterns = [
     path('', landing.landing_page, name='landing'),
@@ -25,9 +25,23 @@ urlpatterns = [
     path('admin/service-pages/<int:page_id>/edit/', service_pages.service_page_edit, name='service_page_edit'),
     path('admin/service-pages/submissions/', service_pages.service_page_submissions, name='service_page_submissions'),
     path('admin/service-pages/submissions/<int:submission_id>/action/', service_pages.service_page_submission_action, name='service_page_submission_action'),
+    path('signup/', signup.signup_view, name='signup'),
+    path('verify/<str:uidb64>/<str:token>/', signup.verify_email, name='verify_email'),
     path('auth/register/', auth.register_view, name='register'),
     path('auth/login/', auth.login_view, name='login'),
     path('auth/logout/', auth.logout_view, name='logout'),
+    path('auth/password-change/', signup.force_password_change, name='force_password_change'),
+    path('auth/password-reset/', auth.password_reset_request, name='password_reset'),
+    path('auth/password-reset/confirm/<str:uidb64>/<str:token>/', auth.password_reset_confirm, name='password_reset_confirm'),
+
+    # Stripe
+    path('api/stripe/webhook/', signup.stripe_webhook, name='stripe_webhook'),
+    path('api/stripe/checkout/', signup.create_checkout_session, name='stripe_checkout'),
+    path('dashboard/billing/', signup.billing_page, name='billing_page'),
+    path('dashboard/billing/portal/', signup.create_portal_session, name='stripe_portal'),
+
+    # Sales-assisted
+    path('sales/create-customer/', signup.sales_create_customer, name='sales_create_customer'),
     path('onboarding/', onboarding.onboarding_view, name='onboarding'),
     path('dashboard/', dashboard.dashboard_home, name='dashboard_home'),
 

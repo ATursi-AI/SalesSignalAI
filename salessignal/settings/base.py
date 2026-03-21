@@ -118,9 +118,22 @@ NEXTDOOR_PASSWORD = config('NEXTDOOR_PASSWORD', default='')
 INGEST_API_KEY = config('INGEST_API_KEY', default='')
 REMOTE_INGEST_URL = config('REMOTE_INGEST_URL', default='https://salessignalai.com/api/ingest-lead/')
 
+# Stripe
+STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='')
+STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY', default='')
+STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
+STRIPE_SETUP_FEE_PRICE_ID = config('STRIPE_SETUP_FEE_PRICE_ID', default='')
+
+# Stripe plan price IDs
+STRIPE_PRICE_OUTREACH = config('STRIPE_PRICE_OUTREACH', default='')
+STRIPE_PRICE_GROWTH = config('STRIPE_PRICE_GROWTH', default='')
+STRIPE_PRICE_DOMINATE = config('STRIPE_PRICE_DOMINATE', default='')
+
+SUPPORT_EMAIL = 'support@salessignalai.com'
+
 # Email backend (console for dev, SMTP for prod)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = ALERT_FROM_EMAIL
+DEFAULT_FROM_EMAIL = SUPPORT_EMAIL
 
 # Outreach email sending backend: 'ses' (default), 'instantly'
 OUTREACH_EMAIL_BACKEND = config('OUTREACH_EMAIL_BACKEND', default='ses')

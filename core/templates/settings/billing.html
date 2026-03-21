@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Billing{% endblock %}
+{% block page_title %}Billing & Subscription{% endblock %}
+
+{% block content %}
+<div style="max-width:800px;">
+    <!-- Current Plan -->
+    <div class="glass-card-static" style="padding:28px;margin-bottom:24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+            <div>
+                <div style="font-size:0.72rem;text-transform:uppercase;color:var(--text-muted);font-weight:600;letter-spacing:0.5px;">Current Plan</div>
+                <div style="font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.75rem;margin-top:4px;">{{ plan_name }}</div>
+                {% if plan_price %}
+                <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--accent-blue);font-weight:700;">${{ plan_price }}/mo</div>
+                {% endif %}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
+                <span style="padding:4px 12px;border-radius:8px;font-size:0.72rem;font-weight:700;text-transform:uppercase;
+                    {% if profile.account_status == 'active' %}background:rgba(16,185,129,0.15);color:var(--accent-emerald);{% elif profile.account_status == 'paused' %}background:rgba(245,158,11,0.15);color:var(--accent-amber);{% else %}background:rgba(107,107,128,0.15);color:var(--text-muted);{% endif %}">
+                    {{ profile.get_account_status_display }}
+                </span>
+                {% if has_stripe %}
+                <a href="{% url 'stripe_portal' %}" class="btn-secondary" style="padding:8px 18px;font-size:0.82rem;border-radius:8px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+                    <i class="bi bi-credit-card"></i> Manage Billing
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Plan Comparison -->
+    <div style="margin-bottom:16px;">
+        <h3 style="font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:16px;">
+            <i class="bi bi-arrow-up-circle-fill" style="color:var(--accent-blue);"></i> Available Plans
+        </h3>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
+        <!-- Outreach -->
+        <div class="glass-card-static" style="padding:24px;text-align:center;{% if profile.subscription_tier == 'outreach' %}border:2px solid var(--accent-blue);{% endif %}">
+            <div style="font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.1rem;">Outreach</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.75rem;color:var(--accent-blue);margin:8px 0;">$149<span style="font-size:0.8rem;color:var(--text-muted);">/mo</span></div>
+            <ul style="text-align:left;font-size:0.82rem;color:var(--text-secondary);list-style:none;padding:0;margin-bottom:16px;">
+                <li style="padding:4px 0;"><i class="bi bi-check" style="color:var(--accent-emerald);"></i> AI email campaigns</li>
+                <li style="padding:4px 0;"><i class="bi bi-check" style="color:var(--accent-emerald);"></i> Dashboard access</li>
+                <li style="padding:4px 0;"><i class="bi bi-check" style="color:var(--accent-emerald);"></i> You provide leads</li>
+            </ul>
+            {% if profile.subscription_tier == 'outreach' %}
+            <span style="font-size:0.82rem;font-weight:700;color:var(--accent-blue);">Current Plan</span>
+            {% endif %}
+        </div>
+
+        <!-- Growth -->
+        <div class="glass-card-static" style="padding:24px;text-align:center;border:2px solid var(--accent-emerald);{% if profile.subscription_tier == 'growth' %}background:rgba(16,185,129,0.04);{% endif %}">
+            <span style="background:var(--accent-emerald);color:#fff;padding:2px 10px;border-radius:10px;font-size:0.68rem;font-weight:700;text-transform:uppercase;">Most Popular</span>
+            <div style="font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.1rem;margin-top:8px;">Growth</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.75rem;color:var(--accent-emerald);margin:8px 0;">$349<span style="font-size:0.8rem;color:var(--text-muted);">/mo</span></div>
+            <ul style="text-align:left;font-size:0.82rem;color:var(--text-secondary);list-style:none;padding:0;margin-bottom:16px;">
+                <li style="padding:4px 0;"><i class="bi bi-check" style="color:var(--accent-emerald);"></i> Everything in Outreach</li>
+                <li style="padding:4px 0;"><i class="bi bi-check" style="color:var(--accent-emerald);"></i> 37+ lead sources</li>
+                <li style="padding:4px 0;"><i class="bi bi-check" style="color:var(--accent-emerald);"></i> CRM & pipeline</li>
+                <li style="padding:4px 0;"><i class="bi bi-check" style="color:var(--accent-emerald);"></i> Competitor monitoring</li>
+            </ul>
+            {% if profile.subscription_tier == 'growth' %}
+            <span style="font-size:0.82rem;font-weight:700;color:var(--accent-emerald);">Current Plan</span>
+            {% endif %}
+        </div>
+
+        <!-- Dominate -->
+        <div class="glass-card-static" style="padding:24px;text-align:center;{% if profile.subscription_tier == 'dominate' %}border:2px solid var(--accent-amber);{% endif %}">
+            <div style="font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.1rem;">Dominate</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.75rem;color:var(--accent-amber);margin:8px 0;">$649<span style="font-size:0.8rem;color:var(--text-muted);">/mo</span></div>
+            <ul style="text-align:left;font-size:0.82rem;color:var(--text-secondary);list-style:none;padding:0;margin-bottom:16px;">
+                <li style="padding:4px 0;"><i class="bi bi-check" style="color:var(--accent-emerald);"></i> Everything in Growth</li>
+                <li style="padding:4px 0;"><i class="bi bi-check" style="color:var(--accent-emerald);"></i> AI reply handling</li>
+                <li style="padding:4px 0;"><i class="bi bi-check" style="color:var(--accent-emerald);"></i> SMS follow-up</li>
+                <li style="padding:4px 0;"><i class="bi bi-check" style="color:var(--accent-emerald);"></i> Auto-booking</li>
+            </ul>
+            {% if profile.subscription_tier == 'dominate' %}
+            <span style="font-size:0.82rem;font-weight:700;color:var(--accent-amber);">Current Plan</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="text-align:center;font-size:0.82rem;color:var(--text-muted);">
+        All plans include a one-time $299 setup and onboarding fee.
+        {% if has_stripe %}To change your plan, click "Manage Billing" above.{% endif %}
+    </div>
+</div>
+{% endblock %}
