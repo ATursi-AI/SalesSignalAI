@@ -16,14 +16,39 @@ def register_view(request):
     return redirect('signup')
 
 
+def _get_login_redirect(user):
+    """Determine where to redirect a user after login based on their role."""
+    # Force password change for sales-assisted accounts
+    profile = getattr(user, 'business_profile', None)
+    if profile and profile.must_change_password:
+        return 'force_password_change'
+
+    # 1. Superuser/staff → Command Center
+    if user.is_superuser or user.is_staff:
+        return 'admin_lead_repository'
+
+    # 2. Salesperson → Sales Dashboard
+    if hasattr(user, 'salesperson_profile'):
+        try:
+            sp = user.salesperson_profile
+            if sp.status == 'active':
+                return 'sales_pipeline'
+        except Exception:
+            pass
+
+    # 3. Customer with BusinessProfile
+    if profile:
+        if not profile.onboarding_complete:
+            return 'onboarding'
+        return 'dashboard_home'
+
+    # 4. Fallback
+    return 'dashboard_home'
+
+
 def login_view(request):
     if request.user.is_authenticated:
-        profile = getattr(request.user, 'business_profile', None)
-        if profile and profile.must_change_password:
-            return redirect('force_password_change')
-        if profile and profile.onboarding_complete:
-            return redirect('dashboard_home')
-        return redirect('onboarding')
+        return redirect(_get_login_redirect(request.user))
 
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
@@ -40,15 +65,7 @@ def login_view(request):
 
         if user is not None:
             login(request, user)
-            profile = getattr(user, 'business_profile', None)
-
-            # Force password change for sales-assisted accounts
-            if profile and profile.must_change_password:
-                return redirect('force_password_change')
-
-            if profile and profile.onboarding_complete:
-                return redirect('dashboard_home')
-            return redirect('onboarding')
+            return redirect(_get_login_redirect(user))
         else:
             messages.error(request, 'Invalid email or password.')
 

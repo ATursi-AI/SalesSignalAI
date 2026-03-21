@@ -4,10 +4,14 @@ Only accessible by superusers at /sales-admin/.
 """
 import csv
 import io
+import secrets
+import string
 from datetime import date, timedelta
 
+from django.conf import settings as django_settings
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
+from django.core.mail import send_mail
 from django.db.models import Count, Sum, Q
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
@@ -110,6 +114,9 @@ def manage_team(request):
             email = request.POST.get('email', '').strip()
             phone = request.POST.get('phone', '').strip()
             territory = request.POST.get('territory', '').strip()
+            trade_spec = request.POST.get('trade_specialization', '').strip()
+            commission = request.POST.get('commission_notes', '').strip()
+            custom_password = request.POST.get('password', '').strip()
 
             if not username:
                 return JsonResponse({'error': 'Username is required'}, status=400)
@@ -117,10 +124,15 @@ def manage_team(request):
             if User.objects.filter(username=username).exists():
                 return JsonResponse({'error': 'Username already taken'}, status=400)
 
+            # Generate password if not provided
+            password = custom_password or ''.join(
+                secrets.choice(string.ascii_letters + string.digits) for _ in range(12)
+            )
+
             user = User.objects.create_user(
                 username=username,
                 email=email,
-                password='SalesSignal2024!',
+                password=password,
                 first_name=first_name,
                 last_name=last_name,
                 is_staff=True,
@@ -130,18 +142,43 @@ def manage_team(request):
                 user=user,
                 phone=phone,
                 territory=territory,
+                trade_specialization=trade_spec,
+                commission_notes=commission,
                 hire_date=date.today(),
             )
 
-            return JsonResponse({'success': True})
+            # Send welcome email
+            if email:
+                try:
+                    send_mail(
+                        'Welcome to the SalesSignal AI Sales Team!',
+                        f'Hi {first_name or username},\n\n'
+                        f'Welcome to the SalesSignal AI sales team!\n\n'
+                        f'Log in at: https://salessignalai.com/auth/login/\n'
+                        f'Username: {username}\n'
+                        f'Password: {password}\n\n'
+                        f'Territory: {territory or "Not assigned"}\n'
+                        f'Trade focus: {trade_spec or "All trades"}\n\n'
+                        f'Please change your password after your first login.\n\n'
+                        f'— SalesSignal AI\nsupport@salessignalai.com',
+                        getattr(django_settings, 'SUPPORT_EMAIL', 'support@salessignalai.com'),
+                        [email],
+                        fail_silently=True,
+                    )
+                except Exception:
+                    pass
+
+            return JsonResponse({'success': True, 'password': password})
 
         elif action == 'update':
             sp_id = request.POST.get('sp_id')
             sp = get_object_or_404(SalesPerson, id=sp_id)
             sp.phone = request.POST.get('phone', sp.phone)
             sp.territory = request.POST.get('territory', sp.territory)
+            sp.trade_specialization = request.POST.get('trade_specialization', sp.trade_specialization)
+            sp.commission_notes = request.POST.get('commission_notes', sp.commission_notes)
             sp.daily_call_goal = int(request.POST.get('daily_call_goal', sp.daily_call_goal))
-            sp.save(update_fields=['phone', 'territory', 'daily_call_goal'])
+            sp.save(update_fields=['phone', 'territory', 'trade_specialization', 'commission_notes', 'daily_call_goal'])
             return JsonResponse({'success': True})
 
         elif action == 'toggle_status':

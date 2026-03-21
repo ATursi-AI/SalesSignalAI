@@ -160,7 +160,9 @@
       "Bash(find /c/Users/aturs/Documents/AI_Engineering_Course/SalesSignalAI -type f \\\\\\(-name *map* -o -name *google* \\\\\\))",
       "Bash(venv/Scripts/python.exe manage.py makemigrations core --name service_pages)",
       "Bash(venv/Scripts/python.exe manage.py seed_service_pages)",
-      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name subscription_fields)"
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name subscription_fields)",
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name salesperson_fields)",
+      "Bash(ls -la c:/Users/aturs/Documents/AI_Engineering_Course/SalesSignalAI/core/static/images/favicon*)"
     ]
   }
 }

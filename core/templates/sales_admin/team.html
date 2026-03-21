@@ -18,9 +18,10 @@
                 <thead>
                     <tr>
                         <th>Name</th>
-                        <th>Username</th>
+                        <th>Email</th>
                         <th>Phone</th>
                         <th>Territory</th>
+                        <th>Trade Focus</th>
                         <th>Daily Goal</th>
                         <th>Status</th>
                         <th>Actions</th>
@@ -30,9 +31,10 @@
                     {% for sp in salespeople %}
                     <tr>
                         <td><strong>{{ sp.user.get_full_name|default:sp.user.username }}</strong></td>
-                        <td class="text-muted">{{ sp.user.username }}</td>
+                        <td style="font-size:0.8rem;color:var(--text-muted);">{{ sp.user.email|default:"—" }}</td>
                         <td>{{ sp.phone|default:"—" }}</td>
                         <td>{{ sp.territory|default:"—"|truncatechars:30 }}</td>
+                        <td style="font-size:0.8rem;">{{ sp.trade_specialization|default:"All" }}</td>
                         <td>{{ sp.daily_call_goal }}</td>
                         <td>
                             <span class="status-pill status-{{ sp.status }}">{{ sp.get_status_display }}</span>
@@ -83,8 +85,20 @@
                 <input type="text" name="phone" class="form-input">
             </div>
             <div class="form-group">
+                <label>Password (leave blank to auto-generate)</label>
+                <input type="text" name="password" class="form-input" placeholder="Auto-generated if blank">
+            </div>
+            <div class="form-group">
                 <label>Territory</label>
-                <input type="text" name="territory" class="form-input" placeholder="e.g. Nassau County plumbers">
+                <input type="text" name="territory" class="form-input" placeholder="e.g. Nassau County, Suffolk County">
+            </div>
+            <div class="form-group">
+                <label>Trade Specialization (optional)</label>
+                <input type="text" name="trade_specialization" class="form-input" placeholder="e.g. plumbers, electricians — blank for all">
+            </div>
+            <div class="form-group">
+                <label>Commission Notes</label>
+                <textarea name="commission_notes" class="form-input" rows="2" placeholder="Commission structure details..."></textarea>
             </div>
             <button type="submit" class="btn-primary" style="width: 100%; margin-top: 0.75rem;">
                 <i class="bi bi-plus-lg"></i> Create Salesperson
@@ -104,7 +118,12 @@ document.getElementById('add-form').addEventListener('submit', function(e) {
     fetch('{% url "sales_admin_team" %}', {method: 'POST', body: fd, headers: {'X-CSRFToken': csrf}})
     .then(r => r.json())
     .then(data => {
-        if (data.success) location.reload();
+        if (data.success) {
+            if (data.password) {
+                alert('Account created! Password: ' + data.password + '\n\nWelcome email sent.');
+            }
+            location.reload();
+        }
         else alert(data.error || 'Error');
     });
 });

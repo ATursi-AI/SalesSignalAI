@@ -17,7 +17,11 @@ class SalesPerson(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='salesperson_profile')
     phone = models.CharField(max_length=20, blank=True)
     territory = models.CharField(max_length=300, blank=True,
-        help_text='Territory description, e.g. "Nassau County plumbers"')
+        help_text='Territory description, e.g. "Nassau County, Suffolk County"')
+    trade_specialization = models.CharField(max_length=200, blank=True,
+        help_text='Trade focus, e.g. "plumbers, electricians" or blank for all trades')
+    commission_notes = models.TextField(blank=True,
+        help_text='Commission structure details')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
     hire_date = models.DateField(null=True, blank=True)
     daily_call_goal = models.IntegerField(default=40)

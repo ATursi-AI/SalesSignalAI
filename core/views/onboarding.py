@@ -25,6 +25,15 @@ def onboarding_view(request):
     if request.method == 'POST':
         step = request.POST.get('step')
 
+        # Handle JSON body (from keyword save)
+        if not step and request.content_type and 'json' in request.content_type:
+            import json as _json
+            try:
+                json_data = _json.loads(request.body)
+                step = json_data.get('step')
+            except (ValueError, AttributeError):
+                pass
+
         if step == '1':
             category_id = request.POST.get('service_category')
             if category_id:
@@ -45,13 +54,16 @@ def onboarding_view(request):
                 })
 
         elif step == '1_keywords':
-            # Save keyword changes from step 1
-            import json
-            try:
-                data = json.loads(request.body)
-                keywords = data.get('keywords', [])
-            except (json.JSONDecodeError, AttributeError):
-                keywords = request.POST.getlist('keywords')
+            # Save keyword changes
+            keywords = request.POST.getlist('keywords')
+            if not keywords:
+                # Fallback: try JSON body
+                import json
+                try:
+                    data = json.loads(request.body)
+                    keywords = data.get('keywords', [])
+                except (json.JSONDecodeError, ValueError, AttributeError):
+                    pass
 
             if keywords:
                 # Deactivate all existing keywords

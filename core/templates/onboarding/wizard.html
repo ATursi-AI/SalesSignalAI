@@ -5,6 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Set Up Your Account | SalesSignal AI</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -16,10 +21,10 @@
         <div class="onboarding-card glass-card-static">
             <div style="text-align: center; margin-bottom: 0.5rem;">
                 <div style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                    <div style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent-blue), #8B5CF6); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;">
+                    <div style="width: 32px; height: 32px; background: #0D9488; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff;">
                         <i class="bi bi-broadcast" style="font-size: 1rem;"></i>
                     </div>
-                    <span style="font-weight: 800; background: linear-gradient(135deg, var(--accent-blue), #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">SalesSignal AI</span>
+                    <span style="font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.1rem; color: #1A1A2E;">SalesSignal AI</span>
                 </div>
             </div>
 
@@ -251,21 +256,29 @@
         }
 
         function submitStep2WithKeywords() {
-            // First save keywords
-            var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-            fetch('{% url "onboarding" %}', {
+            // Save keywords via FormData (not JSON) to avoid content-type issues
+            var form = document.getElementById('onboarding-form');
+            var formData = new FormData(form);
+            formData.set('step', '1_keywords');
+            // Append each keyword as a separate form value
+            activeKeywords.forEach(function(kw) {
+                formData.append('keywords', kw);
+            });
+
+            fetch(form.action, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                body: JSON.stringify({ step: '1_keywords', keywords: activeKeywords }),
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
             })
-            .then(function(r) { return r.json(); })
-            .then(function() {
-                // Then save location (step 2)
-                submitStep(2);
+            .then(function(r) {
+                if (!r.ok) throw new Error('Server error ' + r.status);
+                return r.json();
+            })
+            .then(function(data) {
+                if (data.success) {
+                    // Then save location (step 2)
+                    submitStep(2);
+                }
             })
             .catch(function(err) { console.error('Keyword save error:', err); });
         }
