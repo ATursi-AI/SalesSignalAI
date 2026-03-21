@@ -117,6 +117,10 @@ class Lead(models.Model):
     review_status = models.CharField(max_length=20, choices=REVIEW_STATUS_CHOICES, default='unreviewed')
 
     discovered_at = models.DateTimeField(auto_now_add=True)
+    event_date = models.DateTimeField(
+        null=True, blank=True, db_index=True,
+        help_text='Actual date of the event (violation issued, permit filed, etc.)',
+    )
     raw_data = models.JSONField(default=dict)
     content_hash = models.CharField(max_length=64, unique=True)
 
@@ -140,7 +144,7 @@ class Lead(models.Model):
     contact_address = models.TextField(blank=True)
 
     class Meta:
-        ordering = ['-discovered_at']
+        ordering = ['-event_date', '-discovered_at']
 
     def __str__(self):
         return f"[{self.urgency_level.upper()}] {self.platform} - {self.source_content[:60]}"

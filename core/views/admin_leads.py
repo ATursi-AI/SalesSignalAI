@@ -109,8 +109,9 @@ def _serialize_lead(lead, now, platform_display):
         'location': lead.detected_location or '',
         'confidence': lead.confidence,
         'urgency': lead.urgency_level,
-        'time_ago': _time_ago(lead.discovered_at, now),
+        'time_ago': _time_ago(lead.event_date or lead.discovered_at, now),
         'discovered_at': lead.discovered_at.isoformat(),
+        'event_date': lead.event_date.isoformat() if lead.event_date else None,
         'author': lead.source_author or '',
         'review_status': lead.review_status,
         'matched_keywords': lead.matched_keywords or [],
@@ -326,17 +327,22 @@ def lead_repository_api(request):
 
     qs = _apply_filters(qs, request)
 
-    # Sorting
-    sort = request.GET.get('sort', '-discovered_at')
+    # Sorting — default to event_date DESC with discovered_at fallback
+    sort = request.GET.get('sort', '-event_date')
     allowed_sorts = {
+        'event_date', '-event_date',
         'discovered_at', '-discovered_at',
         'urgency_score', '-urgency_score',
         'confidence', '-confidence',
         'platform', '-platform',
     }
     if sort not in allowed_sorts:
-        sort = '-discovered_at'
-    qs = qs.order_by(sort)
+        sort = '-event_date'
+    # Always add discovered_at as secondary sort for consistent ordering
+    if 'event_date' in sort:
+        qs = qs.order_by(sort, '-discovered_at')
+    else:
+        qs = qs.order_by(sort)
 
     # Pagination
     page = int(request.GET.get('page', 1))
@@ -396,6 +402,7 @@ def lead_detail_api(request, lead_id):
         'confidence': lead.confidence,
         'review_status': lead.review_status,
         'discovered_at': lead.discovered_at.isoformat(),
+        'event_date': lead.event_date.isoformat() if lead.event_date else None,
         'raw_data': lead.raw_data or {},
         'assignments': assignments,
         'state': lead.state,

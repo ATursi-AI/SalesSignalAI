@@ -429,7 +429,7 @@ def process_lead(platform, source_url, content, author='', posted_at=None,
     valid_extra = {
         'state', 'region', 'source_group', 'source_type',
         'contact_name', 'contact_phone', 'contact_email',
-        'contact_business', 'contact_address',
+        'contact_business', 'contact_address', 'event_date',
     }
     for k, v in extra_fields.items():
         if k in valid_extra and v:
