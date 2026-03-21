@@ -139,7 +139,7 @@ class BusinessProfile(models.Model):
     # Theme preference
     theme_preference = models.CharField(
         max_length=10, choices=[('dark', 'Dark'), ('light', 'Light')],
-        default='dark',
+        default='light',
     )
 
     # Welcome banner tracking
