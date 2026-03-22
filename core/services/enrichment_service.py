@@ -114,7 +114,7 @@ def _call_gemini_enrichment(respondent, address, city, state, zip_code):
         '"source": "", "confidence": "high/medium/low"}'
     )
 
-    model_name = 'gemini-2.0-flash'
+    model_name = 'gemini-3-flash-preview'
     url = f'https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent'
 
     try:
@@ -125,7 +125,7 @@ def _call_gemini_enrichment(respondent, address, city, state, zip_code):
             json={
                 'contents': [{'parts': [{'text': prompt}]}],
                 'generationConfig': {
-                    'maxOutputTokens': 512,
+                    'maxOutputTokens': 4096,
                     'temperature': 0.2,
                 },
             },
@@ -137,13 +137,23 @@ def _call_gemini_enrichment(respondent, address, city, state, zip_code):
             return None
 
         data = resp.json()
-        text = data['candidates'][0]['content']['parts'][0]['text']
+        # Extract text, skipping thinking/thought parts
+        parts = data['candidates'][0]['content']['parts']
+        text = ''
+        for part in parts:
+            if 'text' in part:
+                text += part['text']
 
         # Strip markdown code fences if present
         text = re.sub(r'^```(?:json)?\s*', '', text.strip())
         text = re.sub(r'\s*```$', '', text.strip())
 
-        result = json.loads(text)
+        # Extract JSON object even if surrounded by extra text
+        match = re.search(r'\{[^{}]*\}', text, re.DOTALL)
+        if not match:
+            logger.error(f'[Enrichment] No JSON found in response: {text[:200]}')
+            return None
+        result = json.loads(match.group())
         logger.info(f'[Enrichment] Found: phone={result.get("phone")}, email={result.get("email")}')
         return result
 
