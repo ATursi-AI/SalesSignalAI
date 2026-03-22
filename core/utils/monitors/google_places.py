@@ -38,46 +38,22 @@ PLACES_BASE = 'https://places.googleapis.com/v1'
 # https://developers.google.com/maps/documentation/places/web-service/place-types
 CATEGORY_PLACE_TYPES = {
     'plumber': ['plumber'],
-    'electrical': ['electrician'],
     'electrician': ['electrician'],
-    'hvac': ['hvac_contractor'],
+    'hvac': ['electrician'],
     'roofer': ['roofing_contractor'],
     'painter': ['painter'],
-    'landscaper': ['landscaper'],
-    'contractor': ['general_contractor'],
-    'pest-control': ['pest_control'],
     'locksmith': ['locksmith'],
     'moving': ['moving_company'],
-    'cleaning': ['house_cleaning_service', 'maid_service'],
-    'tree-service': ['tree_service'],
-    'fencing': ['fence_contractor'],
-    'flooring': ['flooring_contractor'],
-    'handyman': ['handyman'],
     'dentist': ['dentist'],
     'lawyer': ['lawyer'],
-    'accountant-cpa': ['accountant', 'tax_preparation_service'],
-    'auto-repair': ['auto_repair'],
     'insurance': ['insurance_agency'],
     'real-estate': ['real_estate_agency'],
     'veterinarian': ['veterinary_care'],
-    'therapist': ['counselor', 'psychologist'],
     'chiropractor': ['chiropractor'],
-    'carpet-cleaning': ['carpet_cleaning_service'],
-    'commercial-cleaning': ['janitorial_service'],
-    'concrete-masonry': ['masonry_contractor'],
-    'drywall': ['drywall_contractor'],
-    'garage-door': ['garage_door_supplier'],
-    'gutter': ['gutter_cleaning_service'],
-    'home-inspection': ['home_inspector'],
-    'kitchen-remodeling': ['kitchen_remodeler'],
-    'bathroom-remodeling': ['bathroom_remodeler'],
-    'pool-service': ['swimming_pool_contractor'],
-    'septic': ['septic_system_service'],
-    'water-damage': ['water_damage_restoration_service'],
-    'window-install': ['window_installation_service'],
     'barber': ['barber_shop'],
     'beauty-salon': ['beauty_salon'],
     'tattoo': ['tattoo_parlor'],
+    'laundromat': ['laundromat'],
 }
 
 # Chain/franchise exclusion — skip these from all lead types
@@ -737,6 +713,7 @@ def monitor_google_places(
     radius=10000,
     max_reviews=5,
     dry_run=False,
+    no_website_only=False,
 ):
     """
     Main Google Places API monitor. Searches for businesses by category
@@ -856,13 +833,14 @@ def monitor_google_places(
                 continue
             seen_place_ids.add(place_id)
 
-            # 1. Check for closed businesses (from Nearby Search data)
-            _process_closed_business(place, category, city, dry_run, stats)
+            if not no_website_only:
+                # 1. Check for closed businesses (from Nearby Search data)
+                _process_closed_business(place, category, city, dry_run, stats)
 
-            # 2. Track new businesses
-            _process_new_business(place, category, city, dry_run, stats)
+                # 2. Track new businesses
+                _process_new_business(place, category, city, dry_run, stats)
 
-            # 3. Get Place Details for reviews and Q&A
+            # 3. Get Place Details for reviews, Q&A, and website check
             # Rate limit: 100ms between detail requests
             time.sleep(0.1)
 
@@ -871,14 +849,15 @@ def monitor_google_places(
                 stats['errors'] += 1
                 continue
 
-            # 4. Process negative reviews
-            _process_negative_reviews(
-                place, detail, category, city,
-                max_reviews, dry_run, stats,
-            )
+            if not no_website_only:
+                # 4. Process negative reviews
+                _process_negative_reviews(
+                    place, detail, category, city,
+                    max_reviews, dry_run, stats,
+                )
 
-            # 5. Process Q&A
-            _process_qna(detail, category, city, dry_run, stats)
+                # 5. Process Q&A
+                _process_qna(detail, category, city, dry_run, stats)
 
             # 6. Detect businesses with no website
             _process_no_website(place, detail, category, city, dry_run, stats)

@@ -57,6 +57,16 @@ class Command(BaseCommand):
             action='store_true',
             help='Run across all NYC boroughs + Long Island',
         )
+        parser.add_argument(
+            '--no-website-only',
+            action='store_true',
+            help='Only detect businesses without websites (skip reviews, closed, new, Q&A)',
+        )
+        parser.add_argument(
+            '--top-no-website',
+            action='store_true',
+            help='Scan top 10 categories for no-website prospects across all boroughs',
+        )
 
     def handle(self, *args, **options):
         dry_run = options['dry_run']
@@ -64,14 +74,24 @@ class Command(BaseCommand):
         radius = options['radius']
         max_reviews = options['max_reviews']
         all_boroughs = options['all_boroughs']
+        no_website_only = options['no_website_only']
 
         # Parse comma-separated categories
         categories = None
         if options['category']:
             categories = [c.strip() for c in options['category'].split(',') if c.strip()]
 
+        # --top-no-website shortcut
+        if options['top_no_website']:
+            categories = [
+                'plumber', 'electrician', 'roofer', 'locksmith', 'painter',
+                'moving', 'barber', 'beauty-salon', 'tattoo', 'laundromat',
+            ]
+            all_boroughs = True
+            no_website_only = True
+
         if all_boroughs:
-            self._run_all_boroughs(categories, radius, max_reviews, dry_run)
+            self._run_all_boroughs(categories, radius, max_reviews, dry_run, no_website_only)
             return
 
         self.stdout.write(self.style.HTTP_INFO('Starting Google Places API Monitor...'))
@@ -89,6 +109,7 @@ class Command(BaseCommand):
             radius=radius,
             max_reviews=max_reviews,
             dry_run=dry_run,
+            no_website_only=no_website_only,
         )
 
         # Check for config errors
@@ -215,7 +236,7 @@ class Command(BaseCommand):
         'Suffolk County, NY',
     ]
 
-    def _run_all_boroughs(self, categories, radius, max_reviews, dry_run):
+    def _run_all_boroughs(self, categories, radius, max_reviews, dry_run, no_website_only=False):
         """Run monitor across all NYC boroughs + Long Island."""
         self.stdout.write(self.style.HTTP_INFO('Starting Google Places Monitor — ALL BOROUGHS'))
         if dry_run:
@@ -239,6 +260,7 @@ class Command(BaseCommand):
                 radius=radius,
                 max_reviews=max_reviews,
                 dry_run=dry_run,
+                no_website_only=no_website_only,
             )
 
             if stats.get('error'):
