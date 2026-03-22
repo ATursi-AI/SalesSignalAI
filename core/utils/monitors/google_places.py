@@ -75,6 +75,38 @@ CATEGORY_PLACE_TYPES = {
     'septic': ['septic_system_service'],
     'water-damage': ['water_damage_restoration_service'],
     'window-install': ['window_installation_service'],
+    'barber': ['barber_shop'],
+    'beauty-salon': ['beauty_salon'],
+    'tattoo': ['tattoo_parlor'],
+}
+
+# Chain/franchise exclusion — skip these from all lead types
+EXCLUDED_BUSINESSES = {
+    'home depot',
+    'home services at the home depot',
+    'national grid',
+    'pseg',
+    'con edison',
+    'abm facility',
+    'abm - facility',
+    "lowe's",
+    'lowes',
+    'ace hardware',
+    'menards',
+    'walmart',
+    'costco',
+    'target',
+    'best buy',
+    'sears',
+    'amazon',
+    'spectrum',
+    'verizon',
+    'at&t',
+    't-mobile',
+    'sprint',
+    'usps',
+    'fedex',
+    'ups store',
 }
 
 # New businesses in these categories create cross-sell leads
@@ -786,6 +818,8 @@ def monitor_google_places(
         'dry_run_matches': [],
     }
 
+    seen_place_ids = set()
+
     for category in categories:
         place_types = CATEGORY_PLACE_TYPES.get(category)
         if not place_types:
@@ -811,6 +845,16 @@ def monitor_google_places(
             place_id = place.get('id', '')
             if not place_id:
                 continue
+
+            # Chain/franchise exclusion
+            biz_name_check = place.get('displayName', {}).get('text', '')
+            if any(excluded in biz_name_check.lower() for excluded in EXCLUDED_BUSINESSES):
+                continue
+
+            # Cross-category deduplication
+            if place_id in seen_place_ids:
+                continue
+            seen_place_ids.add(place_id)
 
             # 1. Check for closed businesses (from Nearby Search data)
             _process_closed_business(place, category, city, dry_run, stats)

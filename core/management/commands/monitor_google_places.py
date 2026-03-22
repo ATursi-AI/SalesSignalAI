@@ -52,17 +52,27 @@ class Command(BaseCommand):
             default=5,
             help='Max negative reviews to process per business (default: 5)',
         )
+        parser.add_argument(
+            '--all-boroughs',
+            action='store_true',
+            help='Run across all NYC boroughs + Long Island',
+        )
 
     def handle(self, *args, **options):
         dry_run = options['dry_run']
         city = options['city']
         radius = options['radius']
         max_reviews = options['max_reviews']
+        all_boroughs = options['all_boroughs']
 
         # Parse comma-separated categories
         categories = None
         if options['category']:
             categories = [c.strip() for c in options['category'].split(',') if c.strip()]
+
+        if all_boroughs:
+            self._run_all_boroughs(categories, radius, max_reviews, dry_run)
+            return
 
         self.stdout.write(self.style.HTTP_INFO('Starting Google Places API Monitor...'))
         if dry_run:
@@ -193,4 +203,74 @@ class Command(BaseCommand):
         if stats.get('errors'):
             self.stdout.write(self.style.WARNING(f'  Errors:               {stats["errors"]}'))
 
+        self.stdout.write(self.style.SUCCESS('Done.'))
+
+    ALL_BOROUGHS = [
+        'Queens, NY',
+        'Brooklyn, NY',
+        'Manhattan, NY',
+        'Bronx, NY',
+        'Staten Island, NY',
+        'Nassau County, NY',
+        'Suffolk County, NY',
+    ]
+
+    def _run_all_boroughs(self, categories, radius, max_reviews, dry_run):
+        """Run monitor across all NYC boroughs + Long Island."""
+        self.stdout.write(self.style.HTTP_INFO('Starting Google Places Monitor — ALL BOROUGHS'))
+        if dry_run:
+            self.stdout.write(self.style.WARNING('  DRY RUN — no leads will be created'))
+        self.stdout.write(f'  Radius: {radius}m')
+        self.stdout.write(f'  Categories: {", ".join(categories or CATEGORY_PLACE_TYPES.keys())}')
+        self.stdout.write('')
+
+        totals = {
+            'businesses_found': 0, 'negative_reviews': 0, 'closed_businesses': 0,
+            'new_businesses': 0, 'qna_questions': 0, 'no_website': 0,
+            'created': 0, 'duplicates': 0, 'assigned': 0, 'errors': 0,
+            'categories_searched': 0,
+        }
+
+        for borough in self.ALL_BOROUGHS:
+            self.stdout.write(self.style.HTTP_INFO(f'\n  ── {borough} ──'))
+            stats = monitor_google_places(
+                categories=categories,
+                city=borough,
+                radius=radius,
+                max_reviews=max_reviews,
+                dry_run=dry_run,
+            )
+
+            if stats.get('error'):
+                self.stdout.write(self.style.ERROR(f'    ERROR: {stats["error"]}'))
+                continue
+
+            self.stdout.write(
+                f'    Businesses: {stats["businesses_found"]} | '
+                f'Reviews: {stats["negative_reviews"]} | '
+                f'Closed: {stats["closed_businesses"]} | '
+                f'New: {stats["new_businesses"]} | '
+                f'No-website: {stats["no_website"]} | '
+                f'Created: {stats["created"]} | '
+                f'Dupes: {stats["duplicates"]}'
+            )
+
+            for key in totals:
+                totals[key] += stats.get(key, 0)
+
+        self.stdout.write('')
+        self.stdout.write(self.style.SUCCESS('═══ COMBINED TOTALS ═══'))
+        self.stdout.write(f'  Boroughs searched:    {len(self.ALL_BOROUGHS)}')
+        self.stdout.write(f'  Categories searched:  {totals["categories_searched"]}')
+        self.stdout.write(f'  Businesses found:     {totals["businesses_found"]}')
+        self.stdout.write(f'  Negative reviews:     {totals["negative_reviews"]}')
+        self.stdout.write(f'  Closed businesses:    {totals["closed_businesses"]}')
+        self.stdout.write(f'  New businesses:       {totals["new_businesses"]}')
+        self.stdout.write(f'  No-website prospects: {totals["no_website"]}')
+        if not dry_run:
+            self.stdout.write(f'  Leads created:        {totals["created"]}')
+            self.stdout.write(f'  Duplicates:           {totals["duplicates"]}')
+            self.stdout.write(f'  Assignments:          {totals["assigned"]}')
+        if totals['errors']:
+            self.stdout.write(self.style.WARNING(f'  Errors:               {totals["errors"]}'))
         self.stdout.write(self.style.SUCCESS('Done.'))
