@@ -253,11 +253,27 @@ h4 { font-size: 1.25rem; }
 .pv-logo-icon,
 .login-logo-icon,
 .signup-logo-icon {
-    animation: signal-pulse 2.5s ease-in-out infinite;
+    position: relative;
+    overflow: visible;
 }
-@keyframes signal-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.5); }
-    50% { box-shadow: 0 0 0 8px rgba(13, 148, 136, 0); }
+.brand-icon i,
+.pv-logo-icon i,
+.login-logo-icon i,
+.signup-logo-icon i {
+    animation: icon-signal-pulse 2s ease-in-out infinite;
+    display: inline-block;
+}
+@keyframes icon-signal-pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+        text-shadow: 0 0 0 rgba(255, 255, 255, 0);
+    }
+    50% {
+        transform: scale(1.15);
+        opacity: 0.9;
+        text-shadow: 0 0 12px rgba(255, 255, 255, 0.8), 0 0 24px rgba(13, 148, 136, 0.5);
+    }
 }
 
 .sidebar-brand .brand-text {
