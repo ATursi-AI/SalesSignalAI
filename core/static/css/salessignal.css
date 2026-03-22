@@ -246,6 +246,12 @@ h4 { font-size: 1.25rem; }
     font-size: 1.25rem;
     color: white;
     flex-shrink: 0;
+    position: relative;
+    animation: signal-pulse 2.5s ease-in-out infinite;
+}
+@keyframes signal-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.5); }
+    50% { box-shadow: 0 0 0 8px rgba(13, 148, 136, 0); }
 }
 
 .sidebar-brand .brand-text {

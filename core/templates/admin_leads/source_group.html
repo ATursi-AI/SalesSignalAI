@@ -40,6 +40,17 @@
 }
 .type-tab.active .tab-count { background: rgba(255,255,255,0.25); }
 
+/* ── Source Group Nav ── */
+.group-nav { display: flex; gap: 6px; margin-bottom: 16px; }
+.group-nav a {
+    padding: 7px 16px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;
+    text-decoration: none; color: var(--text-secondary); background: var(--bg-surface);
+    border: 1px solid var(--border-subtle); transition: all 0.15s;
+    font-family: 'Exo 2', sans-serif;
+}
+.group-nav a:hover { border-color: var(--accent-blue); color: var(--text-primary); }
+.group-nav a.active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+
 /* ── Filters Bar ── */
 .filters-bar {
     background: var(--bg-surface);
@@ -320,6 +331,14 @@
 {% endblock %}
 
 {% block content %}
+<!-- Source Group Navigation -->
+<div class="group-nav">
+    <a href="/admin-leads/">Command Center</a>
+    <a href="/admin-leads/public-records/" {% if group_slug == 'public-records' %}class="active"{% endif %}>Public Records</a>
+    <a href="/admin-leads/social-media/" {% if group_slug == 'social-media' %}class="active"{% endif %}>Social Media</a>
+    <a href="/admin-leads/reviews/" {% if group_slug == 'reviews' %}class="active"{% endif %}>Reviews</a>
+</div>
+
 <!-- Type Tabs -->
 <div class="type-tabs">
     <div class="type-tab active" data-type="" onclick="selectTab(this, '')">

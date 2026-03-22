@@ -243,8 +243,7 @@ def lead_repository(request):
     source_overview = []
     for group_key, group_label in [('public_records', 'Public Records'),
                                      ('social_media', 'Social Media'),
-                                     ('reviews', 'Reviews'),
-                                     ('weather', 'Weather')]:
+                                     ('reviews', 'Reviews')]:
         group_total = unreviewed.filter(source_group=group_key).count()
         sub_types = []
         for type_key, type_label in GROUP_SOURCE_TYPES.get(group_key, []):
