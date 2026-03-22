@@ -11,12 +11,12 @@ PUBLIC_PREFIXES = (
 
 # Paths restricted to staff/admin only
 ADMIN_PREFIXES = (
-    '/admin-leads/', '/admin/', '/monitors/',
+    '/admin/', '/monitors/',
 )
 
 # Paths restricted to salespeople + staff
 SALES_PREFIXES = (
-    '/sales/',
+    '/sales/', '/admin-leads/',
 )
 
 # Paths restricted to customers + staff (the main dashboard)

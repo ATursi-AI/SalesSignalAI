@@ -1,16 +1,26 @@
 """
 Lead Repository — Command Center + Source Group pages.
-Internal staff tool for viewing, filtering, and managing ALL incoming leads.
-Protected: staff/superuser only.
+Internal tool for staff and salespeople.
 """
 import json
-from django.contrib.admin.views.decorators import staff_member_required
+from functools import wraps
+from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
+
+
+def staff_or_salesperson_required(view_func):
+    @wraps(view_func)
+    @login_required
+    def wrapper(request, *args, **kwargs):
+        if request.user.is_staff or request.user.is_superuser or hasattr(request.user, 'salesperson_profile'):
+            return view_func(request, *args, **kwargs)
+        return HttpResponseForbidden('Access denied.')
+    return wrapper
 
 from core.models.leads import Lead, LeadAssignment
 from core.models.business import BusinessProfile, ServiceCategory
@@ -201,7 +211,7 @@ def _apply_filters(qs, request):
 # Command Center (main /admin-leads/ page)
 # -------------------------------------------------------------------
 
-@staff_member_required
+@staff_or_salesperson_required
 @ensure_csrf_cookie
 def lead_repository(request):
     """Command Center — dashboard with urgency cards, source overview, unified feed."""
@@ -281,7 +291,7 @@ def lead_repository(request):
 # Source Group Pages (/admin-leads/<group>/)
 # -------------------------------------------------------------------
 
-@staff_member_required
+@staff_or_salesperson_required
 @ensure_csrf_cookie
 def source_group_page(request, group):
     """Source group page with sub-tabs for each source type."""
@@ -331,7 +341,7 @@ def source_group_page(request, group):
 # JSON API (serves both Command Center and Source Group pages)
 # -------------------------------------------------------------------
 
-@staff_member_required
+@staff_or_salesperson_required
 def lead_repository_api(request):
     """JSON API for fetching filtered leads."""
     qs = Lead.objects.select_related('detected_service_type').prefetch_related(
@@ -382,7 +392,7 @@ def lead_repository_api(request):
 # Lead Detail API
 # -------------------------------------------------------------------
 
-@staff_member_required
+@staff_or_salesperson_required
 def lead_detail_api(request, lead_id):
     """JSON API for fetching full lead detail."""
     lead = get_object_or_404(Lead.objects.select_related('detected_service_type'), id=lead_id)
@@ -434,7 +444,7 @@ def lead_detail_api(request, lead_id):
 # Lead Actions (single and bulk)
 # -------------------------------------------------------------------
 
-@staff_member_required
+@staff_or_salesperson_required
 @require_POST
 def lead_action(request, lead_id):
     """Handle single lead actions: approve, reject, assign, delete, etc."""
@@ -539,7 +549,7 @@ def lead_action(request, lead_id):
     return JsonResponse({'error': 'Unknown action'}, status=400)
 
 
-@staff_member_required
+@staff_or_salesperson_required
 @require_POST
 def lead_bulk_action(request):
     """Handle bulk actions on multiple leads."""
@@ -604,7 +614,7 @@ def lead_bulk_action(request):
     return JsonResponse({'error': 'Unknown action'}, status=400)
 
 
-@staff_member_required
+@staff_or_salesperson_required
 @require_POST
 def lead_delete_all(request):
     """Delete ALL leads from the database. Requires confirmation token."""
