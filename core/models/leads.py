@@ -143,6 +143,19 @@ class Lead(models.Model):
     contact_business = models.CharField(max_length=200, blank=True)
     contact_address = models.TextField(blank=True)
 
+    # Enrichment tracking
+    ENRICHMENT_STATUS_CHOICES = [
+        ('not_enriched', 'Not Enriched'),
+        ('enriched', 'Enriched'),
+        ('enrichment_failed', 'Enrichment Failed'),
+        ('manually_enriched', 'Manually Enriched'),
+    ]
+    enrichment_status = models.CharField(
+        max_length=20, choices=ENRICHMENT_STATUS_CHOICES,
+        default='not_enriched', db_index=True,
+    )
+    enrichment_date = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         ordering = ['-event_date', '-discovered_at']
 

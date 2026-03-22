@@ -427,6 +427,35 @@
     transition: all 0.15s;
 }
 .btn-delete-detail:hover { background: rgba(255, 71, 87, 0.22); }
+.btn-enrich {
+    background: rgba(139, 92, 246, 0.12);
+    color: #8B5CF6;
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    border-radius: var(--radius-sm);
+    padding: 7px 16px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.btn-enrich:hover { background: rgba(139, 92, 246, 0.22); }
+.btn-enrich:disabled { opacity: 0.5; cursor: not-allowed; }
+.enrichment-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 14px 22px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    z-index: 9999;
+    animation: fadeInUp 0.3s;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.enrichment-toast.success { background: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
+.enrichment-toast.warning { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+.enrichment-toast.info { background: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 .bulk-bar .btn-bulk-delete {
     background: rgba(255, 71, 87, 0.35);
     border: 1px solid rgba(255, 71, 87, 0.5);
@@ -620,6 +649,16 @@
         </select>
     </div>
     <div class="filter-group">
+        <label>Contact</label>
+        <select id="filterContact" onchange="applyFilters()">
+            <option value="">All</option>
+            <option value="has_phone">Has Phone</option>
+            <option value="needs_enrichment">Needs Enrichment</option>
+            <option value="enriched">Enriched</option>
+            <option value="enrichment_failed">Failed</option>
+        </select>
+    </div>
+    <div class="filter-group">
         <label>Location</label>
         <input type="text" id="filterLocation" placeholder="City or ZIP..." oninput="debounceApply()">
     </div>
@@ -652,8 +691,10 @@
         {% endfor %}
     </select>
     <button onclick="bulkAction('assign')"><i class="bi bi-person-plus"></i> Assign</button>
+    <button style="background:rgba(139,92,246,0.3);border:1px solid rgba(139,92,246,0.5);" onclick="enrichSelected()"><i class="bi bi-magic"></i> Enrich Selected</button>
     <button class="btn-bulk-delete" onclick="bulkDelete()"><i class="bi bi-trash3"></i> Delete</button>
     <div class="bulk-spacer"></div>
+    <div id="enrichProgressBar" style="display:none;font-size:0.8rem;color:#E0E7FF;"></div>
     <button onclick="clearSelection()"><i class="bi bi-x-circle"></i> Deselect</button>
 </div>
 
@@ -687,6 +728,7 @@
                     <th>Author</th>
                     <th>Status</th>
                     <th>Assigned</th>
+                    <th>Phone</th>
                     <th></th>
                 </tr>
             </thead>
@@ -818,6 +860,7 @@ async function fetchLeads() {
     const confidence = document.getElementById('filterConfidence').value;
     const urgency = document.getElementById('filterUrgency').value;
     const status = document.getElementById('filterStatus').value;
+    const contactStatus = document.getElementById('filterContact').value;
     const location = document.getElementById('filterLocation').value;
     const dateFrom = document.getElementById('filterDateFrom').value;
     const dateTo = document.getElementById('filterDateTo').value;
@@ -828,6 +871,7 @@ async function fetchLeads() {
     if (confidence) params.set('confidence', confidence);
     if (urgency) params.set('urgency', urgency);
     if (status) params.set('status', status);
+    if (contactStatus) params.set('contact_status', contactStatus);
     if (location) params.set('location', location);
     if (dateFrom) params.set('date_from', dateFrom);
     if (dateTo) params.set('date_to', dateTo);
@@ -916,6 +960,9 @@ function renderLeadRow(lead) {
             <td style="font-size:0.8rem;color:var(--text-secondary)">${escHtml(lead.author) || '-'}</td>
             <td><span class="badge badge-${lead.review_status}">${lead.review_status}</span></td>
             <td style="font-size:0.78rem;color:#A78BFA;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(assignedNames)}</td>
+            <td style="font-size:0.75rem;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(lead.contact_phone || '')}">
+                ${lead.contact_phone ? '<span style="color:var(--accent-emerald)"><i class="bi bi-telephone-fill"></i> ' + escHtml(lead.contact_phone) + '</span>' : (lead.enrichment_status === 'enriched' ? '<span style="color:var(--accent-amber)">No phone</span>' : '<span style="color:var(--text-muted)">—</span>')}
+            </td>
             <td class="cb-cell" onclick="event.stopPropagation()">
                 <button class="btn-delete-row" onclick="deleteLead(${lead.id})" title="Delete lead"><i class="bi bi-trash3"></i></button>
             </td>
@@ -1028,6 +1075,7 @@ function buildDetailPanel(lead) {
                 <button class="btn-approve" onclick="leadAction(${lead.id}, 'approve')"><i class="bi bi-check-lg"></i> Approve</button>
                 <button class="btn-reject" onclick="leadAction(${lead.id}, 'reject')"><i class="bi bi-x-lg"></i> Reject</button>
                 <button class="btn-unreview" onclick="leadAction(${lead.id}, 'unreview')"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+                <button class="btn-enrich" id="enrich-btn-${lead.id}" onclick="enrichLead(${lead.id})" ${lead.contact_phone ? 'title="Already has phone"' : ''}><i class="bi bi-magic"></i> Enrich</button>
                 <button class="btn-delete-detail" onclick="deleteLead(${lead.id})"><i class="bi bi-trash3"></i> Delete</button>
             </div>
 
@@ -1076,6 +1124,70 @@ async function leadAction(leadId, action) {
         const data = await resp.json();
         if (data.ok) fetchLeads();
     } catch (e) { console.error(e); }
+}
+
+async function enrichLead(leadId) {
+    const btn = document.getElementById('enrich-btn-' + leadId);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Enriching...'; }
+    try {
+        const resp = await fetch(`/admin-leads/detail/${leadId}/action/`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()},
+            body: JSON.stringify({action: 'enrich'}),
+        });
+        const data = await resp.json();
+        if (data.ok) {
+            if (data.result && data.result.skipped) {
+                showToast('Already has contact info', 'info');
+            } else if (data.result && data.result.found) {
+                let msg = 'Found:';
+                if (data.contact_phone) msg += ' ' + data.contact_phone;
+                if (data.contact_email) msg += ' | ' + data.contact_email;
+                showToast(msg, 'success');
+            } else {
+                showToast('No contact info found', 'warning');
+            }
+            fetchLeads();
+        }
+    } catch (e) { console.error(e); showToast('Enrichment error', 'warning'); }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-magic"></i> Enrich'; }
+}
+
+async function enrichSelected() {
+    const ids = Array.from(selectedLeads);
+    if (!ids.length) return;
+    const bar = document.getElementById('enrichProgressBar');
+    if (bar) bar.style.display = 'block';
+
+    let found = 0, notFound = 0, skipped = 0;
+    for (let i = 0; i < ids.length; i++) {
+        if (bar) bar.innerHTML = `<i class="bi bi-magic"></i> Enriching ${i + 1} of ${ids.length}...`;
+        try {
+            const resp = await fetch(`/admin-leads/detail/${ids[i]}/action/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()},
+                body: JSON.stringify({action: 'enrich'}),
+            });
+            const data = await resp.json();
+            if (data.ok) {
+                if (data.result && data.result.skipped) skipped++;
+                else if (data.result && data.result.found) found++;
+                else notFound++;
+            }
+        } catch (e) { notFound++; }
+        if (i < ids.length - 1) await new Promise(r => setTimeout(r, 1000));
+    }
+    if (bar) bar.style.display = 'none';
+    showToast(`Enriched ${ids.length} leads: ${found} found, ${notFound} not found${skipped ? ', ' + skipped + ' skipped' : ''}`, found > 0 ? 'success' : 'warning');
+    fetchLeads();
+}
+
+function showToast(msg, type) {
+    const el = document.createElement('div');
+    el.className = 'enrichment-toast ' + (type || 'info');
+    el.innerHTML = msg;
+    document.body.appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 4000);
 }
 
 async function assignLead(leadId) {
@@ -1253,6 +1365,7 @@ function clearFilters() {
     document.getElementById('filterConfidence').value = '';
     document.getElementById('filterUrgency').value = '';
     document.getElementById('filterStatus').value = '';
+    document.getElementById('filterContact').value = '';
     document.getElementById('filterLocation').value = '';
     document.getElementById('filterDateFrom').value = '';
     document.getElementById('filterDateTo').value = '';

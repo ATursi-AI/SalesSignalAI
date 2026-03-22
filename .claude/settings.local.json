@@ -166,7 +166,9 @@
       "Bash(venv/Scripts/python.exe manage.py makemigrations core --name theme_default_light)",
       "Bash(venv/Scripts/python.exe manage.py makemigrations core --name add_event_date_to_lead)",
       "Bash(venv/Scripts/python.exe manage.py backfill_event_dates --dry-run)",
-      "Bash(venv/Scripts/python.exe manage.py backfill_event_dates)"
+      "Bash(venv/Scripts/python.exe manage.py backfill_event_dates)",
+      "Bash(grep -n \"enrich\" /c/Users/aturs/Documents/AI_Engineering_Course/SalesSignalAI/core/templates/admin_leads/*.html)",
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name add_enrichment_fields)"
     ]
   }
 }

@@ -262,9 +262,12 @@
 .detail-meta-item .meta-label { font-size: 0.65rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.4px; }
 .detail-meta-item .meta-value { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-top: 1px; }
 .action-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
-.btn-approve, .btn-reject, .btn-unreview, .btn-delete-detail {
+.btn-approve, .btn-reject, .btn-unreview, .btn-delete-detail, .btn-enrich {
     border-radius: var(--radius-sm); padding: 5px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.15s;
 }
+.btn-enrich { background: rgba(139,92,246,0.12); color: #8B5CF6; border: 1px solid rgba(139,92,246,0.25); }
+.btn-enrich:hover { background: rgba(139,92,246,0.22); }
+.btn-enrich:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-approve { background: rgba(16,185,129,0.15); color: var(--accent-emerald); border: 1px solid rgba(16,185,129,0.3); }
 .btn-reject { background: rgba(255,71,87,0.12); color: var(--accent-coral); border: 1px solid rgba(255,71,87,0.25); }
 .btn-unreview { background: rgba(107,107,128,0.12); color: var(--text-secondary); border: 1px solid rgba(107,107,128,0.25); }
@@ -385,8 +388,10 @@
         {% endfor %}
     </select>
     <button onclick="bulkAction('assign')"><i class="bi bi-person-plus"></i> Assign</button>
+    <button style="background:rgba(139,92,246,0.3);border:1px solid rgba(139,92,246,0.5);" onclick="enrichSelected()"><i class="bi bi-magic"></i> Enrich Selected</button>
     <button class="btn-bulk-delete" onclick="bulkDelete()"><i class="bi bi-trash3"></i> Delete</button>
     <div class="bulk-spacer"></div>
+    <div id="enrichProgressBar" style="display:none;font-size:0.8rem;"></div>
     <button onclick="clearSelection()"><i class="bi bi-x-circle"></i> Deselect</button>
 </div>
 
@@ -646,6 +651,7 @@ function buildDetailPanel(lead) {
                 <button class="btn-approve" onclick="leadAction(${lead.id},'approve')"><i class="bi bi-check-lg"></i> Approve</button>
                 <button class="btn-reject" onclick="leadAction(${lead.id},'reject')"><i class="bi bi-x-lg"></i> Reject</button>
                 <button class="btn-unreview" onclick="leadAction(${lead.id},'unreview')"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+                <button class="btn-enrich" id="enrich-btn-${lead.id}" onclick="enrichLead(${lead.id})"><i class="bi bi-magic"></i> Enrich</button>
                 <button class="btn-delete-detail" onclick="deleteLead(${lead.id})"><i class="bi bi-trash3"></i> Delete</button>
             </div>
             <h4 style="margin-top:14px">Assign</h4>
@@ -669,6 +675,22 @@ function buildDetailPanel(lead) {
 async function leadAction(id, action) {
     try { const r = await fetch(`/admin-leads/detail/${id}/action/`, { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()}, body:JSON.stringify({action}) }); const d = await r.json(); if(d.ok) fetchLeads(); } catch(e){console.error(e);}
 }
+async function enrichLead(id) {
+    const btn = document.getElementById('enrich-btn-'+id);
+    if(btn){btn.disabled=true;btn.innerHTML='<i class="bi bi-hourglass-split"></i> Enriching...';}
+    try { const r = await fetch(`/admin-leads/detail/${id}/action/`, {method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},body:JSON.stringify({action:'enrich'})});
+        const d = await r.json();
+        if(d.ok){
+            if(d.result&&d.result.skipped) showToast('Already has contact info','info');
+            else if(d.result&&d.result.found){let m='Found:';if(d.contact_phone)m+=' '+d.contact_phone;if(d.contact_email)m+=' | '+d.contact_email;showToast(m,'success');}
+            else showToast('No contact info found','warning');
+            fetchLeads();
+        }
+    } catch(e){console.error(e);showToast('Enrichment error','warning');}
+    if(btn){btn.disabled=false;btn.innerHTML='<i class="bi bi-magic"></i> Enrich';}
+}
+function showToast(msg,type){const el=document.createElement('div');el.style.cssText='position:fixed;bottom:24px;right:24px;padding:14px 22px;border-radius:10px;font-size:0.85rem;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.15);';if(type==='success'){el.style.background='#D1FAE5';el.style.color='#065F46';el.style.border='1px solid #6EE7B7';}else if(type==='warning'){el.style.background='#FEF3C7';el.style.color='#92400E';el.style.border='1px solid #FCD34D';}else{el.style.background='#DBEAFE';el.style.color='#1E40AF';el.style.border='1px solid #93C5FD';}el.innerHTML=msg;document.body.appendChild(el);setTimeout(()=>{el.style.opacity='0';setTimeout(()=>el.remove(),300);},4000);}
+
 async function assignLead(id) {
     const biz = document.getElementById('assignSelect-'+id).value; if(!biz) return;
     try { const r = await fetch(`/admin-leads/detail/${id}/action/`, { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()}, body:JSON.stringify({action:'assign',business_id:parseInt(biz)}) }); const d = await r.json(); if(d.ok) fetchLeads(); else if(d.error) alert(d.error); } catch(e){console.error(e);}
@@ -683,6 +705,22 @@ async function sendToSales(id) {
 async function deleteLead(id) {
     if(!confirm('Delete this lead permanently?')) return;
     try { const r = await fetch(`/admin-leads/detail/${id}/action/`, { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()}, body:JSON.stringify({action:'delete'}) }); const d = await r.json(); if(d.ok){selectedLeads.delete(id);fetchLeads();} } catch(e){console.error(e);}
+}
+async function enrichSelected() {
+    const ids = Array.from(selectedLeads); if(!ids.length) return;
+    const bar = document.getElementById('enrichProgressBar');
+    if(bar) bar.style.display='block';
+    let found=0,notFound=0,skipped=0;
+    for(let i=0;i<ids.length;i++){
+        if(bar) bar.innerHTML=`<i class="bi bi-magic"></i> Enriching ${i+1} of ${ids.length}...`;
+        try{const r=await fetch(`/admin-leads/detail/${ids[i]}/action/`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},body:JSON.stringify({action:'enrich'})});
+            const d=await r.json();if(d.ok){if(d.result&&d.result.skipped)skipped++;else if(d.result&&d.result.found)found++;else notFound++;}
+        }catch(e){notFound++;}
+        if(i<ids.length-1) await new Promise(r=>setTimeout(r,1000));
+    }
+    if(bar) bar.style.display='none';
+    showToast(`Enriched ${ids.length} leads: ${found} found, ${notFound} not found${skipped?', '+skipped+' skipped':''}`, found>0?'success':'warning');
+    fetchLeads();
 }
 async function bulkDelete() {
     const ids = Array.from(selectedLeads); if(!ids.length) return;

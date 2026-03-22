@@ -15,6 +15,7 @@ from django.views.decorators.http import require_POST
 from core.models.leads import Lead, LeadAssignment
 from core.models.business import BusinessProfile, ServiceCategory
 from core.models.sales import SalesPerson, SalesProspect
+from core.services.enrichment_service import enrich_lead
 
 # Source group slug -> model value mapping
 GROUP_SLUG_MAP = {
@@ -122,7 +123,9 @@ def _serialize_lead(lead, now, platform_display):
         'region': lead.region,
         'contact_name': lead.contact_name,
         'contact_phone': lead.contact_phone,
+        'contact_email': lead.contact_email,
         'contact_business': lead.contact_business,
+        'enrichment_status': lead.enrichment_status,
     }
 
 
@@ -180,6 +183,16 @@ def _apply_filters(qs, request):
         qs = qs.filter(source_type=source_type)
     if source_group:
         qs = qs.filter(source_group=source_group)
+
+    contact_status = request.GET.get('contact_status')
+    if contact_status == 'has_phone':
+        qs = qs.exclude(contact_phone='')
+    elif contact_status == 'needs_enrichment':
+        qs = qs.filter(contact_phone='', enrichment_status='not_enriched')
+    elif contact_status == 'enriched':
+        qs = qs.filter(enrichment_status='enriched')
+    elif contact_status == 'enrichment_failed':
+        qs = qs.filter(enrichment_status='enrichment_failed')
 
     return qs
 
@@ -505,6 +518,19 @@ def lead_action(request, lead_id):
         )
         return JsonResponse({'ok': True, 'message': 'Sent to sales pipeline'})
 
+    elif action == 'enrich':
+        result = enrich_lead(lead)
+        lead.refresh_from_db()
+        return JsonResponse({
+            'ok': True,
+            'result': result,
+            'contact_phone': lead.contact_phone,
+            'contact_email': lead.contact_email,
+            'contact_name': lead.contact_name,
+            'contact_business': lead.contact_business,
+            'enrichment_status': lead.enrichment_status,
+        })
+
     elif action == 'delete':
         lead_id = lead.id
         lead.delete()
@@ -551,6 +577,24 @@ def lead_bulk_action(request):
         return JsonResponse({
             'ok': True, 'count': count,
             'assigned': created_count, 'review_status': 'assigned',
+        })
+
+    elif action == 'enrich':
+        # Enrich leads one by one, return summary
+        found = 0
+        not_found = 0
+        skipped = 0
+        for lead in leads:
+            result = enrich_lead(lead)
+            if result.get('skipped'):
+                skipped += 1
+            elif result.get('found'):
+                found += 1
+            else:
+                not_found += 1
+        return JsonResponse({
+            'ok': True, 'count': count,
+            'found': found, 'not_found': not_found, 'skipped': skipped,
         })
 
     elif action == 'delete':
