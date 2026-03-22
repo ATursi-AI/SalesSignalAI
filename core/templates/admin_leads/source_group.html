@@ -646,12 +646,19 @@ function buildDetailPanel(lead) {
                 <div class="detail-meta-item"><div class="meta-label">State</div><div class="meta-value">${escHtml(lead.state||'-')}</div></div>
                 <div class="detail-meta-item"><div class="meta-label">Region</div><div class="meta-value">${escHtml(lead.region||lead.detected_location||'-')}</div></div>
             </div>
+            <h4 style="margin-top:14px">Contact Info</h4>
+            <div class="detail-meta-grid" style="margin-bottom:8px;">
+                <div class="detail-meta-item"><div class="meta-label">Name</div><div class="meta-value" id="contact-name-${lead.id}">${escHtml(lead.contact_name)||'<span style="color:var(--text-muted)">—</span>'}</div></div>
+                <div class="detail-meta-item"><div class="meta-label">Phone</div><div class="meta-value" id="contact-phone-${lead.id}">${lead.contact_phone?'<span style="color:var(--accent-emerald)"><i class="bi bi-telephone-fill"></i> '+escHtml(lead.contact_phone)+'</span>':'<span style="color:var(--text-muted)">—</span>'}</div></div>
+                <div class="detail-meta-item"><div class="meta-label">Email</div><div class="meta-value" id="contact-email-${lead.id}">${lead.contact_email?'<a href="mailto:'+escHtml(lead.contact_email)+'" style="color:var(--accent-blue)">'+escHtml(lead.contact_email)+'</a>':'<span style="color:var(--text-muted)">—</span>'}</div></div>
+                <div class="detail-meta-item"><div class="meta-label">Business</div><div class="meta-value" id="contact-biz-${lead.id}">${escHtml(lead.contact_business)||'<span style="color:var(--text-muted)">—</span>'}</div></div>
+            </div>
             <h4 style="margin-top:14px">Actions</h4>
             <div class="action-buttons">
                 <button class="btn-approve" onclick="leadAction(${lead.id},'approve')"><i class="bi bi-check-lg"></i> Approve</button>
                 <button class="btn-reject" onclick="leadAction(${lead.id},'reject')"><i class="bi bi-x-lg"></i> Reject</button>
                 <button class="btn-unreview" onclick="leadAction(${lead.id},'unreview')"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
-                <button class="btn-enrich" id="enrich-btn-${lead.id}" onclick="enrichLead(${lead.id})"><i class="bi bi-magic"></i> Enrich</button>
+                <button class="btn-enrich" id="enrich-btn-${lead.id}" onclick="enrichLead(${lead.id})" ${lead.enrichment_status==='enriched'?'disabled style="background:#D1FAE5;color:#065F46;border-color:#6EE7B7;"':''}>${lead.enrichment_status==='enriched'?'<i class="bi bi-check-lg"></i> Enriched':'<i class="bi bi-magic"></i> Enrich'}</button>
                 <button class="btn-delete-detail" onclick="deleteLead(${lead.id})"><i class="bi bi-trash3"></i> Delete</button>
             </div>
             <h4 style="margin-top:14px">Assign</h4>
@@ -678,16 +685,31 @@ async function leadAction(id, action) {
 async function enrichLead(id) {
     const btn = document.getElementById('enrich-btn-'+id);
     if(btn){btn.disabled=true;btn.innerHTML='<i class="bi bi-hourglass-split"></i> Enriching...';}
-    try { const r = await fetch(`/admin-leads/detail/${id}/action/`, {method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},body:JSON.stringify({action:'enrich'})});
+    try {
+        const r = await fetch(`/admin-leads/detail/${id}/action/`, {method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},body:JSON.stringify({action:'enrich'})});
         const d = await r.json();
         if(d.ok){
-            if(d.result&&d.result.skipped) showToast('Already has contact info','info');
-            else if(d.result&&d.result.found){let m='Found:';if(d.contact_phone)m+=' '+d.contact_phone;if(d.contact_email)m+=' | '+d.contact_email;showToast(m,'success');}
-            else showToast('No contact info found','warning');
-            fetchLeads();
+            if(d.result&&d.result.skipped){
+                showToast('Already has contact info','info');
+                if(btn){btn.disabled=false;btn.innerHTML='<i class="bi bi-magic"></i> Enrich';}
+            } else if(d.result&&d.result.found){
+                const pe=document.getElementById('contact-phone-'+id);
+                const ee=document.getElementById('contact-email-'+id);
+                const ne=document.getElementById('contact-name-'+id);
+                const be=document.getElementById('contact-biz-'+id);
+                if(d.contact_phone&&pe) pe.innerHTML='<span style="color:var(--accent-emerald)"><i class="bi bi-telephone-fill"></i> '+escHtml(d.contact_phone)+'</span>';
+                if(d.contact_email&&ee) ee.innerHTML='<a href="mailto:'+escHtml(d.contact_email)+'" style="color:var(--accent-blue)">'+escHtml(d.contact_email)+'</a>';
+                if(d.contact_name&&ne) ne.textContent=d.contact_name;
+                if(d.contact_business&&be) be.textContent=d.contact_business;
+                let m='Found:';if(d.contact_phone)m+=' '+d.contact_phone;if(d.contact_email)m+=' | '+d.contact_email;
+                showToast(m,'success');
+                if(btn){btn.disabled=true;btn.innerHTML='<i class="bi bi-check-lg"></i> Enriched';btn.style.background='#D1FAE5';btn.style.color='#065F46';btn.style.borderColor='#6EE7B7';}
+            } else {
+                showToast('No contact info found','warning');
+                if(btn){btn.disabled=false;btn.innerHTML='<i class="bi bi-magic"></i> Enrich';}
+            }
         }
-    } catch(e){console.error(e);showToast('Enrichment error','warning');}
-    if(btn){btn.disabled=false;btn.innerHTML='<i class="bi bi-magic"></i> Enrich';}
+    } catch(e){console.error(e);showToast('Enrichment error','warning');if(btn){btn.disabled=false;btn.innerHTML='<i class="bi bi-magic"></i> Enrich';}}
 }
 function showToast(msg,type){const el=document.createElement('div');el.style.cssText='position:fixed;bottom:24px;right:24px;padding:14px 22px;border-radius:10px;font-size:0.85rem;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.15);';if(type==='success'){el.style.background='#D1FAE5';el.style.color='#065F46';el.style.border='1px solid #6EE7B7';}else if(type==='warning'){el.style.background='#FEF3C7';el.style.color='#92400E';el.style.border='1px solid #FCD34D';}else{el.style.background='#DBEAFE';el.style.color='#1E40AF';el.style.border='1px solid #93C5FD';}el.innerHTML=msg;document.body.appendChild(el);setTimeout(()=>{el.style.opacity='0';setTimeout(()=>el.remove(),300);},4000);}
 
