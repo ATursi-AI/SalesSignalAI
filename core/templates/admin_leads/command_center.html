@@ -354,8 +354,8 @@
 .btn-approve, .btn-reject, .btn-unreview, .btn-delete-detail, .btn-enrich {
     border-radius: var(--radius-sm); padding: 5px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.15s;
 }
-.btn-enrich { background: rgba(139,92,246,0.12); color: #8B5CF6; border: 1px solid rgba(139,92,246,0.25); }
-.btn-enrich:hover { background: rgba(139,92,246,0.22); }
+.btn-enrich { background: rgba(13,148,136,0.12); color: #0D9488; border: 1px solid rgba(13,148,136,0.25); }
+.btn-enrich:hover { background: rgba(13,148,136,0.22); }
 .btn-enrich:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-approve { background: rgba(16,185,129,0.15); color: var(--accent-emerald); border: 1px solid rgba(16,185,129,0.3); }
 .btn-reject { background: rgba(255,71,87,0.12); color: var(--accent-coral); border: 1px solid rgba(255,71,87,0.25); }
@@ -531,8 +531,10 @@
         {% endfor %}
     </select>
     <button onclick="bulkAction('assign')"><i class="bi bi-person-plus"></i> Assign</button>
+    <button style="background:rgba(13,148,136,0.3);border:1px solid rgba(13,148,136,0.5);" onclick="enrichSelected()"><i class="bi bi-magic"></i> Enrich Selected</button>
     <button class="btn-bulk-delete" onclick="bulkDelete()"><i class="bi bi-trash3"></i> Delete</button>
     <div class="bulk-spacer"></div>
+    <div id="enrichProgressBar" style="display:none;font-size:0.8rem;"></div>
     <button onclick="clearSelection()"><i class="bi bi-x-circle"></i> Deselect</button>
 </div>
 
@@ -865,6 +867,22 @@ async function sendToSales(id) {
 async function deleteLead(id) {
     if(!confirm('Delete this lead permanently?')) return;
     try { const r = await fetch(`/admin-leads/detail/${id}/action/`, { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()}, body:JSON.stringify({action:'delete'}) }); const d = await r.json(); if(d.ok){selectedLeads.delete(id);fetchLeads();} } catch(e){console.error(e);}
+}
+async function enrichSelected() {
+    const ids = Array.from(selectedLeads); if(!ids.length) return;
+    const bar = document.getElementById('enrichProgressBar');
+    if(bar) bar.style.display='block';
+    let found=0,notFound=0,skipped=0;
+    for(let i=0;i<ids.length;i++){
+        if(bar) bar.innerHTML=`<i class="bi bi-magic"></i> Enriching ${i+1} of ${ids.length}...`;
+        try{const r=await fetch(`/admin-leads/detail/${ids[i]}/action/`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},body:JSON.stringify({action:'enrich'})});
+            const d=await r.json();if(d.ok){if(d.result&&d.result.skipped)skipped++;else if(d.result&&d.result.found)found++;else notFound++;}
+        }catch(e){notFound++;}
+        if(i<ids.length-1) await new Promise(r=>setTimeout(r,1000));
+    }
+    if(bar) bar.style.display='none';
+    showToast(`Enriched ${ids.length} leads: ${found} found, ${notFound} not found${skipped?', '+skipped+' skipped':''}`, found>0?'success':'warning');
+    fetchLeads();
 }
 async function bulkDelete() {
     const ids = Array.from(selectedLeads); if(!ids.length) return;
