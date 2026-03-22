@@ -23,7 +23,17 @@ def onboarding_view(request):
             grouped[key] = {'label': label, 'categories': cats}
 
     if request.method == 'POST':
-        step = request.POST.get('step')
+        # Handle both form-encoded and JSON requests
+        import json as _json
+        content_type = request.content_type or ''
+        if 'application/json' in content_type:
+            try:
+                body_data = _json.loads(request.body)
+                step = body_data.get('step')
+            except (ValueError, AttributeError):
+                step = request.POST.get('step')
+        else:
+            step = request.POST.get('step')
 
         # Handle JSON body (from keyword save)
         if not step and request.content_type and 'json' in request.content_type:
