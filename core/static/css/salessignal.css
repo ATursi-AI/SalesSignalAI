@@ -246,7 +246,13 @@ h4 { font-size: 1.25rem; }
     font-size: 1.25rem;
     color: white;
     flex-shrink: 0;
-    position: relative;
+}
+
+/* Pulsing signal animation — applies to ALL brand icons sitewide */
+.brand-icon,
+.pv-logo-icon,
+.login-logo-icon,
+.signup-logo-icon {
     animation: signal-pulse 2.5s ease-in-out infinite;
 }
 @keyframes signal-pulse {
