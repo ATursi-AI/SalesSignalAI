@@ -85,7 +85,7 @@ class Command(BaseCommand):
         if options['top_no_website']:
             categories = [
                 'plumber', 'electrician', 'roofer', 'locksmith', 'painter',
-                'moving', 'barber', 'beauty-salon', 'tattoo', 'laundromat',
+                'moving', 'barber', 'beauty-salon',
             ]
             all_boroughs = True
             no_website_only = True

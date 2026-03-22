@@ -52,8 +52,6 @@ CATEGORY_PLACE_TYPES = {
     'chiropractor': ['chiropractor'],
     'barber': ['barber_shop'],
     'beauty-salon': ['beauty_salon'],
-    'tattoo': ['tattoo_parlor'],
-    'laundromat': ['laundromat'],
 }
 
 # Chain/franchise exclusion — skip these from all lead types
@@ -687,6 +685,8 @@ def _process_no_website(place, place_detail, category, city, dry_run, stats):
         urgency_level='warm',
         confidence='high',
         content_hash=content_hash,
+        source_group='reviews',
+        source_type='no_website',
         raw_data={
             'business_name': biz_name,
             'category': category,

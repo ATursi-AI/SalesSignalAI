@@ -265,8 +265,8 @@
 .btn-approve, .btn-reject, .btn-unreview, .btn-delete-detail, .btn-enrich {
     border-radius: var(--radius-sm); padding: 5px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.15s;
 }
-.btn-enrich { background: rgba(37,99,235,0.12); color: #2563EB; border: 1px solid rgba(37,99,235,0.25); }
-.btn-enrich:hover { background: rgba(37,99,235,0.22); }
+.btn-enrich { background: rgba(0,144,255,0.12); color: #0090FF; border: 1px solid rgba(0,144,255,0.25); }
+.btn-enrich:hover { background: rgba(0,144,255,0.22); }
 .btn-enrich:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-approve { background: rgba(16,185,129,0.15); color: var(--accent-emerald); border: 1px solid rgba(16,185,129,0.3); }
 .btn-reject { background: rgba(255,71,87,0.12); color: var(--accent-coral); border: 1px solid rgba(255,71,87,0.25); }
@@ -388,7 +388,7 @@
         {% endfor %}
     </select>
     <button onclick="bulkAction('assign')"><i class="bi bi-person-plus"></i> Assign</button>
-    <button style="background:rgba(37,99,235,0.3);border:1px solid rgba(37,99,235,0.5);color:white;font-weight:600;" onclick="enrichSelected()"><i class="bi bi-magic"></i> Enrich Selected</button>
+    <button style="background:rgba(0,144,255,0.3);border:1px solid rgba(0,144,255,0.5);color:white;font-weight:600;" onclick="enrichSelected()"><i class="bi bi-magic"></i> Enrich Selected</button>
     <button class="btn-bulk-delete" onclick="bulkDelete()"><i class="bi bi-trash3"></i> Delete</button>
     <div class="bulk-spacer"></div>
     <div id="enrichProgressBar" style="display:none;font-size:0.8rem;"></div>
