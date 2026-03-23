@@ -4,6 +4,8 @@ Accessible at /sales/ by:
   - Superusers/admins: see ALL prospects across ALL salespeople (no SalesPerson profile needed)
   - Staff with a SalesPerson profile: see only their own prospects
 """
+import calendar
+from collections import defaultdict
 from datetime import date, timedelta
 from functools import wraps
 
@@ -366,3 +368,120 @@ def stats(request):
         'leaderboard': leaderboard,
         'call_goal': sp.daily_call_goal if sp else 0,
     })
+
+
+# -------------------------------------------------------------------
+# Sales Calendar
+# -------------------------------------------------------------------
+
+@sales_access_required
+def sales_calendar(request):
+    """Calendar view — day/week/month with follow-ups and activities."""
+    view_mode = request.GET.get('view', 'week')
+    date_str = request.GET.get('date', '')
+    today = date.today()
+
+    try:
+        current_date = date.fromisoformat(date_str) if date_str else today
+    except ValueError:
+        current_date = today
+
+    # Compute date range
+    if view_mode == 'day':
+        start_date = current_date
+        end_date = current_date
+        prev_date = current_date - timedelta(days=1)
+        next_date = current_date + timedelta(days=1)
+    elif view_mode == 'month':
+        start_date = current_date.replace(day=1)
+        _, last_day = calendar.monthrange(current_date.year, current_date.month)
+        end_date = current_date.replace(day=last_day)
+        prev_date = (start_date - timedelta(days=1)).replace(day=1)
+        next_date = (end_date + timedelta(days=1))
+        # Extend to full weeks for grid
+        while start_date.weekday() != 0:  # Monday
+            start_date -= timedelta(days=1)
+        while end_date.weekday() != 6:  # Sunday
+            end_date += timedelta(days=1)
+    else:  # week
+        start_date = current_date - timedelta(days=current_date.weekday())  # Monday
+        end_date = start_date + timedelta(days=6)  # Sunday
+        prev_date = start_date - timedelta(days=7)
+        next_date = start_date + timedelta(days=7)
+
+    date_range = []
+    d = start_date
+    while d <= end_date:
+        date_range.append(d)
+        d += timedelta(days=1)
+
+    # Query prospects with follow-ups in range
+    prospects = _prospect_qs(request).filter(
+        next_follow_up_date__gte=start_date,
+        next_follow_up_date__lte=end_date,
+    ).select_related('salesperson__user').order_by('next_follow_up_date')
+
+    # Query activities in range
+    activities = _activity_qs(request).filter(
+        created_at__date__gte=start_date,
+        created_at__date__lte=end_date,
+    ).select_related('prospect', 'salesperson__user').order_by('created_at')
+
+    # Group by date
+    prospects_by_date = defaultdict(list)
+    for p in prospects:
+        key = p.next_follow_up_date.isoformat()
+        prospects_by_date[key].append(p)
+
+    activities_by_date = defaultdict(list)
+    for a in activities:
+        key = a.created_at.date().isoformat()
+        activities_by_date[key].append(a)
+
+    # Overdue count
+    overdue_count = _prospect_qs(request).filter(
+        next_follow_up_date__lt=today,
+        pipeline_stage__in=['new', 'contacted', 'callback', 'demo_scheduled', 'demo_completed', 'proposal_sent'],
+    ).count()
+
+    # Month grid: split into weeks
+    weeks = []
+    if view_mode == 'month':
+        for i in range(0, len(date_range), 7):
+            weeks.append(date_range[i:i + 7])
+
+    return render(request, 'sales/calendar.html', {
+        'current_view': view_mode,
+        'current_date': current_date,
+        'today': today,
+        'date_range': date_range,
+        'weeks': weeks,
+        'prospects_by_date': dict(prospects_by_date),
+        'activities_by_date': dict(activities_by_date),
+        'overdue_count': overdue_count,
+        'prev_date': prev_date if view_mode != 'month' else (current_date.replace(day=1) - timedelta(days=1)).replace(day=1),
+        'next_date': next_date if view_mode != 'month' else (current_date.replace(day=28) + timedelta(days=4)).replace(day=1),
+        'pipeline_choices': dict(SalesProspect.PIPELINE_CHOICES),
+    })
+
+
+@sales_access_required
+def calendar_reschedule(request, prospect_id):
+    """AJAX: reschedule a prospect's follow-up date."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    import json
+    data = json.loads(request.body)
+    new_date = data.get('date', '')
+
+    prospect = get_object_or_404(SalesProspect, pk=prospect_id)
+    if not request.is_sales_admin and request.salesperson != prospect.salesperson:
+        return JsonResponse({'error': 'Access denied'}, status=403)
+
+    try:
+        prospect.next_follow_up_date = date.fromisoformat(new_date) if new_date else None
+        prospect.save(update_fields=['next_follow_up_date'])
+        return JsonResponse({'ok': True})
+    except ValueError:
+        return JsonResponse({'error': 'Invalid date'}, status=400)

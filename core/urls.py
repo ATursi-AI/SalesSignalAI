@@ -147,6 +147,8 @@ urlpatterns = [
     path('sales/prospects/', sales.prospects, name='sales_prospects'),
     path('sales/prospects/<int:prospect_id>/', sales.prospect_detail, name='sales_prospect_detail'),
     path('sales/today/', sales.today_calls, name='sales_today'),
+    path('sales/calendar/', sales.sales_calendar, name='sales_calendar'),
+    path('sales/calendar/reschedule/<int:prospect_id>/', sales.calendar_reschedule, name='calendar_reschedule'),
     path('sales/stats/', sales.stats, name='sales_stats'),
 
     # Prospect Video Pages

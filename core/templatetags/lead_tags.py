@@ -95,3 +95,11 @@ def time_ago(dt):
     else:
         days = int(seconds / 86400)
         return f'{days}d ago'
+
+
+@register.filter
+def get_item(dictionary, key):
+    """Lookup a dict value by key in templates: {{ mydict|get_item:key }}"""
+    if isinstance(dictionary, dict):
+        return dictionary.get(str(key), [])
+    return []

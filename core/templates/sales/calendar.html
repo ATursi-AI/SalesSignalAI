@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Sales Calendar{% endblock %}
+{% block page_title %}Sales Calendar{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Calendar Header ── */
+.cal-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.cal-view-toggle {
+    display: flex; gap: 0; border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden;
+}
+.cal-view-btn {
+    padding: 7px 16px; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    background: var(--bg-surface); color: var(--text-secondary); border: none;
+    transition: all 0.15s; font-family: 'DM Sans', sans-serif;
+}
+.cal-view-btn:hover { background: var(--bg-elevated); }
+.cal-view-btn.active { background: #0D9488; color: white; }
+.cal-nav {
+    display: flex; align-items: center; gap: 8px; margin-left: auto;
+}
+.cal-nav-btn {
+    width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border-subtle);
+    background: var(--bg-surface); cursor: pointer; display: flex; align-items: center;
+    justify-content: center; color: var(--text-secondary); font-size: 0.9rem;
+}
+.cal-nav-btn:hover { border-color: #0D9488; color: #0D9488; }
+.cal-date-label {
+    font-family: 'Exo 2', sans-serif; font-weight: 700; font-size: 1rem;
+    color: var(--text-primary); min-width: 160px; text-align: center;
+}
+.cal-today-btn {
+    padding: 6px 14px; border-radius: 8px; border: 1px solid #0D9488;
+    background: rgba(13,148,136,0.08); color: #0D9488; font-size: 0.78rem;
+    font-weight: 600; cursor: pointer;
+}
+.cal-today-btn:hover { background: rgba(13,148,136,0.15); }
+
+/* ── Overdue Banner ── */
+.cal-overdue {
+    background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px;
+    padding: 10px 16px; margin-bottom: 16px; display: flex; align-items: center;
+    gap: 8px; font-size: 0.85rem; color: #DC2626; font-weight: 600;
+}
+.cal-overdue a { color: #DC2626; text-decoration: underline; }
+
+/* ── Month View ── */
+.cal-month-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr); border: 1px solid var(--border-subtle);
+    border-radius: 12px; overflow: hidden; background: var(--bg-surface);
+}
+.cal-dow {
+    padding: 8px 4px; text-align: center; font-size: 0.72rem; font-weight: 700;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+    background: var(--bg-page); border-bottom: 1px solid var(--border-subtle);
+}
+.cal-day-cell {
+    min-height: 80px; padding: 6px 8px; border-bottom: 1px solid var(--border-subtle);
+    border-right: 1px solid var(--border-subtle); cursor: pointer; transition: background 0.1s;
+    position: relative;
+}
+.cal-day-cell:nth-child(7n) { border-right: none; }
+.cal-day-cell:hover { background: rgba(13,148,136,0.03); }
+.cal-day-cell.outside { opacity: 0.35; }
+.cal-day-cell.today { background: rgba(13,148,136,0.06); }
+.cal-day-cell.has-overdue { border-left: 3px solid #DC2626; }
+.cal-day-num {
+    font-weight: 700; font-size: 0.82rem; color: var(--text-primary); margin-bottom: 4px;
+}
+.cal-day-cell.today .cal-day-num {
+    background: #0D9488; color: white; width: 24px; height: 24px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 0.72rem;
+}
+.cal-day-dots { display: flex; gap: 3px; flex-wrap: wrap; }
+.cal-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+}
+.cal-dot-red { background: #DC2626; }
+.cal-dot-amber { background: #F59E0B; }
+.cal-dot-blue { background: #3B82F6; }
+.cal-dot-green { background: #10B981; }
+.cal-day-badge {
+    position: absolute; top: 4px; right: 6px; background: #0D9488; color: white;
+    font-size: 0.6rem; font-weight: 700; padding: 1px 5px; border-radius: 6px;
+}
+
+/* ── Week View ── */
+.cal-week {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;
+}
+.cal-week-col {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 10px; min-height: 300px; display: flex; flex-direction: column;
+}
+.cal-week-col.today-col { border-color: #0D9488; background: rgba(13,148,136,0.02); }
+.cal-week-header {
+    padding: 10px 12px; border-bottom: 1px solid var(--border-subtle);
+    text-align: center;
+}
+.cal-week-dow { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+.cal-week-date { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); }
+.cal-week-body { padding: 8px; flex: 1; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; max-height: 500px; }
+
+/* ── Follow-up Card (used in week + day) ── */
+.cal-card {
+    background: var(--bg-page); border: 1px solid var(--border-subtle);
+    border-radius: 8px; padding: 10px 12px; border-left: 3px solid #3B82F6;
+    font-size: 0.8rem; transition: box-shadow 0.1s;
+}
+.cal-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.cal-card.overdue { border-left-color: #DC2626; }
+.cal-card.today-card { border-left-color: #F59E0B; }
+.cal-card.future { border-left-color: #3B82F6; }
+.cal-card-biz { font-weight: 700; color: var(--text-primary); margin-bottom: 3px; font-size: 0.82rem; }
+.cal-card-stage {
+    display: inline-block; padding: 1px 7px; border-radius: 6px; font-size: 0.65rem;
+    font-weight: 600; background: rgba(13,148,136,0.08); color: #0D9488; margin-bottom: 4px;
+}
+.cal-card-phone a {
+    color: #0D9488; text-decoration: none; font-size: 0.78rem; font-weight: 600;
+}
+.cal-card-phone a:hover { text-decoration: underline; }
+.cal-card-rep { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+.cal-card-actions {
+    display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;
+}
+.cal-card-actions button, .cal-card-actions a {
+    font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border-subtle);
+    background: var(--bg-surface); color: var(--text-secondary); cursor: pointer;
+    text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;
+}
+.cal-card-actions button:hover, .cal-card-actions a:hover { border-color: #0D9488; color: #0D9488; }
+
+/* ── Day View ── */
+.cal-day-view {
+    display: flex; flex-direction: column; gap: 12px; max-width: 700px;
+}
+.cal-day-card {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 12px; padding: 16px 20px; border-left: 4px solid #3B82F6;
+}
+.cal-day-card.overdue { border-left-color: #DC2626; }
+.cal-day-card.today-card { border-left-color: #F59E0B; }
+.cal-day-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.cal-day-card-biz { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1rem; color: var(--text-primary); }
+.cal-day-card-info { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
+.cal-day-card-info a { color: #0D9488; text-decoration: none; font-weight: 600; }
+.cal-day-card-actions {
+    display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;
+}
+.cal-day-card-actions button, .cal-day-card-actions a {
+    padding: 8px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;
+    border: 1px solid var(--border-subtle); background: var(--bg-page);
+    color: var(--text-secondary); cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 5px;
+}
+.cal-day-card-actions button:hover, .cal-day-card-actions a:hover { border-color: #0D9488; color: #0D9488; }
+.cal-day-card-actions .btn-call {
+    background: #0D9488; color: white; border-color: #0D9488;
+}
+.cal-day-card-actions .btn-call:hover { background: #0B7F74; }
+
+/* ── Reschedule Picker ── */
+.cal-reschedule {
+    display: none; margin-top: 8px; padding: 10px; background: var(--bg-page);
+    border: 1px solid var(--border-subtle); border-radius: 8px;
+    align-items: center; gap: 8px;
+}
+.cal-reschedule.open { display: flex; }
+.cal-reschedule input[type="date"] {
+    padding: 6px 10px; border: 1px solid var(--border-subtle); border-radius: 6px;
+    font-size: 0.82rem; font-family: inherit;
+}
+.cal-reschedule button {
+    padding: 6px 12px; border-radius: 6px; border: none; background: #0D9488;
+    color: white; font-weight: 600; font-size: 0.78rem; cursor: pointer;
+}
+
+/* ── Empty State ── */
+.cal-empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.cal-empty i { font-size: 2.5rem; opacity: 0.3; display: block; margin-bottom: 10px; }
+
+/* ── Activity Item ── */
+.cal-activity {
+    display: flex; align-items: center; gap: 8px; padding: 6px 0;
+    font-size: 0.78rem; color: var(--text-secondary); border-bottom: 1px solid var(--border-subtle);
+}
+.cal-activity:last-child { border-bottom: none; }
+.cal-activity-icon {
+    width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 0.7rem; flex-shrink: 0;
+    background: rgba(13,148,136,0.08); color: #0D9488;
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+    .cal-header { gap: 8px; }
+    .cal-nav { margin-left: 0; width: 100%; justify-content: center; }
+    .cal-date-label { min-width: auto; font-size: 0.9rem; }
+
+    /* Month: compact */
+    .cal-day-cell { min-height: 50px; padding: 4px; }
+    .cal-dow { font-size: 0.6rem; padding: 6px 2px; }
+    .cal-day-num { font-size: 0.7rem; }
+    .cal-day-cell.today .cal-day-num { width: 20px; height: 20px; font-size: 0.6rem; }
+    .cal-dot { width: 5px; height: 5px; }
+
+    /* Week: horizontal scroll */
+    .cal-week {
+        display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory; gap: 8px; padding-bottom: 8px;
+    }
+    .cal-week-col {
+        min-width: 280px; flex-shrink: 0; scroll-snap-align: start;
+    }
+
+    /* Day: full width */
+    .cal-day-card { padding: 14px 16px; }
+    .cal-day-card-biz { font-size: 0.92rem; }
+    .cal-day-card-actions { flex-direction: column; }
+    .cal-day-card-actions button, .cal-day-card-actions a {
+        width: 100%; justify-content: center; min-height: 44px;
+    }
+
+    /* Reschedule */
+    .cal-reschedule { flex-direction: column; align-items: stretch; }
+    .cal-reschedule input[type="date"] { width: 100%; }
+}
+@media (max-width: 480px) {
+    .cal-view-btn { padding: 6px 10px; font-size: 0.72rem; }
+    .cal-week-col { min-width: 260px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="cal-header">
+    <div class="cal-view-toggle">
+        <button class="cal-view-btn {% if current_view == 'day' %}active{% endif %}" onclick="calNav('day')">Day</button>
+        <button class="cal-view-btn {% if current_view == 'week' %}active{% endif %}" onclick="calNav('week')">Week</button>
+        <button class="cal-view-btn {% if current_view == 'month' %}active{% endif %}" onclick="calNav('month')">Month</button>
+    </div>
+    <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="calDate('{{ prev_date|date:'Y-m-d' }}')" title="Previous"><i class="bi bi-chevron-left"></i></button>
+        <div class="cal-date-label">
+            {% if current_view == 'day' %}
+                {{ current_date|date:"l, M d, Y" }}
+            {% elif current_view == 'week' %}
+                {{ date_range.0|date:"M d" }} — {{ date_range.6|date:"M d, Y" }}
+            {% else %}
+                {{ current_date|date:"F Y" }}
+            {% endif %}
+        </div>
+        <button class="cal-nav-btn" onclick="calDate('{{ next_date|date:'Y-m-d' }}')" title="Next"><i class="bi bi-chevron-right"></i></button>
+        <button class="cal-today-btn" onclick="calDate('{{ today|date:'Y-m-d' }}')">Today</button>
+    </div>
+</div>
+
+{% if overdue_count %}
+<div class="cal-overdue">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    {{ overdue_count }} overdue follow-up{{ overdue_count|pluralize }}
+    <a href="?view=day&date={{ today|date:'Y-m-d' }}">View today</a>
+</div>
+{% endif %}
+
+{% if current_view == 'month' %}
+<!-- ═══════ MONTH VIEW ═══════ -->
+<div class="cal-month-grid">
+    <div class="cal-dow">Mon</div><div class="cal-dow">Tue</div><div class="cal-dow">Wed</div>
+    <div class="cal-dow">Thu</div><div class="cal-dow">Fri</div><div class="cal-dow">Sat</div><div class="cal-dow">Sun</div>
+    {% for week in weeks %}{% for day in week %}
+    {% with day_str=day|date:"Y-m-d" day_prospects=prospects_by_date %}
+    <div class="cal-day-cell {% if day.month != current_date.month %}outside{% endif %} {% if day == today %}today{% endif %} {% if day_str in day_prospects and day < today %}has-overdue{% endif %}"
+         onclick="calNav('day','{{ day_str }}')">
+        <div class="cal-day-num">{{ day.day }}</div>
+        {% if day_str in day_prospects %}
+        <div class="cal-day-dots">
+            {% for p in day_prospects|get_item:day_str %}
+            {% if forloop.counter <= 4 %}
+            <div class="cal-dot {% if day < today %}cal-dot-red{% elif day == today %}cal-dot-amber{% else %}cal-dot-blue{% endif %}"></div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% with count=day_prospects|get_item:day_str|length %}
+        {% if count > 4 %}<div class="cal-day-badge">{{ count }}</div>{% endif %}
+        {% endwith %}
+        {% endif %}
+    </div>
+    {% endwith %}
+    {% endfor %}{% endfor %}
+</div>
+
+{% elif current_view == 'week' %}
+<!-- ═══════ WEEK VIEW ═══════ -->
+<div class="cal-week">
+    {% for day in date_range %}
+    {% with day_str=day|date:"Y-m-d" %}
+    <div class="cal-week-col {% if day == today %}today-col{% endif %}">
+        <div class="cal-week-header">
+            <div class="cal-week-dow">{{ day|date:"D" }}</div>
+            <div class="cal-week-date">{{ day|date:"M d" }}</div>
+        </div>
+        <div class="cal-week-body">
+            {% for p in prospects_by_date|get_item:day_str %}
+            <div class="cal-card {% if day < today %}overdue{% elif day == today %}today-card{% else %}future{% endif %}">
+                <div class="cal-card-biz">{{ p.business_name }}</div>
+                <div class="cal-card-stage">{{ p.get_pipeline_stage_display }}</div>
+                {% if p.phone %}
+                <div class="cal-card-phone"><a href="tel:{{ p.phone }}"><i class="bi bi-telephone-fill"></i> {{ p.phone }}</a></div>
+                {% endif %}
+                {% if request.is_sales_admin and p.salesperson %}
+                <div class="cal-card-rep">{{ p.salesperson.user.get_full_name }}</div>
+                {% endif %}
+                <div class="cal-card-actions">
+                    <a href="{% url 'sales_prospect_detail' p.id %}"><i class="bi bi-box-arrow-up-right"></i> Open</a>
+                    <button onclick="toggleReschedule({{ p.id }})"><i class="bi bi-calendar-event"></i> Move</button>
+                </div>
+                <div class="cal-reschedule" id="resched-{{ p.id }}">
+                    <input type="date" id="resched-date-{{ p.id }}" value="{{ p.next_follow_up_date|date:'Y-m-d' }}">
+                    <button onclick="doReschedule({{ p.id }})">Save</button>
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align:center;color:var(--text-muted);font-size:0.78rem;padding:20px 0;">—</div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+</div>
+
+{% else %}
+<!-- ═══════ DAY VIEW ═══════ -->
+<div class="cal-day-view">
+    {% with day_str=current_date|date:"Y-m-d" %}
+    {% for p in prospects_by_date|get_item:day_str %}
+    <div class="cal-day-card {% if current_date < today %}overdue{% elif current_date == today %}today-card{% else %}future{% endif %}">
+        <div class="cal-day-card-header">
+            <div class="cal-day-card-biz">{{ p.business_name }}</div>
+            <span class="cal-card-stage">{{ p.get_pipeline_stage_display }}</span>
+        </div>
+        <div class="cal-day-card-info">
+            {% if p.owner_name %}<div><strong>{{ p.owner_name }}</strong></div>{% endif %}
+            {% if p.phone %}<div><i class="bi bi-telephone-fill"></i> <a href="tel:{{ p.phone }}">{{ p.phone }}</a></div>{% endif %}
+            {% if p.email %}<div><i class="bi bi-envelope"></i> <a href="mailto:{{ p.email }}">{{ p.email }}</a></div>{% endif %}
+            {% if p.service_category %}<div><i class="bi bi-tools"></i> {{ p.service_category }}</div>{% endif %}
+            {% if p.city %}<div><i class="bi bi-geo-alt"></i> {{ p.city }}{% if p.state %}, {{ p.state }}{% endif %}</div>{% endif %}
+            {% if request.is_sales_admin and p.salesperson %}<div><i class="bi bi-person"></i> {{ p.salesperson.user.get_full_name }}</div>{% endif %}
+            {% if p.notes %}<div style="margin-top:6px;font-size:0.82rem;color:var(--text-muted);">{{ p.notes|truncatechars:200 }}</div>{% endif %}
+        </div>
+        <div class="cal-day-card-actions">
+            {% if p.phone %}
+            <a href="tel:{{ p.phone }}" class="btn-call"><i class="bi bi-telephone-fill"></i> Call Now</a>
+            {% endif %}
+            <button onclick="toggleReschedule({{ p.id }})"><i class="bi bi-calendar-event"></i> Reschedule</button>
+            <a href="{% url 'sales_prospect_detail' p.id %}"><i class="bi bi-box-arrow-up-right"></i> Open Prospect</a>
+        </div>
+        <div class="cal-reschedule" id="resched-{{ p.id }}">
+            <input type="date" id="resched-date-{{ p.id }}" value="{{ p.next_follow_up_date|date:'Y-m-d' }}">
+            <button onclick="doReschedule({{ p.id }})">Save</button>
+        </div>
+    </div>
+    {% empty %}
+    <div class="cal-empty">
+        <i class="bi bi-calendar-check"></i>
+        <p>No follow-ups scheduled for {{ current_date|date:"l, M d" }}.</p>
+        <a href="{% url 'sales_prospects' %}" style="color:#0D9488;font-weight:600;">Go to Prospects</a>
+    </div>
+    {% endfor %}
+
+    {% with acts=activities_by_date|get_item:day_str %}
+    {% if acts %}
+    <div style="margin-top:16px;">
+        <h4 style="font-family:'Exo 2',sans-serif;font-weight:800;font-size:0.9rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Activity Log</h4>
+        {% for a in acts %}
+        <div class="cal-activity">
+            <div class="cal-activity-icon"><i class="{{ a.icon }}"></i></div>
+            <div style="flex:1;">
+                <strong>{{ a.prospect.business_name }}</strong> — {{ a.get_activity_type_display }}
+                {% if a.outcome %}<span style="color:var(--text-muted);">({{ a.get_outcome_display }})</span>{% endif %}
+                {% if a.description %}<div style="font-size:0.75rem;color:var(--text-muted);">{{ a.description|truncatechars:120 }}</div>{% endif %}
+            </div>
+            <div style="font-size:0.7rem;color:var(--text-muted);white-space:nowrap;">{{ a.created_at|date:"g:i A" }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% endwith %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function calNav(view, dt) {
+    const params = new URLSearchParams(window.location.search);
+    params.set('view', view);
+    if (dt) params.set('date', dt);
+    else if (!params.has('date')) params.set('date', '{{ current_date|date:"Y-m-d" }}');
+    window.location.href = '{% url "sales_calendar" %}?' + params.toString();
+}
+
+function calDate(dt) {
+    const params = new URLSearchParams(window.location.search);
+    params.set('date', dt);
+    if (!params.has('view')) params.set('view', '{{ current_view }}');
+    window.location.href = '{% url "sales_calendar" %}?' + params.toString();
+}
+
+function toggleReschedule(id) {
+    const el = document.getElementById('resched-' + id);
+    el.classList.toggle('open');
+}
+
+function doReschedule(id) {
+    const dateVal = document.getElementById('resched-date-' + id).value;
+    if (!dateVal) return;
+    fetch('/sales/calendar/reschedule/' + id + '/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: JSON.stringify({date: dateVal}),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) window.location.reload();
+        else alert(data.error || 'Error');
+    });
+}
+</script>
+{% endblock %}

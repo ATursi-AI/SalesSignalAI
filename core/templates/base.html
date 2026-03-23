@@ -106,6 +106,10 @@
                     <i class="bi bi-telephone-fill"></i>
                     <span>Today's Calls</span>
                 </a>
+                <a href="{% url 'sales_calendar' %}" class="sidebar-link {% if request.resolver_match.url_name == 'sales_calendar' %}active{% endif %}">
+                    <i class="bi bi-calendar3"></i>
+                    <span>Calendar</span>
+                </a>
                 <a href="{% url 'sales_stats' %}" class="sidebar-link {% if request.resolver_match.url_name == 'sales_stats' %}active{% endif %}">
                     <i class="bi bi-graph-up"></i>
                     <span>{% if user.is_superuser %}Team Stats{% else %}My Stats{% endif %}</span>
