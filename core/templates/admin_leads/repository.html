@@ -583,6 +583,56 @@
     .lead-table th, .lead-table td { padding: 8px 6px; }
     .category-summary { gap: 6px; }
     .cat-card { padding: 8px 10px; }
+
+    .lead-table th:nth-child(6),
+    .lead-table td:nth-child(6),
+    .lead-table th:nth-child(7),
+    .lead-table td:nth-child(7),
+    .lead-table th:nth-child(8),
+    .lead-table td:nth-child(8) {
+        display: none;
+    }
+
+    .detail-row td { padding: 0 !important; }
+    .detail-panel {
+        display: block !important;
+        padding: 16px !important;
+        box-sizing: border-box;
+        width: 100%;
+        overflow-x: hidden;
+    }
+    .detail-panel * {
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    .detail-meta-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .detail-text {
+        max-height: 200px;
+        overflow-y: auto;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+    .action-buttons {
+        flex-direction: column;
+    }
+    .action-buttons button,
+    .btn-approve, .btn-reject, .btn-unreview, .btn-enrich, .btn-delete-detail {
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .assign-row {
+        flex-direction: column;
+    }
+    .assign-row select, .assign-row button {
+        width: 100%;
+        min-height: 44px;
+    }
 }
 </style>
 {% endblock %}
