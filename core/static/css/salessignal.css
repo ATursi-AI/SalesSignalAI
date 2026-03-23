@@ -3739,6 +3739,37 @@ textarea.form-control-dark {
         min-height: 44px;
     }
 
+    /* ── Detail Panel Text & Grid Fixes ── */
+    .detail-meta-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .detail-meta-item {
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+    .detail-meta-item .meta-value {
+        font-size: 0.82rem !important;
+    }
+    .detail-panel [style*="grid-template-columns: 1fr 1fr"],
+    .detail-panel [style*="grid-template-columns:1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+    .detail-text,
+    .detail-content {
+        word-break: break-word;
+        overflow-wrap: break-word;
+        overflow-x: hidden;
+    }
+    .detail-content pre,
+    .detail-content code,
+    .detail-content div[style*="font-size:0.78rem"] {
+        white-space: pre-wrap !important;
+        word-break: break-all;
+        overflow-wrap: break-word;
+        max-width: 100% !important;
+        overflow-x: hidden;
+    }
+
     /* ── Bulk Action Bar Fixed at Bottom ── */
     .bulk-bar {
         position: fixed !important;
