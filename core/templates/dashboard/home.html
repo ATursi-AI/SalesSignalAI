@@ -69,7 +69,7 @@
         <div class="lead-stream">
             {% if recent_assignments %}
                 {% for assignment in recent_assignments %}
-                <div class="glass-card lead-card {% if assignment.lead.urgency_level == 'hot' %}is-hot{% endif %} animate-fade-in-up" style="animation-delay: {{ forloop.counter0 }}00ms;">
+                <a href="{% url 'lead_detail' assignment.id %}" class="glass-card lead-card {% if assignment.lead.urgency_level == 'hot' %}is-hot{% endif %} animate-fade-in-up" style="animation-delay: {{ forloop.counter0 }}00ms; text-decoration: none; color: inherit; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
                     <div style="flex: 1;">
                         <div class="lead-meta">
                             <span class="platform-pill platform-{{ assignment.lead.platform }}">
@@ -95,7 +95,7 @@
                             <span class="lead-time">{{ assignment.lead.discovered_at|time_ago }}</span>
                         </div>
                     </div>
-                </div>
+                </a>
                 {% endfor %}
             {% else %}
                 <!-- Enhanced Empty State -->

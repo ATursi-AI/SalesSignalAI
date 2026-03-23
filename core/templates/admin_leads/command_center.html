@@ -770,7 +770,8 @@ function buildDetailPanel(lead) {
 
     return `
     <div class="detail-panel">
-        <div class="detail-content">
+        <button onclick="toggleDetail(${lead.id}, event)" style="position:absolute;top:12px;right:12px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.1rem;color:var(--text-secondary);z-index:10;" title="Close"><i class="bi bi-x-lg"></i></button>
+        <div class="detail-content" style="position:relative;">
             <h4>Source Content</h4>
             <div class="detail-text">${escHtml(lead.source_content)}</div>
             ${keywords ? `<h4 style="margin-top:12px">Keywords</h4><div class="keyword-pills">${keywords}</div>` : ''}
@@ -790,7 +791,7 @@ function buildDetailPanel(lead) {
             <h4 style="margin-top:14px">Contact Info</h4>
             <div class="detail-meta-grid" style="margin-bottom:8px;">
                 <div class="detail-meta-item"><div class="meta-label">Name</div><div class="meta-value" id="contact-name-${lead.id}">${escHtml(lead.contact_name)||'<span style="color:var(--text-muted)">—</span>'}</div></div>
-                <div class="detail-meta-item"><div class="meta-label">Phone</div><div class="meta-value" id="contact-phone-${lead.id}">${lead.contact_phone?'<span style="color:var(--accent-emerald)"><i class="bi bi-telephone-fill"></i> '+escHtml(lead.contact_phone)+'</span>':'<span style="color:var(--text-muted)">—</span>'}</div></div>
+                <div class="detail-meta-item"><div class="meta-label">Phone</div><div class="meta-value" id="contact-phone-${lead.id}">${lead.contact_phone?'<a href="tel:'+escHtml(lead.contact_phone)+'" style="color:var(--accent-emerald);text-decoration:none;" onclick="event.stopPropagation()"><i class="bi bi-telephone-fill"></i> '+escHtml(lead.contact_phone)+'</a>':'<span style="color:var(--text-muted)">—</span>'}</div></div>
                 <div class="detail-meta-item"><div class="meta-label">Email</div><div class="meta-value" id="contact-email-${lead.id}">${lead.contact_email?'<a href="mailto:'+escHtml(lead.contact_email)+'" style="color:var(--accent-blue)">'+escHtml(lead.contact_email)+'</a>':'<span style="color:var(--text-muted)">—</span>'}</div></div>
                 <div class="detail-meta-item"><div class="meta-label">Business</div><div class="meta-value" id="contact-biz-${lead.id}">${escHtml(lead.contact_business)||'<span style="color:var(--text-muted)">—</span>'}</div></div>
             </div>

@@ -3673,6 +3673,109 @@ textarea.form-control-dark {
 
     /* Long text safety */
     .page-content { overflow-x: hidden; max-width: 100vw; }
+
+    /* ── Lead Table Mobile ── */
+    .lead-table th:nth-child(2),  /* Src/Platform */
+    .lead-table td:nth-child(2),
+    .lead-table th:nth-child(6),  /* Urgency */
+    .lead-table td:nth-child(6),
+    .lead-table th:nth-child(7),  /* Time */
+    .lead-table td:nth-child(7),
+    .lead-table th:nth-child(8),  /* Status */
+    .lead-table td:nth-child(8) {
+        display: none !important;
+    }
+    .lead-table td {
+        padding: 10px 6px !important;
+        font-size: 0.78rem !important;
+        min-height: 48px;
+    }
+    .lead-table tr {
+        min-height: 48px;
+    }
+    /* Urgency left-border indicator on mobile */
+    .lead-table tbody tr {
+        border-left: 3px solid transparent;
+    }
+    .lead-table .lead-title-link {
+        word-break: break-word !important;
+        white-space: normal !important;
+        font-size: 0.82rem !important;
+    }
+    .lead-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── Detail Panel Full-Screen on Mobile ── */
+    .detail-row td {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        z-index: 1000 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        background: var(--bg-base) !important;
+        padding: 16px !important;
+        display: block !important;
+    }
+    .detail-panel {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        padding: 12px !important;
+    }
+    .detail-panel .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .detail-panel .action-buttons button {
+        width: 100%;
+        min-height: 44px;
+        font-size: 0.88rem !important;
+        justify-content: center;
+    }
+    .detail-panel .assign-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .detail-panel .assign-row select {
+        width: 100% !important;
+        min-height: 44px;
+    }
+    .detail-panel .assign-row button {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    /* ── Bulk Action Bar Fixed at Bottom ── */
+    .bulk-bar {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 999 !important;
+        border-radius: 0 !important;
+        flex-wrap: wrap !important;
+        padding: 10px 12px !important;
+        gap: 6px !important;
+    }
+
+    /* ── Source Nav Horizontal Scroll ── */
+    .source-nav-row {
+        display: flex !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        flex-wrap: nowrap !important;
+        gap: 8px !important;
+        padding-bottom: 6px;
+    }
+    .source-nav-card {
+        min-width: 130px !important;
+        flex-shrink: 0;
+    }
 }
 
 @media (max-width: 480px) {

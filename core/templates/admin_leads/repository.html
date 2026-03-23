@@ -1034,7 +1034,8 @@ function buildDetailPanel(lead) {
     ).join('');
 
     return `
-    <div class="detail-panel">
+    <div class="detail-panel" style="position:relative;">
+        <button onclick="toggleDetail(${lead.id}, event)" style="position:absolute;top:12px;right:12px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.1rem;color:var(--text-secondary);z-index:10;" title="Close"><i class="bi bi-x-lg"></i></button>
         <div class="detail-content">
             <h4>Source Content</h4>
             <div class="detail-text">${escHtml(lead.source_content)}</div>
@@ -1078,7 +1079,7 @@ function buildDetailPanel(lead) {
                 </div>
                 <div class="detail-meta-item">
                     <div class="meta-label">Phone</div>
-                    <div class="meta-value" id="contact-phone-${lead.id}">${lead.contact_phone ? '<span style="color:var(--accent-emerald)"><i class="bi bi-telephone-fill"></i> ' + escHtml(lead.contact_phone) + '</span>' : '<span style="color:var(--text-muted)">—</span>'}</div>
+                    <div class="meta-value" id="contact-phone-${lead.id}">${lead.contact_phone ? '<a href="tel:' + escHtml(lead.contact_phone) + '" style="color:var(--accent-emerald);text-decoration:none;" onclick="event.stopPropagation()"><i class="bi bi-telephone-fill"></i> ' + escHtml(lead.contact_phone) + '</a>' : '<span style="color:var(--text-muted)">—</span>'}</div>
                 </div>
                 <div class="detail-meta-item">
                     <div class="meta-label">Email</div>
