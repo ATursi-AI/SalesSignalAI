@@ -4,14 +4,95 @@
 {% block title %}Lead Detail{% endblock %}
 {% block page_title %}Lead Detail{% endblock %}
 
+{% block extra_css %}
+<style>
+.lead-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 1.5rem;
+    align-items: start;
+}
+.back-link {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.back-link:hover { color: #0D9488; }
+.source-content-text {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    white-space: pre-line;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+@media (max-width: 1024px) {
+    .lead-detail-grid {
+        grid-template-columns: 1fr 280px;
+    }
+}
+@media (max-width: 768px) {
+    .lead-detail-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    .back-link {
+        padding: 8px 16px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        margin-bottom: 0.75rem;
+    }
+    .lead-detail-grid .glass-card-static {
+        padding: 1rem !important;
+    }
+    .lead-meta {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .lead-footer {
+        flex-wrap: wrap;
+        gap: 6px;
+        font-size: 0.8rem;
+    }
+    /* Action buttons touch-friendly */
+    .lead-detail-grid form button,
+    .lead-detail-grid .btn-primary-glow,
+    .lead-detail-grid .btn-secondary,
+    .lead-detail-grid .btn-emerald {
+        min-height: 44px;
+        font-size: 0.9rem;
+    }
+    /* Prevent iOS zoom on input focus */
+    .lead-detail-grid select,
+    .lead-detail-grid input,
+    .lead-detail-grid textarea {
+        font-size: 16px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .timeline-item {
+        padding-left: 1rem;
+    }
+    #ai-response-text {
+        font-size: 0.85rem !important;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div style="margin-bottom: 1rem;">
-    <a href="{% url 'lead_feed' %}" style="font-size: 0.85rem; color: var(--text-secondary);">
+    <a href="{% url 'lead_feed' %}" class="back-link">
         <i class="bi bi-arrow-left"></i> Back to Lead Feed
     </a>
 </div>
 
-<div style="display: grid; grid-template-columns: 1fr 360px; gap: 1.5rem; align-items: start;">
+<div class="lead-detail-grid">
 
     <!-- Main Content -->
     <div>
@@ -39,7 +120,7 @@
             </div>
             {% endif %}
 
-            <div style="font-size: 0.95rem; line-height: 1.7; color: var(--text-secondary); white-space: pre-line;">{{ lead.source_content }}</div>
+            <div class="source-content-text">{{ lead.source_content }}</div>
 
             <div class="lead-footer" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
                 {% if lead.detected_location %}
