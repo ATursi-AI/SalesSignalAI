@@ -40,16 +40,31 @@
 }
 .type-tab.active .tab-count { background: rgba(255,255,255,0.25); }
 
-/* ── Source Group Nav ── */
-.group-nav { display: flex; gap: 6px; margin-bottom: 16px; }
-.group-nav a {
-    padding: 7px 16px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;
-    text-decoration: none; color: var(--text-secondary); background: var(--bg-surface);
-    border: 1px solid var(--border-subtle); transition: all 0.15s;
-    font-family: 'Exo 2', sans-serif;
+/* ── Source Group Nav Cards ── */
+.source-nav-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
 }
-.group-nav a:hover { border-color: var(--accent-blue); color: var(--text-primary); }
-.group-nav a.active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+.source-nav-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.source-nav-card:hover { border-color: var(--accent-blue); background: var(--bg-elevated); }
+.source-nav-card.active { border-color: var(--accent-blue); box-shadow: 0 0 0 2px rgba(0, 144, 255, 0.15); background: rgba(0, 144, 255, 0.04); }
+.source-nav-card i.nav-icon { font-size: 1.2rem; color: var(--accent-blue); }
+.source-nav-card .nav-title { font-weight: 700; font-size: 0.82rem; color: var(--text-primary); font-family: 'Exo 2', sans-serif; }
+.source-nav-card .nav-count { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1rem; color: var(--accent-blue); }
+@media (max-width: 768px) { .source-nav-row { grid-template-columns: repeat(2, 1fr); } }
 
 /* ── Filters Bar ── */
 .filters-bar {
@@ -276,8 +291,8 @@
 .btn-approve, .btn-reject, .btn-unreview, .btn-delete-detail, .btn-enrich {
     border-radius: var(--radius-sm); padding: 5px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.15s;
 }
-.btn-enrich { background: rgba(0,144,255,0.12); color: #0090FF; border: 1px solid rgba(0,144,255,0.25); }
-.btn-enrich:hover { background: rgba(0,144,255,0.22); }
+.btn-enrich { background: rgba(0,144,255,0.3); color: white; border: 1px solid rgba(0,144,255,0.5); font-weight: 600; }
+.btn-enrich:hover { background: rgba(0,144,255,0.45); }
 .btn-enrich:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-approve { background: rgba(16,185,129,0.15); color: var(--accent-emerald); border: 1px solid rgba(16,185,129,0.3); }
 .btn-reject { background: rgba(255,71,87,0.12); color: var(--accent-coral); border: 1px solid rgba(255,71,87,0.25); }
@@ -331,12 +346,19 @@
 {% endblock %}
 
 {% block content %}
-<!-- Source Group Navigation -->
-<div class="group-nav">
-    <a href="/admin-leads/">Command Center</a>
-    <a href="/admin-leads/public-records/" {% if group_slug == 'public-records' %}class="active"{% endif %}>Public Records</a>
-    <a href="/admin-leads/social-media/" {% if group_slug == 'social-media' %}class="active"{% endif %}>Social Media</a>
-    <a href="/admin-leads/reviews/" {% if group_slug == 'reviews' %}class="active"{% endif %}>Reviews</a>
+<!-- Source Group Navigation Cards -->
+<div class="source-nav-row">
+    <a href="/admin-leads/" class="source-nav-card">
+        <i class="bi bi-grid-1x2 nav-icon"></i>
+        <span class="nav-title">Command Center</span>
+    </a>
+    {% for nav in source_nav %}
+    <a href="/admin-leads/{{ nav.slug }}/" class="source-nav-card {% if group_slug == nav.slug %}active{% endif %}">
+        <i class="bi {{ nav.icon }} nav-icon"></i>
+        <span class="nav-title">{{ nav.label }}</span>
+        <span class="nav-count">{{ nav.total }}</span>
+    </a>
+    {% endfor %}
 </div>
 
 <!-- Type Tabs -->

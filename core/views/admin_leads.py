@@ -323,6 +323,20 @@ def source_group_page(request, group):
     businesses = BusinessProfile.objects.filter(is_active=True).order_by('business_name')
     salespeople = SalesPerson.objects.filter(status='active').order_by('user__first_name')
 
+    # Source group navigation counts (same as command center)
+    all_unreviewed = Lead.objects.filter(review_status='unreviewed')
+    source_nav = []
+    for gk, gl in [('public_records', 'Public Records'),
+                    ('social_media', 'Social Media'),
+                    ('reviews', 'Reviews')]:
+        source_nav.append({
+            'key': gk,
+            'slug': gk.replace('_', '-'),
+            'label': gl,
+            'icon': GROUP_ICONS.get(gk, 'bi-folder'),
+            'total': all_unreviewed.filter(source_group=gk).count(),
+        })
+
     return render(request, 'admin_leads/source_group.html', {
         'group_key': group_key,
         'group_slug': group,
@@ -333,6 +347,7 @@ def source_group_page(request, group):
         'platform_choices': dict(Lead.PLATFORM_CHOICES),
         'businesses': businesses,
         'salespeople': salespeople,
+        'source_nav': source_nav,
     })
 
 
