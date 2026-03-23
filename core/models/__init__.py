@@ -16,6 +16,7 @@ from .monitoring import (
 from .prospect_videos import ProspectVideo
 from .call_center import CallLog, SMSMessage, SMSOptOut
 from .service_pages import TradeCategory, ServiceArea, ServiceLandingPage, ServicePageSubmission
+from .blog import BlogPost
 
 __all__ = [
     'ServiceCategory', 'ServiceSubcategory', 'BusinessProfile', 'UserKeyword',
@@ -34,4 +35,5 @@ __all__ = [
     'ProspectVideo',
     'CallLog', 'SMSMessage', 'SMSOptOut',
     'TradeCategory', 'ServiceArea', 'ServiceLandingPage', 'ServicePageSubmission',
+    'BlogPost',
 ]

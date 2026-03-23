@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.utils import timezone
 
-from core.models import ServiceLandingPage
+from core.models import ServiceLandingPage, BlogPost
 
 
 INDUSTRY_SLUGS = [
@@ -49,6 +49,15 @@ def sitemap_xml(request):
                 'priority': '0.7',
                 'changefreq': 'weekly',
             })
+
+    # Blog posts
+    urls.append({'loc': '/blog/', 'priority': '0.7', 'changefreq': 'weekly'})
+    for post in BlogPost.objects.filter(is_published=True):
+        urls.append({
+            'loc': f'/blog/{post.slug}/',
+            'priority': '0.6',
+            'changefreq': 'monthly',
+        })
 
     xml_parts = ['<?xml version="1.0" encoding="UTF-8"?>']
     xml_parts.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')

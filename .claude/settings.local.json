@@ -169,7 +169,9 @@
       "Bash(venv/Scripts/python.exe manage.py backfill_event_dates)",
       "Bash(grep -n \"enrich\" /c/Users/aturs/Documents/AI_Engineering_Course/SalesSignalAI/core/templates/admin_leads/*.html)",
       "Bash(venv/Scripts/python.exe manage.py makemigrations core --name add_enrichment_fields)",
-      "Bash(venv/Scripts/python.exe manage.py showmigrations core)"
+      "Bash(venv/Scripts/python.exe manage.py showmigrations core)",
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name blog_system)",
+      "Bash(venv/Scripts/python.exe manage.py seed_blog)"
     ]
   }
 }

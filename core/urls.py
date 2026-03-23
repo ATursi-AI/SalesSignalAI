@@ -2,7 +2,7 @@ from django.urls import path
 from core.views import landing, auth, onboarding, dashboard, leads, competitors, territory, campaigns, analytics
 from core.views import monitor_health, webhooks, user_settings, admin_leads, ingest_api, crm
 from core.views import sales_admin, sales, industries, prospect_videos, static_pages, seo, call_center
-from core.views import service_pages, signup
+from core.views import service_pages, signup, blog
 
 urlpatterns = [
     path('', landing.landing_page, name='landing'),
@@ -12,6 +12,10 @@ urlpatterns = [
     path('sitemap.xml', seo.sitemap_xml, name='sitemap'),
     path('robots.txt', seo.robots_txt, name='robots_txt'),
     path('google2568d017b4e7e9e5.html', seo.google_verification, name='google_verification'),
+    # Blog
+    path('blog/', blog.blog_list, name='blog_list'),
+    path('blog/<slug:slug>/', blog.blog_detail, name='blog_detail'),
+
     path('industries/', industries.industry_index, name='industry_index'),
     path('industries/<slug:slug>/', industries.industry_detail, name='industry_detail'),
 

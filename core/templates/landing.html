@@ -75,6 +75,7 @@
                 </div>
             </div>
             <a href="#pricing">Pricing</a>
+            <a href="{% url 'blog_list' %}">Blog</a>
             <a href="{% url 'login' %}" class="btn-secondary btn-sm">Log In</a>
             <a href="{% url 'signup' %}" class="btn-primary-glow btn-sm">Sign Up Free</a>
         </div>
@@ -89,6 +90,7 @@
         <a href="#features" onclick="closeLandingMenu()">Features</a>
         <a href="{% url 'industry_index' %}" onclick="closeLandingMenu()">Industries</a>
         <a href="#pricing" onclick="closeLandingMenu()">Pricing</a>
+        <a href="{% url 'blog_list' %}" onclick="closeLandingMenu()">Blog</a>
         <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid rgba(0,0,0,0.06);">
             <a href="{% url 'login' %}" class="btn-secondary" style="justify-content: center;">Log In</a>
             <a href="{% url 'signup' %}" class="btn-primary-glow" style="justify-content: center;" onclick="closeLandingMenu()">Sign Up Free</a>
@@ -476,6 +478,7 @@
             <a href="{% url 'about_page' %}">About</a>
             <a href="{% url 'privacy_page' %}">Privacy Policy</a>
             <a href="{% url 'terms_page' %}">Terms of Service</a>
+            <a href="{% url 'blog_list' %}">Blog</a>
             <a href="{% url 'signup' %}">Sign Up</a>
             <a href="{% url 'login' %}">Log In</a>
         </div>
