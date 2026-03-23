@@ -877,11 +877,20 @@ select.form-control-dark {
     background: var(--bg-deep);
     padding: 2rem;
 }
+@media (max-width: 480px) {
+    .onboarding-container { padding: 1rem 0.75rem; align-items: flex-start; padding-top: 2rem; }
+}
 
 .onboarding-card {
     width: 100%;
     max-width: 680px;
     padding: 3rem;
+}
+@media (max-width: 480px) {
+    .onboarding-card { padding: 1.5rem 1.25rem; border-radius: 12px; }
+    .step-indicator { gap: 0.25rem; margin-bottom: 1.5rem; }
+    .step-line { width: 24px; }
+    .step-dot-label { font-size: 0.65rem; }
 }
 
 .step-indicator {
@@ -3669,6 +3678,173 @@ textarea.form-control-dark {
 @media (max-width: 480px) {
     .kpi-grid {
         grid-template-columns: 1fr !important;
+    }
+
+    /* ── Global mobile form stacking ── */
+    .pv-form-row,
+    .prospect-tab-panel .pv-form-row {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* ── Detail panel action buttons wrap ── */
+    .detail-actions {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    /* ── Bulk action bar scroll on small screens ── */
+    .bulk-bar {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 6px !important;
+        padding: 8px 10px !important;
+        font-size: 0.75rem !important;
+    }
+    .bulk-bar button {
+        white-space: nowrap;
+        font-size: 0.72rem !important;
+        padding: 5px 8px !important;
+    }
+    .bulk-bar select {
+        font-size: 0.72rem !important;
+        max-width: 100px;
+    }
+
+    /* ── Filter bars stack vertically ── */
+    .filters-bar,
+    .filter-bar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    .filter-group {
+        min-width: 100% !important;
+    }
+    .filter-group select,
+    .filter-group input {
+        width: 100% !important;
+    }
+
+    /* ── Topbar compact ── */
+    .topbar-title {
+        font-size: 0.9rem !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 45vw;
+    }
+    .topbar-actions {
+        gap: 4px !important;
+    }
+
+    /* ── KPI values smaller ── */
+    .kpi-value {
+        font-size: 1.25rem !important;
+    }
+
+    /* ── Kanban columns full width ── */
+    .kanban-column {
+        min-width: unset !important;
+        max-width: unset !important;
+    }
+
+    /* ── Pipeline cards compact ── */
+    .pipeline-card {
+        padding: 10px !important;
+    }
+    .pipeline-card-title {
+        font-size: 0.82rem !important;
+    }
+
+    /* ── Contact detail compact ── */
+    .contact-detail-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* ── Campaign wizard forms stack ── */
+    .wizard-panel [style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+    }
+    .prospect-tab {
+        font-size: 0.72rem !important;
+        padding: 6px 10px !important;
+    }
+    .lead-row, .contact-row {
+        padding: 8px 10px !important;
+        font-size: 0.78rem !important;
+    }
+    .lead-source-pill, .lead-urgency {
+        font-size: 0.6rem !important;
+        padding: 1px 5px !important;
+    }
+
+    /* ── Blog mobile padding ── */
+    .blog-hero {
+        padding: 3rem 1rem 1.5rem !important;
+    }
+    .blog-grid {
+        padding: 0 1rem 3rem !important;
+    }
+    .blog-card {
+        padding: 20px 18px !important;
+    }
+    .blog-detail-wrapper {
+        padding: 2rem 1rem 3rem !important;
+    }
+    .blog-content {
+        font-size: 0.95rem !important;
+    }
+    .blog-related-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* ── Pricing cards text ── */
+    .pricing-card {
+        padding: 24px 18px !important;
+    }
+    .pricing-tier-name {
+        font-size: 1.1rem !important;
+    }
+    .pricing-amount {
+        font-size: 2rem !important;
+    }
+}
+
+/* ── Ultra-small screens (320px iPhone SE) ── */
+@media (max-width: 375px) {
+    .hero-brand-title {
+        font-size: 2.25rem !important;
+    }
+    .hero-tagline {
+        font-size: 1.1rem !important;
+    }
+    .hero-scroll-text {
+        font-size: 0.9rem !important;
+    }
+    .hero-cta a {
+        padding: 0.65rem 1.25rem !important;
+        font-size: 0.85rem !important;
+    }
+    .landing-nav {
+        padding: 0.75rem 1rem !important;
+    }
+
+    /* Source nav single column at very small */
+    .source-nav-row {
+        grid-template-columns: 1fr !important;
+    }
+
+    .sidebar {
+        width: 260px !important;
+    }
+    .sidebar-brand {
+        gap: 8px !important;
+    }
+    .brand-text {
+        font-size: 0.95rem !important;
+    }
+
+    .page-content {
+        padding: 0.5rem !important;
     }
 }
 

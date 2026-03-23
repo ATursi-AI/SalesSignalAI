@@ -23,6 +23,15 @@
 .lead-urgency-warm { background: #FEF3C7; color: #92400E; }
 .lead-urgency-new { background: #DBEAFE; color: #1D4ED8; }
 .lead-source-pill { padding: 2px 7px; border-radius: 6px; font-size: 0.65rem; font-weight: 600; background: #F0FDFA; color: #0D9488; }
+
+@media (max-width: 480px) {
+    .prospect-tab { padding: 6px 10px; font-size: 0.72rem; }
+    .lead-row, .contact-row { padding: 8px 10px; font-size: 0.78rem; gap: 6px; }
+    .lead-row .lead-detail { font-size: 0.7rem; }
+    .lead-source-pill, .lead-urgency { font-size: 0.58rem; padding: 1px 5px; }
+    #tab-leads > div:first-child { flex-direction: column; gap: 6px; }
+    #tab-leads > div:first-child select, #tab-leads > div:first-child input { min-width: 100% !important; max-width: 100% !important; }
+}
 </style>
 {% endblock %}
 
