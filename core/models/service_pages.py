@@ -255,7 +255,7 @@ class ServiceLandingPage(models.Model):
     def get_phone_display(self):
         if self.page_type == 'customer' and self.branded_phone:
             return self.branded_phone
-        return self.signalwire_phone or ''
+        return self.signalwire_phone or '(888) 631-5426'
 
     def get_business_name_display(self):
         if self.page_type == 'customer' and self.branded_business_name:

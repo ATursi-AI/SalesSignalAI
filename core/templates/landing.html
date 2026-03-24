@@ -76,6 +76,7 @@
             </div>
             <a href="#pricing">Pricing</a>
             <a href="{% url 'blog_list' %}">Blog</a>
+            <a href="tel:+18886315426" class="nav-phone-link"><i class="bi bi-telephone-fill"></i> (888) 631-5426</a>
             <a href="{% url 'login' %}" class="btn-secondary btn-sm">Log In</a>
             <a href="{% url 'signup' %}" class="btn-primary-glow btn-sm">Sign Up Free</a>
         </div>
@@ -91,6 +92,9 @@
         <a href="{% url 'industry_index' %}" onclick="closeLandingMenu()">Industries</a>
         <a href="#pricing" onclick="closeLandingMenu()">Pricing</a>
         <a href="{% url 'blog_list' %}" onclick="closeLandingMenu()">Blog</a>
+        <a href="tel:+18886315426" style="color: #0F9D7A; font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; padding: 10px 0;">
+            <i class="bi bi-telephone-fill"></i> (888) 631-5426
+        </a>
         <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid rgba(0,0,0,0.06);">
             <a href="{% url 'login' %}" class="btn-secondary" style="justify-content: center;">Log In</a>
             <a href="{% url 'signup' %}" class="btn-primary-glow" style="justify-content: center;" onclick="closeLandingMenu()">Sign Up Free</a>
@@ -485,6 +489,7 @@
         <div class="footer-copy">
             &copy; 2026 Sales Signal AI. All rights reserved.
             <br>Support: <a href="mailto:support@salessignalai.com" style="color:#0D9488;">support@salessignalai.com</a>
+            <br>Phone: <a href="tel:+18886315426" style="color:#0D9488;">(888) 631-5426</a>
         </div>
     </footer>
 
@@ -635,5 +640,12 @@
         }, 2200);
     })();
     </script>
+
+    <!-- Sticky mobile call bar -->
+    <div class="mobile-call-bar">
+        <a href="tel:+18886315426">
+            <i class="bi bi-telephone-fill"></i> Call (888) 631-5426
+        </a>
+    </div>
 </body>
 </html>
