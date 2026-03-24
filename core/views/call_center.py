@@ -518,6 +518,7 @@ def softphone(request):
         'signalwire_project': settings.SIGNALWIRE_PROJECT_ID,
         'signalwire_phone': settings.SIGNALWIRE_SMS_NUMBER or settings.SIGNALWIRE_PHONE_NUMBER,
         'signalwire_space': settings.SIGNALWIRE_SPACE_URL,
+        'is_admin': request.user.is_staff or request.user.is_superuser,
     })
 
 
