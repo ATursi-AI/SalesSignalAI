@@ -514,7 +514,79 @@ def sms_inbox_api(request):
 @ensure_csrf_cookie
 def softphone(request):
     """Browser softphone page."""
-    return render(request, 'call_center/softphone.html')
+    return render(request, 'call_center/softphone.html', {
+        'signalwire_project': settings.SIGNALWIRE_PROJECT_ID,
+        'signalwire_phone': settings.SIGNALWIRE_SMS_NUMBER or settings.SIGNALWIRE_PHONE_NUMBER,
+        'signalwire_space': settings.SIGNALWIRE_SPACE_URL,
+    })
+
+
+@login_required
+def get_relay_token(request):
+    """Generate a SignalWire JWT token for browser WebRTC."""
+    import base64
+    import requests as http_requests
+
+    project_id = settings.SIGNALWIRE_PROJECT_ID
+    api_token = settings.SIGNALWIRE_API_TOKEN
+    space_url = settings.SIGNALWIRE_SPACE_URL
+
+    if not all([project_id, api_token, space_url]):
+        return JsonResponse({'error': 'SignalWire not configured'}, status=500)
+
+    auth = base64.b64encode(f'{project_id}:{api_token}'.encode()).decode()
+    resource = f'softphone-{request.user.id}'
+
+    try:
+        resp = http_requests.post(
+            f'https://{space_url}/api/relay/rest/jwt',
+            headers={
+                'Authorization': f'Basic {auth}',
+                'Content-Type': 'application/json',
+            },
+            json={'expires_in': 120, 'resource': resource},
+            timeout=10,
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            return JsonResponse({
+                'token': data.get('jwt_token', ''),
+                'project': project_id,
+            })
+        else:
+            return JsonResponse({'error': f'Token request failed: {resp.status_code}'}, status=500)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def lookup_lead_by_phone(request):
+    """Find a lead by phone number for softphone context."""
+    phone = request.GET.get('phone', '').strip()
+    if not phone:
+        return JsonResponse({'found': False})
+
+    # Normalize: strip +1, dashes, parens, spaces
+    digits = phone.replace('+1', '').replace('-', '').replace('(', '').replace(')', '').replace(' ', '')
+
+    lead = Lead.objects.filter(contact_phone__icontains=digits[-10:]).order_by('-discovered_at').first() if len(digits) >= 7 else None
+    if not lead:
+        return JsonResponse({'found': False})
+
+    return JsonResponse({
+        'found': True,
+        'id': lead.id,
+        'title': (lead.source_content or '')[:200],
+        'name': lead.contact_name or '',
+        'phone': lead.contact_phone or '',
+        'email': lead.contact_email or '',
+        'business': lead.contact_business or '',
+        'address': lead.contact_address or '',
+        'platform': lead.get_platform_display() if lead.platform else '',
+        'urgency': lead.urgency_level or '',
+        'source_type': lead.get_source_type_display() if lead.source_type else '',
+        'location': lead.detected_location or '',
+    })
 
 
 @login_required
