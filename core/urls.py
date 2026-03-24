@@ -2,7 +2,7 @@ from django.urls import path
 from core.views import landing, auth, onboarding, dashboard, leads, competitors, territory, campaigns, analytics
 from core.views import monitor_health, webhooks, user_settings, admin_leads, ingest_api, crm
 from core.views import sales_admin, sales, industries, prospect_videos, static_pages, seo, call_center
-from core.views import service_pages, signup, blog
+from core.views import service_pages, signup, blog, workflows
 
 urlpatterns = [
     path('', landing.landing_page, name='landing'),
@@ -81,6 +81,14 @@ urlpatterns = [
     path('territory/data/', territory.territory_data, name='territory_data'),
 
     # Outreach Campaigns
+    # Workflows
+    path('dashboard/workflows/', workflows.workflow_list, name='workflow_list'),
+    path('dashboard/workflows/create/', workflows.workflow_builder, name='workflow_builder'),
+    path('dashboard/workflows/<int:rule_id>/', workflows.workflow_detail, name='workflow_detail'),
+    path('dashboard/workflows/<int:rule_id>/edit/', workflows.workflow_builder, name='workflow_edit'),
+    path('dashboard/workflows/<int:rule_id>/toggle/', workflows.workflow_toggle, name='workflow_toggle'),
+    path('dashboard/workflows/<int:rule_id>/delete/', workflows.workflow_delete, name='workflow_delete'),
+
     path('campaigns/', campaigns.campaign_list, name='campaign_list'),
     path('campaigns/new/', campaigns.campaign_wizard, name='campaign_wizard'),
     path('campaigns/prospect-scrape/', campaigns.prospect_scrape, name='prospect_scrape'),
@@ -177,6 +185,7 @@ urlpatterns = [
     path('api/signalwire/relay-token/', call_center.get_relay_token, name='signalwire_relay_token'),
     path('api/signalwire/lead-lookup/', call_center.lookup_lead_by_phone, name='signalwire_lead_lookup'),
     path('api/signalwire/assigned-leads/', call_center.get_assigned_leads, name='signalwire_assigned_leads'),
+    path('api/signalwire/recording-webhook/', call_center.recording_webhook, name='signalwire_recording_webhook'),
     path('api/signalwire/transfer-call/', call_center.transfer_call, name='signalwire_transfer_call'),
     path('api/signalwire/transfer-xml/', call_center.transfer_xml, name='signalwire_transfer_xml'),
 

@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}{{ rule.name }}{% endblock %}
+{% block page_title %}{{ rule.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.wd-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; }
+.wd-back { color: var(--text-secondary); font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 1rem; text-decoration: none; }
+.wd-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+.wd-badge-active { background: #D1FAE5; color: #059669; }
+.wd-badge-inactive { background: #FEE2E2; color: #DC2626; }
+.wd-stats { display: flex; gap: 24px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.wd-stat { text-align: center; }
+.wd-stat-val { font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 700; }
+.wd-stat-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.wd-flow { display: flex; flex-direction: column; align-items: center; gap: 0; margin-bottom: 2rem; }
+.wd-arrow { color: var(--text-muted); font-size: 1rem; padding: 4px 0; }
+.wd-step { width: 100%; max-width: 500px; padding: 14px 18px; border-radius: 12px; background: var(--bg-surface); border: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 12px; }
+.wd-step-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+.wd-step-teal { background: rgba(13,148,136,0.12); color: #0D9488; }
+.wd-step-amber { background: rgba(245,158,11,0.12); color: #F59E0B; }
+.wd-step-blue { background: rgba(59,130,246,0.12); color: #3B82F6; }
+.wd-step-gray { background: rgba(148,163,184,0.12); color: #94A3B8; }
+.wd-step-label { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+.wd-step-text { font-weight: 600; font-size: 0.85rem; }
+.wd-log-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; font-size: 0.82rem; }
+.wd-log-status { padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; }
+.wd-log-completed { background: #D1FAE5; color: #059669; }
+.wd-log-failed { background: #FEE2E2; color: #DC2626; }
+.wd-log-waiting { background: #FEF3C7; color: #92400E; }
+.wd-log-running { background: #DBEAFE; color: #1D4ED8; }
+.wd-log-time { font-size: 0.72rem; color: var(--text-muted); margin-left: auto; }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'workflow_list' %}" class="wd-back"><i class="bi bi-arrow-left"></i> Back to Workflows</a>
+
+<div class="wd-header">
+    <div>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <h2 style="margin:0;">{{ rule.name }}</h2>
+            <span class="wd-badge {% if rule.is_active %}wd-badge-active{% else %}wd-badge-inactive{% endif %}">
+                {% if rule.is_active %}Active{% else %}Inactive{% endif %}
+            </span>
+        </div>
+        {% if rule.description %}
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.25rem 0 0;">{{ rule.description }}</p>
+        {% endif %}
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <a href="{% url 'workflow_edit' rule.id %}" class="btn-secondary btn-sm"><i class="bi bi-pencil"></i> Edit</a>
+        <button class="btn-secondary btn-sm" onclick="toggleRule()" id="toggleBtn">
+            <i class="bi bi-{% if rule.is_active %}pause{% else %}play{% endif %}-fill"></i>
+            {% if rule.is_active %}Pause{% else %}Activate{% endif %}
+        </button>
+        <button class="btn-secondary btn-sm" style="color:#DC2626;" onclick="deleteRule()"><i class="bi bi-trash"></i></button>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="wd-stats">
+    <div class="wd-stat">
+        <div class="wd-stat-val" style="color:#0D9488;">{{ rule.times_triggered }}</div>
+        <div class="wd-stat-label">Times Triggered</div>
+    </div>
+    <div class="wd-stat">
+        <div class="wd-stat-val" style="color:#059669;">{{ success_count }}</div>
+        <div class="wd-stat-label">Completed</div>
+    </div>
+    <div class="wd-stat">
+        <div class="wd-stat-val" style="color:#DC2626;">{{ fail_count }}</div>
+        <div class="wd-stat-label">Failed</div>
+    </div>
+    <div class="wd-stat">
+        <div class="wd-stat-val" style="color:#F59E0B;">{{ waiting_count }}</div>
+        <div class="wd-stat-label">Waiting</div>
+    </div>
+</div>
+
+<!-- Visual Flow -->
+<div class="glass-card-static" style="padding: 1.5rem; margin-bottom: 1.5rem;">
+    <h3 style="font-family:'Exo 2',sans-serif; font-weight:800; font-size:0.95rem; margin:0 0 1rem;">
+        <i class="bi bi-diagram-3" style="color:var(--accent-blue);"></i> Workflow Flow
+    </h3>
+    <div class="wd-flow">
+        <!-- Trigger -->
+        <div class="wd-step">
+            <div class="wd-step-icon wd-step-teal"><i class="bi bi-lightning-fill"></i></div>
+            <div>
+                <div class="wd-step-label">Trigger</div>
+                <div class="wd-step-text">{{ rule.get_trigger_display }}</div>
+            </div>
+        </div>
+
+        {% if rule.trigger_conditions %}
+        <div class="wd-arrow"><i class="bi bi-arrow-down"></i></div>
+        <div class="wd-step">
+            <div class="wd-step-icon wd-step-amber"><i class="bi bi-funnel-fill"></i></div>
+            <div>
+                <div class="wd-step-label">Conditions</div>
+                <div class="wd-step-text" style="font-size:0.8rem;">
+                    {% for key, val in rule.trigger_conditions.items %}{{ key }}: {{ val }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% for action in rule.actions %}
+        <div class="wd-arrow"><i class="bi bi-arrow-down"></i></div>
+        <div class="wd-step">
+            <div class="wd-step-icon {% if action.type == 'wait_days' %}wd-step-gray{% else %}wd-step-blue{% endif %}">
+                <i class="bi bi-{% if action.type == 'wait_days' %}hourglass{% elif action.type == 'send_email' %}envelope{% elif action.type == 'send_sms' %}chat-dots{% elif action.type == 'schedule_followup' %}calendar-plus{% elif action.type == 'change_stage' %}arrow-right-circle{% elif action.type == 'assign_to_rep' %}person-plus{% elif action.type == 'create_task' %}check-square{% elif action.type == 'notify_admin' %}bell{% elif action.type == 'add_to_campaign' %}megaphone{% else %}gear{% endif %}-fill"></i>
+            </div>
+            <div>
+                <div class="wd-step-label">Action {{ forloop.counter }}</div>
+                <div class="wd-step-text">
+                    {% if action.type == 'wait_days' %}Wait {{ action.days }} day{{ action.days|pluralize }}
+                    {% elif action.type == 'send_email' %}Send email: {{ action.subject|default:"(no subject)" }}
+                    {% elif action.type == 'send_sms' %}Send SMS
+                    {% elif action.type == 'change_stage' %}Change stage to {{ action.stage }}
+                    {% elif action.type == 'schedule_followup' %}Schedule follow-up in {{ action.days }} day{{ action.days|pluralize }}
+                    {% elif action.type == 'notify_admin' %}Notify admin
+                    {% elif action.type == 'add_to_campaign' %}Add to campaign
+                    {% else %}{{ action.type }}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Execution Log -->
+<div class="glass-card-static" style="padding: 1.5rem;">
+    <h3 style="font-family:'Exo 2',sans-serif; font-weight:800; font-size:0.95rem; margin:0 0 1rem;">
+        <i class="bi bi-clock-history" style="color:var(--accent-blue);"></i> Recent Executions
+    </h3>
+    {% if executions %}
+    {% for ex in executions %}
+    <div class="wd-log-card">
+        <span class="wd-log-status wd-log-{{ ex.status }}">{{ ex.get_status_display }}</span>
+        <span>{{ ex.triggered_by_model }} #{{ ex.triggered_by_id|default:"—" }}</span>
+        <span style="font-size:0.72rem; color:var(--text-muted);">
+            {{ ex.result_log|length }} action{{ ex.result_log|length|pluralize }}
+        </span>
+        <span class="wd-log-time">{{ ex.created_at|date:"M d, H:i" }}</span>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p style="text-align:center; color:var(--text-muted); padding:1rem;">No executions yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function getCsrf(){var m=document.cookie.match(/csrftoken=([^;]+)/);return m?m[1]:'';}
+
+function toggleRule() {
+    fetch('{% url "workflow_toggle" rule.id %}', {
+        method:'POST', headers:{'X-CSRFToken':getCsrf()},
+    }).then(r=>r.json()).then(d=>{location.reload();});
+}
+
+function deleteRule() {
+    if (!confirm('Delete this workflow? This cannot be undone.')) return;
+    fetch('{% url "workflow_delete" rule.id %}', {
+        method:'POST', headers:{'X-CSRFToken':getCsrf()},
+    }).then(r=>r.json()).then(d=>{
+        if(d.ok) window.location.href='{% url "workflow_list" %}';
+    });
+}
+</script>
+{% endblock %}

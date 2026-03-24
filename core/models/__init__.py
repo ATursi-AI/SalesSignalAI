@@ -17,6 +17,7 @@ from .prospect_videos import ProspectVideo
 from .call_center import CallLog, SMSMessage, SMSOptOut
 from .service_pages import TradeCategory, ServiceArea, ServiceLandingPage, ServicePageSubmission
 from .blog import BlogPost
+from .workflows import WorkflowRule, WorkflowExecution
 
 __all__ = [
     'ServiceCategory', 'ServiceSubcategory', 'BusinessProfile', 'UserKeyword',
@@ -36,4 +37,5 @@ __all__ = [
     'CallLog', 'SMSMessage', 'SMSOptOut',
     'TradeCategory', 'ServiceArea', 'ServiceLandingPage', 'ServicePageSubmission',
     'BlogPost',
+    'WorkflowRule', 'WorkflowExecution',
 ]

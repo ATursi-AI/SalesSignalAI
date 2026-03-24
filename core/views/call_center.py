@@ -190,7 +190,7 @@ def voice_webhook(request):
     xml = (
         '<?xml version="1.0" encoding="UTF-8"?>'
         '<Response>'
-        f'<Dial timeout="30" callerId="+18886315426">'
+        f'<Dial timeout="30" callerId="+18886315426" record="record-from-answer-dual" recordingStatusCallback="/api/signalwire/recording-webhook/" recordingStatusCallbackMethod="POST">'
         f'<Number>{fallback}</Number>'
         '</Dial>'
         '<Say voice="alice">Sorry, no one is available right now. Please leave a message after the beep.</Say>'
@@ -232,6 +232,22 @@ def call_status_webhook(request):
                 )
 
         call_log.save()
+
+        # Trigger workflow on call completion
+        if status == 'completed':
+            try:
+                from core.services.workflow_engine import trigger_workflow
+                trigger_workflow('call_completed', {
+                    'model': 'CallLog',
+                    'id': call_log.id,
+                    'phone': call_log.to_number or call_log.from_number,
+                    'duration': call_log.duration or 0,
+                    'direction': call_log.direction,
+                    'outcome': 'connected',
+                })
+            except Exception:
+                pass
+
     except CallLog.DoesNotExist:
         logger.warning(f'[call_status] No CallLog for sid={call_sid}')
 
@@ -715,6 +731,30 @@ def my_calls(request):
 
 @login_required
 @require_POST
+@csrf_exempt
+def recording_webhook(request):
+    """Handle call recording completion from SignalWire."""
+    call_sid = request.POST.get('CallSid', '')
+    recording_url = request.POST.get('RecordingUrl', '')
+    recording_sid = request.POST.get('RecordingSid', '')
+    recording_duration = request.POST.get('RecordingDuration', '0')
+
+    logger.info(f'[recording] sid={call_sid} url={recording_url} duration={recording_duration}s')
+
+    if call_sid and recording_url:
+        try:
+            call_log = CallLog.objects.filter(call_sid=call_sid).first()
+            if call_log:
+                call_log.recording_url = recording_url
+                call_log.recording_sid = recording_sid
+                call_log.recording_duration = int(recording_duration)
+                call_log.save(update_fields=['recording_url', 'recording_sid', 'recording_duration'])
+        except Exception as e:
+            logger.error(f'[recording] Error saving: {e}')
+
+    return HttpResponse('OK', content_type='text/plain')
+
+
 def transfer_call(request):
     """Handle call transfer requests from the softphone."""
     data = json.loads(request.body)

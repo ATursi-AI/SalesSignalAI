@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Workflows{% endblock %}
+{% block page_title %}Workflow Automations{% endblock %}
+
+{% block extra_css %}
+<style>
+.wf-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; }
+.wf-header p { color: var(--text-secondary); font-size: 0.88rem; margin: 0.25rem 0 0; }
+.wf-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 20px; margin-bottom: 10px; display: flex; align-items: center; gap: 16px; transition: border-color 0.15s; cursor: pointer; text-decoration: none; color: inherit; }
+.wf-card:hover { border-color: var(--accent-blue); }
+.wf-card.inactive { opacity: 0.55; }
+.wf-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0; }
+.wf-icon-teal { background: rgba(13,148,136,0.12); color: #0D9488; }
+.wf-info { flex: 1; min-width: 0; }
+.wf-name { font-family: 'Exo 2', sans-serif; font-weight: 700; font-size: 0.95rem; }
+.wf-desc { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wf-meta { display: flex; gap: 12px; align-items: center; font-size: 0.72rem; color: var(--text-muted); flex-shrink: 0; }
+.wf-badge { padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; }
+.wf-badge-active { background: #D1FAE5; color: #059669; }
+.wf-badge-inactive { background: #FEE2E2; color: #DC2626; }
+.wf-trigger-pill { padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 600; background: rgba(13,148,136,0.1); color: #0D9488; }
+.wf-stat { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.wf-toggle { width: 40px; height: 22px; border-radius: 11px; border: none; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+.wf-toggle.on { background: #059669; }
+.wf-toggle.off { background: #CBD5E1; }
+.wf-toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: white; transition: transform 0.2s; }
+.wf-toggle.on::after { transform: translateX(18px); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wf-header">
+    <div>
+        <p>{{ active_count }} active &middot; {{ total }} total</p>
+    </div>
+    <a href="{% url 'workflow_builder' %}" class="btn-primary-glow"><i class="bi bi-plus-lg"></i> Create Workflow</a>
+</div>
+
+{% if rules %}
+{% for rule in rules %}
+<a href="{% url 'workflow_detail' rule.id %}" class="wf-card {% if not rule.is_active %}inactive{% endif %}">
+    <div class="wf-icon wf-icon-teal"><i class="bi bi-diagram-3"></i></div>
+    <div class="wf-info">
+        <div class="wf-name">{{ rule.name }}</div>
+        <div class="wf-desc">
+            <span class="wf-trigger-pill">{{ rule.get_trigger_display }}</span>
+            &nbsp;&rarr;&nbsp; {{ rule.actions|length }} action{{ rule.actions|length|pluralize }}
+            {% if rule.description %}&middot; {{ rule.description|truncatechars:60 }}{% endif %}
+        </div>
+    </div>
+    <div class="wf-meta">
+        <span class="wf-stat">{{ rule.times_triggered }}</span> runs
+    </div>
+    <span class="wf-badge {% if rule.is_active %}wf-badge-active{% else %}wf-badge-inactive{% endif %}">
+        {% if rule.is_active %}Active{% else %}Off{% endif %}
+    </span>
+    <button class="wf-toggle {% if rule.is_active %}on{% else %}off{% endif %}" onclick="event.preventDefault();event.stopPropagation();toggleWf({{ rule.id }},this)" title="Toggle"></button>
+</a>
+{% endfor %}
+{% else %}
+<div class="glass-card-static" style="text-align:center; padding: 3rem;">
+    <i class="bi bi-diagram-3" style="font-size: 2.5rem; color: var(--text-muted); display: block; margin-bottom: 0.75rem;"></i>
+    <h3 style="margin-bottom: 0.5rem;">No Workflows Yet</h3>
+    <p style="color: var(--text-secondary); margin-bottom: 1.25rem;">Automate your sales process with if/then rules.</p>
+    <a href="{% url 'workflow_builder' %}" class="btn-primary-glow"><i class="bi bi-plus-lg"></i> Create Your First Workflow</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleWf(id, btn) {
+    fetch('/dashboard/workflows/' + id + '/toggle/', {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCsrfToken()},
+    }).then(r => r.json()).then(d => {
+        if (d.is_active) { btn.classList.remove('off'); btn.classList.add('on'); }
+        else { btn.classList.remove('on'); btn.classList.add('off'); }
+        btn.closest('.wf-card').classList.toggle('inactive', !d.is_active);
+        var badge = btn.previousElementSibling;
+        badge.textContent = d.is_active ? 'Active' : 'Off';
+        badge.className = 'wf-badge ' + (d.is_active ? 'wf-badge-active' : 'wf-badge-inactive');
+    });
+}
+function getCsrfToken() { var m = document.cookie.match(/csrftoken=([^;]+)/); return m ? m[1] : ''; }
+</script>
+{% endblock %}

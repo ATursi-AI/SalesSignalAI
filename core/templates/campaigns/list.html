@@ -54,8 +54,25 @@
             </div>
         </div>
 
-        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
-            Created {{ c.created_at|time_ago }}
+        <!-- Drip mini-progress -->
+        {% if c.total_prospects > 0 %}
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 0.65rem; font-size: 0.7rem; color: var(--text-muted);">
+            <span style="color: #0D9488;">E1: {{ c.emails_sent|default:0 }}</span>
+            <i class="bi bi-chevron-right" style="font-size: 0.55rem;"></i>
+            <span style="color: #F59E0B;">E2: {{ c.emails_opened|default:0 }}</span>
+            <i class="bi bi-chevron-right" style="font-size: 0.55rem;"></i>
+            <span style="color: #EF4444;">E3: {{ c.emails_replied|default:0 }}</span>
+            <span style="margin-left: auto;">{{ c.email_sequence_count }}-step &middot; {{ c.followup_delay_days }}d delay</span>
+        </div>
+        {% endif %}
+
+        <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); margin-top: 0.4rem;">
+            <span>Created {{ c.created_at|time_ago }}</span>
+            <span>{{ c.daily_send_limit }}/day &middot;
+                {% if c.status == 'active' %}<span style="color: #059669;"><i class="bi bi-circle-fill" style="font-size: 0.4rem; vertical-align: middle;"></i> Running</span>
+                {% elif c.status == 'paused' %}<span style="color: #F59E0B;"><i class="bi bi-pause-fill"></i> Paused</span>
+                {% else %}<span style="color: var(--text-muted);"><i class="bi bi-pencil-square"></i> Draft</span>{% endif %}
+            </span>
         </div>
     </a>
     {% endfor %}

@@ -164,6 +164,12 @@
 .transfer-tab:last-child { border-radius: 0 8px 8px 0; border-left: none; }
 .transfer-tab.active { background: #0D9488; color: white; border-color: #0D9488; }
 
+/* ── Recording Indicator ── */
+.recording-indicator { display: none; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; color: #DC2626; justify-content: center; margin-bottom: 6px; }
+.recording-indicator.active { display: flex; }
+.rec-dot { width: 8px; height: 8px; border-radius: 50%; background: #DC2626; animation: rec-pulse 1s ease-in-out infinite; }
+@keyframes rec-pulse { 0%,100%{opacity:1;}50%{opacity:0.3;} }
+
 /* ── Mobile ── */
 @media (max-width: 768px) {
     .phone-layout { grid-template-columns: 1fr; height: auto; overflow: auto; }
@@ -190,6 +196,7 @@
         <div class="sw-error-banner" id="swErrorBanner"><span id="swErrorText"></span> <button onclick="initSignalWire()">Retry</button></div>
 
         <div class="dialpad-card" id="dialpadCard">
+            <div class="recording-indicator" id="recordingIndicator"><span class="rec-dot"></span> Recording</div>
             <div class="call-status" id="callStatus" style="display:none;">
                 <div class="call-status-text" id="callStatusText">Calling...</div>
                 <div class="call-timer" id="callTimer">00:00</div>
@@ -432,7 +439,7 @@ function handleCallEvents(call){
             case 'trying':t.textContent='Trying...';break;
             case 'ringing':t.textContent='Ringing...';break;
             case 'early':t.textContent='Connecting...';break;
-            case 'active':t.textContent='Connected';startTimer();break;
+            case 'active':t.textContent='Connected';startTimer();document.getElementById('recordingIndicator').classList.add('active');break;
             case 'hangup':case 'destroy':onCallEnd();break;
         }
     });
@@ -443,6 +450,7 @@ function onCallEnd(){
     clearInterval(callTimerInterval);currentCall=null;isMuted=false;isHeld=false;
     document.getElementById('callStatusText').textContent='Call ended — '+document.getElementById('callTimer').textContent;
     document.getElementById('dialpadCard').classList.remove('call-active','call-hold');
+    document.getElementById('recordingIndicator').classList.remove('active');
     document.getElementById('btnCall').style.display='flex';
     document.getElementById('btnHangup').style.display='none';
     setControlsEnabled(false);

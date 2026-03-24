@@ -96,6 +96,23 @@ def pipeline_move(request):
         prospect=prospect, salesperson=log_sp, activity_type='note',
         description=f'Moved from {old_stage} → {new_stage}',
     )
+
+    # Trigger workflow automation
+    try:
+        from core.services.workflow_engine import trigger_workflow
+        trigger_workflow('prospect_stage_changed', {
+            'model': 'SalesProspect',
+            'prospect_id': prospect.id,
+            'id': prospect.id,
+            'from_stage': old_stage,
+            'to_stage': new_stage,
+            'business_name': prospect.business_name,
+            'phone': prospect.phone,
+            'email': prospect.email,
+        })
+    except Exception:
+        pass  # Don't break the stage change if workflow fails
+
     return JsonResponse({'success': True})
 
 

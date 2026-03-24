@@ -466,14 +466,35 @@ def lead_action(request, lead_id):
     data = json.loads(request.body)
     action = data.get('action')
 
+    def _trigger_lead_workflow(lead_obj, from_status, to_status):
+        try:
+            from core.services.workflow_engine import trigger_workflow
+            trigger_workflow('lead_status_changed', {
+                'model': 'Lead',
+                'lead_id': lead_obj.id,
+                'id': lead_obj.id,
+                'from_status': from_status,
+                'to_status': to_status,
+                'name': lead_obj.contact_name,
+                'phone': lead_obj.contact_phone,
+                'email': lead_obj.contact_email,
+                'business_name': lead_obj.contact_business,
+            })
+        except Exception:
+            pass
+
     if action == 'approve':
+        old = lead.review_status
         lead.review_status = 'approved'
         lead.save(update_fields=['review_status'])
+        _trigger_lead_workflow(lead, old, 'approved')
         return JsonResponse({'ok': True, 'review_status': 'approved'})
 
     elif action == 'reject':
+        old = lead.review_status
         lead.review_status = 'rejected'
         lead.save(update_fields=['review_status'])
+        _trigger_lead_workflow(lead, old, 'rejected')
         return JsonResponse({'ok': True, 'review_status': 'rejected'})
 
     elif action == 'unreview':

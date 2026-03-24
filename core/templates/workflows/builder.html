@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}{% if rule %}Edit{% else %}Create{% endif %} Workflow{% endblock %}
+{% block page_title %}{% if rule %}Edit{% else %}Create{% endif %} Workflow{% endblock %}
+
+{% block extra_css %}
+<style>
+.wb-container { max-width: 760px; }
+.wb-back { color: var(--text-secondary); font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 1.25rem; text-decoration: none; }
+.wb-back:hover { color: var(--text-primary); }
+
+/* Flow cards */
+.wb-flow { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.wb-arrow { color: var(--text-muted); font-size: 1.2rem; padding: 6px 0; }
+.wb-card { width: 100%; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 20px 24px; position: relative; }
+.wb-card-trigger { border-left: 4px solid #0D9488; }
+.wb-card-condition { border-left: 4px solid #F59E0B; }
+.wb-card-action { border-left: 4px solid #3B82F6; }
+.wb-card-wait { border-left: 4px solid #94A3B8; }
+.wb-card-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.wb-card-label-teal { color: #0D9488; }
+.wb-card-label-amber { color: #F59E0B; }
+.wb-card-label-blue { color: #3B82F6; }
+.wb-card-label-gray { color: #94A3B8; }
+
+.wb-select { width: 100%; padding: 10px 14px; border: 1px solid var(--border-subtle); border-radius: 10px; font-size: 0.88rem; background: var(--bg-page); color: var(--text-primary); }
+.wb-select:focus { outline: none; border-color: var(--accent-blue); }
+.wb-input { width: 100%; padding: 10px 14px; border: 1px solid var(--border-subtle); border-radius: 10px; font-size: 0.88rem; background: var(--bg-page); color: var(--text-primary); }
+.wb-input:focus { outline: none; border-color: var(--accent-blue); }
+.wb-textarea { width: 100%; padding: 10px 14px; border: 1px solid var(--border-subtle); border-radius: 10px; font-size: 0.85rem; background: var(--bg-page); color: var(--text-primary); min-height: 60px; resize: vertical; font-family: inherit; }
+.wb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+.wb-field label { font-size: 0.72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 4px; }
+
+/* Action list */
+.wb-action-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; background: var(--bg-page); border-radius: 10px; border: 1px solid var(--border-subtle); margin-bottom: 8px; }
+.wb-action-item .wb-action-num { width: 24px; height: 24px; border-radius: 50%; background: #3B82F6; color: white; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+.wb-action-item .wb-action-num.wait { background: #94A3B8; }
+.wb-action-body { flex: 1; }
+.wb-action-remove { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: 2px 6px; }
+.wb-action-remove:hover { color: #DC2626; }
+
+.wb-add-btn { width: 100%; padding: 12px; border: 2px dashed var(--border-subtle); border-radius: 12px; background: none; color: var(--text-secondary); font-weight: 600; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; }
+.wb-add-btn:hover { border-color: #3B82F6; color: #3B82F6; }
+
+.wb-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wb-container">
+    <a href="{% url 'workflow_list' %}" class="wb-back"><i class="bi bi-arrow-left"></i> Back to Workflows</a>
+
+    <div class="wb-flow" id="wfFlow">
+        <!-- Trigger -->
+        <div class="wb-card wb-card-trigger">
+            <div class="wb-card-label wb-card-label-teal"><i class="bi bi-lightning-fill"></i> When this happens</div>
+            <select class="wb-select" id="wfTrigger" onchange="renderConditions()">
+                <option value="">Select a trigger...</option>
+                {% for val, label in trigger_choices %}
+                <option value="{{ val }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="wb-arrow"><i class="bi bi-arrow-down"></i></div>
+
+        <!-- Conditions -->
+        <div class="wb-card wb-card-condition">
+            <div class="wb-card-label wb-card-label-amber"><i class="bi bi-funnel-fill"></i> Only if</div>
+            <div id="conditionFields">
+                <p style="font-size:0.82rem; color:var(--text-muted);">Select a trigger first.</p>
+            </div>
+        </div>
+
+        <div class="wb-arrow"><i class="bi bi-arrow-down"></i></div>
+
+        <!-- Actions -->
+        <div class="wb-card wb-card-action">
+            <div class="wb-card-label wb-card-label-blue"><i class="bi bi-gear-fill"></i> Then do this</div>
+            <div id="actionList"></div>
+            <button type="button" class="wb-add-btn" onclick="addAction()"><i class="bi bi-plus-circle"></i> Add Action</button>
+        </div>
+
+        <div class="wb-arrow"><i class="bi bi-arrow-down"></i></div>
+
+        <!-- Name & Save -->
+        <div class="wb-card" style="border-left: 4px solid var(--accent-blue);">
+            <div class="wb-card-label" style="color: var(--accent-blue);"><i class="bi bi-tag-fill"></i> Name this workflow</div>
+            <input type="text" class="wb-input" id="wfName" placeholder="e.g. Auto follow-up after demo">
+            <textarea class="wb-textarea" id="wfDesc" placeholder="Description (optional)" style="margin-top:10px;"></textarea>
+        </div>
+    </div>
+
+    <div class="wb-footer">
+        <a href="{% url 'workflow_list' %}" class="btn-secondary">Cancel</a>
+        <button class="btn-primary-glow" onclick="saveWorkflow()"><i class="bi bi-check-lg"></i> Save & Activate</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var actions = [];
+var ruleData = {{ rule_json|safe }};
+var stages = [{% for val, label in stages %}['{{ val }}','{{ label }}'],{% endfor %}];
+var campaigns = [{% for c in campaigns %}[{{ c.id }},'{{ c.name|escapejs }}'],{% endfor %}];
+var reps = [{% for r in reps %}[{{ r.id }},'{{ r.user.get_full_name|default:r.user.username|escapejs }}'],{% endfor %}];
+
+var ACTION_TYPES = [
+    {% for val, label in action_choices %}['{{ val }}', '{{ label }}'],{% endfor %}
+];
+
+function getCsrf(){var m=document.cookie.match(/csrftoken=([^;]+)/);return m?m[1]:'';}
+
+// Init from existing rule
+if (ruleData.trigger) {
+    document.getElementById('wfTrigger').value = ruleData.trigger;
+    renderConditions();
+    // Set condition values after render
+    setTimeout(function() {
+        var conds = ruleData.conditions || {};
+        for (var k in conds) {
+            var el = document.getElementById('cond_' + k);
+            if (el) el.value = conds[k];
+        }
+    }, 50);
+}
+if (ruleData.name) document.getElementById('wfName').value = ruleData.name;
+if (ruleData.description) document.getElementById('wfDesc').value = ruleData.description;
+if (ruleData.actions && ruleData.actions.length) {
+    actions = ruleData.actions;
+    renderActions();
+}
+
+function renderConditions() {
+    var trigger = document.getElementById('wfTrigger').value;
+    var c = document.getElementById('conditionFields');
+    if (!trigger) { c.innerHTML = '<p style="font-size:0.82rem;color:var(--text-muted);">Select a trigger first.</p>'; return; }
+
+    var html = '<div class="wb-row">';
+    if (trigger === 'lead_status_changed') {
+        html += field('cond_from_status', 'From Status', selectOpts([['','Any'],['unreviewed','Unreviewed'],['approved','Approved'],['rejected','Rejected'],['assigned','Assigned']]));
+        html += field('cond_to_status', 'To Status', selectOpts([['','Any'],['unreviewed','Unreviewed'],['approved','Approved'],['rejected','Rejected'],['assigned','Assigned']]));
+    } else if (trigger === 'prospect_stage_changed') {
+        var opts = [['','Any']].concat(stages);
+        html += field('cond_from_stage', 'From Stage', selectOpts(opts));
+        html += field('cond_to_stage', 'To Stage', selectOpts(opts));
+    } else if (trigger === 'email_replied') {
+        html += field('cond_classification', 'Reply Type', selectOpts([['','Any'],['interested','Interested'],['question','Question'],['not_interested','Not Interested'],['auto_reply','Auto Reply']]));
+    } else if (trigger === 'no_response_days') {
+        html += field('cond_days', 'Days Without Response', '<input type="number" class="wb-input" id="cond_days" value="3" min="1">');
+    } else if (trigger === 'call_completed') {
+        html += field('cond_outcome', 'Call Outcome', selectOpts([['','Any'],['connected','Connected'],['no_answer','No Answer'],['voicemail','Voicemail'],['busy','Busy']]));
+    } else {
+        html += '<div class="wb-field"><p style="font-size:0.82rem;color:var(--text-muted);">No additional conditions needed.</p></div>';
+    }
+    html += '</div>';
+    c.innerHTML = html;
+}
+
+function field(id, label, inner) {
+    return '<div class="wb-field"><label for="'+id+'">'+label+'</label>'+inner+'</div>';
+}
+function selectOpts(opts) {
+    var h = '<select class="wb-select" id="cond_'+opts[0]+'_sel">';
+    // Actually use proper id
+    return opts.map(function(){}).join(''); // placeholder
+}
+// Better version:
+function selectOpts(opts) {
+    var h = '<select class="wb-select">';
+    opts.forEach(function(o){ h += '<option value="'+o[0]+'">'+o[1]+'</option>'; });
+    h += '</select>';
+    return h;
+}
+function field(id, label, inner) {
+    // Inject id into the first select/input inside inner
+    inner = inner.replace('<select class="wb-select">', '<select class="wb-select" id="'+id+'">')
+                 .replace('<input ', '<input id="'+id+'" ');
+    return '<div class="wb-field"><label for="'+id+'">'+label+'</label>'+inner+'</div>';
+}
+
+function addAction(preset) {
+    actions.push(preset || {type: '', config: {}});
+    renderActions();
+}
+
+function removeAction(i) {
+    actions.splice(i, 1);
+    renderActions();
+}
+
+function renderActions() {
+    var c = document.getElementById('actionList');
+    if (!actions.length) { c.innerHTML = ''; return; }
+    var html = '';
+    actions.forEach(function(a, i) {
+        var isWait = a.type === 'wait_days';
+        html += '<div class="wb-action-item">';
+        html += '<div class="wb-action-num '+(isWait?'wait':'')+'">'+(i+1)+'</div>';
+        html += '<div class="wb-action-body">';
+        html += '<select class="wb-select" onchange="actions['+i+'].type=this.value;renderActions()" style="margin-bottom:8px;">';
+        html += '<option value="">Select action...</option>';
+        ACTION_TYPES.forEach(function(t){ html += '<option value="'+t[0]+'" '+(a.type===t[0]?'selected':'')+'>'+t[1]+'</option>'; });
+        html += '</select>';
+        html += renderActionConfig(a, i);
+        html += '</div>';
+        html += '<button class="wb-action-remove" onclick="removeAction('+i+')">&times;</button>';
+        html += '</div>';
+    });
+    c.innerHTML = html;
+}
+
+function renderActionConfig(a, i) {
+    var h = '';
+    var pfx = 'act_'+i+'_';
+    switch(a.type) {
+        case 'send_email':
+            h += '<input class="wb-input" placeholder="Subject" value="'+(a.subject||'')+'" onchange="actions['+i+'].subject=this.value" style="margin-bottom:6px;">';
+            h += '<textarea class="wb-textarea" placeholder="Email body (use {{name}}, {{business_name}})" onchange="actions['+i+'].body=this.value">'+(a.body||'')+'</textarea>';
+            break;
+        case 'send_sms':
+            h += '<textarea class="wb-textarea" placeholder="SMS message (use {{name}}, {{phone}})" onchange="actions['+i+'].message=this.value">'+(a.message||'')+'</textarea>';
+            break;
+        case 'schedule_followup':
+            h += '<input type="number" class="wb-input" placeholder="Days from now" value="'+(a.days||1)+'" min="1" onchange="actions['+i+'].days=parseInt(this.value)" style="max-width:200px;">';
+            break;
+        case 'change_stage':
+            h += '<select class="wb-select" onchange="actions['+i+'].stage=this.value"><option value="">Select stage...</option>';
+            stages.forEach(function(s){ h += '<option value="'+s[0]+'" '+(a.stage===s[0]?'selected':'')+'>'+s[1]+'</option>'; });
+            h += '</select>';
+            break;
+        case 'assign_to_rep':
+            h += '<select class="wb-select" onchange="actions['+i+'].rep_id=this.value"><option value="">Select rep...</option>';
+            reps.forEach(function(r){ h += '<option value="'+r[0]+'" '+(String(a.rep_id)===String(r[0])?'selected':'')+'>'+r[1]+'</option>'; });
+            h += '</select>';
+            break;
+        case 'create_task':
+            h += '<input class="wb-input" placeholder="Task description" value="'+(a.description||'')+'" onchange="actions['+i+'].description=this.value">';
+            break;
+        case 'notify_admin':
+            h += '<input class="wb-input" placeholder="Subject" value="'+(a.subject||'')+'" onchange="actions['+i+'].subject=this.value" style="margin-bottom:6px;">';
+            h += '<textarea class="wb-textarea" placeholder="Message" onchange="actions['+i+'].message=this.value">'+(a.message||'')+'</textarea>';
+            break;
+        case 'add_to_campaign':
+            h += '<select class="wb-select" onchange="actions['+i+'].campaign_id=this.value"><option value="">Select campaign...</option>';
+            campaigns.forEach(function(c){ h += '<option value="'+c[0]+'" '+(String(a.campaign_id)===String(c[0])?'selected':'')+'>'+c[1]+'</option>'; });
+            h += '</select>';
+            break;
+        case 'wait_days':
+            h += '<input type="number" class="wb-input" placeholder="Days to wait" value="'+(a.days||1)+'" min="1" onchange="actions['+i+'].days=parseInt(this.value)" style="max-width:200px;">';
+            break;
+    }
+    return h;
+}
+
+function saveWorkflow() {
+    var trigger = document.getElementById('wfTrigger').value;
+    var name = document.getElementById('wfName').value.trim();
+    if (!trigger) { alert('Select a trigger.'); return; }
+    if (!name) { alert('Name your workflow.'); return; }
+    if (!actions.length) { alert('Add at least one action.'); return; }
+
+    // Collect conditions
+    var conditions = {};
+    document.querySelectorAll('#conditionFields select, #conditionFields input').forEach(function(el) {
+        if (el.id && el.id.startsWith('cond_') && el.value) {
+            conditions[el.id.replace('cond_', '')] = el.value;
+        }
+    });
+
+    var payload = {
+        name: name,
+        description: document.getElementById('wfDesc').value.trim(),
+        trigger: trigger,
+        conditions: conditions,
+        actions: actions,
+        is_active: true,
+    };
+
+    var url = ruleData.id ? '/dashboard/workflows/' + ruleData.id + '/edit/' : '{% url "workflow_builder" %}';
+    fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()},
+        body: JSON.stringify(payload),
+    }).then(r => r.json()).then(d => {
+        if (d.ok) window.location.href = '/dashboard/workflows/' + d.id + '/';
+        else alert('Error saving workflow.');
+    });
+}
+</script>
+{% endblock %}

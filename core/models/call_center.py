@@ -27,6 +27,8 @@ class CallLog(models.Model):
     started_at = models.DateTimeField()
     ended_at = models.DateTimeField(null=True, blank=True)
     recording_url = models.URLField(blank=True, max_length=500)
+    recording_sid = models.CharField(max_length=200, blank=True)
+    recording_duration = models.IntegerField(null=True, blank=True, help_text='Recording duration in seconds')
     voicemail_transcription = models.TextField(blank=True)
 
     lead = models.ForeignKey('Lead', null=True, blank=True, on_delete=models.SET_NULL, related_name='call_logs')

@@ -255,20 +255,49 @@ def campaign_detail(request, campaign_id):
     open_rate = round((opened_emails / sent_emails * 100) if sent_emails > 0 else 0)
     reply_rate = round((replied / sent_emails * 100) if sent_emails > 0 else 0)
 
+    # Drip sequence stats
+    email3_sent = campaign.prospects.filter(
+        status__in=['email3_sent', 'replied', 'interested'],
+    ).count() if campaign.email_sequence_count >= 3 else 0
+    new_count = campaign.prospects.filter(status='new').count()
+
+    # Email 1 open rate
+    e1_opened = GeneratedEmail.objects.filter(
+        prospect__campaign=campaign, sequence_number=1, status__in=['opened', 'replied'],
+    ).count()
+    e1_total = GeneratedEmail.objects.filter(
+        prospect__campaign=campaign, sequence_number=1, status__in=['sent', 'opened', 'replied'],
+    ).count()
+    email1_open_pct = round((e1_opened / e1_total * 100) if e1_total > 0 else 0)
+
+    # Completed full sequence = email3_sent + replied + interested (those who went through all 3)
+    max_step = campaign.email_sequence_count
+    if max_step >= 3:
+        completed = campaign.prospects.filter(status__in=['email3_sent', 'replied', 'interested']).count()
+    elif max_step == 2:
+        completed = campaign.prospects.filter(status__in=['email2_sent', 'replied', 'interested']).count()
+    else:
+        completed = campaign.prospects.filter(status__in=['email1_sent', 'replied', 'interested']).count()
+    completed_pct = round((completed / total_prospects * 100) if total_prospects > 0 else 0)
+
     context = {
         'campaign': campaign,
         'prospects': prospects[:100],
         'total_prospects': total_prospects,
         'email1_sent': email1_sent,
         'email2_sent': email2_sent,
+        'email3_sent': email3_sent,
         'total_emails': total_emails,
         'sent_emails': sent_emails,
         'opened_emails': opened_emails,
         'replied_count': replied,
         'interested_count': interested,
         'bounced_count': bounced,
+        'new_count': new_count,
         'open_rate': open_rate,
         'reply_rate': reply_rate,
+        'email1_open_pct': email1_open_pct,
+        'completed_pct': completed_pct,
         'current_status': status_filter,
         'prospect_statuses': OutreachProspect.STATUS_CHOICES,
     }
