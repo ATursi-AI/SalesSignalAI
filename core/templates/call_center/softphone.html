@@ -284,10 +284,9 @@ function initSignalWire() {
             }
 
             try {
-                var client = new SignalWire.RelayClient({
+                var client = new Relay({
                     project: data.project || PROJECT,
                     token: data.token,
-                    contexts: ['softphone'],
                 });
 
                 client.on('signalwire.ready', function() {
