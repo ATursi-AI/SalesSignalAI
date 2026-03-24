@@ -177,6 +177,8 @@ urlpatterns = [
     path('api/signalwire/relay-token/', call_center.get_relay_token, name='signalwire_relay_token'),
     path('api/signalwire/lead-lookup/', call_center.lookup_lead_by_phone, name='signalwire_lead_lookup'),
     path('api/signalwire/assigned-leads/', call_center.get_assigned_leads, name='signalwire_assigned_leads'),
+    path('api/signalwire/transfer-call/', call_center.transfer_call, name='signalwire_transfer_call'),
+    path('api/signalwire/transfer-xml/', call_center.transfer_xml, name='signalwire_transfer_xml'),
 
     # Call Center Pages
     path('sales/sms-inbox/', call_center.sms_inbox, name='sms_inbox'),

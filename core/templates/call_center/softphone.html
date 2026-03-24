@@ -4,32 +4,21 @@
 
 {% block extra_css %}
 <style>
-/* ── Fixed Viewport Layout ── */
+/* ── Fixed Viewport Layout — NO PAGE SCROLLING ── */
 .phone-layout {
     display: grid;
     grid-template-columns: 380px 1fr;
-    gap: 20px;
+    gap: 16px;
     height: calc(100vh - 70px);
     overflow: hidden;
 }
-.left-panel {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-}
-.right-panel {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-    gap: 12px;
-}
+.left-panel { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+.right-panel { display: flex; flex-direction: column; height: 100%; overflow: hidden; gap: 12px; }
 
 /* ── Status Bar ── */
 .sw-status-bar {
     display: flex; align-items: center; gap: 10px;
-    margin-bottom: 14px; padding: 8px 14px; flex-shrink: 0;
+    margin-bottom: 10px; padding: 8px 14px; flex-shrink: 0;
     background: var(--bg-page); border-radius: 10px;
     border: 1px solid var(--border-subtle); font-size: 0.78rem;
 }
@@ -37,242 +26,175 @@
 .sw-status-dot.connected { background: #059669; animation: dot-pulse 2s ease-in-out infinite; }
 .sw-status-dot.connecting { background: #F59E0B; animation: dot-pulse 1s ease-in-out infinite; }
 .sw-status-dot.error { background: #DC2626; }
-@keyframes dot-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes dot-pulse { 0%,100%{opacity:1;}50%{opacity:0.4;} }
 .sw-status-label { color: var(--text-muted); }
 .sw-caller-id { margin-left: auto; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
 
 /* ── Error Banner ── */
 .sw-error-banner {
     background: #FEF2F2; border: 1px solid #FECACA; color: #DC2626;
-    border-radius: 10px; padding: 12px 16px; text-align: center;
-    margin-bottom: 14px; font-size: 0.85rem; display: none; flex-shrink: 0;
+    border-radius: 10px; padding: 10px 14px; text-align: center;
+    margin-bottom: 10px; font-size: 0.82rem; display: none; flex-shrink: 0;
 }
-.sw-error-banner button {
-    margin-left: 10px; padding: 4px 12px; border-radius: 6px;
-    border: 1px solid #DC2626; background: white; color: #DC2626;
-    cursor: pointer; font-weight: 600; font-size: 0.78rem;
-}
+.sw-error-banner button { margin-left: 8px; padding: 3px 10px; border-radius: 6px; border: 1px solid #DC2626; background: white; color: #DC2626; cursor: pointer; font-weight: 600; font-size: 0.75rem; }
 
-/* ── Dial Pad ── */
+/* ── Dial Pad Card ── */
 .dialpad-card {
     background: var(--bg-surface); border-radius: 16px;
-    border: 1px solid var(--border-subtle); padding: 24px;
+    border: 1px solid var(--border-subtle); padding: 20px;
     text-align: center; transition: border-color 0.3s, box-shadow 0.3s;
-    flex: 1; display: flex; flex-direction: column; justify-content: center;
-    overflow: hidden;
+    flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: hidden;
 }
-.dialpad-card.call-active { border-color: #059669; box-shadow: 0 0 20px rgba(5, 150, 105, 0.15); }
-.dialpad-card.call-hold { border-color: #F59E0B; box-shadow: 0 0 20px rgba(245, 158, 11, 0.15); }
+.dialpad-card.call-active { border-color: #059669; box-shadow: 0 0 20px rgba(5,150,105,0.15); }
+.dialpad-card.call-hold { border-color: #F59E0B; box-shadow: 0 0 20px rgba(245,158,11,0.15); }
 
-.call-status { text-align: center; margin-bottom: 10px; }
-.call-status-text { font-size: 0.85rem; color: var(--text-muted); }
-.call-timer { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; font-weight: 600; color: var(--text-primary); }
+.call-status { text-align: center; margin-bottom: 8px; }
+.call-status-text { font-size: 0.82rem; color: var(--text-muted); }
+.call-timer { font-family: 'JetBrains Mono', monospace; font-size: 1.7rem; font-weight: 600; color: var(--text-primary); }
 
 .dialpad-number {
-    width: 100%; padding: 12px;
-    font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 600;
-    text-align: center; border: 1px solid var(--border-subtle); border-radius: 12px;
-    margin-bottom: 14px; background: var(--bg-page); color: var(--text-primary);
+    width: 100%; padding: 12px; font-family: 'JetBrains Mono', monospace;
+    font-size: 1.35rem; font-weight: 600; text-align: center;
+    border: 1px solid var(--border-subtle); border-radius: 12px;
+    margin-bottom: 12px; background: var(--bg-page); color: var(--text-primary);
 }
 .dialpad-number:focus { outline: none; border-color: var(--accent-blue); }
 
-.dialpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+.dialpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-bottom: 14px; }
 .dialpad-btn {
-    padding: 14px; font-size: 1.2rem; font-weight: 600;
-    border: 1px solid var(--border-subtle); border-radius: 12px;
-    background: var(--bg-page); cursor: pointer; transition: background 0.1s;
-    color: var(--text-primary);
+    padding: 12px; font-size: 1.15rem; font-weight: 600;
+    border: 1px solid var(--border-subtle); border-radius: 10px;
+    background: var(--bg-page); cursor: pointer; transition: background 0.1s; color: var(--text-primary);
 }
 .dialpad-btn:hover { background: var(--border-subtle); }
 .dialpad-btn:active { transform: scale(0.95); }
 .dialpad-btn sub { font-size: 0.5rem; display: block; font-weight: 400; color: var(--text-muted); margin-top: -2px; }
 
-.call-actions { display: flex; gap: 10px; justify-content: center; margin-bottom: 0; }
-.btn-call {
-    padding: 12px 32px; border-radius: 30px; font-weight: 700; font-size: 0.95rem;
-    border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;
-    transition: transform 0.1s;
-}
+.call-actions { display: flex; gap: 10px; justify-content: center; }
+.btn-call { padding: 12px 30px; border-radius: 30px; font-weight: 700; font-size: 0.92rem; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: transform 0.1s; }
 .btn-call:active { transform: scale(0.96); }
 .btn-call-green { background: #059669; color: white; }
 .btn-call-green:hover { background: #047857; }
-.btn-call-green:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-call-red { background: #DC2626; color: white; display: none; }
 .btn-call-red:hover { background: #B91C1C; }
 
-/* ── Call Controls — always visible ── */
-.call-controls {
-    display: flex; justify-content: center; gap: 16px;
-    margin-top: 14px; padding-top: 14px;
-    border-top: 1px solid var(--border-subtle);
-}
-.call-ctrl-wrap {
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
-}
-.call-ctrl-label {
-    font-size: 0.6rem; color: var(--text-muted); font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.05em;
-}
+/* ── Call Controls — ALWAYS visible ── */
+.call-controls { display: flex; justify-content: center; gap: 14px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-subtle); }
+.call-ctrl-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.call-ctrl-label { font-size: 0.56rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
 .call-ctrl {
     width: 44px; height: 44px; border-radius: 50%;
     border: 1px solid var(--border-subtle); background: var(--bg-page);
-    cursor: default; font-size: 1rem;
+    cursor: not-allowed; font-size: 1rem;
     display: flex; align-items: center; justify-content: center;
-    color: var(--text-primary); transition: all 0.15s;
-    opacity: 0.35; pointer-events: none;
+    transition: all 0.15s; opacity: 0.35; color: var(--text-secondary);
 }
-.call-ctrl.enabled { opacity: 1; pointer-events: auto; cursor: pointer; }
+.call-ctrl.enabled { opacity: 1; cursor: pointer; }
 .call-ctrl.enabled:hover { background: var(--border-subtle); }
-.call-ctrl.active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+.call-ctrl.active { background: var(--accent-blue, #3B82F6); color: white; border-color: var(--accent-blue, #3B82F6); opacity: 1; }
+/* SMS always enabled */
+#btnSmsCtrl { opacity: 1; cursor: pointer; pointer-events: auto; }
+#btnSmsCtrl:hover { background: var(--border-subtle); }
 
-/* ── Lead Context Card ── */
-.lead-context-card {
-    background: var(--bg-surface); border-radius: 16px;
-    border: 1px solid var(--border-subtle); padding: 20px;
-    flex-shrink: 0; max-height: 45%; overflow-y: auto;
+/* ── Lead Detail Section (top of right panel) ── */
+.lead-detail-section {
+    flex-shrink: 0; background: var(--bg-surface); border-radius: 16px;
+    border: 1px solid var(--border-subtle); overflow: hidden;
 }
-.lead-context-empty { text-align: center; color: var(--text-muted); padding: 20px 12px; font-size: 0.85rem; }
-.lead-context-empty i { font-size: 2rem; display: block; margin-bottom: 8px; }
-.lead-context-title { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.1rem; }
-.lead-detail-row { display: flex; gap: 8px; margin-bottom: 6px; font-size: 0.83rem; }
-.lead-detail-label { color: var(--text-muted); min-width: 70px; font-size: 0.75rem; }
+.lead-detail-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+.lead-detail-left { padding: 18px; border-right: 1px solid var(--border-subtle); }
+.lead-detail-right { padding: 18px; display: flex; flex-direction: column; }
+
+.lead-context-title { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.05rem; }
+.lead-detail-row { display: flex; gap: 8px; margin-bottom: 5px; font-size: 0.8rem; }
+.lead-detail-label { color: var(--text-muted); min-width: 65px; font-size: 0.72rem; }
 .lead-detail-value { font-weight: 500; word-break: break-word; }
-.lead-urgency-badge { padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+.lead-urgency-badge { padding: 2px 7px; border-radius: 6px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; }
 .lead-urgency-badge.hot { background: #FEE2E2; color: #DC2626; }
 .lead-urgency-badge.warm { background: #FEF3C7; color: #92400E; }
 .lead-urgency-badge.new { background: #DBEAFE; color: #1D4ED8; }
 
-.lead-quick-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; margin-bottom: 10px; }
-.lead-quick-btn {
-    padding: 5px 10px; border-radius: 7px; font-size: 0.72rem; font-weight: 600;
-    border: 1px solid var(--border-subtle); background: var(--bg-page);
-    cursor: pointer; display: flex; align-items: center; gap: 4px;
-    color: var(--text-secondary); text-decoration: none;
-}
+.lead-quick-btn { padding: 5px 10px; border-radius: 7px; font-size: 0.7rem; font-weight: 600; border: 1px solid var(--border-subtle); background: var(--bg-page); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; color: var(--text-secondary); text-decoration: none; }
 .lead-quick-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
 
-.call-notes {
-    width: 100%; min-height: 60px; padding: 8px;
-    border: 1px solid var(--border-subtle); border-radius: 8px;
-    font-family: inherit; font-size: 0.8rem; resize: vertical;
-    margin-top: 8px; background: var(--bg-page); color: var(--text-primary);
-}
+.call-notes { width: 100%; padding: 8px; border: 1px solid var(--border-subtle); border-radius: 8px; font-family: inherit; font-size: 0.8rem; resize: none; background: var(--bg-page); color: var(--text-primary); flex: 1; min-height: 60px; }
 .call-notes:focus { outline: none; border-color: var(--accent-blue); }
 
-.disposition-btns { display: none; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.disposition-btns { display: none; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
 .disposition-btns.active { display: flex; }
-.dispo-btn {
-    padding: 6px 10px; border-radius: 7px; font-size: 0.72rem; font-weight: 600;
-    border: 1px solid var(--border-subtle); background: var(--bg-page);
-    cursor: pointer; color: var(--text-primary);
-}
+.dispo-btn { padding: 5px 9px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; border: 1px solid var(--border-subtle); background: var(--bg-page); cursor: pointer; color: var(--text-primary); }
 .dispo-btn:hover { border-color: var(--accent-blue); }
 .dispo-btn.selected { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
 
-/* ── Lead Feed Card ── */
-.lead-feed-card {
-    background: var(--bg-surface); border-radius: 16px;
-    border: 1px solid var(--border-subtle); padding: 16px;
-    flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden;
+/* ── Lead Feed Section ── */
+.lead-feed-section {
+    flex: 1; min-height: 0; background: var(--bg-surface); border-radius: 16px;
+    border: 1px solid var(--border-subtle); display: flex; flex-direction: column; overflow: hidden;
 }
-.lead-feed-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 10px; flex-shrink: 0;
-}
-.lead-feed-header h3 {
-    font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 0.9rem; margin: 0;
-}
-.lead-feed-header button {
-    background: none; border: none; cursor: pointer;
-    color: var(--accent-blue); font-size: 0.75rem; font-weight: 600;
-}
-#assignedLeadsList { flex: 1; overflow-y: auto; overflow-x: hidden; }
+.lead-feed-header { flex-shrink: 0; padding: 14px 18px 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); }
+.lead-feed-header h3 { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 0.88rem; margin: 0; }
+.lead-feed-header button { background: none; border: none; cursor: pointer; color: var(--accent-blue, #0D9488); font-size: 0.75rem; font-weight: 600; }
+.lead-feed-list { flex: 1; overflow-y: auto; padding: 6px 10px; }
 
-.assigned-lead-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px; border-radius: 10px; cursor: pointer;
-    border: 1px solid transparent; transition: all 0.15s;
-    margin-bottom: 4px; background: var(--bg-page);
-}
+.assigned-lead-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; cursor: pointer; border: 1px solid transparent; transition: all 0.12s; margin-bottom: 3px; background: var(--bg-page); }
 .assigned-lead-item:hover { border-color: var(--border-subtle); background: var(--bg-surface); }
 .assigned-lead-item.active { background: rgba(13,148,136,0.06); border-color: rgba(13,148,136,0.3); }
-.assigned-lead-item.overdue { border-left: 3px solid #EF4444; }
-
-.al-avatar {
-    width: 36px; height: 36px; border-radius: 50%;
-    background: #0D9488; color: white; font-weight: 700; font-size: 0.85rem;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
+.al-avatar { width: 34px; height: 34px; border-radius: 50%; background: #0D9488; color: white; font-weight: 700; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .al-info { flex: 1; min-width: 0; }
-.al-name { font-weight: 600; font-size: 0.83rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.al-phone { font-size: 0.72rem; color: #0D9488; font-family: 'JetBrains Mono', monospace; cursor: pointer; }
+.al-name { font-weight: 600; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.al-phone { font-size: 0.7rem; color: #0D9488; font-family: 'JetBrains Mono', monospace; cursor: pointer; }
 .al-phone:hover { text-decoration: underline; }
-.al-meta { font-size: 0.68rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.al-call-btn {
-    width: 34px; height: 34px; border-radius: 50%;
-    background: #059669; color: white; border: none;
-    cursor: pointer; display: flex; align-items: center;
-    justify-content: center; font-size: 0.8rem; flex-shrink: 0;
-    transition: background 0.1s;
-}
-.al-call-btn:hover { background: #047857; }
-.al-stage {
-    padding: 2px 6px; border-radius: 5px; font-size: 0.58rem;
-    font-weight: 700; text-transform: uppercase; flex-shrink: 0;
-    background: #DBEAFE; color: #1D4ED8;
-}
+.al-meta { font-size: 0.65rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; margin-top: 1px; }
+.al-stage { padding: 1px 5px; border-radius: 4px; font-size: 0.55rem; font-weight: 700; text-transform: uppercase; background: #DBEAFE; color: #1D4ED8; flex-shrink: 0; }
 .al-stage.qualified { background: #FEF3C7; color: #92400E; }
-.al-stage.demo_scheduled, .al-stage.proposal_sent { background: #D1FAE5; color: #059669; }
+.al-stage.demo_scheduled,.al-stage.proposal_sent { background: #D1FAE5; color: #059669; }
 .al-stage.contacted { background: #E0E7FF; color: #4338CA; }
+.al-call-btn { width: 32px; height: 32px; border-radius: 50%; background: #059669; color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; flex-shrink: 0; transition: background 0.1s; }
+.al-call-btn:hover { background: #047857; }
 
 /* ── Admin Monitor ── */
-.admin-monitor-section {
-    flex-shrink: 0; margin-top: 4px; padding: 12px;
-    background: var(--bg-surface); border-radius: 12px;
-    border: 1px solid var(--border-subtle);
-}
+.admin-monitor-section { flex-shrink: 0; padding: 12px 16px; background: var(--bg-surface); border-radius: 12px; border: 1px solid var(--border-subtle); }
+
+/* ── Transfer Modal ── */
+.transfer-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: none; align-items: center; justify-content: center; }
+.transfer-backdrop.open { display: flex; }
+.transfer-modal { background: var(--bg-surface); border-radius: 16px; padding: 24px; width: 380px; max-width: 90vw; border: 1px solid var(--border-subtle); box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+.transfer-tab { flex: 1; padding: 9px; font-weight: 600; font-size: 0.8rem; border: 1px solid var(--border-subtle); background: var(--bg-page); cursor: pointer; color: var(--text-secondary); transition: all 0.15s; }
+.transfer-tab:first-child { border-radius: 8px 0 0 8px; }
+.transfer-tab:last-child { border-radius: 0 8px 8px 0; border-left: none; }
+.transfer-tab.active { background: #0D9488; color: white; border-color: #0D9488; }
 
 /* ── Mobile ── */
 @media (max-width: 768px) {
     .phone-layout { grid-template-columns: 1fr; height: auto; overflow: auto; }
-    .left-panel { height: auto; }
-    .right-panel { height: auto; max-height: 50vh; }
-    .dialpad-card { padding: 16px; }
-    .dialpad-btn { padding: 12px; font-size: 1rem; }
-    .lead-context-card { padding: 14px; max-height: none; }
-    .lead-feed-card { max-height: 40vh; }
+    .left-panel, .right-panel { height: auto; }
+    .right-panel { max-height: 50vh; }
+    .lead-detail-inner { grid-template-columns: 1fr; }
+    .lead-detail-left { border-right: none; border-bottom: 1px solid var(--border-subtle); }
     .call-controls { flex-wrap: wrap; gap: 10px; }
+    .lead-feed-section { max-height: 40vh; }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="phone-layout"
-     data-project="{{ signalwire_project }}"
-     data-caller-id="{{ signalwire_phone }}"
-     data-space="{{ signalwire_space }}">
+<div class="phone-layout" data-project="{{ signalwire_project }}" data-caller-id="{{ signalwire_phone }}" data-space="{{ signalwire_space }}">
 
-    <!-- Left: Dial Pad -->
+    <!-- LEFT: Dial Pad -->
     <div class="left-panel">
         <div class="sw-status-bar">
             <div class="sw-status-dot" id="swStatusDot"></div>
             <span class="sw-status-label" id="swStatusLabel">Connecting...</span>
             <span class="sw-caller-id" id="swCallerId">{{ signalwire_phone|default:"Not configured" }}</span>
         </div>
-
-        <div class="sw-error-banner" id="swErrorBanner">
-            <span id="swErrorText"></span>
-            <button onclick="initSignalWire()">Retry</button>
-        </div>
+        <div class="sw-error-banner" id="swErrorBanner"><span id="swErrorText"></span> <button onclick="initSignalWire()">Retry</button></div>
 
         <div class="dialpad-card" id="dialpadCard">
             <div class="call-status" id="callStatus" style="display:none;">
                 <div class="call-status-text" id="callStatusText">Calling...</div>
                 <div class="call-timer" id="callTimer">00:00</div>
             </div>
-
             <input type="tel" class="dialpad-number" id="dialNumber" placeholder="Enter number" autocomplete="off">
-
             <div class="dialpad-grid">
                 <button class="dialpad-btn" onclick="pressKey('1')">1</button>
                 <button class="dialpad-btn" onclick="pressKey('2')">2<sub>ABC</sub></button>
@@ -287,90 +209,109 @@
                 <button class="dialpad-btn" onclick="pressKey('0')">0<sub>+</sub></button>
                 <button class="dialpad-btn" onclick="pressKey('#')">#</button>
             </div>
-
             <div class="call-actions">
                 <button class="btn-call btn-call-green" id="btnCall" onclick="startCall()"><i class="bi bi-telephone-fill"></i> Call</button>
                 <button class="btn-call btn-call-red" id="btnHangup" onclick="endCall()"><i class="bi bi-telephone-x-fill"></i> Hang Up</button>
             </div>
-
-            <!-- Call controls — always visible, enabled during calls -->
             <div class="call-controls">
-                <div class="call-ctrl-wrap">
-                    <button class="call-ctrl" id="btnMute" onclick="toggleMute()" title="Mute"><i class="bi bi-mic-fill"></i></button>
-                    <span class="call-ctrl-label">Mute</span>
-                </div>
-                <div class="call-ctrl-wrap">
-                    <button class="call-ctrl" id="btnHold" onclick="toggleHold()" title="Hold"><i class="bi bi-pause-fill"></i></button>
-                    <span class="call-ctrl-label">Hold</span>
-                </div>
-                <div class="call-ctrl-wrap">
-                    <button class="call-ctrl" id="btnKeypad" onclick="toggleKeypad()" title="Keypad"><i class="bi bi-grid-3x3-gap-fill"></i></button>
-                    <span class="call-ctrl-label">Keypad</span>
-                </div>
-                <div class="call-ctrl-wrap">
-                    <button class="call-ctrl" id="btnTransfer" onclick="showTransfer()" title="Transfer"><i class="bi bi-telephone-forward-fill"></i></button>
-                    <span class="call-ctrl-label">Transfer</span>
-                </div>
-                <div class="call-ctrl-wrap">
-                    <button class="call-ctrl enabled" id="btnSmsCtrl" onclick="openSms()" title="SMS"><i class="bi bi-chat-dots-fill"></i></button>
-                    <span class="call-ctrl-label">SMS</span>
-                </div>
+                <div class="call-ctrl-wrap"><button class="call-ctrl" id="btnMute" onclick="toggleMute()"><i class="bi bi-mic-fill"></i></button><span class="call-ctrl-label">Mute</span></div>
+                <div class="call-ctrl-wrap"><button class="call-ctrl" id="btnHold" onclick="toggleHold()"><i class="bi bi-pause-fill"></i></button><span class="call-ctrl-label">Hold</span></div>
+                <div class="call-ctrl-wrap"><button class="call-ctrl" id="btnKeypad" onclick="toggleKeypad()"><i class="bi bi-grid-3x3-gap-fill"></i></button><span class="call-ctrl-label">Keypad</span></div>
+                <div class="call-ctrl-wrap"><button class="call-ctrl" id="btnTransfer" onclick="showTransferModal()"><i class="bi bi-telephone-forward-fill"></i></button><span class="call-ctrl-label">Transfer</span></div>
+                <div class="call-ctrl-wrap"><button class="call-ctrl" id="btnSmsCtrl" onclick="openSms()"><i class="bi bi-chat-dots-fill"></i></button><span class="call-ctrl-label">SMS</span></div>
             </div>
         </div>
     </div>
 
-    <!-- Right: Lead Context + Lead Feed -->
+    <!-- RIGHT: Lead Detail + Feed -->
     <div class="right-panel">
-        <!-- Active Lead Context -->
-        <div class="lead-context-card" id="leadContextCard">
-            <div class="lead-context-empty" id="leadContextEmpty">
-                <i class="bi bi-person-badge"></i>
-                Enter a number or select a lead to see details.
+        <!-- Lead Detail Section -->
+        <div class="lead-detail-section" id="leadDetailSection">
+            <div id="leadDetailEmpty" style="text-align:center; color:var(--text-muted); padding:28px 20px;">
+                <i class="bi bi-person-badge" style="font-size:1.8rem; display:block; margin-bottom:6px;"></i>
+                Select a lead or enter a number to see details.
             </div>
-            <div id="leadContext" style="display:none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <div class="lead-context-title" id="leadTitle"></div>
-                    <button onclick="clearLeadContext()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1.1rem;" title="Clear">&times;</button>
-                </div>
-                <div id="leadDetails"></div>
-                <div class="lead-quick-actions" id="leadQuickActions" style="display:none;">
-                    <a class="lead-quick-btn" id="btnSendSms" href="#"><i class="bi bi-chat-dots"></i> SMS</a>
-                    <a class="lead-quick-btn" id="btnOpenLead" href="#" target="_blank"><i class="bi bi-box-arrow-up-right"></i> Open Lead</a>
-                    <button class="lead-quick-btn" id="btnScheduleFollowup" onclick="promptFollowup()"><i class="bi bi-calendar-plus"></i> Follow-up</button>
-                </div>
-                <textarea class="call-notes" id="callNotes" placeholder="Call notes..."></textarea>
-                <div class="disposition-btns" id="dispositionBtns">
-                    <button class="dispo-btn" onclick="setDisposition('interested', this)">Interested</button>
-                    <button class="dispo-btn" onclick="setDisposition('not_interested', this)">Not Interested</button>
-                    <button class="dispo-btn" onclick="setDisposition('callback', this)">Callback</button>
-                    <button class="dispo-btn" onclick="setDisposition('wrong_number', this)">Wrong #</button>
-                    <button class="dispo-btn" onclick="setDisposition('no_answer', this)">No Answer</button>
-                    <button class="dispo-btn" onclick="setDisposition('left_voicemail', this)">Voicemail</button>
-                    <button class="dispo-btn" onclick="setDisposition('appointment_booked', this)" style="background:#D1FAE5;border-color:#059669;color:#059669;">Booked</button>
+            <div id="leadDetailActive" style="display:none;">
+                <div class="lead-detail-inner">
+                    <div class="lead-detail-left">
+                        <div style="display:flex; justify-content:space-between; align-items:start;">
+                            <h3 id="leadTitle" class="lead-context-title" style="margin:0 0 10px 0;"></h3>
+                            <button onclick="clearLeadContext()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1.1rem;">&times;</button>
+                        </div>
+                        <div id="leadDetails"></div>
+                        <div style="display:flex; gap:6px; margin-top:12px; flex-wrap:wrap;" id="leadQuickActions">
+                            <a class="lead-quick-btn" id="btnSendSms" href="#"><i class="bi bi-chat-dots"></i> SMS</a>
+                            <a class="lead-quick-btn" id="btnOpenLead" href="#" target="_blank"><i class="bi bi-box-arrow-up-right"></i> Open</a>
+                            <button class="lead-quick-btn" onclick="promptFollowup()"><i class="bi bi-calendar-plus"></i> Follow-up</button>
+                        </div>
+                    </div>
+                    <div class="lead-detail-right">
+                        <label style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:5px;">Call Notes</label>
+                        <textarea class="call-notes" id="callNotes" placeholder="Type notes during the call..."></textarea>
+                        <div class="disposition-btns" id="dispositionBtns">
+                            <button class="dispo-btn" onclick="setDisposition('interested',this)">Interested</button>
+                            <button class="dispo-btn" onclick="setDisposition('not_interested',this)">Not Interested</button>
+                            <button class="dispo-btn" onclick="setDisposition('callback',this)">Callback</button>
+                            <button class="dispo-btn" onclick="setDisposition('wrong_number',this)">Wrong #</button>
+                            <button class="dispo-btn" onclick="setDisposition('no_answer',this)">No Answer</button>
+                            <button class="dispo-btn" onclick="setDisposition('left_voicemail',this)">Left VM</button>
+                            <button class="dispo-btn" onclick="setDisposition('appointment_booked',this)" style="background:#D1FAE5;border-color:#059669;color:#059669;">Booked!</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Assigned Leads Feed -->
-        <div class="lead-feed-card">
+        <!-- Lead Feed -->
+        <div class="lead-feed-section">
             <div class="lead-feed-header">
                 <h3>Your Leads</h3>
                 <button onclick="loadAssignedLeads()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
             </div>
-            <div id="assignedLeadsList">
+            <div class="lead-feed-list" id="assignedLeadsList">
                 <div style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:0.8rem;">Loading leads...</div>
             </div>
         </div>
 
         {% if is_admin %}
         <div class="admin-monitor-section">
-            <h4 style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin:0 0 8px 0;">Live Calls</h4>
-            <div style="text-align:center; padding:8px; color:var(--text-muted); font-size:0.75rem;">
-                <i class="bi bi-headset"></i> No active calls
-                <br><small>Eavesdrop, whisper, barge — coming soon</small>
+            <h4 style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin:0 0 6px 0;">Live Calls</h4>
+            <div style="text-align:center; padding:6px; color:var(--text-muted); font-size:0.72rem;">
+                <i class="bi bi-headset"></i> No active calls<br><small>Eavesdrop, whisper, barge — coming soon</small>
             </div>
         </div>
         {% endif %}
+    </div>
+</div>
+
+<!-- Transfer Modal -->
+<div class="transfer-backdrop" id="transferModal" onclick="if(event.target===this)hideTransferModal()">
+    <div class="transfer-modal">
+        <h3 style="font-family:'Exo 2',sans-serif; font-weight:800; margin:0 0 14px; font-size:1rem;">
+            <i class="bi bi-telephone-forward-fill" style="color:#0D9488;"></i> Transfer Call
+        </h3>
+        <div style="display:flex; gap:0; margin-bottom:14px;">
+            <button class="transfer-tab active" id="tabCold" onclick="setTransferTab('cold')">Cold Transfer</button>
+            <button class="transfer-tab" id="tabWarm" onclick="setTransferTab('warm')">Warm Transfer</button>
+        </div>
+        <div id="coldPane">
+            <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:10px;">Caller transferred directly. You disconnect.</p>
+            <input type="tel" id="transferNum" class="dialpad-number" style="font-size:1.1rem; margin-bottom:10px;" placeholder="Transfer to number">
+            <button class="btn-call btn-call-green" style="width:100%;" onclick="doColdTransfer()"><i class="bi bi-telephone-forward-fill"></i> Transfer Now</button>
+        </div>
+        <div id="warmPane" style="display:none;">
+            <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:10px;">Caller on hold. Speak to target first, then merge.</p>
+            <input type="tel" id="warmTransferNum" class="dialpad-number" style="font-size:1.1rem; margin-bottom:10px;" placeholder="Transfer target number">
+            <div id="warmStep1"><button class="btn-call btn-call-green" style="width:100%;" onclick="doWarmInit()"><i class="bi bi-telephone-fill"></i> Call Target</button></div>
+            <div id="warmStep2" style="display:none;">
+                <p style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:10px; text-align:center;">Connected to target. Announce the caller.</p>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-call btn-call-green" style="flex:1;" onclick="doWarmMerge()"><i class="bi bi-people-fill"></i> Merge</button>
+                    <button class="btn-call btn-call-red" style="flex:1; display:flex;" onclick="doWarmCancel()"><i class="bi bi-x-circle"></i> Cancel</button>
+                </div>
+            </div>
+        </div>
+        <button onclick="hideTransferModal()" style="margin-top:12px; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.82rem; width:100%; text-align:center;">Cancel</button>
     </div>
 </div>
 {% endblock %}
@@ -378,309 +319,249 @@
 {% block extra_js %}
 <script src="https://unpkg.com/@signalwire/js@^1"></script>
 <script>
-/* ── State ── */
-var swClient = null;
-var currentCall = null;
-var callTimerInterval = null;
-var callSeconds = 0;
-var currentCallId = null;
-var currentLeadId = null;
-var selectedDisposition = '';
-var isMuted = false;
-var isHeld = false;
-var callEnded = false;
-var lookupTimer = null;
+var swClient=null, currentCall=null, callTimerInterval=null, callSeconds=0;
+var currentCallId=null, currentCallSid='', currentLeadId=null, selectedDisposition='';
+var isMuted=false, isHeld=false, callEnded=false, lookupTimer=null;
 
-var LAYOUT = document.querySelector('.phone-layout');
-var PROJECT = LAYOUT.dataset.project;
-var CALLER_ID = LAYOUT.dataset.callerId;
-var SPACE = LAYOUT.dataset.space;
+var LAYOUT=document.querySelector('.phone-layout');
+var PROJECT=LAYOUT.dataset.project, CALLER_ID=LAYOUT.dataset.callerId, SPACE=LAYOUT.dataset.space;
 
-function getCsrf() { var m = document.cookie.match(/csrftoken=([^;]+)/); return m ? m[1] : ''; }
+function getCsrf(){var m=document.cookie.match(/csrftoken=([^;]+)/);return m?m[1]:'';}
+function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 
 /* ── SignalWire Init ── */
-function initSignalWire() {
-    setStatus('connecting', 'Connecting to SignalWire...');
-    hideError();
-    fetch('/api/signalwire/relay-token/')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.error) { setStatus('error', 'Disconnected'); showError(data.error); return; }
-            try {
-                var client = new Relay({ project: data.project || PROJECT, token: data.token });
-                client.on('signalwire.ready', function() { swClient = client; setStatus('connected', 'Connected'); });
-                client.on('signalwire.error', function() { setStatus('error', 'Connection error'); showError('SignalWire error. Click Retry.'); });
-                client.on('signalwire.socket.close', function() { swClient = null; setStatus('error', 'Disconnected'); });
-                client.on('call.received', function(call) {
-                    if (confirm('Incoming call from ' + (call.from || 'Unknown') + '. Answer?')) { call.answer(); handleCallEvents(call); } else { call.hangup(); }
-                });
-                client.connect();
-            } catch (e) { setStatus('error', 'SDK error'); showError('Could not initialize: ' + e.message); }
-        })
-        .catch(function(err) { setStatus('error', 'Disconnected'); showError('Token failed: ' + err.message); });
+function initSignalWire(){
+    setStatus('connecting','Connecting...');hideError();
+    fetch('/api/signalwire/relay-token/').then(r=>r.json()).then(data=>{
+        if(data.error){setStatus('error','Disconnected');showError(data.error);return;}
+        try{
+            var client=new Relay({project:data.project||PROJECT,token:data.token});
+            client.on('signalwire.ready',function(){swClient=client;setStatus('connected','Connected');});
+            client.on('signalwire.error',function(){setStatus('error','Error');showError('Connection error.');});
+            client.on('signalwire.socket.close',function(){swClient=null;setStatus('error','Disconnected');});
+            client.on('call.received',function(call){if(confirm('Incoming: '+(call.from||'Unknown'))){call.answer();handleCallEvents(call);}else call.hangup();});
+            client.connect();
+        }catch(e){setStatus('error','SDK error');showError(e.message);}
+    }).catch(function(e){setStatus('error','Disconnected');showError('Token failed: '+e.message);});
 }
 
-/* ── Status UI ── */
-function setStatus(state, label) {
-    document.getElementById('swStatusDot').className = 'sw-status-dot ' + state;
-    document.getElementById('swStatusLabel').textContent = label;
-}
-function showError(msg) { document.getElementById('swErrorText').textContent = msg; document.getElementById('swErrorBanner').style.display = 'block'; }
-function hideError() { document.getElementById('swErrorBanner').style.display = 'none'; }
+function setStatus(s,l){document.getElementById('swStatusDot').className='sw-status-dot '+s;document.getElementById('swStatusLabel').textContent=l;}
+function showError(m){document.getElementById('swErrorText').textContent=m;document.getElementById('swErrorBanner').style.display='block';}
+function hideError(){document.getElementById('swErrorBanner').style.display='none';}
 
-/* ── Enable/Disable call controls ── */
-function setControlsEnabled(on) {
-    document.querySelectorAll('.call-ctrl:not(#btnSmsCtrl)').forEach(function(b) {
-        if (on) b.classList.add('enabled'); else { b.classList.remove('enabled', 'active'); }
+function setControlsEnabled(on){
+    document.querySelectorAll('.call-ctrl:not(#btnSmsCtrl)').forEach(function(b){
+        if(on) b.classList.add('enabled'); else b.classList.remove('enabled','active');
     });
 }
 
 /* ── Dial Pad ── */
-function pressKey(key) {
-    var input = document.getElementById('dialNumber');
-    input.value += key;
-    if (currentCall) { try { currentCall.dtmf(key); } catch(e) {} }
-    clearTimeout(lookupTimer);
-    lookupTimer = setTimeout(function() { lookupLead(input.value); }, 500);
+function pressKey(k){
+    var i=document.getElementById('dialNumber');i.value+=k;
+    if(currentCall)try{currentCall.dtmf(k);}catch(e){}
+    clearTimeout(lookupTimer);lookupTimer=setTimeout(function(){lookupLead(i.value);},500);
 }
-document.getElementById('dialNumber').addEventListener('input', function() {
-    clearTimeout(lookupTimer);
-    var val = this.value;
-    lookupTimer = setTimeout(function() { lookupLead(val); }, 500);
-});
+document.getElementById('dialNumber').addEventListener('input',function(){clearTimeout(lookupTimer);var v=this.value;lookupTimer=setTimeout(function(){lookupLead(v);},500);});
 
 /* ── Lead Lookup ── */
-function lookupLead(number) {
-    var digits = number.replace(/\D/g, '');
-    if (digits.length < 7) return;
-    fetch('/api/signalwire/lead-lookup/?phone=' + encodeURIComponent(digits))
-        .then(function(r) { return r.json(); })
-        .then(function(data) { if (data.found) showLeadContext(data); })
-        .catch(function() {});
+function lookupLead(n){
+    var d=n.replace(/\D/g,'');if(d.length<7)return;
+    fetch('/api/signalwire/lead-lookup/?phone='+encodeURIComponent(d)).then(r=>r.json()).then(data=>{if(data.found)showLeadContext(data);}).catch(function(){});
 }
 
-function showLeadContext(lead) {
-    currentLeadId = lead.id;
-    document.getElementById('leadContextEmpty').style.display = 'none';
-    document.getElementById('leadContext').style.display = 'block';
-    document.getElementById('leadTitle').textContent = lead.business || lead.name || 'Lead #' + lead.id;
-    var html = '';
-    if (lead.name) html += '<div class="lead-detail-row"><span class="lead-detail-label">Name</span><span class="lead-detail-value">' + esc(lead.name) + '</span></div>';
-    if (lead.phone) html += '<div class="lead-detail-row"><span class="lead-detail-label">Phone</span><span class="lead-detail-value"><a href="tel:' + esc(lead.phone) + '" style="color:#0D9488;text-decoration:none;">' + esc(lead.phone) + '</a></span></div>';
-    if (lead.email) html += '<div class="lead-detail-row"><span class="lead-detail-label">Email</span><span class="lead-detail-value">' + esc(lead.email) + '</span></div>';
-    if (lead.address) html += '<div class="lead-detail-row"><span class="lead-detail-label">Address</span><span class="lead-detail-value">' + esc(lead.address) + '</span></div>';
-    if (lead.location) html += '<div class="lead-detail-row"><span class="lead-detail-label">Location</span><span class="lead-detail-value">' + esc(lead.location) + '</span></div>';
-    if (lead.platform) html += '<div class="lead-detail-row"><span class="lead-detail-label">Source</span><span class="lead-detail-value">' + esc(lead.platform) + (lead.source_type ? ' — ' + esc(lead.source_type) : '') + '</span></div>';
-    if (lead.urgency) html += '<div class="lead-detail-row"><span class="lead-detail-label">Urgency</span><span class="lead-urgency-badge ' + lead.urgency + '">' + lead.urgency.toUpperCase() + '</span></div>';
-    document.getElementById('leadDetails').innerHTML = html;
-    document.getElementById('leadQuickActions').style.display = 'flex';
-    document.getElementById('btnOpenLead').href = '/leads/' + lead.id + '/';
-    if (lead.phone) document.getElementById('btnSendSms').href = '/sales/sms-inbox/?phone=' + encodeURIComponent(lead.phone);
+function showLeadContext(lead){
+    currentLeadId=lead.id;
+    document.getElementById('leadDetailEmpty').style.display='none';
+    document.getElementById('leadDetailActive').style.display='block';
+    document.getElementById('leadTitle').textContent=lead.business||lead.name||'Lead #'+lead.id;
+    var h='';
+    if(lead.name)h+='<div class="lead-detail-row"><span class="lead-detail-label">Name</span><span class="lead-detail-value">'+esc(lead.name)+'</span></div>';
+    if(lead.phone)h+='<div class="lead-detail-row"><span class="lead-detail-label">Phone</span><span class="lead-detail-value"><a href="tel:'+esc(lead.phone)+'" style="color:#0D9488;text-decoration:none;">'+esc(lead.phone)+'</a></span></div>';
+    if(lead.email)h+='<div class="lead-detail-row"><span class="lead-detail-label">Email</span><span class="lead-detail-value">'+esc(lead.email)+'</span></div>';
+    if(lead.address)h+='<div class="lead-detail-row"><span class="lead-detail-label">Address</span><span class="lead-detail-value">'+esc(lead.address)+'</span></div>';
+    if(lead.location)h+='<div class="lead-detail-row"><span class="lead-detail-label">Location</span><span class="lead-detail-value">'+esc(lead.location)+'</span></div>';
+    if(lead.platform)h+='<div class="lead-detail-row"><span class="lead-detail-label">Source</span><span class="lead-detail-value">'+esc(lead.platform)+(lead.source_type?' — '+esc(lead.source_type):'')+'</span></div>';
+    if(lead.urgency)h+='<div class="lead-detail-row"><span class="lead-detail-label">Urgency</span><span class="lead-urgency-badge '+lead.urgency+'">'+lead.urgency.toUpperCase()+'</span></div>';
+    document.getElementById('leadDetails').innerHTML=h;
+    document.getElementById('btnOpenLead').href='/leads/'+lead.id+'/';
+    if(lead.phone)document.getElementById('btnSendSms').href='/sales/sms-inbox/?phone='+encodeURIComponent(lead.phone);
 }
 
-function clearLeadContext() {
-    currentLeadId = null;
-    document.getElementById('leadContext').style.display = 'none';
-    document.getElementById('leadContextEmpty').style.display = 'block';
-    document.getElementById('leadQuickActions').style.display = 'none';
+function clearLeadContext(){
+    currentLeadId=null;
+    document.getElementById('leadDetailActive').style.display='none';
+    document.getElementById('leadDetailEmpty').style.display='block';
     document.getElementById('dispositionBtns').classList.remove('active');
-    document.getElementById('callNotes').value = '';
-    document.querySelectorAll('.dispo-btn').forEach(function(b) { b.classList.remove('selected'); });
-    document.querySelectorAll('.assigned-lead-item').forEach(function(i) { i.classList.remove('active'); });
+    document.getElementById('callNotes').value='';
+    document.querySelectorAll('.dispo-btn').forEach(b=>b.classList.remove('selected'));
+    document.querySelectorAll('.assigned-lead-item').forEach(i=>i.classList.remove('active'));
 }
-
-function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
 
 /* ── Start Call ── */
-function startCall() {
-    var number = document.getElementById('dialNumber').value.trim().replace(/[^\d+]/g, '');
-    if (!number) return;
-    if (number.length === 10) number = '+1' + number;
-    if (!number.startsWith('+')) number = '+1' + number;
-
-    callEnded = false;
-    document.getElementById('btnCall').style.display = 'none';
-    document.getElementById('btnHangup').style.display = 'flex';
-    document.getElementById('callStatus').style.display = 'block';
-    document.getElementById('callStatusText').textContent = 'Dialing...';
-    document.getElementById('callTimer').textContent = '00:00';
+function startCall(){
+    var number=document.getElementById('dialNumber').value.trim().replace(/[^\d+]/g,'');
+    if(!number)return;
+    if(number.length===10)number='+1'+number;
+    if(!number.startsWith('+'))number='+1'+number;
+    callEnded=false;
+    document.getElementById('btnCall').style.display='none';
+    document.getElementById('btnHangup').style.display='flex';
+    document.getElementById('callStatus').style.display='block';
+    document.getElementById('callStatusText').textContent='Dialing...';
+    document.getElementById('callTimer').textContent='00:00';
     document.getElementById('dialpadCard').classList.add('call-active');
     setControlsEnabled(true);
 
-    if (swClient) {
-        try {
-            swClient.newCall({ destinationNumber: number, callerNumber: CALLER_ID || undefined })
-                .then(function(callObj) { currentCall = callObj; handleCallEvents(callObj); })
-                .catch(function(err) { document.getElementById('callStatusText').textContent = 'Failed: ' + err.message; resetCallUI(); });
-        } catch (e) { document.getElementById('callStatusText').textContent = 'Error: ' + e.message; resetCallUI(); }
-    } else {
-        document.getElementById('callStatusText').textContent = 'Calling ' + number + ' (no WebRTC)';
+    if(swClient){
+        try{
+            swClient.newCall({destinationNumber:number,callerNumber:CALLER_ID||undefined})
+                .then(function(c){currentCall=c;currentCallSid=c.id||'';handleCallEvents(c);})
+                .catch(function(e){document.getElementById('callStatusText').textContent='Failed: '+e.message;resetCallUI();});
+        }catch(e){document.getElementById('callStatusText').textContent='Error: '+e.message;resetCallUI();}
+    }else{
+        document.getElementById('callStatusText').textContent='Calling '+number+' (no WebRTC)';
         startTimer();
     }
     lookupLead(number);
 }
 
-function handleCallEvents(call) {
-    call.on('stateChange', function(state) {
-        var text = document.getElementById('callStatusText');
-        switch (state) {
-            case 'trying': text.textContent = 'Trying...'; break;
-            case 'ringing': text.textContent = 'Ringing...'; break;
-            case 'early': text.textContent = 'Connecting...'; break;
-            case 'active': text.textContent = 'Connected'; startTimer(); break;
-            case 'hangup': case 'destroy': onCallEnd(); break;
+function handleCallEvents(call){
+    call.on('stateChange',function(state){
+        var t=document.getElementById('callStatusText');
+        switch(state){
+            case 'trying':t.textContent='Trying...';break;
+            case 'ringing':t.textContent='Ringing...';break;
+            case 'early':t.textContent='Connecting...';break;
+            case 'active':t.textContent='Connected';startTimer();break;
+            case 'hangup':case 'destroy':onCallEnd();break;
         }
     });
 }
 
-function onCallEnd() {
-    if (callEnded) return;
-    callEnded = true;
-    clearInterval(callTimerInterval);
-    currentCall = null; isMuted = false; isHeld = false;
-    document.getElementById('callStatusText').textContent = 'Call ended — ' + document.getElementById('callTimer').textContent;
-    document.getElementById('dialpadCard').classList.remove('call-active', 'call-hold');
-    document.getElementById('btnCall').style.display = 'flex';
-    document.getElementById('btnHangup').style.display = 'none';
+function onCallEnd(){
+    if(callEnded)return;callEnded=true;
+    clearInterval(callTimerInterval);currentCall=null;isMuted=false;isHeld=false;
+    document.getElementById('callStatusText').textContent='Call ended — '+document.getElementById('callTimer').textContent;
+    document.getElementById('dialpadCard').classList.remove('call-active','call-hold');
+    document.getElementById('btnCall').style.display='flex';
+    document.getElementById('btnHangup').style.display='none';
     setControlsEnabled(false);
     document.getElementById('dispositionBtns').classList.add('active');
 }
-
-function resetCallUI() {
-    setTimeout(function() {
-        document.getElementById('btnCall').style.display = 'flex';
-        document.getElementById('btnHangup').style.display = 'none';
-        document.getElementById('callStatus').style.display = 'none';
-        document.getElementById('dialpadCard').classList.remove('call-active', 'call-hold');
+function resetCallUI(){
+    setTimeout(function(){
+        document.getElementById('btnCall').style.display='flex';
+        document.getElementById('btnHangup').style.display='none';
+        document.getElementById('callStatus').style.display='none';
+        document.getElementById('dialpadCard').classList.remove('call-active','call-hold');
         setControlsEnabled(false);
-    }, 2000);
+    },2000);
 }
-
-function endCall() {
-    if (currentCall) { try { currentCall.hangup(); } catch(e) {} }
-    else { onCallEnd(); }
-}
+function endCall(){if(currentCall)try{currentCall.hangup();}catch(e){}else onCallEnd();}
 
 /* ── Timer ── */
-function startTimer() {
-    callSeconds = 0;
-    clearInterval(callTimerInterval);
-    callTimerInterval = setInterval(function() {
+function startTimer(){
+    callSeconds=0;clearInterval(callTimerInterval);
+    callTimerInterval=setInterval(function(){
         callSeconds++;
-        var m = Math.floor(callSeconds / 60).toString().padStart(2, '0');
-        var s = (callSeconds % 60).toString().padStart(2, '0');
-        document.getElementById('callTimer').textContent = m + ':' + s;
-    }, 1000);
+        var m=Math.floor(callSeconds/60).toString().padStart(2,'0');
+        var s=(callSeconds%60).toString().padStart(2,'0');
+        document.getElementById('callTimer').textContent=m+':'+s;
+    },1000);
 }
 
 /* ── Call Controls ── */
-function toggleMute() {
-    isMuted = !isMuted;
-    var btn = document.getElementById('btnMute');
-    btn.classList.toggle('active', isMuted);
-    btn.innerHTML = isMuted ? '<i class="bi bi-mic-mute-fill"></i>' : '<i class="bi bi-mic-fill"></i>';
-    if (currentCall) { try { currentCall.toggleAudioMute(); } catch(e) {} }
+function toggleMute(){
+    isMuted=!isMuted;var b=document.getElementById('btnMute');
+    b.classList.toggle('active',isMuted);
+    b.innerHTML=isMuted?'<i class="bi bi-mic-mute-fill"></i>':'<i class="bi bi-mic-fill"></i>';
+    if(currentCall)try{currentCall.toggleAudioMute();}catch(e){}
 }
-function toggleHold() {
-    isHeld = !isHeld;
-    document.getElementById('btnHold').classList.toggle('active', isHeld);
-    if (isHeld) {
-        document.getElementById('callStatusText').textContent = 'On Hold';
-        document.getElementById('dialpadCard').classList.add('call-hold');
-        document.getElementById('dialpadCard').classList.remove('call-active');
-        if (currentCall) { try { currentCall.hold(); } catch(e) {} }
-    } else {
-        document.getElementById('callStatusText').textContent = 'Connected';
-        document.getElementById('dialpadCard').classList.remove('call-hold');
-        document.getElementById('dialpadCard').classList.add('call-active');
-        if (currentCall) { try { currentCall.unhold(); } catch(e) {} }
-    }
+function toggleHold(){
+    isHeld=!isHeld;document.getElementById('btnHold').classList.toggle('active',isHeld);
+    if(isHeld){document.getElementById('callStatusText').textContent='On Hold';document.getElementById('dialpadCard').classList.add('call-hold');document.getElementById('dialpadCard').classList.remove('call-active');if(currentCall)try{currentCall.hold();}catch(e){}}
+    else{document.getElementById('callStatusText').textContent='Connected';document.getElementById('dialpadCard').classList.remove('call-hold');document.getElementById('dialpadCard').classList.add('call-active');if(currentCall)try{currentCall.unhold();}catch(e){}}
 }
-function toggleKeypad() { document.getElementById('btnKeypad').classList.toggle('active'); }
-function showTransfer() {
-    var num = prompt('Transfer to number:');
-    if (!num || !currentCall) return;
-    try { currentCall.transfer({destination: num}); } catch(e) { alert('Transfer not available: ' + e.message); }
+function toggleKeypad(){document.getElementById('btnKeypad').classList.toggle('active');}
+function openSms(){var n=document.getElementById('dialNumber').value.trim();window.open('/sales/sms-inbox/'+(n?'?phone='+encodeURIComponent(n):''),'_blank');}
+
+/* ── Transfer ── */
+function showTransferModal(){if(!currentCall&&!callEnded)return;document.getElementById('transferModal').classList.add('open');document.getElementById('transferNum').focus();}
+function hideTransferModal(){document.getElementById('transferModal').classList.remove('open');document.getElementById('warmStep1').style.display='block';document.getElementById('warmStep2').style.display='none';}
+function setTransferTab(t){
+    document.getElementById('tabCold').classList.toggle('active',t==='cold');
+    document.getElementById('tabWarm').classList.toggle('active',t==='warm');
+    document.getElementById('coldPane').style.display=t==='cold'?'block':'none';
+    document.getElementById('warmPane').style.display=t==='warm'?'block':'none';
 }
-function openSms() {
-    var number = document.getElementById('dialNumber').value.trim();
-    window.open('/sales/sms-inbox/' + (number ? '?phone=' + encodeURIComponent(number) : ''), '_blank');
+function doColdTransfer(){
+    var n=document.getElementById('transferNum').value.trim();if(!n)return;
+    if(n.length===10)n='+1'+n;if(!n.startsWith('+'))n='+1'+n;
+    fetch('/api/signalwire/transfer-call/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},body:JSON.stringify({call_id:currentCallSid,transfer_to:n,type:'cold'})})
+        .then(r=>r.json()).then(d=>{if(d.ok){hideTransferModal();onCallEnd();}else alert('Transfer failed: '+(d.error||''));});
+}
+function doWarmInit(){
+    var n=document.getElementById('warmTransferNum').value.trim();if(!n)return;
+    if(n.length===10)n='+1'+n;if(!n.startsWith('+'))n='+1'+n;
+    if(currentCall)try{currentCall.hold();}catch(e){}
+    document.getElementById('warmStep1').style.display='none';document.getElementById('warmStep2').style.display='block';
+    fetch('/api/signalwire/transfer-call/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},body:JSON.stringify({call_id:currentCallSid,transfer_to:n,type:'warm_initiate'})})
+        .then(r=>r.json()).then(d=>{if(!d.ok)alert('Could not connect: '+(d.error||''));});
+}
+function doWarmMerge(){
+    fetch('/api/signalwire/transfer-call/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},body:JSON.stringify({call_id:currentCallSid,type:'warm_merge'})})
+        .then(r=>r.json()).then(d=>{hideTransferModal();if(d.ok)onCallEnd();else alert('Merge failed: '+(d.error||''));});
+}
+function doWarmCancel(){
+    fetch('/api/signalwire/transfer-call/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},body:JSON.stringify({call_id:currentCallSid,type:'warm_cancel'})})
+        .then(r=>r.json()).then(()=>{if(currentCall)try{currentCall.unhold();}catch(e){}hideTransferModal();});
 }
 
 /* ── Disposition ── */
-function setDisposition(dispo, btn) {
-    selectedDisposition = dispo;
-    document.querySelectorAll('.dispo-btn').forEach(function(b) { b.classList.remove('selected'); });
-    btn.classList.add('selected');
-    if (currentCallId) {
-        fetch('/api/calls/' + currentCallId + '/disposition/', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()},
-            body: JSON.stringify({disposition: dispo, notes: document.getElementById('callNotes').value})
-        });
-    }
+function setDisposition(d,btn){
+    selectedDisposition=d;document.querySelectorAll('.dispo-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');
+    if(currentCallId)fetch('/api/calls/'+currentCallId+'/disposition/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},body:JSON.stringify({disposition:d,notes:document.getElementById('callNotes').value})});
 }
-function promptFollowup() {
-    var date = prompt('Follow-up date (YYYY-MM-DD):');
-    if (!date || !currentLeadId) return;
-    alert('Follow-up scheduled for ' + date);
-}
+function promptFollowup(){var d=prompt('Follow-up date (YYYY-MM-DD):');if(!d)return;alert('Follow-up scheduled: '+d);}
 
 /* ── Assigned Leads ── */
-function loadAssignedLeads() {
-    fetch('/api/signalwire/assigned-leads/')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            var c = document.getElementById('assignedLeadsList');
-            if (!data.leads || !data.leads.length) {
-                c.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:0.8rem;">No leads yet.</div>';
-                return;
-            }
-            var html = '';
-            data.leads.forEach(function(l) {
-                var initial = (l.name || '?').charAt(0).toUpperCase();
-                var stageClass = l.stage_key || '';
-                var meta = [];
-                if (l.category) meta.push(l.category);
-                if (l.source_type) meta.push(l.source_type);
-                if (l.next_followup) meta.push('FU: ' + l.next_followup);
-                if (l.urgency) meta.push(l.urgency.toUpperCase());
-
-                html += '<div class="assigned-lead-item" onclick="selectAssignedLead(' + JSON.stringify(l).replace(/"/g, '&quot;') + ', this)">';
-                html += '<div class="al-avatar">' + initial + '</div>';
-                html += '<div class="al-info">';
-                html += '<div class="al-name">' + esc(l.name) + '</div>';
-                if (l.phone) html += '<div class="al-phone" onclick="event.stopPropagation();fillNumber(\'' + esc(l.phone) + '\')">' + esc(l.phone) + '</div>';
-                if (meta.length) html += '<div class="al-meta">' + esc(meta.join(' · ')) + '</div>';
-                html += '</div>';
-                if (l.stage) html += '<span class="al-stage ' + stageClass + '">' + esc(l.stage) + '</span>';
-                if (l.phone) html += '<button class="al-call-btn" onclick="event.stopPropagation();dialAssigned(\'' + esc(l.phone) + '\')" title="Call"><i class="bi bi-telephone-fill"></i></button>';
-                html += '</div>';
-            });
-            c.innerHTML = html;
-        })
-        .catch(function() { document.getElementById('assignedLeadsList').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:0.8rem;">Failed to load.</div>'; });
+function loadAssignedLeads(){
+    fetch('/api/signalwire/assigned-leads/').then(r=>r.json()).then(data=>{
+        var c=document.getElementById('assignedLeadsList');
+        if(!data.leads||!data.leads.length){c.innerHTML='<div style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:0.8rem;">No leads yet.</div>';return;}
+        var h='';
+        data.leads.forEach(function(l){
+            var ini=(l.name||'?').charAt(0).toUpperCase();
+            var meta=[];
+            if(l.category)meta.push(l.category);if(l.source_type)meta.push(l.source_type);
+            if(l.next_followup)meta.push('FU: '+l.next_followup);if(l.urgency)meta.push(l.urgency.toUpperCase());
+            h+='<div class="assigned-lead-item" onclick="selectLead('+JSON.stringify(l).replace(/"/g,'&quot;')+',this)">';
+            h+='<div class="al-avatar">'+ini+'</div><div class="al-info">';
+            h+='<div class="al-name">'+esc(l.name)+'</div>';
+            if(l.phone)h+='<div class="al-phone" onclick="event.stopPropagation();fillNumber(\''+esc(l.phone)+'\')">'+esc(l.phone)+'</div>';
+            if(meta.length)h+='<div class="al-meta">'+esc(meta.join(' · '))+(l.stage?' <span class="al-stage '+(l.stage_key||'')+'">'+esc(l.stage)+'</span>':'')+'</div>';
+            h+='</div>';
+            if(l.phone)h+='<button class="al-call-btn" onclick="event.stopPropagation();dialAndCall(\''+esc(l.phone)+'\')" title="Call"><i class="bi bi-telephone-fill"></i></button>';
+            h+='</div>';
+        });
+        c.innerHTML=h;
+    }).catch(function(){document.getElementById('assignedLeadsList').innerHTML='<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:0.8rem;">Failed to load.</div>';});
 }
 
-function selectAssignedLead(lead, el) {
-    document.querySelectorAll('.assigned-lead-item').forEach(function(i) { i.classList.remove('active'); });
+function selectLead(lead,el){
+    document.querySelectorAll('.assigned-lead-item').forEach(i=>i.classList.remove('active'));
     el.classList.add('active');
-    showLeadContext({ id: lead.id, name: lead.name, phone: lead.phone, business: lead.name, address: lead.address || '', email: '', location: '', platform: lead.source_type || lead.category || '', source_type: lead.stage || '', urgency: lead.urgency || '', title: '', found: true });
-    if (lead.phone) document.getElementById('dialNumber').value = lead.phone;
+    showLeadContext({id:lead.id,name:lead.name,phone:lead.phone,business:lead.name,address:lead.address||'',email:'',location:'',platform:lead.source_type||lead.category||'',source_type:lead.stage||'',urgency:lead.urgency||'',title:'',found:true});
+    if(lead.phone)document.getElementById('dialNumber').value=lead.phone;
 }
-function fillNumber(phone) { document.getElementById('dialNumber').value = phone; lookupLead(phone); }
-function dialAssigned(phone) { document.getElementById('dialNumber').value = phone; lookupLead(phone); startCall(); }
+function fillNumber(p){document.getElementById('dialNumber').value=p;lookupLead(p);}
+function dialAndCall(p){document.getElementById('dialNumber').value=p;lookupLead(p);startCall();}
 
 /* ── Init ── */
-var params = new URLSearchParams(window.location.search);
-if (params.get('number')) { document.getElementById('dialNumber').value = params.get('number'); lookupLead(params.get('number')); }
-
-if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    navigator.mediaDevices.getUserMedia({audio: true}).then(function(s) { s.getTracks().forEach(function(t) { t.stop(); }); }).catch(function() {});
-}
-
+var params=new URLSearchParams(window.location.search);
+if(params.get('number')){document.getElementById('dialNumber').value=params.get('number');lookupLead(params.get('number'));}
+if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:true}).then(s=>{s.getTracks().forEach(t=>t.stop());}).catch(function(){});}
 loadAssignedLeads();
-if (PROJECT && SPACE) { initSignalWire(); }
-else { setStatus('error', 'Not configured'); showError('Set SIGNALWIRE_PROJECT_ID and SIGNALWIRE_SPACE_URL in .env'); }
+if(PROJECT&&SPACE){initSignalWire();}else{setStatus('error','Not configured');showError('Set SIGNALWIRE_PROJECT_ID and SIGNALWIRE_SPACE_URL in .env');}
 </script>
 {% endblock %}

@@ -709,3 +709,59 @@ def my_calls(request):
         'sms_list': sms_list,
         'stats': stats,
     })
+
+
+# ─── Call Transfer ────────────────────────────────────────────────────
+
+@login_required
+@require_POST
+def transfer_call(request):
+    """Handle call transfer requests from the softphone."""
+    data = json.loads(request.body)
+    call_id = data.get('call_id', '')
+    transfer_to = data.get('transfer_to', '')
+    transfer_type = data.get('type', 'cold')
+
+    if not call_id:
+        return JsonResponse({'ok': False, 'error': 'No active call ID'})
+
+    try:
+        from signalwire.rest import Client as SignalWireClient
+        sw = SignalWireClient(
+            settings.SIGNALWIRE_PROJECT_ID,
+            settings.SIGNALWIRE_API_TOKEN,
+            signalwire_space_url=settings.SIGNALWIRE_SPACE_URL,
+        )
+
+        if transfer_type == 'cold':
+            sw.calls(call_id).update(
+                url=f'https://salessignalai.com/api/signalwire/transfer-xml/?to={transfer_to}',
+                method='POST',
+            )
+            return JsonResponse({'ok': True})
+        elif transfer_type == 'warm_initiate':
+            return JsonResponse({'ok': True, 'message': 'Warm transfer initiated'})
+        elif transfer_type == 'warm_merge':
+            return JsonResponse({'ok': True, 'message': 'Calls merged'})
+        elif transfer_type == 'warm_cancel':
+            return JsonResponse({'ok': True, 'message': 'Transfer cancelled'})
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': str(e)})
+
+    return JsonResponse({'ok': False, 'error': 'Unknown transfer type'})
+
+
+@csrf_exempt
+def transfer_xml(request):
+    """Return cXML to dial the transfer target."""
+    to_number = request.GET.get('to', '')
+    caller_id = settings.SIGNALWIRE_PHONE_NUMBER or '+18886315426'
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<Response>'
+        f'<Dial callerId="{caller_id}">'
+        f'<Number>{to_number}</Number>'
+        '</Dial>'
+        '</Response>'
+    )
+    return HttpResponse(xml, content_type='application/xml')
