@@ -560,6 +560,70 @@ def get_relay_token(request):
 
 
 @login_required
+def get_assigned_leads(request):
+    """Get leads assigned to the current user for the softphone panel."""
+    from core.models.leads import LeadAssignment
+
+    # For salespeople — get their sales prospects
+    if hasattr(request.user, 'salesperson_profile'):
+        sp = request.user.salesperson_profile
+        prospects = SalesProspect.objects.filter(
+            salesperson=sp
+        ).exclude(
+            pipeline_stage__in=['closed_won', 'closed_lost']
+        ).order_by('-created_at')[:30]
+
+        leads = []
+        for p in prospects:
+            leads.append({
+                'id': p.id,
+                'type': 'prospect',
+                'name': p.business_name,
+                'phone': p.phone or '',
+                'stage': p.get_pipeline_stage_display(),
+                'stage_key': p.pipeline_stage,
+                'category': p.service_category or '',
+                'next_followup': str(p.next_follow_up_date) if p.next_follow_up_date else '',
+            })
+        return JsonResponse({'leads': leads})
+
+    # For business users — get their assigned leads
+    if hasattr(request.user, 'business_profile'):
+        profile = request.user.business_profile
+        assignments = LeadAssignment.objects.filter(
+            business=profile, status__in=['new', 'viewed', 'contacted']
+        ).select_related('lead').order_by('-created_at')[:30]
+
+        leads = []
+        for a in assignments:
+            leads.append({
+                'id': a.lead.id,
+                'type': 'lead',
+                'name': a.lead.contact_name or a.lead.contact_business or 'Unknown',
+                'phone': a.lead.contact_phone or '',
+                'address': a.lead.contact_address or '',
+                'urgency': a.lead.urgency_level or '',
+                'source_type': a.lead.get_source_type_display() if a.lead.source_type else '',
+            })
+        return JsonResponse({'leads': leads})
+
+    # Admin/staff — get recent unreviewed leads with phone numbers
+    recent = Lead.objects.exclude(contact_phone='').order_by('-discovered_at')[:30]
+    leads = []
+    for l in recent:
+        leads.append({
+            'id': l.id,
+            'type': 'lead',
+            'name': l.contact_name or l.contact_business or 'Unknown',
+            'phone': l.contact_phone or '',
+            'address': l.contact_address or '',
+            'urgency': l.urgency_level or '',
+            'source_type': l.get_source_type_display() if l.source_type else '',
+        })
+    return JsonResponse({'leads': leads})
+
+
+@login_required
 def lookup_lead_by_phone(request):
     """Find a lead by phone number for softphone context."""
     phone = request.GET.get('phone', '').strip()

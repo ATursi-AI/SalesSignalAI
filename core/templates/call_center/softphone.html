@@ -149,6 +149,34 @@
     cursor: pointer; font-weight: 600; font-size: 0.78rem;
 }
 
+/* ── Assigned Leads ── */
+.assigned-lead-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 10px; cursor: pointer;
+    border: 1px solid transparent; transition: all 0.1s;
+    margin-bottom: 4px;
+}
+.assigned-lead-item:hover { background: var(--bg-page); border-color: var(--border-subtle); }
+.assigned-lead-item.active { background: rgba(13,148,136,0.06); border-color: rgba(13,148,136,0.2); }
+.al-info { flex: 1; min-width: 0; }
+.al-name { font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.al-meta { font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.al-call-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #059669; color: white; border: none;
+    cursor: pointer; display: flex; align-items: center;
+    justify-content: center; font-size: 0.8rem; flex-shrink: 0;
+}
+.al-call-btn:hover { background: #047857; }
+.al-stage {
+    padding: 2px 6px; border-radius: 5px; font-size: 0.6rem;
+    font-weight: 700; text-transform: uppercase;
+    background: #DBEAFE; color: #1D4ED8;
+}
+.al-stage.qualified { background: #FEF3C7; color: #92400E; }
+.al-stage.demo_scheduled, .al-stage.proposal_sent { background: #D1FAE5; color: #059669; }
+.al-stage.contacted { background: #E0E7FF; color: #4338CA; }
+
 @media (max-width: 768px) {
     .phone-layout { grid-template-columns: 1fr; }
     .dialpad-card { padding: 20px 16px; }
@@ -213,35 +241,50 @@
         </div>
     </div>
 
-    <!-- Right: Lead Context -->
-    <div class="lead-context-card">
-        <div class="lead-context-empty" id="leadContextEmpty">
-            <i class="bi bi-person-badge"></i>
-            Lead info will appear here when you enter or call a number linked to a lead.
+    <!-- Right: Lead Context + Assigned Leads -->
+    <div>
+        <!-- Active Lead Context (shown when calling/looking up a number) -->
+        <div class="lead-context-card" id="leadContextCard">
+            <div class="lead-context-empty" id="leadContextEmpty">
+                <i class="bi bi-person-badge"></i>
+                Enter a number or select a lead below to see details.
+            </div>
+            <div id="leadContext" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div class="lead-context-title" id="leadTitle" style="margin-bottom:0;"></div>
+                    <button onclick="clearLeadContext()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1.1rem;" title="Clear">&times;</button>
+                </div>
+                <div id="leadDetails"></div>
+
+                <div class="lead-quick-actions" id="leadQuickActions" style="display:none;">
+                    <a class="lead-quick-btn" id="btnSendSms" href="#"><i class="bi bi-chat-dots"></i> Send SMS</a>
+                    <a class="lead-quick-btn" id="btnOpenLead" href="#" target="_blank"><i class="bi bi-box-arrow-up-right"></i> Open Lead</a>
+                    <button class="lead-quick-btn" id="btnScheduleFollowup" onclick="promptFollowup()"><i class="bi bi-calendar-plus"></i> Follow-up</button>
+                </div>
+
+                <textarea class="call-notes" id="callNotes" placeholder="Call notes..."></textarea>
+
+                <div class="disposition-btns" id="dispositionBtns">
+                    <button class="dispo-btn" onclick="setDisposition('interested', this)">Interested</button>
+                    <button class="dispo-btn" onclick="setDisposition('not_interested', this)">Not Interested</button>
+                    <button class="dispo-btn" onclick="setDisposition('callback', this)">Callback</button>
+                    <button class="dispo-btn" onclick="setDisposition('wrong_number', this)">Wrong Number</button>
+                    <button class="dispo-btn" onclick="setDisposition('no_answer', this)">No Answer</button>
+                    <button class="dispo-btn" onclick="setDisposition('left_voicemail', this)">Left Voicemail</button>
+                    <button class="dispo-btn" onclick="setDisposition('appointment_booked', this)" style="background:#D1FAE5;border-color:#059669;color:#059669;">Booked</button>
+                </div>
+            </div>
         </div>
-        <div id="leadContext" style="display:none;">
-            <div class="lead-context-title" id="leadTitle"></div>
-            <div id="leadDetails"></div>
 
-            <div class="lead-quick-actions" id="leadQuickActions" style="display:none;">
-                <a class="lead-quick-btn" id="btnSendSms" href="#"><i class="bi bi-chat-dots"></i> Send SMS</a>
-                <a class="lead-quick-btn" id="btnOpenLead" href="#" target="_blank"><i class="bi bi-box-arrow-up-right"></i> Open Lead</a>
-                <button class="lead-quick-btn" id="btnScheduleFollowup" onclick="promptFollowup()"><i class="bi bi-calendar-plus"></i> Schedule Follow-up</button>
+        <!-- Assigned Leads Feed -->
+        <div class="lead-context-card" style="margin-top:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3 style="font-family:'Exo 2',sans-serif; font-weight:800; font-size:0.95rem; margin:0;">Your Leads</h3>
+                <button onclick="loadAssignedLeads()" style="background:none;border:none;cursor:pointer;color:var(--accent-blue);font-size:0.78rem;font-weight:600;"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
             </div>
-
-            <textarea class="call-notes" id="callNotes" placeholder="Call notes..."></textarea>
-
-            <div class="disposition-btns" id="dispositionBtns">
-                <button class="dispo-btn" onclick="setDisposition('interested', this)">Interested</button>
-                <button class="dispo-btn" onclick="setDisposition('not_interested', this)">Not Interested</button>
-                <button class="dispo-btn" onclick="setDisposition('callback', this)">Callback</button>
-                <button class="dispo-btn" onclick="setDisposition('wrong_number', this)">Wrong Number</button>
-                <button class="dispo-btn" onclick="setDisposition('no_answer', this)">No Answer</button>
-                <button class="dispo-btn" onclick="setDisposition('left_voicemail', this)">Left Voicemail</button>
-                <button class="dispo-btn" onclick="setDisposition('appointment_booked', this)" style="background:#D1FAE5;border-color:#059669;color:#059669;">Appointment Booked</button>
+            <div id="assignedLeadsList">
+                <div style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:0.8rem;">Loading leads...</div>
             </div>
-
-            <div class="call-history" id="callHistory"></div>
         </div>
     </div>
 </div>
@@ -260,6 +303,7 @@ var currentLeadId = null;
 var selectedDisposition = '';
 var isMuted = false;
 var isHeld = false;
+var callEnded = false;
 var lookupTimer = null;
 
 var LAYOUT = document.querySelector('.phone-layout');
@@ -411,6 +455,9 @@ function startCall() {
     if (number.length === 10) number = '+1' + number;
     if (!number.startsWith('+')) number = '+1' + number;
 
+    // Reset state
+    callEnded = false;
+
     // UI: show calling state
     document.getElementById('btnCall').style.display = 'none';
     document.getElementById('btnHangup').style.display = 'flex';
@@ -473,12 +520,12 @@ function handleCallEvents(call) {
                 break;
         }
     });
-
-    call.on('hangup', function() { onCallEnd(); });
-    call.on('destroy', function() { onCallEnd(); });
+    // No duplicate listeners — stateChange handles hangup/destroy
 }
 
 function onCallEnd() {
+    if (callEnded) return;
+    callEnded = true;
     clearInterval(callTimerInterval);
     currentCall = null;
     isMuted = false;
@@ -576,6 +623,86 @@ function setDisposition(dispo, btn) {
     }
 }
 
+/* ── Clear Lead Context ── */
+function clearLeadContext() {
+    currentLeadId = null;
+    document.getElementById('leadContext').style.display = 'none';
+    document.getElementById('leadContextEmpty').style.display = 'block';
+    document.getElementById('leadQuickActions').style.display = 'none';
+    document.getElementById('dispositionBtns').classList.remove('active');
+    document.getElementById('callNotes').value = '';
+    document.querySelectorAll('.dispo-btn').forEach(function(b) { b.classList.remove('selected'); });
+    document.querySelectorAll('.assigned-lead-item').forEach(function(i) { i.classList.remove('active'); });
+}
+
+/* ── Assigned Leads ── */
+function loadAssignedLeads() {
+    fetch('/api/signalwire/assigned-leads/')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var c = document.getElementById('assignedLeadsList');
+            if (!data.leads || !data.leads.length) {
+                c.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:0.8rem;">No leads assigned yet.</div>';
+                return;
+            }
+            var html = '';
+            data.leads.forEach(function(l) {
+                var stageClass = l.stage_key || '';
+                var meta = [];
+                if (l.phone) meta.push(l.phone);
+                if (l.category) meta.push(l.category);
+                if (l.source_type) meta.push(l.source_type);
+                if (l.next_followup) meta.push('Follow-up: ' + l.next_followup);
+                if (l.urgency) meta.push(l.urgency.toUpperCase());
+
+                html += '<div class="assigned-lead-item" onclick="selectAssignedLead(' + JSON.stringify(l).replace(/"/g, '&quot;') + ', this)">';
+                html += '<div class="al-info">';
+                html += '<div class="al-name">' + esc(l.name) + '</div>';
+                html += '<div class="al-meta">' + esc(meta.join(' · ')) + '</div>';
+                html += '</div>';
+                if (l.stage) html += '<span class="al-stage ' + stageClass + '">' + esc(l.stage) + '</span>';
+                if (l.phone) html += '<button class="al-call-btn" onclick="event.stopPropagation();dialAssigned(\'' + esc(l.phone) + '\')" title="Call"><i class="bi bi-telephone-fill"></i></button>';
+                html += '</div>';
+            });
+            c.innerHTML = html;
+        })
+        .catch(function() {
+            document.getElementById('assignedLeadsList').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:0.8rem;">Failed to load leads.</div>';
+        });
+}
+
+function selectAssignedLead(lead, el) {
+    document.querySelectorAll('.assigned-lead-item').forEach(function(i) { i.classList.remove('active'); });
+    el.classList.add('active');
+
+    // Show lead context
+    showLeadContext({
+        id: lead.id,
+        name: lead.name,
+        phone: lead.phone,
+        business: lead.name,
+        address: lead.address || '',
+        email: '',
+        location: '',
+        platform: lead.source_type || lead.category || '',
+        source_type: lead.stage || '',
+        urgency: lead.urgency || '',
+        title: '',
+        found: true,
+    });
+
+    // Set the number in the dial pad
+    if (lead.phone) {
+        document.getElementById('dialNumber').value = lead.phone;
+    }
+}
+
+function dialAssigned(phone) {
+    document.getElementById('dialNumber').value = phone;
+    lookupLead(phone);
+    startCall();
+}
+
 /* ── Follow-up ── */
 function promptFollowup() {
     var date = prompt('Schedule follow-up date (YYYY-MM-DD):');
@@ -602,6 +729,9 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         stream.getTracks().forEach(function(t) { t.stop(); });
     }).catch(function() {});
 }
+
+// Load assigned leads
+loadAssignedLeads();
 
 // Connect to SignalWire
 if (PROJECT && SPACE) {

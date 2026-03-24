@@ -176,6 +176,7 @@ urlpatterns = [
     path('api/calls/<int:call_id>/disposition/', call_center.api_call_disposition, name='api_call_disposition'),
     path('api/signalwire/relay-token/', call_center.get_relay_token, name='signalwire_relay_token'),
     path('api/signalwire/lead-lookup/', call_center.lookup_lead_by_phone, name='signalwire_lead_lookup'),
+    path('api/signalwire/assigned-leads/', call_center.get_assigned_leads, name='signalwire_assigned_leads'),
 
     # Call Center Pages
     path('sales/sms-inbox/', call_center.sms_inbox, name='sms_inbox'),
