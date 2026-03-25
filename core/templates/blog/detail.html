@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% block robots %}<meta name="robots" content="index, follow">{% endblock %}
 
 {% block title %}{{ post.meta_title|default:post.title }} — SalesSignal AI Blog{% endblock %}
 {% block meta_description %}{{ post.meta_description|default:post.excerpt }}{% endblock %}
