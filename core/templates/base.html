@@ -222,7 +222,7 @@
                 </a>
                 {% if user.business_profile and user.business_profile.account_status == 'trial' or user.business_profile and user.business_profile.subscription_tier == 'none' %}
                 <div style="padding: 0 16px; margin-top: 12px;">
-                    <a href="{% url 'signup_plan' %}" style="display: flex; align-items: center; justify-content: center; gap: 6px; background: linear-gradient(135deg, #0D9488, #065F46); color: white; padding: 10px 16px; border-radius: 10px; font-weight: 700; font-size: 0.82rem; text-decoration: none;">
+                    <a href="{% url 'billing_page' %}" style="display: flex; align-items: center; justify-content: center; gap: 6px; background: linear-gradient(135deg, #0D9488, #065F46); color: white; padding: 10px 16px; border-radius: 10px; font-weight: 700; font-size: 0.82rem; text-decoration: none;">
                         <i class="bi bi-rocket-takeoff"></i> Upgrade Plan
                     </a>
                 </div>
