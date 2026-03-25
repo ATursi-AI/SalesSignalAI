@@ -2,7 +2,7 @@ from django.urls import path
 from core.views import landing, auth, onboarding, dashboard, leads, competitors, territory, campaigns, analytics
 from core.views import monitor_health, webhooks, user_settings, admin_leads, ingest_api, crm
 from core.views import sales_admin, sales, industries, prospect_videos, static_pages, seo, call_center
-from core.views import service_pages, signup, blog, workflows
+from core.views import service_pages, signup, blog, workflows, conversations
 
 urlpatterns = [
     path('', landing.landing_page, name='landing'),
@@ -58,6 +58,9 @@ urlpatterns = [
     path('dashboard/contacts/<int:contact_id>/note/', crm.contact_add_note, name='crm_contact_note'),
     path('dashboard/contacts/<int:contact_id>/update/', crm.contact_update, name='crm_contact_update'),
     path('dashboard/inbox/', crm.inbox, name='crm_inbox'),
+    path('dashboard/conversations/', conversations.conversations, name='conversations'),
+    path('dashboard/conversations/<int:assignment_id>/', conversations.conversation_detail_api, name='conversation_detail_api'),
+    path('dashboard/conversations/<int:assignment_id>/update/', conversations.conversation_update, name='conversation_update'),
     path('dashboard/appointments/', crm.appointment_list, name='crm_appointments'),
     path('dashboard/appointments/create/', crm.appointment_create, name='crm_appointment_create'),
     path('dashboard/appointments/<int:appointment_id>/status/', crm.appointment_update_status, name='crm_appointment_status'),

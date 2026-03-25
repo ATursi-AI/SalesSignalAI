@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+{% block title %}Conversations{% endblock %}
+{% block page_title %}Conversations{% endblock %}
+
+{% block extra_css %}
+<style>
+.conversations-layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    height: calc(100vh - 70px);
+    overflow: hidden;
+}
+
+/* ── List Panel ── */
+.conv-list-panel {
+    border-right: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg-surface);
+}
+.conv-list-search {
+    flex-shrink: 0;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.conv-search-input {
+    width: 100%;
+    padding: 9px 12px 9px 34px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    background: var(--bg-page);
+    color: var(--text-primary);
+}
+.conv-search-input:focus { outline: none; border-color: var(--accent-blue); }
+.conv-search-wrap { position: relative; }
+.conv-search-wrap i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem; }
+
+.conv-filter-pills {
+    display: flex;
+    gap: 4px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+}
+.conv-pill {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-page);
+    color: var(--text-secondary);
+}
+.conv-pill.active { background: var(--accent-blue, #0D9488); color: white; border-color: var(--accent-blue, #0D9488); }
+
+.conv-list-items { flex: 1; overflow-y: auto; }
+.conv-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-subtle);
+    border-left: 3px solid transparent;
+    transition: all 0.12s;
+}
+.conv-item:hover { background: rgba(13,148,136,0.03); }
+.conv-item.active { background: rgba(13,148,136,0.06); border-left-color: #0D9488; }
+.conv-item.unread { font-weight: 600; }
+.conv-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.85rem; color: white; flex-shrink: 0;
+}
+.conv-avatar.hot { background: #EF4444; }
+.conv-avatar.warm { background: #F59E0B; }
+.conv-avatar.new { background: #3B82F6; }
+.conv-avatar.stale { background: #94A3B8; }
+.conv-info { flex: 1; min-width: 0; }
+.conv-name { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conv-preview { font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.conv-meta { flex-shrink: 0; text-align: right; }
+.conv-time { font-size: 0.62rem; color: var(--text-muted); }
+.conv-unread-dot { width: 8px; height: 8px; border-radius: 50%; background: #0D9488; margin-top: 4px; margin-left: auto; }
+.conv-status-pill { padding: 1px 5px; border-radius: 4px; font-size: 0.55rem; font-weight: 700; text-transform: uppercase; }
+
+/* ── Detail Panel ── */
+.conv-detail-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg-page);
+}
+.conv-detail-header {
+    flex-shrink: 0;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.conv-header-info { flex: 1; }
+.conv-header-name { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.05rem; }
+.conv-header-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+.conv-header-sub a { color: #0D9488; text-decoration: none; }
+.conv-header-actions { display: flex; gap: 6px; }
+.conv-action-btn {
+    padding: 6px 12px; border-radius: 6px; font-size: 0.72rem; font-weight: 600;
+    border: 1px solid var(--border-subtle); background: var(--bg-page); cursor: pointer;
+    display: inline-flex; align-items: center; gap: 4px; color: var(--text-secondary);
+}
+.conv-action-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+.conv-action-btn.won { background: #D1FAE5; border-color: #059669; color: #059669; }
+.conv-action-btn.lost { background: #FEE2E2; border-color: #DC2626; color: #DC2626; }
+
+.conv-detail-timeline {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+.conv-empty-detail {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: var(--text-muted);
+    gap: 8px;
+}
+.conv-empty-detail i { font-size: 2.5rem; }
+
+/* Timeline items */
+.tl-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.tl-icon {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 0.85rem;
+}
+.tl-icon.teal { background: #CCFBF1; color: #0D9488; }
+.tl-icon.blue { background: #DBEAFE; color: #3B82F6; }
+.tl-icon.amber { background: #FEF3C7; color: #92400E; }
+.tl-icon.emerald { background: #D1FAE5; color: #059669; }
+.tl-icon.purple { background: #EDE9FE; color: #7C3AED; }
+.tl-icon.gray { background: #F1F5F9; color: #64748B; }
+.tl-body { flex: 1; min-width: 0; }
+.tl-title { font-size: 0.82rem; font-weight: 600; }
+.tl-time { font-size: 0.65rem; color: var(--text-muted); margin-top: 1px; }
+.tl-content {
+    margin-top: 6px; padding: 10px 14px;
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: 10px; font-size: 0.8rem; line-height: 1.6;
+    word-break: break-word; white-space: pre-line;
+}
+
+/* AI cards */
+.tl-ai-card {
+    margin-top: 6px; padding: 10px 14px;
+    background: #EFF6FF; border: 1px solid #BFDBFE;
+    border-radius: 10px; font-size: 0.8rem; line-height: 1.6;
+}
+.tl-ai-card .copy-btn {
+    float: right; padding: 2px 8px; border-radius: 4px; font-size: 0.65rem;
+    font-weight: 600; cursor: pointer; border: 1px solid #93C5FD; background: white; color: #3B82F6;
+}
+
+/* Compose area */
+.conv-detail-compose {
+    flex-shrink: 0;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+}
+.compose-row { display: flex; gap: 8px; }
+.compose-textarea {
+    flex: 1; padding: 9px 12px; border: 1px solid var(--border-subtle);
+    border-radius: 8px; font-family: inherit; font-size: 0.82rem;
+    resize: none; min-height: 38px; max-height: 80px; background: var(--bg-page); color: var(--text-primary);
+}
+.compose-textarea:focus { outline: none; border-color: var(--accent-blue); }
+.compose-send {
+    padding: 9px 16px; border-radius: 8px; background: #0D9488; color: white;
+    font-weight: 600; font-size: 0.8rem; border: none; cursor: pointer; white-space: nowrap;
+}
+.compose-send:hover { background: #0C8478; }
+.compose-revenue {
+    display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 0.78rem; color: var(--text-muted);
+}
+.compose-revenue input {
+    width: 100px; padding: 5px 8px; border: 1px solid var(--border-subtle);
+    border-radius: 6px; font-size: 0.8rem; background: var(--bg-page); color: var(--text-primary);
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+    .conversations-layout { grid-template-columns: 1fr; height: auto; overflow: auto; }
+    .conv-list-panel { max-height: 40vh; border-right: none; border-bottom: 1px solid var(--border-subtle); }
+    .conv-detail-panel { min-height: 50vh; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="conversations-layout">
+    <!-- LEFT: Conversation List -->
+    <div class="conv-list-panel">
+        <div class="conv-list-search">
+            <div class="conv-search-wrap">
+                <i class="bi bi-search"></i>
+                <input type="text" class="conv-search-input" id="convSearch" placeholder="Search conversations..." oninput="filterConversations()">
+            </div>
+        </div>
+        <div class="conv-filter-pills">
+            <button class="conv-pill active" onclick="filterByStatus('all',this)">All</button>
+            <button class="conv-pill" onclick="filterByStatus('new',this)">Unread</button>
+            <button class="conv-pill" onclick="filterByStatus('contacted',this)">Contacted</button>
+            <button class="conv-pill" onclick="filterByStatus('won',this)">Won</button>
+        </div>
+        <div class="conv-list-items" id="convList">
+            {% for c in conversations %}
+            <div class="conv-item {% if c.unread %}unread{% endif %}"
+                 data-id="{{ c.id }}" data-status="{{ c.status }}"
+                 data-name="{{ c.name|lower }}" data-phone="{{ c.phone }}"
+                 onclick="loadConversation({{ c.id }}, this)">
+                <div class="conv-avatar {{ c.urgency }}">{{ c.name|first|upper }}</div>
+                <div class="conv-info">
+                    <div class="conv-name">{{ c.name }}</div>
+                    <div class="conv-preview">{{ c.last_message }}</div>
+                </div>
+                <div class="conv-meta">
+                    <div class="conv-time">{{ c.updated_at|timesince }} ago</div>
+                    {% if c.unread %}<div class="conv-unread-dot"></div>{% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div style="padding:30px;text-align:center;color:var(--text-muted);font-size:0.85rem;">
+                <i class="bi bi-chat-square" style="font-size:2rem;display:block;margin-bottom:8px;"></i>
+                No conversations yet. Leads will appear here as they're assigned to you.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- RIGHT: Detail Panel -->
+    <div class="conv-detail-panel" id="detailPanel">
+        <div class="conv-empty-detail" id="emptyDetail">
+            <i class="bi bi-chat-square-text"></i>
+            <div style="font-size:0.9rem;">Select a conversation</div>
+            <div style="font-size:0.75rem;">Click a lead on the left to see their full history.</div>
+        </div>
+        <div id="activeDetail" style="display:none;height:100%;display:none;flex-direction:column;">
+            <div class="conv-detail-header" id="detailHeader"></div>
+            <div class="conv-detail-timeline" id="detailTimeline"></div>
+            <div class="conv-detail-compose" id="detailCompose">
+                <div class="compose-row">
+                    <textarea class="compose-textarea" id="composeNotes" placeholder="Add a note..."></textarea>
+                    <button class="compose-send" onclick="saveNote()"><i class="bi bi-send-fill"></i> Save</button>
+                </div>
+                <div class="compose-revenue">
+                    <span>Revenue: $</span>
+                    <input type="number" id="composeRevenue" placeholder="0" onblur="saveRevenue()">
+                    <span id="revSaved" style="color:#059669;font-size:0.7rem;display:none;">Saved</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var activeId = null;
+function getCsrf(){var m=document.cookie.match(/csrftoken=([^;]+)/);return m?m[1]:'';}
+function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+function ago(iso){if(!iso)return '';var d=new Date(iso),n=new Date(),s=Math.floor((n-d)/1000);if(s<60)return 'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
+
+function loadConversation(id, el) {
+    activeId = id;
+    document.querySelectorAll('.conv-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+    el.classList.remove('unread');
+    var dot = el.querySelector('.conv-unread-dot');
+    if(dot) dot.remove();
+
+    document.getElementById('emptyDetail').style.display = 'none';
+    var ad = document.getElementById('activeDetail');
+    ad.style.display = 'flex';
+
+    fetch('/dashboard/conversations/' + id + '/').then(r=>r.json()).then(data => {
+        // Header
+        var urgClass = data.urgency || 'new';
+        var h = '<div class="conv-avatar ' + urgClass + '" style="width:42px;height:42px;font-size:1rem;">' + esc(data.name).charAt(0).toUpperCase() + '</div>';
+        h += '<div class="conv-header-info">';
+        h += '<div class="conv-header-name">' + esc(data.name) + '</div>';
+        h += '<div class="conv-header-sub">';
+        if(data.phone) h += '<a href="tel:' + esc(data.phone) + '"><i class="bi bi-telephone-fill"></i> ' + esc(data.phone) + '</a> ';
+        if(data.email) h += '<a href="mailto:' + esc(data.email) + '"><i class="bi bi-envelope-fill"></i> ' + esc(data.email) + '</a>';
+        h += '</div></div>';
+        h += '<div class="conv-header-actions">';
+        h += '<button class="conv-action-btn" onclick="updateStatus(\'contacted\')"><i class="bi bi-telephone-fill"></i> Contacted</button>';
+        h += '<button class="conv-action-btn won" onclick="updateStatus(\'won\')"><i class="bi bi-trophy-fill"></i> Won</button>';
+        h += '<button class="conv-action-btn lost" onclick="updateStatus(\'lost\')"><i class="bi bi-x-circle"></i> Lost</button>';
+        h += '</div>';
+        document.getElementById('detailHeader').innerHTML = h;
+
+        // Timeline
+        var t = '';
+        (data.timeline || []).forEach(function(ev){
+            t += '<div class="tl-item">';
+            t += '<div class="tl-icon ' + (ev.color||'gray') + '"><i class="bi ' + (ev.icon||'bi-circle') + '"></i></div>';
+            t += '<div class="tl-body"><div class="tl-title">' + esc(ev.title) + '</div>';
+            t += '<div class="tl-time">' + ago(ev.time) + '</div>';
+            if(ev.content) t += '<div class="tl-content">' + esc(ev.content) + '</div>';
+            t += '</div></div>';
+        });
+        if(data.ai_summary) {
+            t += '<div class="tl-item"><div class="tl-icon blue"><i class="bi bi-robot"></i></div><div class="tl-body"><div class="tl-title">AI Summary</div><div class="tl-ai-card">' + esc(data.ai_summary) + '</div></div></div>';
+        }
+        if(data.ai_response) {
+            t += '<div class="tl-item"><div class="tl-icon blue"><i class="bi bi-stars"></i></div><div class="tl-body"><div class="tl-title">Suggested Response</div><div class="tl-ai-card"><button class="copy-btn" onclick="navigator.clipboard.writeText(this.parentElement.querySelector(\'.ai-text\').textContent)">Copy</button><span class="ai-text">' + esc(data.ai_response) + '</span></div></div></div>';
+        }
+        document.getElementById('detailTimeline').innerHTML = t;
+        document.getElementById('detailTimeline').scrollTop = 99999;
+
+        // Revenue
+        document.getElementById('composeRevenue').value = data.revenue || '';
+        document.getElementById('composeNotes').value = '';
+    });
+}
+
+function updateStatus(status) {
+    if(!activeId) return;
+    fetch('/dashboard/conversations/' + activeId + '/update/', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','X-CSRFToken':getCsrf()},
+        body: JSON.stringify({status: status})
+    }).then(r=>r.json()).then(d => {
+        var item = document.querySelector('.conv-item[data-id="'+activeId+'"]');
+        if(item) item.dataset.status = status;
+    });
+}
+
+function saveNote() {
+    if(!activeId) return;
+    var notes = document.getElementById('composeNotes').value.trim();
+    if(!notes) return;
+    fetch('/dashboard/conversations/' + activeId + '/update/', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','X-CSRFToken':getCsrf()},
+        body: JSON.stringify({notes: notes})
+    }).then(r=>r.json()).then(d => {
+        document.getElementById('composeNotes').value = '';
+        loadConversation(activeId, document.querySelector('.conv-item.active'));
+    });
+}
+
+function saveRevenue() {
+    if(!activeId) return;
+    var rev = document.getElementById('composeRevenue').value;
+    fetch('/dashboard/conversations/' + activeId + '/update/', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','X-CSRFToken':getCsrf()},
+        body: JSON.stringify({revenue: rev})
+    }).then(r=>r.json()).then(d => {
+        document.getElementById('revSaved').style.display = 'inline';
+        setTimeout(function(){ document.getElementById('revSaved').style.display = 'none'; }, 2000);
+    });
+}
+
+/* Filters */
+var currentFilter = 'all';
+function filterByStatus(status, btn) {
+    currentFilter = status;
+    document.querySelectorAll('.conv-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    filterConversations();
+}
+function filterConversations() {
+    var q = document.getElementById('convSearch').value.toLowerCase();
+    document.querySelectorAll('.conv-item').forEach(function(el){
+        var matchSearch = !q || el.dataset.name.includes(q) || (el.dataset.phone||'').includes(q);
+        var matchStatus = currentFilter === 'all' || el.dataset.status === currentFilter;
+        el.style.display = (matchSearch && matchStatus) ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

@@ -36,6 +36,38 @@
 </div>
 {% endif %}
 
+{% if not is_trial and total_delivered %}
+<!-- ROI Results Card -->
+<div class="animate-fade-in-up" style="background: linear-gradient(135deg, #0D9488 0%, #065F46 100%); color: white; padding: 24px; border-radius: 14px; margin-bottom: 20px;">
+    <div style="font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.1rem; margin-bottom: 14px;">Your Results This Month</div>
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; text-align: center;">
+        <div>
+            <div style="font-size: 2rem; font-weight: 800; font-family: 'JetBrains Mono', monospace;">{{ total_delivered }}</div>
+            <div style="font-size: 0.72rem; opacity: 0.8;">Leads Delivered</div>
+        </div>
+        <div>
+            <div style="font-size: 2rem; font-weight: 800; font-family: 'JetBrains Mono', monospace;">{{ total_contacted }}</div>
+            <div style="font-size: 0.72rem; opacity: 0.8;">Contacted</div>
+        </div>
+        <div>
+            <div style="font-size: 2rem; font-weight: 800; font-family: 'JetBrains Mono', monospace;">{{ total_won }}</div>
+            <div style="font-size: 0.72rem; opacity: 0.8;">Won</div>
+        </div>
+        <div>
+            <div style="font-size: 2rem; font-weight: 800; font-family: 'JetBrains Mono', monospace;">${{ total_revenue|floatformat:0 }}</div>
+            <div style="font-size: 0.72rem; opacity: 0.8;">Revenue</div>
+        </div>
+    </div>
+    {% if roi_multiple %}
+    <div style="text-align: center; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2);">
+        <span style="font-size: 0.8rem; opacity: 0.85;">ROI: </span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 1.1rem;">{{ roi_multiple }}x</span>
+        <span style="font-size: 0.72rem; opacity: 0.7; margin-left: 8px;">your ${{ monthly_cost }}/mo investment</span>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
 <!-- KPI Cards -->
 <div class="kpi-grid">
     <div class="glass-card kpi-card kpi-hot animate-fade-in-up animate-delay-1">

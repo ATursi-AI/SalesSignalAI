@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from django.db.models import Avg, Count, F
+from django.db.models import Avg, Count, F, Sum
 from django.utils import timezone
 from datetime import timedelta
 from core.models import LeadAssignment, Lead, TrackedCompetitor, CompetitorReview
@@ -110,6 +110,16 @@ def dashboard_home(request):
     is_trial = (profile.account_status == 'trial' or profile.subscription_tier == 'none')
     trial_leads_used = max(0, 10 - profile.trial_leads_remaining) if is_trial else 0
 
+    # ROI metrics
+    total_delivered = assignments.count()
+    total_contacted = assignments.filter(status__in=['contacted', 'quoted', 'won']).count()
+    total_won = assignments.filter(status='won').count()
+    total_revenue = assignments.filter(status='won').aggregate(
+        rev=Sum('revenue'))['rev'] or 0
+    tier_prices = {'outreach': 149, 'growth': 349, 'dominate': 649}
+    monthly_cost = tier_prices.get(profile.subscription_tier, 0)
+    roi_multiple = round(float(total_revenue) / monthly_cost, 1) if monthly_cost and total_revenue else 0
+
     context = {
         'profile': profile,
         'hot_leads': hot_leads,
@@ -132,5 +142,11 @@ def dashboard_home(request):
         'is_trial': is_trial,
         'trial_leads_remaining': profile.trial_leads_remaining if is_trial else 0,
         'trial_leads_used': trial_leads_used,
+        'total_delivered': total_delivered,
+        'total_contacted': total_contacted,
+        'total_won': total_won,
+        'total_revenue': total_revenue,
+        'monthly_cost': monthly_cost,
+        'roi_multiple': roi_multiple,
     }
     return render(request, 'dashboard/home.html', context)

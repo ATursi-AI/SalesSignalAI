@@ -65,6 +65,10 @@
                 </a>
 
                 <div class="sidebar-section-label">CRM</div>
+                <a href="{% url 'conversations' %}" class="sidebar-link {% if request.resolver_match.url_name == 'conversations' %}active{% endif %}">
+                    <i class="bi bi-chat-square-text-fill"></i>
+                    <span>Conversations</span>
+                </a>
                 <a href="{% url 'crm_pipeline' %}" class="sidebar-link {% if request.resolver_match.url_name == 'crm_pipeline' %}active{% endif %}">
                     <i class="bi bi-kanban-fill"></i>
                     <span>Pipeline</span>
