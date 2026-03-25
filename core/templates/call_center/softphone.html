@@ -170,6 +170,53 @@
 .rec-dot { width: 8px; height: 8px; border-radius: 50%; background: #DC2626; animation: rec-pulse 1s ease-in-out infinite; }
 @keyframes rec-pulse { 0%,100%{opacity:1;}50%{opacity:0.3;} }
 
+/* ── Power Dialer ── */
+.phone-tabs { display: flex; gap: 0; margin-bottom: 10px; flex-shrink: 0; }
+.phone-tab { flex: 1; padding: 9px 12px; font-size: 0.78rem; font-weight: 600; border: 1px solid var(--border-subtle); background: var(--bg-surface); cursor: pointer; color: var(--text-secondary); text-align: center; transition: all 0.15s; }
+.phone-tab:first-child { border-radius: 8px 0 0 8px; }
+.phone-tab:last-child { border-radius: 0 8px 8px 0; border-left: none; }
+.phone-tab.active { background: #0D9488; color: white; border-color: #0D9488; }
+.dialer-panel { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.dialer-panel.active { display: flex; }
+.manual-panel { display: flex; flex-direction: column; flex: 1; }
+.manual-panel.hidden { display: none; }
+
+.pd-progress { height: 4px; background: var(--bg-page); border-radius: 2px; margin-bottom: 10px; flex-shrink: 0; }
+.pd-progress-bar { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #0D9488, #059669); transition: width 0.3s; }
+.pd-counter { text-align: center; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 8px; flex-shrink: 0; }
+
+.pd-prospect-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 14px; border-left: 4px solid #0D9488; padding: 18px; flex: 1; overflow-y: auto; min-height: 0; }
+.pd-biz-name { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.15rem; margin-bottom: 6px; }
+.pd-phone { font-family: 'JetBrains Mono', monospace; font-size: 1.35rem; color: #0D9488; font-weight: 600; margin-bottom: 10px; display: block; }
+.pd-detail-row { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 3px; display: flex; gap: 6px; }
+.pd-detail-label { color: var(--text-muted); font-size: 0.7rem; min-width: 60px; }
+.pd-stage-pill { padding: 2px 8px; border-radius: 5px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; background: #DBEAFE; color: #1D4ED8; }
+.pd-last-act { margin-top: 8px; padding: 8px 10px; background: var(--bg-page); border-radius: 8px; font-size: 0.75rem; color: var(--text-muted); }
+.pd-notes { margin-top: 8px; font-size: 0.75rem; color: var(--text-secondary); white-space: pre-line; max-height: 60px; overflow-y: auto; }
+
+.pd-actions { margin-top: 12px; flex-shrink: 0; display: flex; gap: 8px; }
+.pd-dial-btn { flex: 1; padding: 12px; border-radius: 30px; font-weight: 700; font-size: 0.9rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.pd-dial-green { background: #059669; color: white; }
+.pd-dial-green:hover { background: #047857; }
+.pd-dial-red { background: #DC2626; color: white; display: none; }
+.pd-dial-red:hover { background: #B91C1C; }
+.pd-skip-btn { padding: 12px 20px; border-radius: 30px; font-weight: 600; font-size: 0.82rem; border: 1px solid var(--border-subtle); background: var(--bg-page); cursor: pointer; color: var(--text-secondary); }
+.pd-skip-btn:hover { border-color: var(--accent-blue); }
+
+/* Disposition overlay in dialer */
+.pd-dispo { display: none; padding: 14px; background: var(--bg-surface); border-radius: 12px; border: 1px solid var(--border-subtle); flex-shrink: 0; margin-top: 8px; }
+.pd-dispo.active { display: block; }
+.pd-dispo-grid { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+.pd-dispo-btn { padding: 6px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 600; border: 1px solid var(--border-subtle); background: var(--bg-page); cursor: pointer; color: var(--text-primary); }
+.pd-dispo-btn:hover { border-color: #0D9488; }
+.pd-dispo-btn.selected { background: #0D9488; color: white; border-color: #0D9488; }
+.pd-dispo-btn.booked { background: #D1FAE5; border-color: #059669; color: #059669; }
+.pd-dispo-btn.booked.selected { background: #059669; color: white; }
+.pd-save-next { width: 100%; padding: 10px; border-radius: 8px; background: #0D9488; color: white; font-weight: 700; font-size: 0.85rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 6px; }
+.pd-save-next:hover { background: #0C8478; }
+
+.pd-empty { text-align: center; color: var(--text-muted); padding: 30px; font-size: 0.85rem; }
+
 /* ── Mobile ── */
 @media (max-width: 768px) {
     .phone-layout { grid-template-columns: 1fr; height: auto; overflow: auto; }
@@ -186,8 +233,14 @@
 {% block content %}
 <div class="phone-layout" data-project="{{ signalwire_project }}" data-caller-id="{{ signalwire_phone }}" data-space="{{ signalwire_space }}">
 
-    <!-- LEFT: Dial Pad -->
+    <!-- LEFT: Dial Pad + Power Dialer -->
     <div class="left-panel">
+        <!-- Mode Tabs -->
+        <div class="phone-tabs">
+            <button class="phone-tab active" id="tabManual" onclick="setPhoneMode('manual')"><i class="bi bi-grid-3x3-gap"></i> Manual Dial</button>
+            <button class="phone-tab" id="tabDialer" onclick="setPhoneMode('dialer')"><i class="bi bi-lightning-fill"></i> Power Dialer</button>
+        </div>
+
         <div class="sw-status-bar">
             <div class="sw-status-dot" id="swStatusDot"></div>
             <span class="sw-status-label" id="swStatusLabel">Connecting...</span>
@@ -195,6 +248,7 @@
         </div>
         <div class="sw-error-banner" id="swErrorBanner"><span id="swErrorText"></span> <button onclick="initSignalWire()">Retry</button></div>
 
+        <div class="manual-panel" id="manualPanel">
         <div class="dialpad-card" id="dialpadCard">
             <div class="recording-indicator" id="recordingIndicator"><span class="rec-dot"></span> Recording</div>
             <div class="call-status" id="callStatus" style="display:none;">
@@ -226,6 +280,49 @@
                 <div class="call-ctrl-wrap"><button class="call-ctrl" id="btnKeypad" onclick="toggleKeypad()"><i class="bi bi-grid-3x3-gap-fill"></i></button><span class="call-ctrl-label">Keypad</span></div>
                 <div class="call-ctrl-wrap"><button class="call-ctrl" id="btnTransfer" onclick="showTransferModal()"><i class="bi bi-telephone-forward-fill"></i></button><span class="call-ctrl-label">Transfer</span></div>
                 <div class="call-ctrl-wrap"><button class="call-ctrl" id="btnSmsCtrl" onclick="openSms()"><i class="bi bi-chat-dots-fill"></i></button><span class="call-ctrl-label">SMS</span></div>
+            </div>
+        </div>
+        </div><!-- /manual-panel -->
+
+        <!-- Power Dialer Panel -->
+        <div class="dialer-panel" id="dialerPanel">
+            <div class="pd-progress"><div class="pd-progress-bar" id="pdProgressBar" style="width:0%"></div></div>
+            <div class="pd-counter" id="pdCounter">Load prospects to start dialing</div>
+
+            <div id="pdContent">
+                <div class="pd-empty" id="pdEmpty">
+                    <i class="bi bi-lightning-fill" style="font-size:2rem;display:block;margin-bottom:8px;color:#0D9488;"></i>
+                    <p>Power through your prospect list automatically.</p>
+                    <button class="pd-dial-green" style="margin-top:12px;padding:12px 28px;border-radius:30px;font-weight:700;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" onclick="startDialer()"><i class="bi bi-lightning-fill"></i> Start Power Dialer</button>
+                </div>
+                <div id="pdProspectCard" style="display:none;">
+                    <div class="pd-prospect-card">
+                        <div class="pd-biz-name" id="pdBizName"></div>
+                        <span class="pd-phone" id="pdPhone"></span>
+                        <div id="pdDetails"></div>
+                        <div class="pd-last-act" id="pdLastAct" style="display:none;"></div>
+                        <div class="pd-notes" id="pdNotes" style="display:none;"></div>
+                    </div>
+                    <div class="pd-actions" id="pdDialActions">
+                        <button class="pd-dial-btn pd-dial-green" id="pdDialBtn" onclick="pdDial()"><i class="bi bi-telephone-fill"></i> Dial</button>
+                        <button class="pd-dial-btn pd-dial-red" id="pdHangupBtn" onclick="pdHangup()"><i class="bi bi-telephone-x-fill"></i> Hang Up</button>
+                        <button class="pd-skip-btn" onclick="pdSkip()"><i class="bi bi-skip-forward-fill"></i> Skip</button>
+                    </div>
+                    <div class="pd-dispo" id="pdDispo">
+                        <div style="font-size:0.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;">Disposition</div>
+                        <div class="pd-dispo-grid" id="pdDispoGrid">
+                            <button class="pd-dispo-btn" onclick="pdSelectDispo('interested',this)">Interested</button>
+                            <button class="pd-dispo-btn" onclick="pdSelectDispo('not_interested',this)">Not Interested</button>
+                            <button class="pd-dispo-btn" onclick="pdSelectDispo('callback',this)">Callback</button>
+                            <button class="pd-dispo-btn" onclick="pdSelectDispo('no_answer',this)">No Answer</button>
+                            <button class="pd-dispo-btn" onclick="pdSelectDispo('left_voicemail',this)">Left VM</button>
+                            <button class="pd-dispo-btn" onclick="pdSelectDispo('wrong_number',this)">Wrong #</button>
+                            <button class="pd-dispo-btn booked" onclick="pdSelectDispo('appointment_booked',this)">Booked!</button>
+                        </div>
+                        <textarea id="pdDispoNotes" class="call-notes" placeholder="Notes (optional)" style="min-height:40px;margin-top:4px;"></textarea>
+                        <button class="pd-save-next" onclick="pdSaveNext()"><i class="bi bi-arrow-right-circle"></i> Save & Next</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -571,5 +668,102 @@ if(params.get('number')){document.getElementById('dialNumber').value=params.get(
 if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:true}).then(s=>{s.getTracks().forEach(t=>t.stop());}).catch(function(){});}
 loadAssignedLeads();
 if(PROJECT&&SPACE){initSignalWire();}else{setStatus('error','Not configured');showError('Set SIGNALWIRE_PROJECT_ID and SIGNALWIRE_SPACE_URL in .env');}
+
+/* ── Power Dialer ── */
+var pdQueue=[], pdIndex=0, pdCalled=0, pdSkipped=0, pdSelectedDispo='', pdActive=false;
+
+function setPhoneMode(mode) {
+    document.getElementById('tabManual').classList.toggle('active', mode==='manual');
+    document.getElementById('tabDialer').classList.toggle('active', mode==='dialer');
+    document.getElementById('manualPanel').classList.toggle('hidden', mode==='dialer');
+    document.getElementById('dialerPanel').classList.toggle('active', mode==='dialer');
+}
+
+function startDialer() {
+    document.getElementById('pdEmpty').style.display='none';
+    document.getElementById('pdCounter').textContent='Loading prospects...';
+    fetch('/api/signalwire/dialer-queue/').then(r=>r.json()).then(data=>{
+        pdQueue=data.prospects||[];
+        pdIndex=0;pdCalled=0;pdSkipped=0;pdActive=true;
+        if(!pdQueue.length){document.getElementById('pdCounter').textContent='No prospects to dial.';document.getElementById('pdEmpty').style.display='block';return;}
+        pdShowCurrent();
+    });
+}
+
+function pdShowCurrent() {
+    if(pdIndex>=pdQueue.length){pdFinished();return;}
+    var p=pdQueue[pdIndex];
+    document.getElementById('pdProspectCard').style.display='block';
+    document.getElementById('pdBizName').textContent=p.name;
+    document.getElementById('pdPhone').textContent=p.phone;
+    var h='';
+    if(p.stage)h+='<div class="pd-detail-row"><span class="pd-detail-label">Stage</span><span class="pd-stage-pill">'+esc(p.stage)+'</span></div>';
+    if(p.category)h+='<div class="pd-detail-row"><span class="pd-detail-label">Trade</span>'+esc(p.category)+'</div>';
+    if(p.address||p.city)h+='<div class="pd-detail-row"><span class="pd-detail-label">Location</span>'+esc((p.address?p.address+', ':'')+p.city)+'</div>';
+    if(p.followup)h+='<div class="pd-detail-row"><span class="pd-detail-label">Follow-up</span>'+esc(p.followup)+'</div>';
+    document.getElementById('pdDetails').innerHTML=h;
+    if(p.last_activity){document.getElementById('pdLastAct').style.display='block';document.getElementById('pdLastAct').innerHTML='<i class="bi bi-clock-history"></i> Last: '+esc(p.last_activity.type)+' — '+esc(p.last_activity.description);}else{document.getElementById('pdLastAct').style.display='none';}
+    if(p.notes){document.getElementById('pdNotes').style.display='block';document.getElementById('pdNotes').textContent=p.notes;}else{document.getElementById('pdNotes').style.display='none';}
+
+    document.getElementById('pdDialBtn').style.display='flex';
+    document.getElementById('pdHangupBtn').style.display='none';
+    document.getElementById('pdDispo').classList.remove('active');
+    pdSelectedDispo='';
+    document.querySelectorAll('.pd-dispo-btn').forEach(b=>b.classList.remove('selected'));
+    document.getElementById('pdDispoNotes').value='';
+
+    var total=pdQueue.length;var pct=Math.round((pdIndex/total)*100);
+    document.getElementById('pdProgressBar').style.width=pct+'%';
+    document.getElementById('pdCounter').textContent='Prospect '+(pdIndex+1)+' of '+total+' — '+pdCalled+' called, '+pdSkipped+' skipped';
+}
+
+function pdDial() {
+    var p=pdQueue[pdIndex];if(!p)return;
+    document.getElementById('dialNumber').value=p.phone;
+    startCall();
+    document.getElementById('pdDialBtn').style.display='none';
+    document.getElementById('pdHangupBtn').style.display='flex';
+    // Listen for call end to show dispo
+    var checkEnd=setInterval(function(){
+        if(callEnded){clearInterval(checkEnd);pdCallEnded();}
+    },500);
+}
+
+function pdHangup() { endCall(); }
+
+function pdCallEnded() {
+    pdCalled++;
+    document.getElementById('pdDialBtn').style.display='flex';
+    document.getElementById('pdHangupBtn').style.display='none';
+    document.getElementById('pdDispo').classList.add('active');
+}
+
+function pdSkip() {
+    pdSkipped++;pdIndex++;pdShowCurrent();
+}
+
+function pdSelectDispo(d,btn) {
+    pdSelectedDispo=d;
+    document.querySelectorAll('.pd-dispo-btn').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+}
+
+function pdSaveNext() {
+    if(!pdSelectedDispo){alert('Select a disposition.');return;}
+    var p=pdQueue[pdIndex];
+    fetch('/api/signalwire/dialer-disposition/',{
+        method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},
+        body:JSON.stringify({prospect_id:p.id,disposition:pdSelectedDispo,notes:document.getElementById('pdDispoNotes').value.trim()})
+    }).then(r=>r.json()).then(d=>{
+        pdIndex++;pdShowCurrent();
+    });
+}
+
+function pdFinished() {
+    document.getElementById('pdProspectCard').style.display='none';
+    document.getElementById('pdProgressBar').style.width='100%';
+    document.getElementById('pdCounter').innerHTML='<strong style="color:#059669;">Session complete!</strong> '+pdCalled+' called, '+pdSkipped+' skipped out of '+pdQueue.length;
+    pdActive=false;
+}
 </script>
 {% endblock %}

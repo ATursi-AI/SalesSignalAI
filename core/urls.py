@@ -189,6 +189,8 @@ urlpatterns = [
     path('api/signalwire/lead-lookup/', call_center.lookup_lead_by_phone, name='signalwire_lead_lookup'),
     path('api/signalwire/assigned-leads/', call_center.get_assigned_leads, name='signalwire_assigned_leads'),
     path('api/signalwire/recording-webhook/', call_center.recording_webhook, name='signalwire_recording_webhook'),
+    path('api/signalwire/dialer-queue/', call_center.get_dialer_queue, name='dialer_queue'),
+    path('api/signalwire/dialer-disposition/', call_center.log_dialer_disposition, name='dialer_disposition'),
     path('api/signalwire/transfer-call/', call_center.transfer_call, name='signalwire_transfer_call'),
     path('api/signalwire/transfer-xml/', call_center.transfer_xml, name='signalwire_transfer_xml'),
 

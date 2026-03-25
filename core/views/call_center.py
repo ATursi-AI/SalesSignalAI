@@ -805,3 +805,107 @@ def transfer_xml(request):
         '</Response>'
     )
     return HttpResponse(xml, content_type='application/xml')
+
+
+# ─── Power Dialer ────────────────────────────────────────────────────
+
+@login_required
+def get_dialer_queue(request):
+    """Get the list of prospects to power dial."""
+    from core.models.sales import SalesProspect
+
+    sp = getattr(request.user, 'salesperson_profile', None)
+    if not sp and not request.user.is_superuser:
+        return JsonResponse({'prospects': []})
+
+    if request.user.is_superuser:
+        prospects = SalesProspect.objects.filter(phone__gt='')
+    else:
+        prospects = SalesProspect.objects.filter(salesperson=sp, phone__gt='')
+
+    prospects = prospects.filter(
+        pipeline_stage__in=['new', 'contacted', 'callback'],
+    ).order_by('next_follow_up_date', '-created_at')[:50]
+
+    data = []
+    for p in prospects:
+        last_act = p.activities.order_by('-created_at').first()
+        data.append({
+            'id': p.id,
+            'name': p.business_name,
+            'phone': p.phone,
+            'stage': p.get_pipeline_stage_display(),
+            'stage_key': p.pipeline_stage,
+            'category': p.service_category or '',
+            'address': p.address or '',
+            'city': p.city or '',
+            'notes': p.notes or '',
+            'followup': str(p.next_follow_up_date) if p.next_follow_up_date else '',
+            'last_activity': {
+                'type': last_act.get_activity_type_display(),
+                'description': last_act.description[:100] if last_act.description else '',
+                'date': last_act.created_at.isoformat(),
+            } if last_act else None,
+        })
+    return JsonResponse({'prospects': data})
+
+
+@login_required
+@require_POST
+def log_dialer_disposition(request):
+    """Log call disposition from power dialer."""
+    from datetime import date, timedelta
+    from core.models.sales import SalesProspect, SalesActivity
+
+    data = json.loads(request.body)
+    prospect_id = data.get('prospect_id')
+    disposition = data.get('disposition', '')
+    notes = data.get('notes', '')
+
+    sp = getattr(request.user, 'salesperson_profile', None)
+    if request.user.is_superuser:
+        prospect = get_object_or_404(SalesProspect, id=prospect_id)
+    else:
+        prospect = get_object_or_404(SalesProspect, id=prospect_id, salesperson=sp)
+
+    log_sp = sp or prospect.salesperson
+    SalesActivity.objects.create(
+        prospect=prospect,
+        salesperson=log_sp,
+        activity_type='call',
+        description=f'Power dialer: {disposition}. {notes}'.strip(),
+    )
+
+    if disposition == 'interested':
+        prospect.pipeline_stage = 'contacted'
+    elif disposition == 'not_interested':
+        prospect.pipeline_stage = 'closed_lost'
+        prospect.lost_reason = 'not_interested'
+    elif disposition == 'callback':
+        prospect.pipeline_stage = 'callback'
+        prospect.next_follow_up_date = date.today() + timedelta(days=1)
+    elif disposition == 'appointment_booked':
+        prospect.pipeline_stage = 'demo_scheduled'
+    elif disposition == 'wrong_number':
+        prospect.phone = ''
+
+    if notes:
+        prospect.notes = ((prospect.notes or '') + f'\n[{date.today()}] {notes}').strip()
+
+    prospect.save()
+
+    try:
+        from core.services.workflow_engine import trigger_workflow
+        trigger_workflow('call_completed', {
+            'model': 'SalesProspect',
+            'prospect_id': prospect.id,
+            'id': prospect.id,
+            'outcome': disposition,
+            'business_name': prospect.business_name,
+            'phone': prospect.phone,
+            'email': prospect.email,
+        })
+    except Exception:
+        pass
+
+    return JsonResponse({'ok': True})
