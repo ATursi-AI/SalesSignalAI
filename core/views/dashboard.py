@@ -8,9 +8,16 @@ from core.models import LeadAssignment, Lead, TrackedCompetitor, CompetitorRevie
 
 @login_required
 def dashboard_home(request):
+    from django.shortcuts import redirect
+
+    # Salespeople without a business profile → redirect to sales dashboard
+    if not hasattr(request.user, 'business_profile') or not request.user.business_profile:
+        if hasattr(request.user, 'salesperson_profile'):
+            return redirect('sales_today')
+        return redirect('landing')
+
     profile = request.user.business_profile
     if not profile.onboarding_complete:
-        from django.shortcuts import redirect
         return redirect('onboarding')
 
     now = timezone.now()
