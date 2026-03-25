@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% load lead_tags %}
+
+{% block title %}Sales Dashboard{% endblock %}
+{% block page_title %}Sales Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+.sd-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+.sd-metric { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 18px 20px; border-top: 3px solid transparent; }
+.sd-metric-calls { border-top-color: #DC2626; }
+.sd-metric-tasks { border-top-color: #3B82F6; }
+.sd-metric-pipeline { border-top-color: #059669; }
+.sd-metric-meetings { border-top-color: #F59E0B; }
+.sd-metric-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin-bottom: 4px; }
+.sd-metric-val { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; font-weight: 700; }
+.sd-metric-sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+.sd-progress { height: 4px; background: var(--bg-page); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.sd-progress-bar { height: 100%; border-radius: 2px; background: #DC2626; transition: width 0.3s; }
+
+.sd-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.sd-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 18px; overflow: hidden; }
+.sd-card-title { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 0.92rem; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+/* Day items */
+.sd-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; margin-bottom: 4px; transition: background 0.1s; cursor: pointer; text-decoration: none; color: inherit; }
+.sd-item:hover { background: var(--bg-page); }
+.sd-item-overdue { border-left: 3px solid #DC2626; }
+.sd-item-today { border-left: 3px solid #F59E0B; }
+.sd-item-task { border-left: 3px solid #3B82F6; }
+.sd-item-info { flex: 1; min-width: 0; }
+.sd-item-name { font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sd-item-meta { font-size: 0.72rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+.sd-item-phone { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #0D9488; text-decoration: none; }
+.sd-item-phone:hover { text-decoration: underline; }
+.sd-stage-pill { padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; background: #DBEAFE; color: #1D4ED8; }
+.sd-call-btn { width: 30px; height: 30px; border-radius: 50%; background: #059669; color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0; }
+.sd-call-btn:hover { background: #047857; }
+.sd-task-check { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--border-subtle); background: var(--bg-page); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.7rem; color: transparent; }
+.sd-task-check:hover { border-color: #059669; color: #059669; }
+
+/* Activity timeline */
+.sd-activity { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border-subtle); font-size: 0.82rem; }
+.sd-activity:last-child { border-bottom: none; }
+.sd-act-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; flex-shrink: 0; background: var(--bg-page); }
+.sd-act-info { flex: 1; }
+.sd-act-text { color: var(--text-secondary); }
+.sd-act-text strong { color: var(--text-primary); font-weight: 600; }
+.sd-act-time { font-size: 0.68rem; color: var(--text-muted); }
+
+/* Pipeline summary */
+.sd-pipeline-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.sd-pipeline-stage { padding: 6px 12px; border-radius: 8px; background: var(--bg-page); border: 1px solid var(--border-subtle); font-size: 0.75rem; text-align: center; }
+.sd-pipeline-stage-count { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1rem; display: block; }
+.sd-pipeline-stage-name { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; }
+
+/* Quick actions */
+.sd-quick-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.sd-quick-btn { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-subtle); background: var(--bg-page); font-size: 0.78rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; color: var(--text-secondary); text-decoration: none; }
+.sd-quick-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+.sd-empty { text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.82rem; }
+
+@media (max-width: 768px) {
+    .sd-metrics { grid-template-columns: repeat(2, 1fr); }
+    .sd-columns { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Metrics -->
+<div class="sd-metrics animate-fade-in-up">
+    <div class="sd-metric sd-metric-calls">
+        <div class="sd-metric-label">Calls Today</div>
+        <div class="sd-metric-val">{{ calls_today }} <span style="font-size:0.8rem;color:var(--text-muted);">/ {{ call_goal }}</span></div>
+        <div class="sd-progress"><div class="sd-progress-bar" style="width:{{ call_pct }}%"></div></div>
+    </div>
+    <div class="sd-metric sd-metric-tasks">
+        <div class="sd-metric-label">Tasks Due</div>
+        <div class="sd-metric-val" style="color:#3B82F6;">{{ tasks_due }}</div>
+        <div class="sd-metric-sub">overdue + today</div>
+    </div>
+    <div class="sd-metric sd-metric-pipeline">
+        <div class="sd-metric-label">Pipeline Value</div>
+        <div class="sd-metric-val" style="color:#059669;">${{ pipeline_value|floatformat:0 }}</div>
+        <div class="sd-metric-sub">active prospects</div>
+    </div>
+    <div class="sd-metric sd-metric-meetings">
+        <div class="sd-metric-label">Meetings This Week</div>
+        <div class="sd-metric-val" style="color:#F59E0B;">{{ meetings_week }}</div>
+        <div class="sd-metric-sub">demos scheduled</div>
+    </div>
+</div>
+
+<!-- Two Columns -->
+<div class="sd-columns">
+    <!-- Your Day -->
+    <div class="sd-card animate-fade-in-up" style="animation-delay:50ms; max-height: calc(100vh - 280px); overflow-y: auto;">
+        <div class="sd-card-title"><i class="bi bi-sun" style="color:#F59E0B;"></i> Your Day</div>
+
+        {% if overdue_followups %}
+        <div style="font-size:0.68rem;font-weight:700;color:#DC2626;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">Overdue Follow-ups</div>
+        {% for p in overdue_followups %}
+        <a href="{% url 'prospect_detail' p.id %}" class="sd-item sd-item-overdue">
+            <div class="sd-item-info">
+                <div class="sd-item-name">{{ p.business_name }}</div>
+                <div class="sd-item-meta">
+                    {% if p.phone %}<a href="{% url 'softphone' %}?number={{ p.phone }}" class="sd-item-phone" onclick="event.stopPropagation()">{{ p.phone }}</a>{% endif %}
+                    <span class="sd-stage-pill">{{ p.get_pipeline_stage_display }}</span>
+                    <span style="color:#DC2626;">{{ p.next_follow_up_date }}</span>
+                </div>
+            </div>
+            {% if p.phone %}<button class="sd-call-btn" onclick="event.preventDefault();window.location='{% url 'softphone' %}?number={{ p.phone }}'"><i class="bi bi-telephone-fill"></i></button>{% endif %}
+        </a>
+        {% endfor %}
+        {% endif %}
+
+        {% if today_followups %}
+        <div style="font-size:0.68rem;font-weight:700;color:#F59E0B;text-transform:uppercase;letter-spacing:0.04em;margin:8px 0 4px;">Today's Follow-ups</div>
+        {% for p in today_followups %}
+        <a href="{% url 'prospect_detail' p.id %}" class="sd-item sd-item-today">
+            <div class="sd-item-info">
+                <div class="sd-item-name">{{ p.business_name }}</div>
+                <div class="sd-item-meta">
+                    {% if p.phone %}<a href="{% url 'softphone' %}?number={{ p.phone }}" class="sd-item-phone" onclick="event.stopPropagation()">{{ p.phone }}</a>{% endif %}
+                    <span class="sd-stage-pill">{{ p.get_pipeline_stage_display }}</span>
+                </div>
+            </div>
+            {% if p.phone %}<button class="sd-call-btn" onclick="event.preventDefault();window.location='{% url 'softphone' %}?number={{ p.phone }}'"><i class="bi bi-telephone-fill"></i></button>{% endif %}
+        </a>
+        {% endfor %}
+        {% endif %}
+
+        {% if overdue_tasks or today_tasks %}
+        <div style="font-size:0.68rem;font-weight:700;color:#3B82F6;text-transform:uppercase;letter-spacing:0.04em;margin:8px 0 4px;">Tasks</div>
+        {% for t in overdue_tasks %}
+        <div class="sd-item sd-item-task" style="border-left-color:#DC2626;">
+            <button class="sd-task-check" onclick="completeTask({{ t.id }},this)" title="Complete"><i class="bi bi-check-lg"></i></button>
+            <div class="sd-item-info">
+                <div class="sd-item-name">{{ t.description|truncatechars:50 }}</div>
+                <div class="sd-item-meta">{{ t.prospect.business_name }} &middot; <span style="color:#DC2626;">Due {{ t.task_due_date }}</span></div>
+            </div>
+        </div>
+        {% endfor %}
+        {% for t in today_tasks %}
+        <div class="sd-item sd-item-task">
+            <button class="sd-task-check" onclick="completeTask({{ t.id }},this)" title="Complete"><i class="bi bi-check-lg"></i></button>
+            <div class="sd-item-info">
+                <div class="sd-item-name">{{ t.description|truncatechars:50 }}</div>
+                <div class="sd-item-meta">{{ t.prospect.business_name }}</div>
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if not overdue_followups and not today_followups and not overdue_tasks and not today_tasks %}
+        <div class="sd-empty"><i class="bi bi-check-circle" style="font-size:1.5rem;display:block;margin-bottom:6px;color:#059669;"></i>All caught up! No follow-ups or tasks due today.</div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="sd-card animate-fade-in-up" style="animation-delay:100ms; max-height: calc(100vh - 280px); overflow-y: auto;">
+        <div class="sd-card-title"><i class="bi bi-clock-history" style="color:var(--accent-blue);"></i> Recent Activity</div>
+
+        {% if recent_activities %}
+        {% for act in recent_activities %}
+        <div class="sd-activity">
+            <div class="sd-act-icon" style="color:{{ act.color }}"><i class="{{ act.icon }}"></i></div>
+            <div class="sd-act-info">
+                <div class="sd-act-text">
+                    <strong>{{ act.get_activity_type_display }}</strong> — {{ act.prospect.business_name }}
+                    {% if act.description %}<br><span style="font-size:0.75rem;">{{ act.description|truncatechars:80 }}</span>{% endif %}
+                </div>
+                <div class="sd-act-time">{{ act.created_at|time_ago }}</div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="sd-empty">No activity yet today.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Pipeline Summary + Quick Actions -->
+<div class="sd-card animate-fade-in-up" style="animation-delay:150ms;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <div class="sd-card-title" style="margin-bottom:10px;"><i class="bi bi-kanban" style="color:var(--accent-emerald);"></i> Pipeline</div>
+            <div class="sd-pipeline-row">
+                {% for label, count in pipeline_summary %}
+                <div class="sd-pipeline-stage">
+                    <span class="sd-pipeline-stage-count">{{ count }}</span>
+                    <span class="sd-pipeline-stage-name">{{ label }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="sd-quick-actions">
+            <a href="{% url 'sales_today' %}" class="sd-quick-btn"><i class="bi bi-telephone"></i> Today's Calls</a>
+            <a href="{% url 'sales_prospects' %}" class="sd-quick-btn"><i class="bi bi-person-plus"></i> New Prospect</a>
+            <a href="{% url 'softphone' %}" class="sd-quick-btn"><i class="bi bi-telephone-fill"></i> Open Phone</a>
+            <a href="{% url 'sales_calendar' %}" class="sd-quick-btn"><i class="bi bi-calendar3"></i> Calendar</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function getCsrf(){var m=document.cookie.match(/csrftoken=([^;]+)/);return m?m[1]:'';}
+
+function completeTask(id, btn) {
+    fetch('{% url "sales_complete_task" %}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()},
+        body: JSON.stringify({task_id: id}),
+    }).then(r => r.json()).then(d => {
+        if (d.ok) {
+            var item = btn.closest('.sd-item');
+            item.style.opacity = '0.4';
+            item.style.textDecoration = 'line-through';
+            btn.style.background = '#059669';
+            btn.style.color = 'white';
+            btn.style.borderColor = '#059669';
+        }
+    });
+}
+</script>
+{% endblock %}

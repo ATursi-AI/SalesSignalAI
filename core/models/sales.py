@@ -112,6 +112,7 @@ class SalesActivity(models.Model):
         ('proposal', 'Proposal'),
         ('follow_up', 'Follow-up'),
         ('note', 'Note'),
+        ('task', 'Task'),
         ('closed_won', 'Closed Won'),
         ('closed_lost', 'Closed Lost'),
     ]
@@ -133,6 +134,12 @@ class SalesActivity(models.Model):
     outcome = models.CharField(max_length=20, choices=OUTCOME_CHOICES, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # Task fields
+    is_task = models.BooleanField(default=False)
+    task_due_date = models.DateField(null=True, blank=True)
+    task_completed = models.BooleanField(default=False)
+    task_completed_at = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         ordering = ['-created_at']
         verbose_name_plural = 'Sales Activities'
@@ -150,6 +157,7 @@ class SalesActivity(models.Model):
             'proposal': 'bi-file-earmark-text',
             'follow_up': 'bi-arrow-repeat',
             'note': 'bi-sticky',
+            'task': 'bi-check-square',
             'closed_won': 'bi-trophy',
             'closed_lost': 'bi-x-circle',
         }
@@ -165,6 +173,7 @@ class SalesActivity(models.Model):
             'proposal': 'var(--accent-amber)',
             'follow_up': 'var(--text-secondary)',
             'note': 'var(--text-muted)',
+            'task': 'var(--accent-amber)',
             'closed_won': 'var(--accent-emerald)',
             'closed_lost': 'var(--accent-coral)',
         }

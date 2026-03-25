@@ -175,7 +175,8 @@
       "Bash(venv/Scripts/python.exe manage.py process_email_drips --dry-run)",
       "Bash(venv/Scripts/python.exe manage.py makemigrations core --name workflows)",
       "Bash(venv/Scripts/python.exe manage.py makemigrations core --name call_recording_fields)",
-      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name trial_fields)"
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name trial_fields)",
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name sales_task_fields)"
     ]
   }
 }

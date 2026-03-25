@@ -150,6 +150,9 @@ urlpatterns = [
     path('sales-admin/team/<int:sp_id>/', sales_admin.salesperson_detail, name='sales_admin_sp_detail'),
 
     # Sales (salesperson)
+    path('sales/dashboard/', sales.sales_dashboard, name='sales_dashboard'),
+    path('sales/quick-log/', sales.quick_log, name='sales_quick_log'),
+    path('sales/complete-task/', sales.complete_task, name='sales_complete_task'),
     path('sales/pipeline/', sales.pipeline, name='sales_pipeline'),
     path('sales/pipeline/move/', sales.pipeline_move, name='sales_pipeline_move'),
     path('sales/prospects/', sales.prospects, name='sales_prospects'),

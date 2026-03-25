@@ -100,6 +100,10 @@
 
                 {% if user.salesperson_profile or user.is_superuser %}
                 <div class="sidebar-section-label">Sales</div>
+                <a href="{% url 'sales_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'sales_dashboard' %}active{% endif %}">
+                    <i class="bi bi-house-fill"></i>
+                    <span>Dashboard</span>
+                </a>
                 <a href="{% url 'sales_pipeline' %}" class="sidebar-link {% if request.resolver_match.url_name == 'sales_pipeline' %}active{% endif %}">
                     <i class="bi bi-kanban-fill"></i>
                     <span>{% if user.is_superuser %}All Pipelines{% else %}My Pipeline{% endif %}</span>

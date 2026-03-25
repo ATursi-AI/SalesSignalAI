@@ -13,7 +13,7 @@ def dashboard_home(request):
     # Salespeople without a business profile → redirect to sales dashboard
     if not hasattr(request.user, 'business_profile') or not request.user.business_profile:
         if hasattr(request.user, 'salesperson_profile'):
-            return redirect('sales_today')
+            return redirect('sales_dashboard')
         return redirect('landing')
 
     profile = request.user.business_profile

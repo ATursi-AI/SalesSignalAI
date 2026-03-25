@@ -502,3 +502,142 @@ def calendar_reschedule(request, prospect_id):
         return JsonResponse({'ok': True})
     except ValueError:
         return JsonResponse({'error': 'Invalid date'}, status=400)
+
+
+# ─── Sales Dashboard ─────────────────────────────────────────────
+
+@sales_access_required
+def sales_dashboard(request):
+    """Salesperson home dashboard with metrics, tasks, and activity feed."""
+    sp = request.salesperson
+    today = date.today()
+    now = timezone.now()
+    week_start = today - timedelta(days=today.weekday())
+    week_end = week_start + timedelta(days=6)
+
+    if request.is_sales_admin:
+        prospects = SalesProspect.objects.all()
+        activities = SalesActivity.objects.all()
+    else:
+        prospects = SalesProspect.objects.filter(salesperson=sp)
+        activities = SalesActivity.objects.filter(salesperson=sp)
+
+    active_prospects = prospects.exclude(pipeline_stage__in=['closed_won', 'closed_lost'])
+
+    # Metrics
+    calls_today = activities.filter(
+        activity_type='call', created_at__date=today,
+    ).count()
+    call_goal = sp.daily_call_goal if sp else 40
+
+    tasks_due = activities.filter(
+        is_task=True, task_completed=False,
+        task_due_date__lte=today,
+    ).count()
+
+    pipeline_value = active_prospects.aggregate(
+        total=Sum('estimated_monthly_value'),
+    )['total'] or 0
+
+    meetings_week = activities.filter(
+        activity_type='demo',
+        created_at__date__gte=week_start,
+        created_at__date__lte=week_end,
+    ).count()
+
+    # Your Day — overdue + today follow-ups + today tasks
+    overdue_followups = active_prospects.filter(
+        next_follow_up_date__lt=today,
+    ).order_by('next_follow_up_date')[:10]
+
+    today_followups = active_prospects.filter(
+        next_follow_up_date=today,
+    ).order_by('business_name')[:10]
+
+    today_tasks = activities.filter(
+        is_task=True, task_completed=False, task_due_date=today,
+    ).select_related('prospect')[:10]
+
+    overdue_tasks = activities.filter(
+        is_task=True, task_completed=False, task_due_date__lt=today,
+    ).select_related('prospect')[:10]
+
+    # Recent activity
+    recent_activities = activities.select_related('prospect').order_by('-created_at')[:10]
+
+    # Pipeline summary — build list of (label, count) for template
+    raw_counts = dict(
+        active_prospects.values_list('pipeline_stage')
+        .annotate(c=Count('id'))
+        .values_list('pipeline_stage', 'c')
+    )
+    pipeline_summary = [
+        (label, raw_counts.get(key, 0))
+        for key, label in SalesProspect.PIPELINE_CHOICES
+        if key not in ('closed_won', 'closed_lost')
+    ]
+
+    context = {
+        'calls_today': calls_today,
+        'call_goal': call_goal,
+        'call_pct': min(100, round(calls_today / call_goal * 100)) if call_goal else 0,
+        'tasks_due': tasks_due,
+        'pipeline_value': pipeline_value,
+        'meetings_week': meetings_week,
+        'overdue_followups': overdue_followups,
+        'today_followups': today_followups,
+        'today_tasks': today_tasks,
+        'overdue_tasks': overdue_tasks,
+        'recent_activities': recent_activities,
+        'pipeline_summary': pipeline_summary,
+    }
+    return render(request, 'sales/dashboard.html', context)
+
+
+@sales_access_required
+def quick_log(request):
+    """AJAX: Quick-log a call/email/note from the dashboard."""
+    import json
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    sp = request.salesperson
+    data = json.loads(request.body)
+    prospect_id = data.get('prospect_id')
+    activity_type = data.get('type', 'call')
+    description = data.get('description', '')
+    outcome = data.get('outcome', '')
+
+    if request.is_sales_admin:
+        prospect = get_object_or_404(SalesProspect, id=prospect_id)
+    else:
+        prospect = get_object_or_404(SalesProspect, id=prospect_id, salesperson=sp)
+
+    log_sp = sp or prospect.salesperson
+    activity = SalesActivity.objects.create(
+        prospect=prospect,
+        salesperson=log_sp,
+        activity_type=activity_type,
+        description=description,
+        outcome=outcome,
+    )
+
+    return JsonResponse({'ok': True, 'id': activity.id})
+
+
+@sales_access_required
+def complete_task(request):
+    """AJAX: Mark a task as complete."""
+    import json
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    data = json.loads(request.body)
+    task_id = data.get('task_id')
+
+    activity = get_object_or_404(SalesActivity, id=task_id, is_task=True)
+    activity.task_completed = True
+    activity.task_completed_at = timezone.now()
+    activity.save(update_fields=['task_completed', 'task_completed_at'])
+
+    return JsonResponse({'ok': True})
