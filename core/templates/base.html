@@ -188,12 +188,9 @@
                     <span>Reviews</span>
                     {% if lead_group_counts.reviews %}<span class="sidebar-badge">{{ lead_group_counts.reviews }}</span>{% endif %}
                 </a>
-                <a href="{% url 'leads_source_group' group='weather' %}" class="sidebar-link {% if request.resolver_match.url_name == 'leads_source_group' and 'weather' in request.path %}active{% endif %}">
-                    <i class="bi bi-cloud-lightning"></i>
-                    <span>Weather</span>
-                    {% if lead_group_counts.weather %}<span class="sidebar-badge">{{ lead_group_counts.weather }}</span>{% endif %}
-                </a>
+                {% endif %}
 
+                {% if user.is_superuser %}
                 <div class="sidebar-section-label" style="margin-top:6px">Tools</div>
                 <a href="{% url 'monitor_health' %}" class="sidebar-link {% if request.resolver_match.url_name == 'monitor_health' %}active{% endif %}">
                     <i class="bi bi-activity"></i>
