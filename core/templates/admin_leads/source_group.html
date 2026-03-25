@@ -470,8 +470,6 @@
 <!-- Bulk Action Bar -->
 <div class="bulk-bar" id="bulkBar">
     <span id="bulkCount">0</span> selected
-    <button onclick="bulkAction('approve')"><i class="bi bi-check-lg"></i> Approve</button>
-    <button onclick="bulkAction('reject')"><i class="bi bi-x-lg"></i> Reject</button>
     <select id="bulkAssignBiz">
         <option value="">Assign to...</option>
         {% for biz in businesses %}
@@ -747,23 +745,20 @@ function buildDetailPanel(lead) {
             </div>
             <h4 style="margin-top:14px">Actions</h4>
             <div class="action-buttons">
-                <button class="btn-approve" onclick="leadAction(${lead.id},'approve')"><i class="bi bi-check-lg"></i> Approve</button>
-                <button class="btn-reject" onclick="leadAction(${lead.id},'reject')"><i class="bi bi-x-lg"></i> Reject</button>
-                <button class="btn-unreview" onclick="leadAction(${lead.id},'unreview')"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
                 <button class="btn-enrich" id="enrich-btn-${lead.id}" onclick="enrichLead(${lead.id})" ${lead.enrichment_status==='enriched'?'disabled style="background:#D1FAE5;color:#065F46;border-color:#6EE7B7;"':''}>${lead.enrichment_status==='enriched'?'<i class="bi bi-check-lg"></i> Enriched':'<i class="bi bi-magic"></i> Enrich'}</button>
                 <button class="btn-delete-detail" onclick="deleteLead(${lead.id})"><i class="bi bi-trash3"></i> Delete</button>
             </div>
-            <h4 style="margin-top:14px">Assign</h4>
+            <h4 style="margin-top:14px">Send to Customer</h4>
             <div class="assign-row">
                 <select id="assignSelect-${lead.id}"><option value="">Select business...</option>${bizOpts}</select>
-                <button onclick="assignLead(${lead.id})"><i class="bi bi-person-plus"></i> Assign</button>
+                <button onclick="assignLead(${lead.id})"><i class="bi bi-send"></i> Send</button>
             </div>
             ${assignments ? `<div style="margin-top:6px">${assignments}</div>` : ''}
             ${SALESPEOPLE.length ? `
-            <h4 style="margin-top:14px">Sales Pipeline</h4>
+            <h4 style="margin-top:14px">Assign to Rep</h4>
             <div class="assign-row">
                 <select id="salesSelect-${lead.id}"><option value="">Select salesperson...</option>${SALESPEOPLE.map(sp=>`<option value="${sp.id}">${escHtml(sp.name)}</option>`).join('')}</select>
-                <button onclick="sendToSales(${lead.id})" style="background:rgba(16,185,129,0.15);color:var(--accent-emerald);border-color:rgba(16,185,129,0.3)"><i class="bi bi-arrow-right-circle"></i> Send</button>
+                <button onclick="sendToSales(${lead.id})" style="background:rgba(16,185,129,0.15);color:var(--accent-emerald);border-color:rgba(16,185,129,0.3)"><i class="bi bi-person-plus"></i> Assign</button>
             </div>` : ''}
             <a href="${escHtml(lead.source_url)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;font-size:0.78rem;color:var(--accent-blue)"><i class="bi bi-box-arrow-up-right"></i> Source</a>
         </div>

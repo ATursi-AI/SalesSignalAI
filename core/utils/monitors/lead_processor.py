@@ -410,6 +410,24 @@ def process_lead(platform, source_url, content, author='', posted_at=None,
         logger.debug(f"Duplicate lead skipped: {source_url}")
         return None, False, 0
 
+    # Address-based dedup for public records (same building = one lead)
+    contact_address = extra_fields.get('contact_address', '')
+    contact_name = extra_fields.get('contact_name', '')
+    if contact_address and contact_name and platform == 'public_records':
+        existing = Lead.objects.filter(
+            platform=platform,
+            contact_address=contact_address,
+            contact_name=contact_name,
+        ).first()
+        if existing:
+            # Append this violation to existing lead's raw_data
+            if 'additional_violations' not in existing.raw_data:
+                existing.raw_data['additional_violations'] = []
+            existing.raw_data['additional_violations'].append(raw_data or {})
+            existing.save(update_fields=['raw_data'])
+            logger.debug(f"Address duplicate merged: {contact_address} / {contact_name}")
+            return existing, False, 0
+
     # Extract location
     location = extract_location(content)
 
