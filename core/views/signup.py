@@ -108,8 +108,9 @@ def verify_email(request, uidb64, token):
         user.save(update_fields=['is_active'])
 
         profile = user.business_profile
-        profile.account_status = 'active'
-        profile.save(update_fields=['account_status'])
+        profile.account_status = 'trial'
+        profile.trial_leads_remaining = 10
+        profile.save(update_fields=['account_status', 'trial_leads_remaining'])
 
         login(request, user)
         return redirect('onboarding')

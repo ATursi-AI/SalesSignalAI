@@ -25,6 +25,17 @@
 </div>
 {% endif %}
 
+{% if is_trial %}
+<!-- Trial Upgrade Banner -->
+<div class="animate-fade-in-up" style="background: linear-gradient(135deg, #0D9488, #065F46); color: white; padding: 16px 24px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+    <div>
+        <div style="font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.1rem; margin-bottom: 4px;">You're on the Free Trial</div>
+        <div style="font-size: 0.85rem; opacity: 0.9;">You've viewed {{ trial_leads_used }} of 10 free leads. Upgrade to unlock unlimited leads, AI outreach, and more.</div>
+    </div>
+    <a href="{% url 'signup_plan' %}" style="background: white; color: #0D9488; padding: 10px 24px; border-radius: 8px; font-weight: 700; text-decoration: none; white-space: nowrap;">Upgrade Now</a>
+</div>
+{% endif %}
+
 <!-- KPI Cards -->
 <div class="kpi-grid">
     <div class="glass-card kpi-card kpi-hot animate-fade-in-up animate-delay-1">

@@ -142,48 +142,73 @@ def onboarding_view(request):
 
 def _backfill_recent_leads(profile):
     """
-    Assign existing leads from the last 48 hours that match the user's
-    service type and geography. Returns the count of new assignments.
+    Assign existing leads matching the user's service type and geography.
+    Guarantees at least 15 leads for every new user via 3-pass strategy.
     """
+    from django.db.models import Q
     from django.utils import timezone
     from datetime import timedelta
     from core.models import Lead, LeadAssignment
 
-    cutoff = timezone.now() - timedelta(hours=48)
+    TARGET_MIN = 15
+    TARGET_MAX = 50
 
-    # Match by service category
-    leads = Lead.objects.filter(
-        detected_service_type=profile.service_category,
-        discovered_at__gte=cutoff,
+    # Exclude already-assigned leads for this business
+    existing_ids = set(
+        LeadAssignment.objects.filter(business=profile)
+        .values_list('lead_id', flat=True)
     )
 
-    # Filter by geography: match on zip code or detected_location containing city
-    if profile.zip_code:
-        geo_leads = leads.filter(detected_zip=profile.zip_code)
-        if profile.city:
-            geo_leads = leads.filter(
-                detected_location__icontains=profile.city,
-            ) | geo_leads
-    elif profile.city:
-        geo_leads = leads.filter(detected_location__icontains=profile.city)
-    else:
-        geo_leads = leads  # No geo filter if no location set
+    base_qs = Lead.objects.exclude(id__in=existing_ids).order_by('-discovered_at')
+    assigned_ids = set()
 
-    # Exclude already-assigned leads
-    existing_ids = LeadAssignment.objects.filter(
-        business=profile,
-    ).values_list('lead_id', flat=True)
+    # Build geography filter from user's location
+    geo_terms = []
+    if profile.city:
+        geo_terms.append(profile.city)
+    if profile.state:
+        geo_terms.append(profile.state.upper())
+    # Always include NYC boroughs + Long Island for NY users
+    if not profile.state or profile.state.upper() in ('NY', 'NEW YORK'):
+        geo_terms.extend([
+            'Manhattan', 'Queens', 'Brooklyn', 'Bronx', 'Staten Island',
+            'Nassau', 'Suffolk', 'New York',
+        ])
 
-    to_assign = geo_leads.exclude(id__in=existing_ids).distinct()[:50]  # Cap at 50
+    geo_q = Q()
+    for term in geo_terms:
+        geo_q |= Q(region__icontains=term) | Q(detected_location__icontains=term)
 
-    assignments = []
-    for lead in to_assign:
-        assignments.append(LeadAssignment(
-            lead=lead,
-            business=profile,
-            status='new',
-        ))
+    cutoff_30d = timezone.now() - timedelta(days=30)
 
+    # ── PASS 1: Service category + geography (30 days) ──
+    if profile.service_category_id:
+        pass1 = base_qs.filter(
+            detected_service_type_id=profile.service_category_id,
+            discovered_at__gte=cutoff_30d,
+        ).filter(geo_q)[:TARGET_MAX]
+        for lead in pass1:
+            assigned_ids.add(lead.id)
+
+    # ── PASS 2: Geography only, any trade (30 days) ──
+    if len(assigned_ids) < TARGET_MIN and geo_terms:
+        pass2 = base_qs.filter(
+            discovered_at__gte=cutoff_30d,
+        ).filter(geo_q).exclude(id__in=assigned_ids)[:TARGET_MAX - len(assigned_ids)]
+        for lead in pass2:
+            assigned_ids.add(lead.id)
+
+    # ── PASS 3: Newest leads regardless of match ──
+    if len(assigned_ids) < TARGET_MIN:
+        pass3 = base_qs.exclude(id__in=assigned_ids)[:TARGET_MIN - len(assigned_ids)]
+        for lead in pass3:
+            assigned_ids.add(lead.id)
+
+    # Create assignments
+    assignments = [
+        LeadAssignment(lead_id=lid, business=profile, status='new')
+        for lid in assigned_ids
+    ]
     if assignments:
         LeadAssignment.objects.bulk_create(assignments, ignore_conflicts=True)
 

@@ -67,6 +67,7 @@ class BusinessProfile(models.Model):
 
     ACCOUNT_STATUS_CHOICES = [
         ('active', 'Active'),
+        ('trial', 'Free Trial'),
         ('pending_payment', 'Pending Payment'),
         ('pending_plan', 'Pending Plan Selection'),
         ('pending_verification', 'Pending Email Verification'),
@@ -98,6 +99,9 @@ class BusinessProfile(models.Model):
     account_status = models.CharField(max_length=30, choices=ACCOUNT_STATUS_CHOICES, default='active')
     is_active = models.BooleanField(default=True)
     onboarding_complete = models.BooleanField(default=False)
+
+    # Trial
+    trial_leads_remaining = models.IntegerField(default=10, help_text='Free lead views remaining for trial users')
 
     # Sales-assisted signup
     created_by_sales = models.BooleanField(default=False)

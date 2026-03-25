@@ -41,6 +41,9 @@ def lead_feed(request):
     platforms = Lead.PLATFORM_CHOICES
     statuses = LeadAssignment.STATUS_CHOICES
 
+    is_trial = (profile.account_status == 'trial' or profile.subscription_tier == 'none')
+    free_limit = 5  # First N leads show full details
+
     context = {
         'assignments': assignments[:50],
         'hot_count': hot_count,
@@ -52,6 +55,9 @@ def lead_feed(request):
         'current_urgency': urgency,
         'current_status': status,
         'current_search': search,
+        'is_trial': is_trial,
+        'free_limit': free_limit,
+        'trial_leads_remaining': profile.trial_leads_remaining if is_trial else 0,
     }
     return render(request, 'leads/feed.html', context)
 
@@ -65,10 +71,21 @@ def lead_detail(request, assignment_id):
         business=profile,
     )
 
-    # Mark as viewed
+    # Trial lead access check
+    is_trial = (profile.account_status == 'trial' or profile.subscription_tier == 'none')
+    lead_blocked = False
+
+    if is_trial and profile.trial_leads_remaining <= 0:
+        lead_blocked = True
+
+    # Mark as viewed and decrement trial counter
     if assignment.status == 'new' or assignment.status == 'alerted':
         if not assignment.viewed_at:
             assignment.viewed_at = timezone.now()
+            # Decrement trial leads on first view
+            if is_trial and profile.trial_leads_remaining > 0:
+                profile.trial_leads_remaining -= 1
+                profile.save(update_fields=['trial_leads_remaining'])
         if assignment.status in ('new', 'alerted'):
             assignment.status = 'viewed'
         assignment.save()
@@ -83,6 +100,9 @@ def lead_detail(request, assignment_id):
         'assignment': assignment,
         'lead': assignment.lead,
         'similar_leads': similar,
+        'is_trial': is_trial,
+        'lead_blocked': lead_blocked,
+        'trial_leads_remaining': profile.trial_leads_remaining,
     }
     return render(request, 'leads/detail.html', context)
 

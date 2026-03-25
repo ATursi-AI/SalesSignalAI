@@ -100,6 +100,9 @@ def dashboard_home(request):
             .values('platform', 'source_content', 'detected_location', 'discovered_at')
         )
 
+    is_trial = (profile.account_status == 'trial' or profile.subscription_tier == 'none')
+    trial_leads_used = max(0, 10 - profile.trial_leads_remaining) if is_trial else 0
+
     context = {
         'profile': profile,
         'hot_leads': hot_leads,
@@ -119,5 +122,8 @@ def dashboard_home(request):
         'source_count': source_count,
         'total_leads': total_leads,
         'nationwide_recent': nationwide_recent,
+        'is_trial': is_trial,
+        'trial_leads_remaining': profile.trial_leads_remaining if is_trial else 0,
+        'trial_leads_used': trial_leads_used,
     }
     return render(request, 'dashboard/home.html', context)

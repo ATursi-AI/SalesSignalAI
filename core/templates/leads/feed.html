@@ -4,7 +4,34 @@
 {% block title %}Lead Feed{% endblock %}
 {% block page_title %}Lead Feed{% endblock %}
 
+{% block extra_css %}
+<style>
+.lead-blurred { position: relative; overflow: hidden; }
+.lead-blurred .lead-content-preview,
+.lead-blurred .lead-footer { filter: blur(5px); user-select: none; pointer-events: none; }
+.lead-blur-overlay {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg, transparent 20%, rgba(255,255,255,0.92) 65%);
+    display: flex; align-items: center; justify-content: center; z-index: 2;
+    border-radius: var(--radius-lg);
+}
+.lead-blur-cta {
+    background: #0D9488; color: white; padding: 10px 24px; border-radius: 8px;
+    font-weight: 700; font-size: 0.88rem; text-decoration: none;
+    box-shadow: 0 4px 12px rgba(13,148,136,0.3); display: inline-flex; align-items: center; gap: 6px;
+}
+.lead-blur-cta:hover { background: #0C8478; }
+</style>
+{% endblock %}
+
 {% block content %}
+{% if is_trial %}
+<div style="background: linear-gradient(135deg, #0D9488, #065F46); color: white; padding: 12px 20px; border-radius: 10px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 0.85rem;">
+    <span><strong>Free Trial</strong> — {{ trial_leads_remaining }} lead view{{ trial_leads_remaining|pluralize }} remaining</span>
+    <a href="{% url 'signup_plan' %}" style="background: white; color: #0D9488; padding: 6px 16px; border-radius: 6px; font-weight: 700; text-decoration: none; font-size: 0.8rem;">Upgrade</a>
+</div>
+{% endif %}
+
 <!-- Urgency Summary Bar -->
 <div class="d-flex align-center gap-2 mb-3 animate-fade-in-up" style="flex-wrap: wrap;">
     <a href="?urgency=hot" class="urgency-badge urgency-hot" style="padding: 0.35rem 0.85rem; font-size: 0.8rem; text-decoration: none; cursor: pointer;">
@@ -70,6 +97,36 @@
 <div class="lead-stream">
     {% if assignments %}
         {% for assignment in assignments %}
+        {% with is_blurred=is_trial|yesno:"True,False" %}
+        {% if is_trial and forloop.counter > free_limit %}
+        <!-- Blurred lead for trial users -->
+        <div class="glass-card lead-card lead-blurred {% if assignment.lead.urgency_level == 'hot' %}is-hot{% endif %} animate-fade-in-up" style="animation-delay: {{ forloop.counter0 }}0ms; cursor: default;">
+            <div class="lead-blur-overlay">
+                <a href="{% url 'signup_plan' %}" class="lead-blur-cta"><i class="bi bi-lock-fill"></i> Upgrade to Unlock</a>
+            </div>
+            <div style="flex: 1;">
+                <div class="lead-meta">
+                    <span class="platform-pill platform-{{ assignment.lead.platform }}">
+                        {{ assignment.lead.platform|platform_label }}
+                    </span>
+                    <span class="urgency-badge {{ assignment.lead.urgency_level|urgency_class }}">
+                        {% if assignment.lead.urgency_level == 'hot' %}<i class="bi bi-fire"></i>{% endif %}
+                        {{ assignment.lead.urgency_level|upper }}
+                    </span>
+                </div>
+                <div class="lead-content-preview">
+                    {{ assignment.lead.source_content|truncatechars:80 }}...
+                </div>
+                <div class="lead-footer">
+                    {% if assignment.lead.detected_location %}
+                    <span class="lead-location"><i class="bi bi-geo-alt"></i> {{ assignment.lead.detected_location }}</span>
+                    {% endif %}
+                    <span class="lead-time">{{ assignment.lead.discovered_at|time_ago }}</span>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Full lead (paid user or within free limit) -->
         <a href="{% url 'lead_detail' assignment.id %}" style="text-decoration: none; color: inherit;">
             <div class="glass-card lead-card {% if assignment.lead.urgency_level == 'hot' %}is-hot{% endif %} animate-fade-in-up" style="animation-delay: {{ forloop.counter0 }}0ms;">
                 <div style="flex: 1;">
@@ -86,7 +143,6 @@
                             <i class="bi bi-robot"></i> AI
                         </span>
                         {% endif %}
-                        <!-- Status indicator -->
                         <span style="margin-left: auto; font-size: 0.72rem; padding: 0.15rem 0.5rem; border-radius: var(--radius-full); background: var(--bg-surface); color: var(--text-muted); border: 1px solid var(--border-subtle);">
                             {{ assignment.get_status_display }}
                         </span>
@@ -126,6 +182,8 @@
                 </div>
             </div>
         </a>
+        {% endif %}
+        {% endwith %}
         {% endfor %}
     {% else %}
         <div class="glass-card-static empty-state">

@@ -92,6 +92,21 @@
     </a>
 </div>
 
+{% if lead_blocked %}
+<!-- Trial Limit Reached -->
+<div class="glass-card-static animate-fade-in-up" style="text-align: center; padding: 4rem 2rem;">
+    <i class="bi bi-lock-fill" style="font-size: 3rem; color: #0D9488; display: block; margin-bottom: 1rem;"></i>
+    <h2 style="font-family: 'Exo 2', sans-serif; font-weight: 800; margin-bottom: 0.5rem;">Free Trial Limit Reached</h2>
+    <p style="color: var(--text-secondary); font-size: 0.95rem; max-width: 500px; margin: 0 auto 1.5rem;">
+        You've used all {{ trial_leads_remaining|default:0 }} of your free lead views. Upgrade to unlock unlimited leads, AI email campaigns, and human phone follow-up.
+    </p>
+    <a href="{% url 'signup_plan' %}" style="display: inline-flex; align-items: center; gap: 8px; background: #0D9488; color: white; padding: 14px 32px; border-radius: 10px; font-weight: 700; text-decoration: none; font-size: 1rem; box-shadow: 0 4px 16px rgba(13,148,136,0.3);">
+        <i class="bi bi-rocket-takeoff"></i> Upgrade Now
+    </a>
+    <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 1rem;">Plans start at $149/mo. One new customer pays for months of SalesSignal AI.</p>
+</div>
+{% else %}
+
 <div class="lead-detail-grid">
 
     <!-- Main Content -->
@@ -346,4 +361,5 @@ function copyResponse() {
     });
 }
 </script>
+{% endif %}
 {% endblock %}
