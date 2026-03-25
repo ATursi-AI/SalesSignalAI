@@ -68,6 +68,7 @@ def pipeline(request):
         'columns': columns,
         'sp': sp,
         'is_sales_admin': request.is_sales_admin,
+        'today': date.today(),
     })
 
 

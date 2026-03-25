@@ -6,59 +6,191 @@
 
 {% block extra_css %}
 <style>
-.kanban-board { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem; min-height: 60vh; }
-.kanban-column { min-width: 250px; max-width: 280px; flex-shrink: 0; }
-.kanban-header { padding: 0.75rem; border-radius: 8px 8px 0 0; background: rgba(255,255,255,0.05); border-bottom: 2px solid var(--accent-blue); display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 0.85rem; }
-.kanban-header .count { background: rgba(255,255,255,0.1); border-radius: 10px; padding: 0.1rem 0.5rem; font-size: 0.75rem; }
-.kanban-body { background: rgba(255,255,255,0.02); border-radius: 0 0 8px 8px; padding: 0.5rem; min-height: 200px; }
-.kanban-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; cursor: grab; transition: all 0.15s; }
-.kanban-card:hover { border-color: var(--accent-blue); transform: translateY(-1px); }
-.kanban-card.dragging { opacity: 0.5; }
-.kanban-card h4 { font-size: 0.85rem; margin: 0 0 0.25rem 0; }
-.kanban-card .meta { font-size: 0.75rem; color: var(--text-muted); }
-.kanban-card .value { font-size: 0.75rem; color: var(--accent-emerald); font-weight: 600; margin-top: 0.25rem; }
-.kanban-body.drag-over { background: rgba(59,130,246,0.08); border: 1px dashed var(--accent-blue); border-radius: 0 0 8px 8px; }
-.stage-new .kanban-header { border-color: var(--text-muted); }
-.stage-contacted .kanban-header { border-color: var(--accent-blue); }
-.stage-callback .kanban-header { border-color: var(--accent-amber); }
-.stage-demo_scheduled .kanban-header { border-color: #8b5cf6; }
-.stage-demo_completed .kanban-header { border-color: #8b5cf6; }
-.stage-proposal_sent .kanban-header { border-color: var(--accent-amber); }
-.stage-closed_won .kanban-header { border-color: var(--accent-emerald); }
-.stage-closed_lost .kanban-header { border-color: var(--accent-coral); }
+/* ── Header Bar ── */
+.pipe-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.pipe-view-toggle { display: flex; gap: 0; }
+.pipe-view-btn { padding: 7px 14px; font-size: 0.78rem; font-weight: 600; border: 1px solid var(--border-subtle); background: var(--bg-surface); cursor: pointer; color: var(--text-secondary); transition: all 0.15s; }
+.pipe-view-btn:first-child { border-radius: 8px 0 0 8px; }
+.pipe-view-btn:last-child { border-radius: 0 8px 8px 0; border-left: none; }
+.pipe-view-btn.active { background: #0D9488; color: white; border-color: #0D9488; }
+
+/* ── Stage Colors ── */
+:root {
+    --stage-new: #3B82F6; --stage-contacted: #8B5CF6; --stage-callback: #F59E0B;
+    --stage-demo_scheduled: #0D9488; --stage-demo_completed: #059669;
+    --stage-proposal_sent: #EC4899; --stage-closed_won: #10B981; --stage-closed_lost: #EF4444;
+}
+
+/* ── Kanban Board ── */
+.kanban-board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 16px; min-height: 60vh; scrollbar-width: thin; }
+.kanban-board::-webkit-scrollbar { height: 6px; }
+.kanban-board::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+
+.kanban-column { min-width: 260px; max-width: 280px; flex-shrink: 0; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; border-top: 4px solid #CBD5E1; box-shadow: 0 1px 3px rgba(0,0,0,0.06); display: flex; flex-direction: column; }
+.stage-new .kanban-column, .col-new { border-top-color: var(--stage-new); }
+.stage-contacted .kanban-column, .col-contacted { border-top-color: var(--stage-contacted); }
+.stage-callback .kanban-column, .col-callback { border-top-color: var(--stage-callback); }
+.stage-demo_scheduled .kanban-column, .col-demo_scheduled { border-top-color: var(--stage-demo_scheduled); }
+.stage-demo_completed .kanban-column, .col-demo_completed { border-top-color: var(--stage-demo_completed); }
+.stage-proposal_sent .kanban-column, .col-proposal_sent { border-top-color: var(--stage-proposal_sent); }
+.stage-closed_won .kanban-column, .col-closed_won { border-top-color: var(--stage-closed_won); }
+.stage-closed_lost .kanban-column, .col-closed_lost { border-top-color: var(--stage-closed_lost); }
+
+/* Column Header */
+.kanban-col-header { padding: 14px 14px 10px; display: flex; justify-content: space-between; align-items: center; }
+.kanban-stage-name { font-family: 'Exo 2', sans-serif; font-weight: 700; font-size: 0.82rem; color: #1E293B; }
+.kanban-count { width: 24px; height: 24px; border-radius: 50%; font-size: 0.68rem; font-weight: 700; color: white; display: flex; align-items: center; justify-content: center; }
+.count-new { background: var(--stage-new); }
+.count-contacted { background: var(--stage-contacted); }
+.count-callback { background: var(--stage-callback); }
+.count-demo_scheduled { background: var(--stage-demo_scheduled); }
+.count-demo_completed { background: var(--stage-demo_completed); }
+.count-proposal_sent { background: var(--stage-proposal_sent); }
+.count-closed_won { background: var(--stage-closed_won); }
+.count-closed_lost { background: var(--stage-closed_lost); }
+
+/* Column Body — scrollable */
+.kanban-body { flex: 1; padding: 6px 10px 10px; overflow-y: auto; min-height: 180px; transition: background 0.15s; }
+.kanban-body.drag-over { background: rgba(13,148,136,0.06); outline: 2px dashed #0D9488; outline-offset: -4px; border-radius: 0 0 8px 8px; }
+
+/* ── Prospect Card ── */
+.k-card { background: #FFFFFF; border: 1px solid #E2E8F0; border-left: 3px solid #CBD5E1; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; cursor: grab; transition: all 0.18s; position: relative; }
+.k-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: #CBD5E1; }
+.k-card.dragging { opacity: 0.6; transform: rotate(2deg) scale(1.02); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+
+/* Card border colors */
+.col-new .k-card { border-left-color: var(--stage-new); }
+.col-contacted .k-card { border-left-color: var(--stage-contacted); }
+.col-callback .k-card { border-left-color: var(--stage-callback); }
+.col-demo_scheduled .k-card { border-left-color: var(--stage-demo_scheduled); }
+.col-demo_completed .k-card { border-left-color: var(--stage-demo_completed); }
+.col-proposal_sent .k-card { border-left-color: var(--stage-proposal_sent); }
+.col-closed_won .k-card { border-left-color: var(--stage-closed_won); }
+.col-closed_lost .k-card { border-left-color: var(--stage-closed_lost); }
+
+.k-card-name { font-weight: 700; font-size: 0.88rem; color: #1E293B; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+.k-card-name .k-grip { color: #CBD5E1; font-size: 0.75rem; cursor: grab; }
+.k-card-phone { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #0D9488; text-decoration: none; display: block; margin-bottom: 4px; }
+.k-card-phone:hover { text-decoration: underline; }
+.k-card-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.k-card-pill { padding: 2px 7px; border-radius: 5px; font-size: 0.6rem; font-weight: 600; background: #F1F5F9; color: #64748B; }
+.k-card-value { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #059669; font-weight: 600; }
+.k-card-followup { font-size: 0.65rem; color: #94A3B8; display: flex; align-items: center; gap: 3px; }
+.k-card-followup.overdue { color: #DC2626; }
+.k-card-rep { font-size: 0.62rem; color: #94A3B8; margin-top: 2px; }
+
+/* Empty state */
+.k-empty { border: 2px dashed #E2E8F0; border-radius: 8px; padding: 20px; text-align: center; color: #94A3B8; font-size: 0.78rem; }
+
+/* ── List View ── */
+.pipe-list { display: none; }
+.pipe-list.active { display: block; }
+.kanban-board.active { display: flex; }
+
+.pipe-table { width: 100%; border-collapse: separate; border-spacing: 0; background: #FFFFFF; border-radius: 12px; border: 1px solid #E2E8F0; overflow: hidden; }
+.pipe-table th { padding: 10px 14px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #64748B; background: #F8FAFC; border-bottom: 1px solid #E2E8F0; text-align: left; }
+.pipe-table td { padding: 10px 14px; font-size: 0.82rem; border-bottom: 1px solid #F1F5F9; }
+.pipe-table tr:hover td { background: #F8FAFC; }
+.pipe-table tr { cursor: pointer; }
+.pipe-stage-pill { padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 700; color: white; display: inline-block; }
+.pill-new { background: var(--stage-new); }
+.pill-contacted { background: var(--stage-contacted); }
+.pill-callback { background: var(--stage-callback); }
+.pill-demo_scheduled { background: var(--stage-demo_scheduled); }
+.pill-demo_completed { background: var(--stage-demo_completed); }
+.pill-proposal_sent { background: var(--stage-proposal_sent); }
+.pill-closed_won { background: var(--stage-closed_won); }
+.pill-closed_lost { background: var(--stage-closed_lost); }
+
+@media (max-width: 768px) {
+    .kanban-column { min-width: 240px; }
+    .kanban-board { scroll-snap-type: x mandatory; }
+    .kanban-column { scroll-snap-align: start; }
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="kanban-board">
+<!-- Header -->
+<div class="pipe-header">
+    <div></div>
+    <div class="pipe-view-toggle">
+        <button class="pipe-view-btn active" id="btnBoardView" onclick="setView('board')"><i class="bi bi-kanban"></i> Board</button>
+        <button class="pipe-view-btn" id="btnListView" onclick="setView('list')"><i class="bi bi-list-ul"></i> List</button>
+    </div>
+</div>
+
+<!-- Kanban Board -->
+<div class="kanban-board active" id="kanbanBoard">
     {% for col in columns %}
-    <div class="kanban-column stage-{{ col.code }}">
-        <div class="kanban-header">
-            {{ col.label }}
-            <span class="count">{{ col.prospects|length }}</span>
+    <div class="col-{{ col.code }}" style="min-width:260px;max-width:280px;flex-shrink:0;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;border-top:4px solid var(--stage-{{ col.code }});box-shadow:0 1px 3px rgba(0,0,0,0.06);display:flex;flex-direction:column;">
+        <div class="kanban-col-header">
+            <span class="kanban-stage-name">{{ col.label }}</span>
+            <span class="kanban-count count-{{ col.code }}">{{ col.prospects|length }}</span>
         </div>
         <div class="kanban-body" data-stage="{{ col.code }}"
              ondragover="event.preventDefault(); this.classList.add('drag-over')"
              ondragleave="this.classList.remove('drag-over')"
              ondrop="dropCard(event, '{{ col.code }}')">
             {% for p in col.prospects %}
-            <div class="kanban-card" draggable="true" data-id="{{ p.id }}"
+            <div class="k-card" draggable="true" data-id="{{ p.id }}"
                  ondragstart="event.dataTransfer.setData('text/plain', '{{ p.id }}'); this.classList.add('dragging')"
                  ondragend="this.classList.remove('dragging')"
                  onclick="window.location='{% url 'sales_prospect_detail' p.id %}'">
-                <h4>{{ p.business_name|truncatechars:30 }}</h4>
-                <div class="meta">
-                    {% if is_sales_admin %}<strong>{{ p.salesperson.user.get_full_name|default:p.salesperson.user.username }}</strong><br>{% endif %}
-                    {% if p.phone %}{{ p.phone }}{% endif %}
-                    {% if p.service_category %} &middot; {{ p.service_category }}{% endif %}
+                <div class="k-card-name">
+                    <i class="bi bi-grip-vertical k-grip"></i>
+                    {{ p.business_name|truncatechars:28 }}
                 </div>
-                {% if p.estimated_monthly_value %}<div class="value">${{ p.estimated_monthly_value|intcomma }}/mo</div>{% endif %}
-                {% if p.next_follow_up_date %}<div class="meta"><i class="bi bi-calendar-event"></i> {{ p.next_follow_up_date }}</div>{% endif %}
+                {% if p.phone %}
+                <a href="{% url 'softphone' %}?number={{ p.phone }}" class="k-card-phone" onclick="event.stopPropagation()">{{ p.phone }}</a>
+                {% endif %}
+                <div class="k-card-meta">
+                    {% if p.service_category %}<span class="k-card-pill">{{ p.service_category }}</span>{% endif %}
+                    {% if p.estimated_monthly_value %}<span class="k-card-value">${{ p.estimated_monthly_value|intcomma }}/mo</span>{% endif %}
+                </div>
+                {% if p.next_follow_up_date %}
+                <div class="k-card-followup {% if p.next_follow_up_date < today %}overdue{% endif %}">
+                    <i class="bi bi-calendar-event"></i> {{ p.next_follow_up_date }}
+                </div>
+                {% endif %}
+                {% if is_sales_admin %}<div class="k-card-rep">{{ p.salesperson.user.get_full_name|default:p.salesperson.user.username }}</div>{% endif %}
             </div>
+            {% empty %}
+            <div class="k-empty"><i class="bi bi-arrows-move" style="font-size:1.1rem;display:block;margin-bottom:4px;"></i>Drag prospects here</div>
             {% endfor %}
         </div>
     </div>
     {% endfor %}
+</div>
+
+<!-- List View -->
+<div class="pipe-list" id="listView">
+    <table class="pipe-table">
+        <thead>
+            <tr>
+                <th>Business</th>
+                <th>Phone</th>
+                <th>Stage</th>
+                <th>Category</th>
+                <th>Follow-up</th>
+                <th>Value</th>
+                {% if is_sales_admin %}<th>Rep</th>{% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for col in columns %}{% for p in col.prospects %}
+            <tr onclick="window.location='{% url 'sales_prospect_detail' p.id %}'">
+                <td><strong>{{ p.business_name }}</strong></td>
+                <td>{% if p.phone %}<a href="{% url 'softphone' %}?number={{ p.phone }}" style="color:#0D9488;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:0.78rem;" onclick="event.stopPropagation()">{{ p.phone }}</a>{% else %}—{% endif %}</td>
+                <td><span class="pipe-stage-pill pill-{{ col.code }}">{{ col.label }}</span></td>
+                <td>{{ p.service_category|default:"—" }}</td>
+                <td>{% if p.next_follow_up_date %}<span {% if p.next_follow_up_date < today %}style="color:#DC2626;font-weight:600;"{% endif %}>{{ p.next_follow_up_date }}</span>{% else %}—{% endif %}</td>
+                <td>{% if p.estimated_monthly_value %}<span style="color:#059669;font-weight:600;">${{ p.estimated_monthly_value|intcomma }}/mo</span>{% else %}—{% endif %}</td>
+                {% if is_sales_admin %}<td style="font-size:0.78rem;color:#64748B;">{{ p.salesperson.user.get_full_name|default:p.salesperson.user.username }}</td>{% endif %}
+            </tr>
+            {% endfor %}{% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}
 
@@ -67,16 +199,34 @@
 function dropCard(event, newStage) {
     event.preventDefault();
     event.currentTarget.classList.remove('drag-over');
-    const prospectId = event.dataTransfer.getData('text/plain');
-    const fd = new FormData();
+    var prospectId = event.dataTransfer.getData('text/plain');
+    var fd = new FormData();
     fd.set('prospect_id', prospectId);
     fd.set('stage', newStage);
     fetch('{% url "sales_pipeline_move" %}', {
         method: 'POST', body: fd,
         headers: {'X-CSRFToken': '{{ csrf_token }}'},
     })
-    .then(r => r.json())
-    .then(data => { if (data.success) location.reload(); });
+    .then(function(r) { return r.json(); })
+    .then(function(data) { if (data.success) location.reload(); });
+}
+
+function setView(v) {
+    var board = document.getElementById('kanbanBoard');
+    var list = document.getElementById('listView');
+    var btnBoard = document.getElementById('btnBoardView');
+    var btnList = document.getElementById('btnListView');
+    if (v === 'list') {
+        board.style.display = 'none';
+        list.classList.add('active');
+        btnBoard.classList.remove('active');
+        btnList.classList.add('active');
+    } else {
+        board.style.display = 'flex';
+        list.classList.remove('active');
+        btnBoard.classList.add('active');
+        btnList.classList.remove('active');
+    }
 }
 </script>
 {% endblock %}
