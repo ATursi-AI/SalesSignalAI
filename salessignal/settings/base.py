@@ -107,6 +107,9 @@ SIGNALWIRE_FALLBACK_PHONE = config('SIGNALWIRE_FALLBACK_PHONE', default='')
 SIGNALWIRE_SMS_NUMBER = config('SIGNALWIRE_SMS_NUMBER', default='')
 
 SERPAPI_KEY = config('SERPAPI_KEY', default='')
+
+# Agent system — phone numbers that can command agents via SMS
+AGENT_ADMIN_NUMBERS = [n.strip() for n in config('AGENT_ADMIN_NUMBERS', default='').split(',') if n.strip()]
 APIFY_API_TOKEN = config('APIFY_API_TOKEN', default='')
 ZEROBOUNCE_API_KEY = config('ZEROBOUNCE_API_KEY', default='')
 

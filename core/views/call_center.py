@@ -68,14 +68,70 @@ def _notify_admin(subject, body):
 
 @csrf_exempt
 @require_POST
+def _run_agent_mission(goal, agent_name, triggered_by, triggered_from):
+    """Run an agent mission in a background thread."""
+    from core.models.leads import AgentMission
+    from core.agents import get_agent
+    from core.agents.tools import send_sms_notification
+
+    mission = AgentMission.objects.create(
+        agent_name=agent_name, goal=goal, status='running',
+        triggered_by=triggered_by, triggered_from=triggered_from,
+        started_at=timezone.now(),
+    )
+    try:
+        agent = get_agent(agent_name)
+        result = agent.run(goal, mission_id=mission.id)
+        mission.status = 'complete'
+        mission.result = result or ''
+        mission.mission_log = agent.mission_log
+        mission.steps_taken = len(agent.mission_log)
+        mission.completed_at = timezone.now()
+        mission.save()
+        if triggered_from:
+            sms_result = result[:1500] if result else "Mission complete. No results."
+            send_sms_notification(triggered_from, f"[{agent_name}]\n\n{sms_result}")
+    except Exception as e:
+        mission.status = 'error'
+        mission.result = str(e)
+        mission.completed_at = timezone.now()
+        mission.save()
+        if triggered_from:
+            send_sms_notification(triggered_from, f"Agent error: {str(e)[:200]}")
+
+
+@csrf_exempt
 def sms_webhook(request):
     """Handle inbound SMS from SignalWire."""
+    import threading
     from_number = request.POST.get('From', '')
     to_number = request.POST.get('To', '')
     body = request.POST.get('Body', '').strip()
     message_sid = request.POST.get('MessageSid', '')
 
     logger.info(f'[sms_webhook] From={from_number} Body={body[:100]}')
+
+    # ── Agent routing for admin numbers ──────────────────────────
+    agent_admin_numbers = getattr(settings, 'AGENT_ADMIN_NUMBERS', [])
+    if from_number in agent_admin_numbers and body:
+        body_lower = body.lower()
+
+        if body_lower == 'status':
+            from core.models.leads import Lead, AgentMission as AM
+            lc = Lead.objects.count()
+            last = AM.objects.first()
+            msg = f"SalesSignal Status\nTotal leads: {lc}"
+            if last:
+                msg += f"\nLast mission: {last.agent_name} - {last.status}"
+            return HttpResponse(f'<Response><Message>{msg}</Message></Response>', content_type='text/xml')
+
+        agent_name = 'orchestrator'
+        if body_lower.startswith('discover') or body_lower.startswith('find source'):
+            agent_name = 'discovery'
+
+        thread = threading.Thread(target=_run_agent_mission, args=(body, agent_name, 'sms', from_number), daemon=True)
+        thread.start()
+        return HttpResponse('<Response><Message>Agent deployed. Working on it...</Message></Response>', content_type='text/xml')
 
     # Find associated lead or prospect video
     lead = _find_lead_by_phone(from_number)

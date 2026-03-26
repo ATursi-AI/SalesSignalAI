@@ -178,3 +178,55 @@ class SalesActivity(models.Model):
             'closed_lost': 'var(--accent-coral)',
         }
         return colors.get(self.activity_type, 'var(--text-muted)')
+
+
+class EmailTemplate(models.Model):
+    CATEGORY_CHOICES = [
+        ('introduction', 'Introduction'),
+        ('followup', 'Follow-up'),
+        ('quote', 'Quote/Proposal'),
+        ('appointment', 'Appointment Confirmation'),
+        ('thankyou', 'Thank You'),
+        ('custom', 'Custom'),
+    ]
+    name = models.CharField(max_length=200)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    subject = models.CharField(max_length=300)
+    body = models.TextField()
+    is_default = models.BooleanField(default=False)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['category', 'name']
+
+    def __str__(self):
+        return f"{self.name} ({self.category})"
+
+
+class CallScript(models.Model):
+    SCRIPT_TYPE_CHOICES = [
+        ('violation', 'Violation Lead'),
+        ('property_sale', 'Property Sale Lead'),
+        ('no_website', 'No Website Prospect'),
+        ('health_inspection', 'Health Inspection Lead'),
+        ('business_filing', 'New Business Filing'),
+        ('general', 'General Outreach'),
+        ('followup', 'Follow-up Call'),
+        ('appointment', 'Appointment Setting'),
+    ]
+    name = models.CharField(max_length=200)
+    script_type = models.CharField(max_length=30, choices=SCRIPT_TYPE_CHOICES)
+    opening = models.TextField(help_text='Opening statement')
+    talking_points = models.JSONField(default=list, help_text='List of talking points')
+    qualification_questions = models.JSONField(default=list, help_text='Questions to qualify the lead')
+    objection_handlers = models.JSONField(default=dict, help_text='Common objections and responses')
+    closing = models.TextField(blank=True, help_text='Closing statement')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['script_type', 'name']
+
+    def __str__(self):
+        return f"{self.name} ({self.script_type})"

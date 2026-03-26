@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Mission Control{% endblock %}
+{% block page_title %}Mission Control{% endblock %}
+
+{% block extra_css %}
+<style>
+.mc-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.mc-stat-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 18px; text-align: center; }
+.mc-stat-value { font-family: 'JetBrains Mono', monospace; font-size: 2rem; font-weight: 800; }
+.mc-stat-label { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+.mc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; margin-bottom: 28px; }
+.mc-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 16px; display: flex; gap: 12px; align-items: flex-start; transition: border-color 0.15s; }
+.mc-card:hover { border-color: #0D9488; }
+.mc-card.healthy { border-left: 4px solid #059669; }
+.mc-card.overdue { border-left: 4px solid #F59E0B; }
+.mc-card.error { border-left: 4px solid #DC2626; }
+.mc-card.never { border-left: 4px solid #94A3B8; }
+
+.mc-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.mc-dot.healthy { background: #059669; animation: mc-pulse 2s ease-in-out infinite; }
+.mc-dot.overdue { background: #F59E0B; }
+.mc-dot.error { background: #DC2626; animation: mc-pulse 1s ease-in-out infinite; }
+.mc-dot.never { background: #94A3B8; }
+@keyframes mc-pulse { 0%,100%{opacity:1;}50%{opacity:0.4;} }
+
+.mc-info { flex: 1; min-width: 0; }
+.mc-name { font-weight: 600; font-size: 0.85rem; margin-bottom: 2px; }
+.mc-meta { font-size: 0.72rem; color: var(--text-muted); }
+.mc-freq { padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 600; background: #F0FDFA; color: #0D9488; }
+.mc-run-btn { padding: 6px 12px; border-radius: 7px; font-size: 0.72rem; font-weight: 600; border: 1px solid var(--border-subtle); background: var(--bg-page); cursor: pointer; color: var(--text-secondary); white-space: nowrap; align-self: center; }
+.mc-run-btn:hover { border-color: #0D9488; color: #0D9488; }
+.mc-run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.mc-run-all { display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px; border-radius: 10px; font-weight: 700; font-size: 0.92rem; border: none; cursor: pointer; background: linear-gradient(135deg, #0D9488, #059669); color: white; box-shadow: 0 4px 16px rgba(13,148,136,0.3); margin-bottom: 20px; }
+.mc-run-all:hover { box-shadow: 0 6px 24px rgba(13,148,136,0.4); transform: translateY(-1px); }
+
+.mc-log { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 12px; overflow: hidden; }
+.mc-log-header { padding: 14px 18px; font-family: 'Exo 2', sans-serif; font-weight: 700; font-size: 0.9rem; border-bottom: 1px solid var(--border-subtle); }
+.mc-log-item { display: flex; align-items: center; gap: 10px; padding: 10px 18px; border-bottom: 1px solid var(--border-subtle); font-size: 0.78rem; }
+.mc-log-item:last-child { border-bottom: none; }
+.mc-log-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.mc-log-dot.success { background: #059669; }
+.mc-log-dot.failed { background: #DC2626; }
+.mc-log-dot.running { background: #F59E0B; }
+.mc-log-name { flex: 1; font-weight: 500; }
+.mc-log-leads { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #0D9488; }
+.mc-log-time { color: var(--text-muted); font-size: 0.7rem; }
+
+@media (max-width: 768px) {
+    .mc-summary { grid-template-columns: repeat(2, 1fr); }
+    .mc-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <h2 style="font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.5rem;margin:0;">Mission Control</h2>
+            <p style="color:var(--text-muted);font-size:0.82rem;margin-top:4px;">Lead monitor orchestration &amp; health</p>
+        </div>
+        <button class="mc-run-all" onclick="runAllMonitors()"><i class="bi bi-rocket-takeoff-fill"></i> Run All Now</button>
+    </div>
+
+    <!-- Summary -->
+    <div class="mc-summary">
+        <div class="mc-stat-card">
+            <div class="mc-stat-value" style="color:#059669;">{{ total_healthy }}</div>
+            <div class="mc-stat-label">Healthy</div>
+        </div>
+        <div class="mc-stat-card">
+            <div class="mc-stat-value" style="color:#F59E0B;">{{ total_overdue }}</div>
+            <div class="mc-stat-label">Overdue / Never</div>
+        </div>
+        <div class="mc-stat-card">
+            <div class="mc-stat-value" style="color:#DC2626;">{{ total_error }}</div>
+            <div class="mc-stat-label">Errors</div>
+        </div>
+        <div class="mc-stat-card">
+            <div class="mc-stat-value" style="color:#0D9488;">{{ leads_today }}</div>
+            <div class="mc-stat-label">Leads Today</div>
+        </div>
+    </div>
+
+    <!-- Agent Command -->
+    <div style="background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;gap:10px;align-items:center;">
+        <i class="bi bi-robot" style="font-size:1.3rem;color:#0D9488;"></i>
+        <select id="agentSelect" style="padding:8px 12px;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.85rem;background:var(--bg-page);">
+            <option value="orchestrator">Orchestrator</option>
+            <option value="discovery">Discovery</option>
+        </select>
+        <input type="text" id="agentGoal" placeholder="e.g. Find 20 plumbing leads in Queens NY" style="flex:1;padding:8px 14px;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.85rem;">
+        <button onclick="launchAgent()" style="padding:8px 20px;border-radius:8px;background:#0D9488;color:white;border:none;cursor:pointer;font-weight:600;font-size:0.85rem;white-space:nowrap;"><i class="bi bi-send-fill"></i> Deploy Agent</button>
+    </div>
+    <div id="agentStatus" style="display:none;background:#F0FDFA;border:1px solid #99F6E4;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:0.82rem;color:#0D9488;">
+        <i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite;display:inline-block;"></i> <span id="agentStatusText">Agent working...</span>
+    </div>
+    <style>@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}</style>
+
+    <!-- Monitor Grid -->
+    <div class="mc-grid">
+        {% for m in monitors %}
+        <div class="mc-card {{ m.status }}" id="mc-{{ forloop.counter }}">
+            <div class="mc-dot {{ m.status }}"></div>
+            <div class="mc-info">
+                <div class="mc-name">{{ m.description }}</div>
+                <div class="mc-meta">
+                    {% if m.last_run %}
+                        {% if m.last_run.finished_at %}
+                            {{ m.last_run.finished_at|timesince }} ago
+                            {% if m.last_run.leads_created %} · <span style="color:#0D9488;">{{ m.last_run.leads_created }} leads</span>{% endif %}
+                        {% else %}
+                            Running...
+                        {% endif %}
+                    {% else %}
+                        Never run
+                    {% endif %}
+                    <span class="mc-freq" style="margin-left:6px;">Every {{ m.frequency_hours }}h</span>
+                </div>
+                {% if m.last_run and m.last_run.error_message %}
+                <div style="font-size:0.68rem;color:#DC2626;margin-top:3px;max-height:32px;overflow:hidden;">{{ m.last_run.error_message|truncatewords:20 }}</div>
+                {% endif %}
+            </div>
+            <button class="mc-run-btn" onclick="runMonitor('{{ m.key }}', this)"><i class="bi bi-play-fill"></i> Run</button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Activity Log -->
+    <div class="mc-log">
+        <div class="mc-log-header">Recent Runs</div>
+        {% for r in recent_runs %}
+        <div class="mc-log-item">
+            <div class="mc-log-dot {{ r.status }}"></div>
+            <div class="mc-log-name">{{ r.monitor_name|truncatechars:40 }}</div>
+            <div class="mc-log-leads">{% if r.leads_created %}{{ r.leads_created }} leads{% endif %}</div>
+            <div class="mc-log-time">
+                {% if r.finished_at %}{{ r.finished_at|timesince }} ago{% else %}running{% endif %}
+                {% if r.duration_seconds %} · {{ r.duration_seconds|floatformat:0 }}s{% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="mc-log-item" style="justify-content:center;color:var(--text-muted);">No monitor runs yet.</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function getCsrf(){var m=document.cookie.match(/csrftoken=([^;]+)/);return m?m[1]:'';}
+
+function runMonitor(key, btn) {
+    btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Running...';
+    fetch('/admin-leads/mission-control/run/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()},
+        body: JSON.stringify({monitor_key: key})
+    }).then(r => r.json()).then(data => {
+        if (data.ok) {
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Done';
+            btn.style.color = '#059669'; btn.style.borderColor = '#059669';
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            btn.innerHTML = '<i class="bi bi-x-lg"></i> Failed';
+            btn.style.color = '#DC2626'; btn.style.borderColor = '#DC2626';
+            alert('Error: ' + (data.error || 'Unknown'));
+            setTimeout(() => { btn.disabled = false; btn.innerHTML = '<i class="bi bi-play-fill"></i> Run'; btn.style.color = ''; btn.style.borderColor = ''; }, 3000);
+        }
+    }).catch(() => {
+        btn.innerHTML = '<i class="bi bi-x-lg"></i> Error';
+        btn.disabled = false;
+    });
+}
+
+function runAllMonitors() {
+    if (!confirm('Run ALL monitors now? This may take several minutes.')) return;
+    var btns = document.querySelectorAll('.mc-run-btn');
+    btns.forEach((btn, i) => {
+        setTimeout(() => {
+            var key = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
+            runMonitor(key, btn);
+        }, i * 2000);
+    });
+}
+
+function launchAgent() {
+    var goal = document.getElementById('agentGoal').value.trim();
+    var agent = document.getElementById('agentSelect').value;
+    if (!goal) { alert('Enter a goal for the agent.'); return; }
+
+    document.getElementById('agentStatus').style.display = 'block';
+    document.getElementById('agentStatusText').textContent = 'Deploying ' + agent + ' agent...';
+
+    fetch('/admin-leads/mission-control/agent/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()},
+        body: JSON.stringify({goal: goal, agent: agent})
+    }).then(r => r.json()).then(data => {
+        if (data.ok) {
+            document.getElementById('agentStatusText').textContent = 'Agent running (Mission #' + data.mission_id + ')...';
+            pollMission(data.mission_id);
+        } else {
+            document.getElementById('agentStatusText').textContent = 'Error: ' + (data.error || 'Unknown');
+        }
+    });
+}
+
+function pollMission(id) {
+    setTimeout(function check() {
+        fetch('/admin-leads/mission-control/agent/' + id + '/').then(r => r.json()).then(data => {
+            if (data.status === 'running' || data.status === 'queued') {
+                document.getElementById('agentStatusText').textContent = 'Agent working... (step ' + (data.steps || 0) + ')';
+                setTimeout(check, 3000);
+            } else if (data.status === 'complete') {
+                var el = document.getElementById('agentStatus');
+                el.style.background = '#D1FAE5'; el.style.borderColor = '#059669';
+                document.getElementById('agentStatusText').innerHTML = '<strong>Complete!</strong> ' + (data.result || '').substring(0, 500).replace(/\n/g, '<br>');
+            } else {
+                var el = document.getElementById('agentStatus');
+                el.style.background = '#FEF2F2'; el.style.borderColor = '#FECACA'; el.style.color = '#DC2626';
+                document.getElementById('agentStatusText').textContent = 'Error: ' + (data.result || 'Unknown');
+            }
+        });
+    }, 2000);
+}
+</script>
+{% endblock %}

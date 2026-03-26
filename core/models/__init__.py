@@ -1,9 +1,9 @@
 from .business import ServiceCategory, ServiceSubcategory, BusinessProfile, UserKeyword
-from .leads import Lead, LeadAssignment
+from .leads import Lead, LeadAssignment, AgentMission
 from .outreach import ProspectBusiness, OutreachCampaign, OutreachEmail, OutreachProspect, GeneratedEmail
 from .competitors import TrackedCompetitor, CompetitorReview
 from .crm import Contact, Activity, Appointment
-from .sales import SalesPerson, SalesProspect, SalesActivity
+from .sales import SalesPerson, SalesProspect, SalesActivity, EmailTemplate, CallScript
 from .monitoring import (
     MonitoredLocalSite, MonitoredFacebookGroup,
     MonitorRun, EmailSendLog, Unsubscribe,
@@ -21,11 +21,11 @@ from .workflows import WorkflowRule, WorkflowExecution
 
 __all__ = [
     'ServiceCategory', 'ServiceSubcategory', 'BusinessProfile', 'UserKeyword',
-    'Lead', 'LeadAssignment',
+    'Lead', 'LeadAssignment', 'AgentMission',
     'ProspectBusiness', 'OutreachCampaign', 'OutreachEmail', 'OutreachProspect', 'GeneratedEmail',
     'TrackedCompetitor', 'CompetitorReview',
     'Contact', 'Activity', 'Appointment',
-    'SalesPerson', 'SalesProspect', 'SalesActivity',
+    'SalesPerson', 'SalesProspect', 'SalesActivity', 'EmailTemplate', 'CallScript',
     'MonitoredLocalSite', 'MonitoredFacebookGroup',
     'MonitorRun', 'EmailSendLog', 'Unsubscribe',
     'PermitSource', 'PropertyTransferSource',

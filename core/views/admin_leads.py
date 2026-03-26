@@ -659,3 +659,167 @@ def lead_delete_all(request):
         return JsonResponse({'error': 'Confirmation required'}, status=400)
     deleted_count, _ = Lead.objects.all().delete()
     return JsonResponse({'ok': True, 'deleted': deleted_count})
+
+
+# ─── Customer Accounts ────────────────────────────────────────────────
+
+@staff_or_salesperson_required
+def customer_accounts(request):
+    """List all customer business profiles for admin management."""
+    from core.models.business import BusinessProfile
+    from core.models.leads import LeadAssignment
+
+    profiles = BusinessProfile.objects.select_related('user').order_by('-created_at')
+
+    accounts = []
+    for p in profiles:
+        lead_count = LeadAssignment.objects.filter(business=p).count()
+        won_count = LeadAssignment.objects.filter(business=p, status='won').count()
+        accounts.append({
+            'profile': p,
+            'lead_count': lead_count,
+            'won_count': won_count,
+        })
+
+    return render(request, 'admin_leads/customer_accounts.html', {
+        'accounts': accounts,
+    })
+
+
+# ─── Mission Control ──────────────────────────────────────────────────
+
+@staff_or_salesperson_required
+def mission_control(request):
+    """Dashboard showing all monitor health and run history."""
+    from core.models.monitoring import MonitorRun
+    from core.utils.monitors.schedule import MONITOR_SCHEDULE
+    from datetime import timedelta
+
+    monitors = []
+    for cmd_name, kwargs, freq_hours, description in MONITOR_SCHEDULE:
+        key = f"{cmd_name}_{'_'.join(str(v) for v in kwargs.values())}"
+        last_run = MonitorRun.objects.filter(monitor_name=key).order_by('-started_at').first()
+
+        is_overdue = False
+        if last_run and last_run.finished_at:
+            is_overdue = last_run.finished_at < timezone.now() - timedelta(hours=freq_hours)
+
+        if last_run and last_run.status in ('failed',):
+            status = 'error'
+        elif is_overdue or not last_run:
+            status = 'overdue' if last_run else 'never'
+        else:
+            status = 'healthy'
+
+        monitors.append({
+            'key': key,
+            'description': description,
+            'command': cmd_name,
+            'frequency_hours': freq_hours,
+            'last_run': last_run,
+            'is_overdue': is_overdue,
+            'status': status,
+        })
+
+    recent_runs = MonitorRun.objects.all()[:30]
+    today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    leads_today = MonitorRun.objects.filter(
+        started_at__gte=today_start, status='success',
+    ).values_list('leads_created', flat=True)
+
+    return render(request, 'admin_leads/mission_control.html', {
+        'monitors': monitors,
+        'recent_runs': recent_runs,
+        'total_healthy': sum(1 for m in monitors if m['status'] == 'healthy'),
+        'total_overdue': sum(1 for m in monitors if m['status'] in ('overdue', 'never')),
+        'total_error': sum(1 for m in monitors if m['status'] == 'error'),
+        'leads_today': sum(leads_today),
+    })
+
+
+@staff_or_salesperson_required
+@require_POST
+def run_monitor_now(request):
+    """Trigger a single monitor via AJAX."""
+    from django.core.management import call_command as django_call_command
+    from core.models.monitoring import MonitorRun
+    from core.utils.monitors.schedule import MONITOR_SCHEDULE
+
+    data = json.loads(request.body)
+    target_key = data.get('monitor_key', '')
+
+    for cmd_name, kwargs, freq_hours, description in MONITOR_SCHEDULE:
+        key = f"{cmd_name}_{'_'.join(str(v) for v in kwargs.values())}"
+        if key == target_key:
+            run = MonitorRun.objects.create(
+                monitor_name=key,
+                details={'description': description, 'command': cmd_name, 'kwargs': kwargs},
+            )
+            try:
+                django_call_command(cmd_name, **kwargs)
+                run.finish(status='success')
+                return JsonResponse({'ok': True, 'status': 'success', 'leads': run.leads_created})
+            except Exception as e:
+                run.finish(status='failed', error_message=str(e))
+                return JsonResponse({'ok': False, 'error': str(e)[:200]})
+
+    return JsonResponse({'ok': False, 'error': 'Monitor not found'})
+
+
+# ─── Agent Missions ───────────────────────────────────────────────────
+
+@staff_or_salesperson_required
+@require_POST
+def launch_agent(request):
+    """Launch an AI agent via AJAX."""
+    import threading
+    data = json.loads(request.body)
+    goal = data.get('goal', '').strip()
+    agent_name = data.get('agent', 'orchestrator')
+
+    if not goal:
+        return JsonResponse({'ok': False, 'error': 'Goal required'})
+
+    from core.models.leads import AgentMission
+
+    mission = AgentMission.objects.create(
+        agent_name=agent_name, goal=goal, status='queued',
+        triggered_by=f'web:{request.user.username}',
+    )
+
+    def _run():
+        from core.agents import get_agent
+        mission.status = 'running'
+        mission.started_at = timezone.now()
+        mission.save(update_fields=['status', 'started_at'])
+        try:
+            agent = get_agent(agent_name)
+            result = agent.run(goal, mission_id=mission.id)
+            mission.status = 'complete'
+            mission.result = result or ''
+            mission.mission_log = agent.mission_log
+            mission.steps_taken = len(agent.mission_log)
+            mission.completed_at = timezone.now()
+            mission.save()
+        except Exception as e:
+            mission.status = 'error'
+            mission.result = str(e)
+            mission.completed_at = timezone.now()
+            mission.save()
+
+    threading.Thread(target=_run, daemon=True).start()
+    return JsonResponse({'ok': True, 'mission_id': mission.id})
+
+
+@staff_or_salesperson_required
+def agent_mission_status(request, mission_id):
+    """Check status of an agent mission."""
+    from core.models.leads import AgentMission
+    m = AgentMission.objects.filter(id=mission_id).first()
+    if not m:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse({
+        'id': m.id, 'agent': m.agent_name, 'status': m.status,
+        'result': m.result[:3000] if m.result else '',
+        'steps': m.steps_taken, 'leads': m.leads_found,
+    })

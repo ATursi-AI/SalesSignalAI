@@ -15,7 +15,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 
-from core.models.sales import SalesPerson, SalesProspect, SalesActivity
+from core.models.sales import SalesPerson, SalesProspect, SalesActivity, EmailTemplate, CallScript
 from core.models.business import BusinessProfile
 
 
@@ -642,3 +642,143 @@ def complete_task(request):
     activity.save(update_fields=['task_completed', 'task_completed_at'])
 
     return JsonResponse({'ok': True})
+
+
+# ─── Email Templates + Compose ─────────────────────────────────────
+
+@sales_access_required
+def get_email_templates(request):
+    """Return all email templates as JSON."""
+    templates = EmailTemplate.objects.all().order_by('category', 'name')
+    data = [{
+        'id': t.id, 'name': t.name, 'category': t.category,
+        'subject': t.subject, 'body': t.body,
+    } for t in templates]
+    return JsonResponse({'templates': data})
+
+
+@sales_access_required
+def send_prospect_email(request, prospect_id):
+    """Send an email to a prospect from the detail page."""
+    import json
+    from django.core.mail import send_mail as django_send_mail
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    sp = _get_salesperson(request)
+    if request.user.is_superuser:
+        prospect = get_object_or_404(SalesProspect, id=prospect_id)
+    else:
+        prospect = get_object_or_404(SalesProspect, id=prospect_id, salesperson=sp)
+
+    data = json.loads(request.body)
+    to_email = data.get('to', prospect.email or '').strip()
+    subject = data.get('subject', '').strip()
+    body = data.get('body', '').strip()
+
+    if not to_email or not subject or not body:
+        return JsonResponse({'ok': False, 'error': 'Email, subject, and body are required.'})
+
+    # Replace template variables
+    rep_name = request.user.get_full_name() or request.user.username
+    rep_phone = sp.phone if sp else ''
+    replacements = {
+        '{{business_name}}': prospect.business_name or '',
+        '{{contact_name}}': prospect.contact_name or prospect.business_name or '',
+        '{{your_name}}': rep_name,
+        '{{your_phone}}': rep_phone,
+        '{{your_company}}': 'SalesSignal AI',
+    }
+    for k, v in replacements.items():
+        subject = subject.replace(k, v)
+        body = body.replace(k, v)
+
+    try:
+        django_send_mail(
+            subject, body,
+            'support@salessignalai.com', [to_email],
+            fail_silently=False,
+        )
+        SalesActivity.objects.create(
+            prospect=prospect,
+            salesperson=sp or prospect.salesperson,
+            activity_type='email',
+            description=f'Email sent: {subject}\nTo: {to_email}',
+        )
+        return JsonResponse({'ok': True})
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': str(e)})
+
+
+# ─── Call Scripts ───────────────────────────────────────────────────
+
+@sales_access_required
+def get_call_scripts(request):
+    """Return all active call scripts as JSON."""
+    script_type = request.GET.get('type', '')
+    qs = CallScript.objects.filter(is_active=True)
+    if script_type:
+        qs = qs.filter(script_type=script_type)
+    data = [{
+        'id': s.id, 'name': s.name, 'script_type': s.script_type,
+        'opening': s.opening, 'talking_points': s.talking_points,
+        'qualification_questions': s.qualification_questions,
+        'objection_handlers': s.objection_handlers,
+        'closing': s.closing,
+    } for s in qs]
+    return JsonResponse({'scripts': data})
+
+
+@sales_access_required
+def get_prospect_script(request, prospect_id):
+    """Get the appropriate call script for a specific prospect, with variables replaced."""
+    sp = _get_salesperson(request)
+    if request.user.is_superuser:
+        prospect = get_object_or_404(SalesProspect, id=prospect_id)
+    else:
+        prospect = get_object_or_404(SalesProspect, id=prospect_id, salesperson=sp)
+
+    source_map = {
+        'violation': 'violation',
+        'property_sale': 'property_sale',
+        'no_website': 'no_website',
+        'health_inspection': 'health_inspection',
+        'business_filing': 'business_filing',
+        'google_maps_scan': 'no_website',
+    }
+    script_type = source_map.get(prospect.source or '', 'general')
+
+    script = CallScript.objects.filter(script_type=script_type, is_active=True).first()
+    if not script:
+        script = CallScript.objects.filter(script_type='general', is_active=True).first()
+    if not script:
+        return JsonResponse({'found': False})
+
+    def rep(text):
+        return (text or '').replace(
+            '[CONTACT NAME]', prospect.contact_name or prospect.business_name or ''
+        ).replace(
+            '[BUSINESS NAME]', prospect.business_name or ''
+        ).replace(
+            '[BUSINESS/PROPERTY]', prospect.business_name or ''
+        ).replace(
+            '[ADDRESS]', prospect.address or ''
+        ).replace(
+            '[YOUR NAME]', request.user.get_full_name() or request.user.username
+        ).replace(
+            '[AREA]', prospect.city or ''
+        ).replace(
+            '[TIMEFRAME]', 'recently'
+        )
+
+    return JsonResponse({
+        'found': True,
+        'name': script.name,
+        'type': script.script_type,
+        'opening': rep(script.opening),
+        'talking_points': [rep(tp) for tp in (script.talking_points or [])],
+        'qualification_questions': script.qualification_questions or [],
+        'objection_handlers': {k: rep(v) for k, v in (script.objection_handlers or {}).items()},
+        'closing': rep(script.closing),
+    })

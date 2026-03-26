@@ -4,6 +4,21 @@
 {% block title %}{{ prospect.business_name }}{% endblock %}
 {% block page_title %}{{ prospect.business_name }}{% endblock %}
 
+{% block extra_css %}
+<style>
+.tag-pill { padding:2px 8px;border-radius:6px;font-size:0.65rem;font-weight:600;border:1px solid rgba(13,148,136,0.3);background:rgba(13,148,136,0.08);color:#0D9488;cursor:pointer; }
+.tag-pill:hover { background:rgba(13,148,136,0.15); }
+.objection-item { margin-bottom:6px;border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden; }
+.objection-q { padding:8px 12px;font-weight:600;font-size:0.78rem;color:var(--accent-coral);cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:var(--bg-page); }
+.objection-q:hover { background:rgba(239,68,68,0.04); }
+.objection-a { padding:8px 12px;font-size:0.78rem;color:var(--text-secondary);line-height:1.5;display:none;border-top:1px solid var(--border-subtle); }
+.objection-a.open { display:block; }
+.tp-check { display:flex;align-items:flex-start;gap:8px;padding:4px 0; }
+.tp-check input { margin-top:4px;accent-color:#0D9488; }
+.tp-check.checked label { text-decoration:line-through;opacity:0.5; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="sales-page">
     <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
@@ -110,6 +125,87 @@
                     {% endfor %}
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Email Compose + Call Script Panels -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+    <!-- Email Compose -->
+    <div class="glass-card">
+        <h3 class="card-title"><i class="bi bi-envelope-fill"></i> Send Email</h3>
+        <div style="margin-bottom: 10px;">
+            <select id="emailTemplate" class="form-input" style="margin-bottom: 8px;" onchange="loadTemplate(this.value)">
+                <option value="">Select template...</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>To</label>
+            <input type="email" id="emailTo" class="form-input" value="{{ prospect.email }}" placeholder="email@example.com">
+        </div>
+        <div class="form-group">
+            <label>Subject</label>
+            <input type="text" id="emailSubject" class="form-input" placeholder="Subject line...">
+        </div>
+        <div class="form-group">
+            <label>Body</label>
+            <textarea id="emailBody" class="form-input" rows="8" placeholder="Write your email..." style="min-height: 160px; resize: vertical;"></textarea>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">
+                <span style="font-size:0.65rem;color:var(--text-muted);align-self:center;margin-right:2px;">Insert:</span>
+                <button type="button" class="tag-pill" onclick="insertTag('{% templatetag openvariable %}contact_name{% templatetag closevariable %}')">Contact Name</button>
+                <button type="button" class="tag-pill" onclick="insertTag('{% templatetag openvariable %}business_name{% templatetag closevariable %}')">Business Name</button>
+                <button type="button" class="tag-pill" onclick="insertTag('{% templatetag openvariable %}your_name{% templatetag closevariable %}')">Your Name</button>
+                <button type="button" class="tag-pill" onclick="insertTag('{% templatetag openvariable %}your_phone{% templatetag closevariable %}')">Your Phone</button>
+                <button type="button" class="tag-pill" onclick="insertTag('{% templatetag openvariable %}your_company{% templatetag closevariable %}')">Company</button>
+            </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button class="btn-primary-glow" onclick="sendEmail()" id="sendEmailBtn" style="flex:1;">
+                <i class="bi bi-send-fill"></i> Send Email
+            </button>
+            <button class="btn-secondary" onclick="generateAiEmail()" id="aiEmailBtn" title="Generate personalized email with AI">
+                <i class="bi bi-stars"></i> AI Draft
+            </button>
+        </div>
+        <div id="emailStatus" style="margin-top: 8px; font-size: 0.8rem;"></div>
+    </div>
+
+    <!-- Call Script -->
+    <div class="glass-card">
+        <h3 class="card-title"><i class="bi bi-journal-text"></i> Call Script</h3>
+        <div style="margin-bottom: 10px;">
+            <select id="scriptSelect" class="form-input" onchange="loadScript(this.value)">
+                <option value="">Select a script...</option>
+            </select>
+        </div>
+        <div id="scriptContent" style="display: none;">
+            <div style="margin-bottom: 14px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                    <span style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted);">Opening</span>
+                    <button onclick="navigator.clipboard.writeText(document.getElementById('scriptOpening').textContent);this.innerHTML='<i class=\'bi bi-check\'></i> Copied';setTimeout(()=>{this.innerHTML='<i class=\'bi bi-clipboard\'></i> Copy'},1500)" style="font-size:0.65rem;padding:3px 8px;border-radius:4px;border:1px solid var(--border-subtle);background:var(--bg-page);cursor:pointer;color:var(--text-muted);"><i class="bi bi-clipboard"></i> Copy</button>
+                </div>
+                <div id="scriptOpening" style="font-size: 0.88rem; line-height: 1.7; padding: 12px 16px; background: var(--bg-page); border-radius: 8px; border-left: 3px solid #0D9488;"></div>
+            </div>
+            <details style="margin-bottom: 12px;" open>
+                <summary style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted);cursor:pointer;margin-bottom:6px;">Talking Points</summary>
+                <div id="scriptTalkingPoints" style="font-size:0.82rem;line-height:1.65;color:var(--text-secondary);padding-left:0;"></div>
+            </details>
+            <details style="margin-bottom: 12px;">
+                <summary style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted);cursor:pointer;margin-bottom:6px;">Qualification Questions</summary>
+                <ol id="scriptQuestions" style="font-size:0.82rem;line-height:1.65;padding-left:1.2rem;color:var(--text-secondary);"></ol>
+            </details>
+            <details style="margin-bottom: 12px;" id="scriptObjectionsWrap">
+                <summary style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted);cursor:pointer;margin-bottom:6px;">Objection Handlers</summary>
+                <div id="scriptObjections"></div>
+            </details>
+            <div id="scriptClosingWrap" style="display: none;">
+                <div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin-bottom: 4px;">Closing</div>
+                <div id="scriptClosing" style="font-size: 0.85rem; line-height: 1.65; padding: 10px 14px; background: #D1FAE5; border-radius: 8px; border-left: 3px solid #059669;"></div>
+            </div>
+        </div>
+        <div id="scriptEmpty" style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 0.82rem;">
+            <i class="bi bi-journal-text" style="font-size: 1.5rem; display: block; margin-bottom: 6px;"></i>
+            Select a script to see talking points and objection handlers.
         </div>
     </div>
 </div>
@@ -245,5 +341,118 @@ function toggleOutcome(type) {
     document.getElementById('duration-group').style.display = (type === 'call') ? '' : 'none';
 }
 toggleOutcome('call');
+
+/* ── Tag Insertion ── */
+function insertTag(tag) {
+    var ta = document.getElementById('emailBody');
+    var start = ta.selectionStart, end = ta.selectionEnd;
+    ta.value = ta.value.substring(0, start) + tag + ta.value.substring(end);
+    ta.selectionStart = ta.selectionEnd = start + tag.length;
+    ta.focus();
+}
+
+/* ── AI Email Generation ── */
+function generateAiEmail() {
+    var btn = document.getElementById('aiEmailBtn');
+    btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
+    document.getElementById('emailStatus').innerHTML = '<span style="color:var(--text-muted);">Asking AI to write a personalized email...</span>';
+    fetch('/api/leads/0/enrich/', {method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':document.querySelector('[name=csrfmiddlewaretoken]').value},body:JSON.stringify({action:'ai_email',prospect_id:{{ prospect.id }}})})
+    .then(r=>r.json()).then(data=>{
+        btn.disabled=false;btn.innerHTML='<i class="bi bi-stars"></i> AI Draft';
+        if(data.subject){document.getElementById('emailSubject').value=data.subject;document.getElementById('emailBody').value=data.body;document.getElementById('emailStatus').innerHTML='<span style="color:#059669;">AI draft ready — edit and send!</span>';}
+        else{document.getElementById('emailStatus').innerHTML='<span style="color:var(--accent-coral);">Could not generate draft. Write manually.</span>';}
+    }).catch(()=>{btn.disabled=false;btn.innerHTML='<i class="bi bi-stars"></i> AI Draft';document.getElementById('emailStatus').innerHTML='<span style="color:var(--accent-coral);">AI unavailable.</span>';});
+}
+
+/* ── Email Templates ── */
+var emailTemplates = [];
+fetch('/sales/email-templates/').then(r=>r.json()).then(data => {
+    emailTemplates = data.templates || [];
+    var sel = document.getElementById('emailTemplate');
+    emailTemplates.forEach(t => {
+        var opt = document.createElement('option');
+        opt.value = t.id; opt.textContent = t.name + ' (' + t.category + ')';
+        sel.appendChild(opt);
+    });
+});
+function loadTemplate(id) {
+    var t = emailTemplates.find(x => x.id == id);
+    if (!t) return;
+    document.getElementById('emailSubject').value = t.subject;
+    document.getElementById('emailBody').value = t.body;
+}
+function sendEmail() {
+    var btn = document.getElementById('sendEmailBtn');
+    var to = document.getElementById('emailTo').value.trim();
+    var subject = document.getElementById('emailSubject').value.trim();
+    var body = document.getElementById('emailBody').value.trim();
+    if (!to || !subject || !body) { document.getElementById('emailStatus').innerHTML = '<span style="color:var(--accent-coral);">All fields required.</span>'; return; }
+    btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Sending...';
+    fetch('/sales/prospects/{{ prospect.id }}/email/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value},
+        body: JSON.stringify({to: to, subject: subject, body: body})
+    }).then(r=>r.json()).then(data => {
+        btn.disabled = false; btn.innerHTML = '<i class="bi bi-send-fill"></i> Send Email';
+        if (data.ok) {
+            document.getElementById('emailStatus').innerHTML = '<span style="color:#059669;"><i class="bi bi-check-circle-fill"></i> Email sent!</span>';
+            document.getElementById('emailSubject').value = '';
+            document.getElementById('emailBody').value = '';
+            document.getElementById('emailTemplate').value = '';
+        } else {
+            document.getElementById('emailStatus').innerHTML = '<span style="color:var(--accent-coral);">' + (data.error || 'Failed') + '</span>';
+        }
+    });
+}
+
+/* ── Call Scripts ── */
+var callScripts = [];
+var PROSPECT_SOURCE = '{{ prospect.source|default:""|escapejs }}';
+var SOURCE_MAP = {'violation':'violation','property_sale':'property_sale','no_website':'no_website','health_inspection':'health_inspection','business_filing':'business_filing','google_maps_scan':'no_website'};
+
+fetch('/sales/call-scripts/').then(r=>r.json()).then(data => {
+    callScripts = data.scripts || [];
+    var sel = document.getElementById('scriptSelect');
+    callScripts.forEach(s => {
+        var opt = document.createElement('option');
+        opt.value = s.id; opt.textContent = s.name;
+        sel.appendChild(opt);
+    });
+    // Auto-select based on prospect source
+    var targetType = SOURCE_MAP[PROSPECT_SOURCE] || 'general';
+    var autoScript = callScripts.find(s => s.script_type === targetType) || callScripts.find(s => s.script_type === 'general');
+    if (autoScript) { sel.value = autoScript.id; loadScript(autoScript.id); }
+});
+
+function loadScript(id) {
+    var s = callScripts.find(x => x.id == id);
+    if (!s) { document.getElementById('scriptContent').style.display='none'; document.getElementById('scriptEmpty').style.display='block'; return; }
+    document.getElementById('scriptContent').style.display='block';
+    document.getElementById('scriptEmpty').style.display='none';
+    var biz = '{{ prospect.business_name|escapejs }}';
+    var contact = '{{ prospect.contact_name|default:prospect.business_name|escapejs }}';
+    var addr = '{{ prospect.address|escapejs }}';
+    function rep(t) { return (t||'').replace(/\[CONTACT NAME\]/g, contact).replace(/\[BUSINESS NAME\]/g, biz).replace(/\[BUSINESS\/PROPERTY\]/g, biz).replace(/\[ADDRESS\]/g, addr).replace(/\[YOUR NAME\]/g, '{{ request.user.get_full_name|escapejs }}').replace(/\[AREA\]/g, '{{ prospect.city|escapejs }}'); }
+    document.getElementById('scriptOpening').textContent = rep(s.opening);
+    // Talking points with checkboxes
+    var tp = ''; (s.talking_points||[]).forEach(function(p,i) {
+        tp += '<div class="tp-check" id="tp-'+i+'"><input type="checkbox" onchange="this.parentElement.classList.toggle(\'checked\',this.checked)"><label style="font-size:0.82rem;line-height:1.5;color:var(--text-secondary);cursor:pointer;">'+rep(p)+'</label></div>';
+    });
+    document.getElementById('scriptTalkingPoints').innerHTML = tp;
+    var qq = ''; (s.qualification_questions||[]).forEach(q => { qq += '<li>' + rep(q) + '</li>'; });
+    document.getElementById('scriptQuestions').innerHTML = qq;
+    // Accordion objection handlers
+    var oh = s.objection_handlers || {};
+    var ohHtml = '';
+    for (var key in oh) {
+        ohHtml += '<div class="objection-item">';
+        ohHtml += '<div class="objection-q" onclick="this.nextElementSibling.classList.toggle(\'open\')"><span>"' + key + '"</span><i class="bi bi-chevron-down" style="font-size:0.7rem;"></i></div>';
+        ohHtml += '<div class="objection-a">' + rep(oh[key]) + '</div>';
+        ohHtml += '</div>';
+    }
+    document.getElementById('scriptObjections').innerHTML = ohHtml || '<p class="text-muted">None</p>';
+    if (s.closing) { document.getElementById('scriptClosingWrap').style.display='block'; document.getElementById('scriptClosing').textContent = rep(s.closing); }
+    else { document.getElementById('scriptClosingWrap').style.display='none'; }
+}
 </script>
 {% endblock %}

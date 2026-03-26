@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Customer Accounts{% endblock %}
+{% block page_title %}Customer Accounts{% endblock %}
+
+{% block content %}
+<div style="max-width: 1100px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+        <div>
+            <h2 style="font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.4rem;margin:0;">Customer Accounts</h2>
+            <p style="color:var(--text-muted);font-size:0.82rem;margin-top:4px;">{{ accounts|length }} customer{{ accounts|length|pluralize }}</p>
+        </div>
+    </div>
+
+    <div style="display:grid;gap:12px;">
+        {% for a in accounts %}
+        <div class="glass-card-static" style="padding:16px 20px;display:flex;align-items:center;gap:16px;">
+            <div style="width:44px;height:44px;border-radius:50%;background:{% if a.profile.account_status == 'active' %}#D1FAE5{% elif a.profile.account_status == 'trial' %}#DBEAFE{% else %}#F1F5F9{% endif %};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;color:{% if a.profile.account_status == 'active' %}#059669{% elif a.profile.account_status == 'trial' %}#3B82F6{% else %}#94A3B8{% endif %};flex-shrink:0;">
+                {{ a.profile.business_name|first|upper }}
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-weight:700;font-size:0.92rem;">{{ a.profile.business_name }}</div>
+                <div style="font-size:0.78rem;color:var(--text-muted);">
+                    {{ a.profile.user.email }}
+                    {% if a.profile.phone %} · {{ a.profile.phone }}{% endif %}
+                    {% if a.profile.city %} · {{ a.profile.city }}, {{ a.profile.state }}{% endif %}
+                </div>
+            </div>
+            <div style="text-align:center;min-width:60px;">
+                <div style="font-weight:800;font-size:1.1rem;font-family:'JetBrains Mono',monospace;">{{ a.lead_count }}</div>
+                <div style="font-size:0.62rem;color:var(--text-muted);">Leads</div>
+            </div>
+            <div style="text-align:center;min-width:50px;">
+                <div style="font-weight:800;font-size:1.1rem;font-family:'JetBrains Mono',monospace;color:#059669;">{{ a.won_count }}</div>
+                <div style="font-size:0.62rem;color:var(--text-muted);">Won</div>
+            </div>
+            <div style="min-width:80px;text-align:center;">
+                {% if a.profile.subscription_tier == 'none' %}
+                <span style="padding:3px 8px;border-radius:5px;font-size:0.65rem;font-weight:700;background:#DBEAFE;color:#1D4ED8;">TRIAL</span>
+                {% elif a.profile.subscription_tier %}
+                <span style="padding:3px 8px;border-radius:5px;font-size:0.65rem;font-weight:700;background:#D1FAE5;color:#059669;">{{ a.profile.subscription_tier|upper }}</span>
+                {% else %}
+                <span style="padding:3px 8px;border-radius:5px;font-size:0.65rem;font-weight:700;background:#F1F5F9;color:#94A3B8;">NONE</span>
+                {% endif %}
+            </div>
+            <div style="display:flex;gap:4px;">
+                <a href="{% url 'leads_feed' %}" class="btn-secondary btn-sm" style="font-size:0.7rem;padding:4px 8px;" title="View Leads"><i class="bi bi-broadcast"></i></a>
+                <a href="{% url 'crm_pipeline' %}" class="btn-secondary btn-sm" style="font-size:0.7rem;padding:4px 8px;" title="View Pipeline"><i class="bi bi-kanban"></i></a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="glass-card-static" style="padding:40px;text-align:center;color:var(--text-muted);">
+            <i class="bi bi-buildings" style="font-size:2rem;display:block;margin-bottom:8px;"></i>
+            No customer accounts yet.
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

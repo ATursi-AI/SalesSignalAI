@@ -176,7 +176,17 @@
       "Bash(venv/Scripts/python.exe manage.py makemigrations core --name workflows)",
       "Bash(venv/Scripts/python.exe manage.py makemigrations core --name call_recording_fields)",
       "Bash(venv/Scripts/python.exe manage.py makemigrations core --name trial_fields)",
-      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name sales_task_fields)"
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name sales_task_fields)",
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name email_templates_call_scripts)",
+      "Bash(venv/Scripts/python.exe manage.py seed_email_templates)",
+      "Bash(venv/Scripts/python.exe manage.py run_all_monitors --dry-run)",
+      "Bash(venv/Scripts/python.exe manage.py run_all_monitors --list)",
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name agent_mission)",
+      "Bash(venv/Scripts/pip show:*)",
+      "Bash(ls c:/Users/aturs/Documents/AI_Engineering_Course/SalesSignalAI/core/management/commands/seed_email* c:/Users/aturs/Documents/AI_Engineering_Course/SalesSignalAI/core/management/commands/seed_call*)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\aturs\\Documents\\AI_Engineering_Course\\SalesSignalAI\\core"
     ]
   }
 }

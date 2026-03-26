@@ -193,3 +193,30 @@ class LeadAssignment(models.Model):
 
     def __str__(self):
         return f"{self.business} - {self.lead} ({self.status})"
+
+
+class AgentMission(models.Model):
+    STATUS_CHOICES = [
+        ('queued', 'Queued'),
+        ('running', 'Running'),
+        ('complete', 'Complete'),
+        ('error', 'Error'),
+    ]
+    agent_name = models.CharField(max_length=50)
+    goal = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='queued')
+    result = models.TextField(blank=True)
+    steps_taken = models.IntegerField(default=0)
+    leads_found = models.IntegerField(default=0)
+    mission_log = models.JSONField(default=list)
+    triggered_by = models.CharField(max_length=100, blank=True, help_text='sms, web, cron, or username')
+    triggered_from = models.CharField(max_length=50, blank=True, help_text='Phone number or IP')
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.agent_name}: {self.goal[:50]} ({self.status})"

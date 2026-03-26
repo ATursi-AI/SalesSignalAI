@@ -196,6 +196,15 @@
                     <span>Reviews</span>
                     {% if lead_group_counts.reviews %}<span class="sidebar-badge">{{ lead_group_counts.reviews }}</span>{% endif %}
                 </a>
+
+                <a href="{% url 'customer_accounts' %}" class="sidebar-link {% if request.resolver_match.url_name == 'customer_accounts' %}active{% endif %}">
+                    <i class="bi bi-buildings"></i>
+                    <span>Customer Accounts</span>
+                </a>
+                <a href="{% url 'mission_control' %}" class="sidebar-link {% if request.resolver_match.url_name == 'mission_control' %}active{% endif %}">
+                    <i class="bi bi-rocket-takeoff-fill"></i>
+                    <span>Mission Control</span>
+                </a>
                 {% endif %}
 
                 {% if user.is_superuser %}
