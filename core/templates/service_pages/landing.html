@@ -13,421 +13,364 @@
     <meta property="og:type" content="website">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        :root {
-            --sp-bg: #FAFBFC;
-            --sp-surface: #FFFFFF;
-            --sp-text: #1A1A2E;
-            --sp-text-sec: #64748B;
-            --sp-accent: #0D9488;
-            --sp-accent-light: #CCFBF1;
-            --sp-border: #E2E8F0;
-            --sp-radius: 14px;
-            --sp-coral: #DC2626;
-            --sp-amber: #F59E0B;
-            --sp-blue: #3B82F6;
-        }
-        body { font-family: 'DM Sans', sans-serif; background: var(--sp-bg); color: var(--sp-text); line-height: 1.6; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#1B3A5C;--navy-dark:#0F2440;--amber:#E8A838;--amber-light:#FEF3C7;--green:#28A745;--green-dark:#1E8336;--text:#1a1a1a;--text-sec:#5A6577;--bg:#F8F9FA;--white:#FFFFFF;--border:#DEE2E6;--radius:12px}
+body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--text);line-height:1.6}
 
-        /* Sticky phone bar */
-        .sp-phone-bar {
-            position: sticky; top: 0; z-index: 100;
-            background: var(--sp-accent);
-            color: #fff;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 20px;
-        }
-        .sp-phone-bar a { color: #fff; text-decoration: none; }
-        .sp-phone-logo {
-            font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 0.95rem;
-            display: flex; align-items: center; gap: 8px;
-        }
-        .sp-phone-logo i { font-size: 1.1rem; }
-        .sp-phone-number {
-            font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.15rem;
-            display: flex; align-items: center; gap: 8px;
-        }
+/* ── Sticky Header ── */
+.sp-header{position:sticky;top:0;z-index:100;background:var(--navy-dark);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:14px 24px}
+.sp-header-left{font-family:'Montserrat',sans-serif;font-weight:800;font-size:0.95rem;display:flex;align-items:center;gap:10px;letter-spacing:-0.01em}
+.sp-header-left i{color:var(--amber);font-size:1.1rem}
+.sp-header-right{display:flex;align-items:center;gap:14px}
+.sp-header-phone{font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.15rem;color:#fff;text-decoration:none;display:flex;align-items:center;gap:6px}
+.sp-header-cta{background:var(--green);color:#fff;font-family:'Montserrat',sans-serif;font-weight:700;font-size:0.82rem;padding:9px 20px;border-radius:8px;text-decoration:none;border:none;cursor:pointer;animation:ctaPulse 2.5s ease-in-out infinite}
+@keyframes ctaPulse{0%,100%{box-shadow:0 0 0 0 rgba(40,167,69,0.4)}50%{box-shadow:0 0 0 10px rgba(40,167,69,0)}}
 
-        .sp-container { max-width: 900px; margin: 0 auto; padding: 0 20px; }
+/* ── Hero ── */
+.sp-hero{background:linear-gradient(135deg,var(--navy-dark) 0%,var(--navy) 100%);color:#fff;text-align:center;padding:64px 24px 56px;position:relative;overflow:hidden}
+.sp-hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.sp-hero-emergency{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(1rem,3vw,1.3rem);color:var(--amber);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:8px}
+.sp-hero h1{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(2rem,6vw,3.2rem);line-height:1.1;margin-bottom:16px;position:relative;z-index:1}
+.sp-hero-sub{font-size:1.1rem;color:rgba(255,255,255,0.8);max-width:560px;margin:0 auto 28px;line-height:1.7}
+.sp-hero-phone{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(1.6rem,5vw,2.4rem);color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:10px;margin-bottom:24px}
+.sp-hero-phone i{color:var(--green)}
+.sp-hero-ctas{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;position:relative;z-index:1}
+.sp-btn{display:inline-flex;align-items:center;gap:8px;font-family:'Montserrat',sans-serif;font-weight:700;font-size:1.05rem;padding:15px 34px;border-radius:10px;text-decoration:none;border:none;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s}
+.sp-btn:hover{transform:translateY(-2px)}
+.sp-btn-green{background:var(--green);color:#fff;box-shadow:0 4px 16px rgba(40,167,69,0.35);animation:ctaPulse 2.5s ease-in-out infinite}
+.sp-btn-outline{background:transparent;color:#fff;border:2px solid rgba(255,255,255,0.4)}
+.sp-btn-outline:hover{border-color:#fff}
 
-        /* Hero */
-        .sp-hero {
-            text-align: center; padding: 48px 20px 40px;
-        }
-        .sp-hero h1 {
-            font-family: 'Exo 2', sans-serif; font-weight: 900;
-            font-size: clamp(1.8rem, 5vw, 3rem); line-height: 1.15; margin-bottom: 14px;
-        }
-        .sp-hero-sub {
-            font-size: 1.1rem; color: var(--sp-text-sec); max-width: 600px; margin: 0 auto 28px; line-height: 1.7;
-        }
-        .sp-hero-ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
-        .sp-btn {
-            display: inline-flex; align-items: center; gap: 8px;
-            font-family: 'Exo 2', sans-serif; font-weight: 700; font-size: 1.05rem;
-            padding: 14px 32px; border-radius: 12px; text-decoration: none; border: none; cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.15s;
-        }
-        .sp-btn:hover { transform: translateY(-2px); }
-        .sp-btn-primary { background: var(--sp-accent); color: #fff; box-shadow: 0 4px 16px rgba(13,148,136,0.3); }
-        .sp-btn-outline { background: transparent; color: var(--sp-accent); border: 2px solid var(--sp-accent); }
+/* ── Trust Bar ── */
+.sp-trust{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;padding:24px 20px;background:var(--amber-light);border-bottom:2px solid var(--amber)}
+.sp-trust-item{display:flex;align-items:center;gap:8px;font-size:0.85rem;font-weight:700;color:#78350F}
+.sp-trust-icon{width:36px;height:36px;border-radius:50%;background:rgba(232,168,56,0.2);display:flex;align-items:center;justify-content:center;color:#92400E;font-size:1rem}
 
-        /* Trust bar */
-        .sp-trust {
-            display: flex; justify-content: center; gap: 24px; flex-wrap: wrap;
-            padding: 20px; background: var(--sp-accent-light); border-radius: var(--sp-radius);
-            margin-bottom: 40px;
-        }
-        .sp-trust-item { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: #0D6B63; }
-        .sp-trust-item i { font-size: 1.1rem; }
+.sp-container{max-width:900px;margin:0 auto;padding:0 20px}
 
-        /* Live Stats */
-        .sp-stats-section {
-            background: var(--sp-surface); border: 1px solid var(--sp-border);
-            border-radius: var(--sp-radius); padding: 28px; margin-bottom: 40px; text-align: center;
-        }
-        .sp-stats-title {
-            font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.25rem; margin-bottom: 18px;
-        }
-        .sp-stats-grid { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
-        .sp-stat-card {
-            background: var(--sp-bg); border: 1px solid var(--sp-border);
-            border-radius: 10px; padding: 14px 20px; min-width: 160px; text-align: center;
-        }
-        .sp-stat-num {
-            font-family: 'Exo 2', sans-serif; font-weight: 900; font-size: 1.75rem; color: var(--sp-accent);
-        }
-        .sp-stat-label { font-size: 0.78rem; color: var(--sp-text-sec); margin-top: 2px; }
+/* ── Section shared ── */
+.sp-section{padding:60px 0}
+.sp-section-title{font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.6rem;text-align:center;margin-bottom:28px;color:var(--navy)}
 
-        /* Services */
-        .sp-services { margin-bottom: 40px; }
-        .sp-section-title {
-            font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.4rem;
-            text-align: center; margin-bottom: 24px;
-        }
-        .sp-services-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 12px;
-        }
-        .sp-service-card {
-            background: var(--sp-surface); border: 1px solid var(--sp-border);
-            border-radius: 10px; padding: 16px 18px;
-            display: flex; align-items: center; gap: 10px;
-            font-weight: 500; font-size: 0.92rem;
-        }
-        .sp-service-card i { color: var(--sp-accent); font-size: 1.1rem; }
+/* ── How It Works ── */
+.sp-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;text-align:center}
+.sp-step{padding:28px 20px}
+.sp-step-num{width:56px;height:56px;border-radius:50%;background:var(--navy);color:#fff;font-family:'Montserrat',sans-serif;font-weight:900;font-size:1.3rem;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px}
+.sp-step h3{font-family:'Montserrat',sans-serif;font-weight:700;font-size:1.05rem;margin-bottom:8px}
+.sp-step p{font-size:0.88rem;color:var(--text-sec);line-height:1.6}
 
-        /* Request Form */
-        .sp-form-section {
-            background: var(--sp-surface); border: 2px solid var(--sp-accent);
-            border-radius: var(--sp-radius); padding: 36px; margin-bottom: 40px;
-        }
-        .sp-form-title {
-            font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.5rem;
-            text-align: center; margin-bottom: 6px;
-        }
-        .sp-form-sub { text-align: center; color: var(--sp-text-sec); font-size: 0.9rem; margin-bottom: 24px; }
-        .sp-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-        .sp-field { display: flex; flex-direction: column; gap: 4px; }
-        .sp-field.full { grid-column: 1 / -1; }
-        .sp-field label {
-            font-size: 0.75rem; font-weight: 600; color: var(--sp-text-sec);
-            text-transform: uppercase; letter-spacing: 0.4px;
-        }
-        .sp-field .req { color: var(--sp-coral); }
-        .sp-field input, .sp-field select, .sp-field textarea {
-            padding: 12px 14px; border: 1px solid var(--sp-border); border-radius: 10px;
-            font-size: 0.95rem; font-family: inherit; color: var(--sp-text); background: var(--sp-bg);
-        }
-        .sp-field input:focus, .sp-field select:focus, .sp-field textarea:focus {
-            outline: none; border-color: var(--sp-accent);
-        }
-        .sp-field textarea { resize: vertical; min-height: 80px; }
-        .sp-form-submit { text-align: center; margin-top: 12px; }
-        .sp-form-error {
-            background: #FEF2F2; border: 1px solid #FECACA; color: var(--sp-coral);
-            border-radius: 10px; padding: 12px; font-size: 0.85rem; margin-bottom: 16px;
-            text-align: center; display: none;
-        }
-        .sp-form-success {
-            background: #D1FAE5; border: 2px solid #059669; border-radius: var(--sp-radius);
-            padding: 48px 32px; text-align: center; display: none;
-        }
-        .sp-form-success.visible { display: block; }
-        .sp-form-success i { font-size: 3rem; color: #059669; display: block; margin-bottom: 12px; }
-        .sp-form-success h3 { font-family: 'Exo 2', sans-serif; font-weight: 800; color: #059669; font-size: 1.5rem; margin-bottom: 8px; }
-        .sp-form-success p { color: var(--sp-text-sec); }
+/* ── Services Grid ── */
+.sp-services-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.sp-svc-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;display:flex;align-items:flex-start;gap:12px;transition:transform 0.2s,box-shadow 0.2s}
+.sp-svc-card:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,0.06)}
+.sp-svc-icon{width:40px;height:40px;border-radius:10px;background:rgba(27,58,92,0.08);display:flex;align-items:center;justify-content:center;color:var(--navy);font-size:1.1rem;flex-shrink:0}
+.sp-svc-name{font-weight:700;font-size:0.9rem;margin-bottom:2px}
+.sp-svc-desc{font-size:0.78rem;color:var(--text-sec)}
 
-        /* About */
-        .sp-about {
-            background: var(--sp-surface); border: 1px solid var(--sp-border);
-            border-radius: var(--sp-radius); padding: 32px; margin-bottom: 40px;
-        }
-        .sp-about p { font-size: 1rem; line-height: 1.8; color: var(--sp-text-sec); }
+/* ── Request Form ── */
+.sp-form-section{background:var(--white);border:2px solid var(--navy);border-radius:var(--radius);padding:40px;margin-bottom:0}
+.sp-form-title{font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.5rem;text-align:center;margin-bottom:6px;color:var(--navy)}
+.sp-form-sub{text-align:center;color:var(--text-sec);font-size:0.9rem;margin-bottom:24px}
+.sp-form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.sp-field{display:flex;flex-direction:column;gap:4px}
+.sp-field.full{grid-column:1/-1}
+.sp-field label{font-size:0.75rem;font-weight:600;color:var(--text-sec);text-transform:uppercase;letter-spacing:0.4px}
+.sp-field .req{color:#DC2626}
+.sp-field input,.sp-field select,.sp-field textarea{padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:0.95rem;font-family:inherit;color:var(--text);background:var(--bg)}
+.sp-field input:focus,.sp-field select:focus,.sp-field textarea:focus{outline:none;border-color:var(--navy)}
+.sp-field textarea{resize:vertical;min-height:80px}
+.sp-form-submit{text-align:center;margin-top:14px}
+.sp-form-error{background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;border-radius:10px;padding:12px;font-size:0.85rem;margin-bottom:16px;text-align:center;display:none}
+.sp-form-success{background:#D1FAE5;border:2px solid #059669;border-radius:var(--radius);padding:48px 32px;text-align:center;display:none}
+.sp-form-success.visible{display:block}
+.sp-form-success i{font-size:3rem;color:#059669;display:block;margin-bottom:12px}
+.sp-form-success h3{font-family:'Montserrat',sans-serif;font-weight:800;color:#059669;font-size:1.5rem;margin-bottom:8px}
 
-        /* FAQ */
-        .sp-faq { margin-bottom: 40px; }
-        .sp-faq-item {
-            background: var(--sp-surface); border: 1px solid var(--sp-border);
-            border-radius: 10px; padding: 20px 24px; margin-bottom: 10px;
-        }
-        .sp-faq-q { font-weight: 700; font-size: 1rem; margin-bottom: 8px; cursor: pointer; }
-        .sp-faq-a { font-size: 0.92rem; color: var(--sp-text-sec); line-height: 1.7; }
+/* ── Why Choose Us ── */
+.sp-why-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.sp-why-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:24px;border-left:4px solid var(--navy)}
+.sp-why-card h4{font-family:'Montserrat',sans-serif;font-weight:700;font-size:1rem;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.sp-why-card h4 i{color:var(--amber)}
+.sp-why-card p{font-size:0.85rem;color:var(--text-sec);line-height:1.6}
 
-        /* Internal links */
-        .sp-links {
-            background: var(--sp-surface); border: 1px solid var(--sp-border);
-            border-radius: var(--sp-radius); padding: 28px; margin-bottom: 40px;
-        }
-        .sp-links h3 {
-            font-family: 'Exo 2', sans-serif; font-weight: 700; font-size: 1rem;
-            margin-bottom: 12px; color: var(--sp-text);
-        }
-        .sp-link-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-        .sp-link-pill {
-            background: var(--sp-bg); border: 1px solid var(--sp-border);
-            border-radius: 20px; padding: 6px 16px; font-size: 0.82rem;
-            color: var(--sp-accent); text-decoration: none; font-weight: 500;
-        }
-        .sp-link-pill:hover { background: var(--sp-accent-light); border-color: var(--sp-accent); }
+/* ── Testimonials ── */
+.sp-testimonials{background:var(--bg)}
+.sp-test-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.sp-test-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:0 2px 8px rgba(0,0,0,0.04)}
+.sp-test-stars{color:#FBBF24;font-size:0.85rem;margin-bottom:10px}
+.sp-test-text{font-size:0.9rem;font-style:italic;line-height:1.65;color:var(--text);margin-bottom:10px}
+.sp-test-author{font-size:0.78rem;font-weight:600;color:var(--text-sec)}
 
-        /* Footer */
-        .sp-footer {
-            text-align: center; padding: 32px 20px; color: var(--sp-text-sec); font-size: 0.8rem;
-            border-top: 1px solid var(--sp-border);
-        }
-        .sp-footer a { color: var(--sp-accent); text-decoration: none; }
-        .sp-footer-links { display: flex; justify-content: center; gap: 20px; margin-top: 8px; }
+/* ── Live Stats ── */
+.sp-stats{text-align:center}
+.sp-stats-grid{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.sp-stat{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:18px 24px;min-width:150px;text-align:center}
+.sp-stat-num{font-family:'Montserrat',sans-serif;font-weight:900;font-size:2rem;color:var(--navy)}
+.sp-stat-label{font-size:0.78rem;color:var(--text-sec);margin-top:2px}
 
-        /* Customer branding */
-        .sp-brand-badge {
-            display: flex; align-items: center; gap: 12px; justify-content: center;
-            margin-bottom: 16px;
-        }
-        .sp-brand-stars { color: #FBBF24; font-size: 1rem; }
-        .sp-brand-reviews { font-size: 0.85rem; color: var(--sp-text-sec); }
+/* ── FAQ ── */
+.sp-faq-item{background:var(--white);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden}
+.sp-faq-q{font-weight:700;font-size:0.95rem;padding:18px 24px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.sp-faq-q::after{content:'+';font-size:1.2rem;color:var(--text-sec);transition:transform 0.2s}
+.sp-faq-q.open::after{transform:rotate(45deg)}
+.sp-faq-a{padding:0 24px;max-height:0;overflow:hidden;transition:max-height 0.3s ease,padding 0.3s ease;font-size:0.9rem;color:var(--text-sec);line-height:1.7}
+.sp-faq-a.open{max-height:300px;padding:0 24px 18px}
 
-        /* Mobile */
-        @media (max-width: 600px) {
-            .sp-hero { padding: 32px 16px; }
-            .sp-hero-ctas { flex-direction: column; align-items: stretch; }
-            .sp-btn { justify-content: center; width: 100%; }
-            .sp-form-row { grid-template-columns: 1fr; }
-            .sp-trust { gap: 12px; }
-            .sp-trust-item { font-size: 0.78rem; }
-            .sp-form-section { padding: 24px 20px; }
-            .sp-phone-logo span { display: none; }
-        }
+/* ── Service Areas ── */
+.sp-areas-pills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.sp-area-pill{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:6px 16px;font-size:0.82rem;color:var(--navy);font-weight:500}
+
+/* ── Internal Links ── */
+.sp-links{margin-bottom:40px}
+.sp-links h3{font-family:'Montserrat',sans-serif;font-weight:700;font-size:0.95rem;margin-bottom:10px;color:var(--navy)}
+.sp-link-pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.sp-link-pill{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:6px 16px;font-size:0.82rem;color:var(--navy);text-decoration:none;font-weight:500}
+.sp-link-pill:hover{background:rgba(27,58,92,0.06);border-color:var(--navy)}
+
+/* ── Bottom CTA ── */
+.sp-bottom-cta{background:linear-gradient(135deg,var(--navy-dark),var(--navy));color:#fff;text-align:center;padding:64px 24px}
+.sp-bottom-cta h2{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(1.5rem,4vw,2.2rem);margin-bottom:16px}
+.sp-bottom-cta .sp-hero-phone{margin-bottom:20px}
+
+/* ── Footer ── */
+.sp-footer{text-align:center;padding:28px 20px;color:var(--text-sec);font-size:0.78rem;border-top:1px solid var(--border)}
+.sp-footer a{color:var(--text-sec);text-decoration:none}
+.sp-footer a:hover{color:var(--navy)}
+.sp-footer-links{display:flex;justify-content:center;gap:20px;margin-top:6px}
+
+/* ── Mobile ── */
+@media(max-width:768px){
+.sp-hero{padding:48px 20px 40px}
+.sp-hero-ctas{flex-direction:column;align-items:stretch}
+.sp-btn{justify-content:center;width:100%}
+.sp-form-row{grid-template-columns:1fr}
+.sp-form-section{padding:28px 20px}
+.sp-trust{gap:14px;padding:16px}
+.sp-trust-item{font-size:0.78rem}
+.sp-steps{grid-template-columns:1fr;gap:12px}
+.sp-why-grid{grid-template-columns:1fr}
+.sp-test-grid{grid-template-columns:1fr}
+.sp-header-phone span{display:none}
+.sp-header-left span{display:none}
+}
+
+/* Mobile call bar */
+.sp-mobile-bar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:var(--green);text-align:center;padding:14px}
+.sp-mobile-bar a{color:#fff;text-decoration:none;font-family:'Montserrat',sans-serif;font-weight:700;font-size:1.05rem;display:flex;align-items:center;justify-content:center;gap:8px}
+@media(max-width:768px){.sp-mobile-bar{display:block}}
     </style>
 </head>
 <body>
-    <!-- Sticky Phone Bar -->
-    <div class="sp-phone-bar">
-        <a href="/" class="sp-phone-logo">
-            {% if is_branded and page.branded_business_name %}
-                <span>{{ page.branded_business_name }}</span>
-            {% else %}
-                <i class="bi bi-broadcast"></i>
-                <span>SalesSignal AI</span>
-            {% endif %}
-        </a>
-        {% with phone=page.get_phone_display %}
-        {% if phone %}
-        <a href="tel:{{ phone }}" class="sp-phone-number">
-            <i class="bi bi-telephone-fill"></i> {{ phone }}
-        </a>
+    <!-- Sticky Header -->
+    <div class="sp-header">
+        <div class="sp-header-left">
+            <i class="bi bi-{% if 'Plumb' in trade_name %}droplet-fill{% elif 'Electric' in trade_name %}lightning-fill{% else %}tools{% endif %}"></i>
+            <span>EMERGENCY {{ trade_name|upper }} &mdash; {{ area_name }}</span>
+        </div>
+        <div class="sp-header-right">
+            <a href="tel:{{ phone_raw }}" class="sp-header-phone"><i class="bi bi-telephone-fill"></i> <span>{{ phone }}</span></a>
+            <a href="tel:{{ phone_raw }}" class="sp-header-cta">Call 24/7</a>
+        </div>
+    </div>
+
+    <!-- Hero -->
+    <section class="sp-hero">
+        {% if is_branded and page.branded_star_rating %}
+        <div style="margin-bottom:12px;">
+            <span style="color:#FBBF24;font-size:1rem;">{% for i in "12345" %}<i class="bi {% if forloop.counter <= page.branded_star_rating %}bi-star-fill{% else %}bi-star{% endif %}"></i>{% endfor %}</span>
+            {% if page.branded_review_count %}<span style="color:rgba(255,255,255,0.7);font-size:0.85rem;margin-left:6px;">({{ page.branded_review_count }} reviews)</span>{% endif %}
+        </div>
         {% endif %}
-        {% endwith %}
+        <div class="sp-hero-emergency">EMERGENCY</div>
+        <h1>{% if is_branded and page.branded_business_name %}{{ page.branded_business_name }} &mdash; {% endif %}{{ trade_name }} in {{ area_name }}, {{ state_full }}</h1>
+        <p class="sp-hero-sub">Call 24/7 &bull; Licensed &amp; Insured &bull; Fast Response &bull; Free Estimates</p>
+        <a href="tel:{{ phone_raw }}" class="sp-hero-phone"><i class="bi bi-telephone-fill"></i> {{ phone }}</a>
+        <div class="sp-hero-ctas">
+            <a href="tel:{{ phone_raw }}" class="sp-btn sp-btn-green"><i class="bi bi-telephone-fill"></i> Call Now &mdash; 24/7</a>
+            <a href="#request-form" class="sp-btn sp-btn-outline" onclick="document.getElementById('request-form').scrollIntoView({behavior:'smooth'});return false;"><i class="bi bi-pencil-square"></i> Request a Callback</a>
+        </div>
+    </section>
+
+    <!-- Trust Bar -->
+    <div class="sp-trust">
+        <div class="sp-trust-item"><div class="sp-trust-icon"><i class="bi bi-patch-check-fill"></i></div> {% if is_branded and page.branded_license_number %}License #{{ page.branded_license_number }}{% else %}Licensed &amp; Insured{% endif %}</div>
+        <div class="sp-trust-item"><div class="sp-trust-icon"><i class="bi bi-clock-fill"></i></div> Available 24/7</div>
+        <div class="sp-trust-item"><div class="sp-trust-icon"><i class="bi bi-cash-stack"></i></div> Free Estimates</div>
+        <div class="sp-trust-item"><div class="sp-trust-icon"><i class="bi bi-star-fill"></i></div> 5-Star Rated</div>
+        <div class="sp-trust-item"><div class="sp-trust-icon"><i class="bi bi-shield-check"></i></div> Guaranteed</div>
+        {% if is_branded and page.branded_years_in_business %}
+        <div class="sp-trust-item"><div class="sp-trust-icon"><i class="bi bi-award-fill"></i></div> {{ page.branded_years_in_business }} Years</div>
+        {% endif %}
     </div>
 
     <div class="sp-container">
-        <!-- Hero -->
-        <div class="sp-hero">
-            {% if is_branded and page.branded_star_rating %}
-            <div class="sp-brand-badge">
-                <div class="sp-brand-stars">
-                    {% for i in "12345" %}
-                    <i class="bi {% if forloop.counter <= page.branded_star_rating %}bi-star-fill{% else %}bi-star{% endif %}"></i>
-                    {% endfor %}
-                </div>
-                {% if page.branded_review_count %}
-                <span class="sp-brand-reviews">({{ page.branded_review_count }} reviews)</span>
-                {% endif %}
+        <!-- Request Form -->
+        <div class="sp-section">
+            <div class="sp-form-section" id="request-form">
+                <div class="sp-form-title">Need Help Now? We'll Call You in 60 Seconds</div>
+                <div class="sp-form-sub">Tell us what's going on and we'll dispatch our team immediately.</div>
+                <div class="sp-form-error" id="form-error"></div>
+                <form id="service-form" onsubmit="submitServiceForm(event)">
+                    <div class="sp-form-row">
+                        <div class="sp-field"><label>Your Name <span class="req">*</span></label><input type="text" id="f-name" required placeholder="Full name"></div>
+                        <div class="sp-field"><label>Phone <span class="req">*</span></label><input type="tel" id="f-phone" required placeholder="(555) 123-4567"></div>
+                    </div>
+                    <div class="sp-form-row">
+                        <div class="sp-field"><label>Email</label><input type="email" id="f-email" placeholder="you@email.com"></div>
+                        <div class="sp-field"><label>Address / ZIP</label><input type="text" id="f-address" placeholder="123 Main St or ZIP code"></div>
+                    </div>
+                    <div class="sp-form-row">
+                        <div class="sp-field full"><label>Describe Your Issue</label><textarea id="f-problem" placeholder="e.g. Burst pipe in kitchen, water everywhere"></textarea></div>
+                    </div>
+                    <div class="sp-form-row">
+                        <div class="sp-field full">
+                            <label>Best Time to Call</label>
+                            <select id="f-urgency">
+                                <option value="emergency">Right Now</option>
+                                <option value="today">Within 1 Hour</option>
+                                <option value="this_week">Today</option>
+                                <option value="getting_quotes">Tomorrow</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="sp-form-submit"><button type="submit" class="sp-btn sp-btn-green" id="submit-btn" style="width:100%;"><i class="bi bi-send-fill"></i> Get Help Now</button></div>
+                </form>
             </div>
-            {% endif %}
-
-            <h1>{% if is_branded and page.branded_business_name %}{{ page.branded_business_name }} — {% endif %}{{ page.h1_headline }}</h1>
-            <p class="sp-hero-sub">{{ page.hero_subheadline }}</p>
-
-            <div class="sp-hero-ctas">
-                {% with phone=page.get_phone_display %}
-                {% if phone %}
-                <a href="tel:{{ phone }}" class="sp-btn sp-btn-primary">
-                    <i class="bi bi-telephone-fill"></i> Call Now
-                </a>
-                {% endif %}
-                {% endwith %}
-                <a href="#request-form" class="sp-btn sp-btn-outline" onclick="document.getElementById('request-form').scrollIntoView({behavior:'smooth'});return false;">
-                    <i class="bi bi-pencil-square"></i> Request Service
-                </a>
-            </div>
-        </div>
-
-        <!-- Trust Bar -->
-        <div class="sp-trust">
-            {% if is_branded and page.branded_license_number %}
-            <div class="sp-trust-item"><i class="bi bi-patch-check-fill"></i> License #{{ page.branded_license_number }}</div>
-            {% else %}
-            <div class="sp-trust-item"><i class="bi bi-patch-check-fill"></i> Licensed &amp; Insured</div>
-            {% endif %}
-            <div class="sp-trust-item"><i class="bi bi-clock-fill"></i> Available 24/7</div>
-            <div class="sp-trust-item"><i class="bi bi-cash-stack"></i> Free Estimates</div>
-            <div class="sp-trust-item"><i class="bi bi-hand-thumbs-up-fill"></i> Satisfaction Guaranteed</div>
-            {% if is_branded and page.branded_years_in_business %}
-            <div class="sp-trust-item"><i class="bi bi-award-fill"></i> {{ page.branded_years_in_business }} Years in Business</div>
-            {% endif %}
-        </div>
-
-        <!-- Live Stats -->
-        {% if stats %}
-        <div class="sp-stats-section">
-            <div class="sp-stats-title">This Week in {{ page.area.name }}</div>
-            <div class="sp-stats-grid">
-                {% if stats.service_requests %}
-                <div class="sp-stat-card">
-                    <div class="sp-stat-num">{{ stats.service_requests }}</div>
-                    <div class="sp-stat-label">{{ page.trade.name }} service requests</div>
-                </div>
-                {% endif %}
-                {% if stats.permits_filed %}
-                <div class="sp-stat-card">
-                    <div class="sp-stat-num">{{ stats.permits_filed }}</div>
-                    <div class="sp-stat-label">Permits filed</div>
-                </div>
-                {% endif %}
-                {% if stats.violations_issued %}
-                <div class="sp-stat-card">
-                    <div class="sp-stat-num">{{ stats.violations_issued }}</div>
-                    <div class="sp-stat-label">Violations issued</div>
-                </div>
-                {% endif %}
-                {% if stats.properties_sold %}
-                <div class="sp-stat-card">
-                    <div class="sp-stat-num">{{ stats.properties_sold }}</div>
-                    <div class="sp-stat-label">Properties sold</div>
-                </div>
-                {% endif %}
-                {% if stats.new_businesses %}
-                <div class="sp-stat-card">
-                    <div class="sp-stat-num">{{ stats.new_businesses }}</div>
-                    <div class="sp-stat-label">New businesses filed</div>
-                </div>
-                {% endif %}
-                {% if stats.health_inspections %}
-                <div class="sp-stat-card">
-                    <div class="sp-stat-num">{{ stats.health_inspections }}</div>
-                    <div class="sp-stat-label">Health inspections</div>
-                </div>
-                {% endif %}
+            <div class="sp-form-success" id="form-success">
+                <i class="bi bi-check-circle-fill"></i>
+                <h3>We're On It</h3>
+                <p>Our team will call you within minutes. Sit tight.</p>
             </div>
         </div>
-        {% endif %}
+
+        <!-- How It Works -->
+        <div class="sp-section">
+            <div class="sp-section-title">How It Works</div>
+            <div class="sp-steps">
+                <div class="sp-step">
+                    <div class="sp-step-num">1</div>
+                    <h3>Call Us or Fill Out the Form</h3>
+                    <p>Reach us anytime &mdash; 24 hours a day, 7 days a week.</p>
+                </div>
+                <div class="sp-step">
+                    <div class="sp-step-num">2</div>
+                    <h3>Tell Us What's Going On</h3>
+                    <p>Describe the issue so we can bring the right equipment.</p>
+                </div>
+                <div class="sp-step">
+                    <div class="sp-step-num">3</div>
+                    <h3>We're At Your Door Fast</h3>
+                    <p>Our licensed team arrives ready to fix your problem. Fast.</p>
+                </div>
+            </div>
+        </div>
 
         <!-- Services -->
-        {% if services %}
-        <div class="sp-services">
+        {% if trade_services %}
+        <div class="sp-section" style="padding-top:0;">
+            <div class="sp-section-title">Emergency {{ trade_name }} Services in {{ area_name }}</div>
+            <div class="sp-services-grid">
+                {% for svc in trade_services %}
+                <div class="sp-svc-card">
+                    <div class="sp-svc-icon"><i class="bi {{ svc.icon }}"></i></div>
+                    <div>
+                        <div class="sp-svc-name">{{ svc.name }}</div>
+                        <div class="sp-svc-desc">{{ svc.desc }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% elif services %}
+        <div class="sp-section" style="padding-top:0;">
             <div class="sp-section-title">Our Services</div>
             <div class="sp-services-grid">
                 {% for svc in services %}
-                <div class="sp-service-card">
-                    <i class="bi bi-check-circle-fill"></i> {{ svc }}
-                </div>
+                <div class="sp-svc-card"><div class="sp-svc-icon"><i class="bi bi-check-circle-fill"></i></div><div><div class="sp-svc-name">{{ svc }}</div></div></div>
                 {% endfor %}
             </div>
         </div>
         {% endif %}
 
-        <!-- Request Form -->
-        <div class="sp-form-section" id="request-form">
-            <div class="sp-form-title">Request Service</div>
-            <div class="sp-form-sub">Tell us what you need and a {{ page.trade.name|lower }} will contact you shortly.</div>
-
-            <div class="sp-form-error" id="form-error"></div>
-
-            <form id="service-form" onsubmit="submitServiceForm(event)">
-                <div class="sp-form-row">
-                    <div class="sp-field">
-                        <label>Your Name <span class="req">*</span></label>
-                        <input type="text" id="f-name" required placeholder="Full name">
-                    </div>
-                    <div class="sp-field">
-                        <label>Phone <span class="req">*</span></label>
-                        <input type="tel" id="f-phone" required placeholder="(555) 123-4567">
-                    </div>
-                </div>
-                <div class="sp-form-row">
-                    <div class="sp-field">
-                        <label>Email</label>
-                        <input type="email" id="f-email" placeholder="you@email.com">
-                    </div>
-                    <div class="sp-field">
-                        <label>Address / ZIP</label>
-                        <input type="text" id="f-address" placeholder="123 Main St or ZIP code">
-                    </div>
-                </div>
-                <div class="sp-form-row">
-                    <div class="sp-field full">
-                        <label>What do you need help with? <span class="req">*</span></label>
-                        <textarea id="f-problem" required placeholder="Describe the issue..."></textarea>
-                    </div>
-                </div>
-                <div class="sp-form-row">
-                    <div class="sp-field full">
-                        <label>How soon do you need service?</label>
-                        <select id="f-urgency">
-                            <option value="emergency">Emergency — need help now</option>
-                            <option value="today">Today</option>
-                            <option value="this_week" selected>This week</option>
-                            <option value="getting_quotes">Just getting quotes</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="sp-form-submit">
-                    <button type="submit" class="sp-btn sp-btn-primary" id="submit-btn" style="width:100%;">
-                        <i class="bi bi-send-fill"></i> Get Help Now
-                    </button>
-                </div>
-            </form>
+        <!-- Why Choose Us -->
+        <div class="sp-section" style="padding-top:0;">
+            <div class="sp-section-title">Why {{ area_name }} Homeowners Trust Us</div>
+            <div class="sp-why-grid">
+                <div class="sp-why-card"><h4><i class="bi bi-clock-fill"></i> 24/7 Emergency Response</h4><p>We answer the phone at 2am. No voicemail. No waiting. Real people, real fast.</p></div>
+                <div class="sp-why-card"><h4><i class="bi bi-patch-check-fill"></i> Licensed &amp; Insured</h4><p>Fully licensed, fully insured. Every job, every time. Your home is in good hands.</p></div>
+                <div class="sp-why-card"><h4><i class="bi bi-cash-coin"></i> Upfront Pricing</h4><p>No surprise charges. You know the cost before we start. Guaranteed.</p></div>
+                <div class="sp-why-card"><h4><i class="bi bi-hand-thumbs-up-fill"></i> Guaranteed Satisfaction</h4><p>Not happy? We make it right. That's our promise to every customer.</p></div>
+            </div>
         </div>
 
-        <!-- Form Success (hidden) -->
-        <div class="sp-form-success" id="form-success">
-            <i class="bi bi-check-circle-fill"></i>
-            <h3>We Received Your Request</h3>
-            <p>A {{ page.trade.name|lower }} professional will contact you shortly.</p>
+        <!-- Testimonials -->
+        <div class="sp-section sp-testimonials" style="margin:0 -20px;padding:60px 20px;border-radius:0;">
+            <div class="sp-section-title">What Our Customers Say</div>
+            <div class="sp-test-grid">
+                <div class="sp-test-card">
+                    <div class="sp-test-stars"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                    <div class="sp-test-text">"Called at midnight with a burst pipe. They had someone here in 30 minutes. Lifesaver!"</div>
+                    <div class="sp-test-author">&mdash; Sarah M., {{ area_name }}</div>
+                </div>
+                <div class="sp-test-card">
+                    <div class="sp-test-stars"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                    <div class="sp-test-text">"Fair price, fast work, cleaned up after themselves. Can't ask for more."</div>
+                    <div class="sp-test-author">&mdash; Mike R., {{ area_name }}</div>
+                </div>
+                <div class="sp-test-card">
+                    <div class="sp-test-stars"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                    <div class="sp-test-text">"I've used them three times now. Always reliable, always professional."</div>
+                    <div class="sp-test-author">&mdash; Lisa K., {{ area_name }}</div>
+                </div>
+            </div>
         </div>
 
-        <!-- About -->
-        {% if page.about_section %}
-        <div class="sp-about">
-            <div class="sp-section-title">About {% if is_branded %}{{ page.branded_business_name }}{% else %}Our {{ page.trade.name }} Network{% endif %}</div>
-            <p>{{ page.about_section }}</p>
+        <!-- Live Stats -->
+        {% if stats %}
+        <div class="sp-section sp-stats">
+            <div class="sp-section-title">This Week in {{ area_name }}</div>
+            <div class="sp-stats-grid">
+                {% if stats.service_requests %}<div class="sp-stat"><div class="sp-stat-num">{{ stats.service_requests }}</div><div class="sp-stat-label">Service requests</div></div>{% endif %}
+                {% if stats.permits_filed %}<div class="sp-stat"><div class="sp-stat-num">{{ stats.permits_filed }}</div><div class="sp-stat-label">Permits filed</div></div>{% endif %}
+                {% if stats.violations_issued %}<div class="sp-stat"><div class="sp-stat-num">{{ stats.violations_issued }}</div><div class="sp-stat-label">Violations issued</div></div>{% endif %}
+                {% if stats.properties_sold %}<div class="sp-stat"><div class="sp-stat-num">{{ stats.properties_sold }}</div><div class="sp-stat-label">Properties sold</div></div>{% endif %}
+            </div>
         </div>
         {% endif %}
 
         <!-- FAQ -->
-        {% if page.faq_section %}
-        <div class="sp-faq">
+        {% if trade_faqs %}
+        <div class="sp-section" style="padding-top:0;">
+            <div class="sp-section-title">Frequently Asked Questions</div>
+            {% for faq in trade_faqs %}
+            <div class="sp-faq-item">
+                <div class="sp-faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">{{ faq.q }}</div>
+                <div class="sp-faq-a">{{ faq.a }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% elif page.faq_section %}
+        <div class="sp-section" style="padding-top:0;">
             <div class="sp-section-title">Frequently Asked Questions</div>
             {% for faq in page.faq_section %}
             <div class="sp-faq-item">
-                <div class="sp-faq-q">{{ faq.question }}</div>
+                <div class="sp-faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">{{ faq.question }}</div>
                 <div class="sp-faq-a">{{ faq.answer }}</div>
             </div>
             {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Service Areas -->
+        {% if neighborhoods %}
+        <div class="sp-section" style="padding-top:0;">
+            <div class="sp-section-title">Serving {{ area_name }} and Surrounding Areas</div>
+            <div class="sp-areas-pills">
+                {% for n in neighborhoods %}<span class="sp-area-pill">{{ n }}</span>{% endfor %}
+            </div>
         </div>
         {% endif %}
 
@@ -435,16 +378,15 @@
         {% if same_trade_pages or same_area_pages %}
         <div class="sp-links">
             {% if same_trade_pages %}
-            <h3>{{ page.trade.name }} in Other Areas</h3>
+            <h3>{{ trade_name }} in Other Areas</h3>
             <div class="sp-link-pills">
                 {% for sp in same_trade_pages %}
                 <a href="/find/{{ sp.trade.slug }}/{{ sp.area.slug }}/" class="sp-link-pill">{{ sp.area.name }}</a>
                 {% endfor %}
             </div>
             {% endif %}
-
             {% if same_area_pages %}
-            <h3>Other Services in {{ page.area.name }}</h3>
+            <h3>Other Services in {{ area_name }}</h3>
             <div class="sp-link-pills">
                 {% for sp in same_area_pages %}
                 <a href="/find/{{ sp.trade.slug }}/{{ sp.area.slug }}/" class="sp-link-pill">{{ sp.trade.name }}</a>
@@ -455,14 +397,19 @@
         {% endif %}
     </div>
 
+    <!-- Bottom CTA -->
+    <section class="sp-bottom-cta">
+        <h2>Don't Wait &mdash; Call Now</h2>
+        <a href="tel:{{ phone_raw }}" class="sp-hero-phone"><i class="bi bi-telephone-fill"></i> {{ phone }}</a>
+        <div>
+            <a href="tel:{{ phone_raw }}" class="sp-btn sp-btn-green" style="margin-right:10px;"><i class="bi bi-telephone-fill"></i> Call 24/7</a>
+            <a href="#request-form" class="sp-btn sp-btn-outline" onclick="document.getElementById('request-form').scrollIntoView({behavior:'smooth'});return false;">Request a Callback</a>
+        </div>
+    </section>
+
     <!-- Footer -->
     <div class="sp-footer">
-        {% if is_branded %}
-            {{ page.branded_business_name }} &middot; Serving {{ page.area.name }}, {{ page.area.state }}
-            <br>Powered by <a href="/">SalesSignal AI</a>
-        {% else %}
-            <a href="/">SalesSignal AI</a> &middot; Connecting {{ page.area.name }} with trusted service professionals
-        {% endif %}
+        Serving {{ area_name }}, {{ state_full }} and surrounding areas
         <div class="sp-footer-links">
             <a href="/privacy/">Privacy</a>
             <a href="/terms/">Terms</a>
@@ -470,106 +417,38 @@
     </div>
 
     <!-- FAQ Structured Data -->
-    {% if page.faq_section %}
+    {% if trade_faqs %}
     <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        "mainEntity": [
-            {% for faq in page.faq_section %}
-            {
-                "@type": "Question",
-                "name": "{{ faq.question|escapejs }}",
-                "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": "{{ faq.answer|escapejs }}"
-                }
-            }{% if not forloop.last %},{% endif %}
-            {% endfor %}
-        ]
-    }
+    {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{% for faq in trade_faqs %}{"@type":"Question","name":"{{ faq.q|escapejs }}","acceptedAnswer":{"@type":"Answer","text":"{{ faq.a|escapejs }}"}}{% if not forloop.last %},{% endif %}{% endfor %}]}
     </script>
     {% endif %}
 
     <!-- Local Business Structured Data -->
     <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "LocalBusiness",
-        {% if is_branded and page.branded_business_name %}
-        "name": "{{ page.branded_business_name|escapejs }}",
-        {% else %}
-        "name": "{{ page.trade.name|escapejs }} in {{ page.area.name|escapejs }}",
-        {% endif %}
-        "description": "{{ page.meta_description|escapejs }}",
-        "areaServed": {
-            "@type": "City",
-            "name": "{{ page.area.name|escapejs }}",
-            "containedIn": "{{ page.area.state_full|escapejs }}"
-        }
-        {% if page.area.latitude %},
-        "geo": {
-            "@type": "GeoCoordinates",
-            "latitude": {{ page.area.latitude }},
-            "longitude": {{ page.area.longitude }}
-        }
-        {% endif %}
-    }
+    {"@context":"https://schema.org","@type":"LocalBusiness",{% if is_branded and page.branded_business_name %}"name":"{{ page.branded_business_name|escapejs }}",{% else %}"name":"Emergency {{ trade_name|escapejs }} in {{ area_name|escapejs }}",{% endif %}"description":"{{ page.meta_description|escapejs }}","telephone":"{{ phone }}","areaServed":{"@type":"City","name":"{{ area_name|escapejs }}","containedIn":"{{ state_full|escapejs }}"}{% if page.area.latitude %},"geo":{"@type":"GeoCoordinates","latitude":{{ page.area.latitude }},"longitude":{{ page.area.longitude }}}{% endif %}}
     </script>
 
     <script>
-    function submitServiceForm(e) {
+    function submitServiceForm(e){
         e.preventDefault();
-        var name = document.getElementById('f-name').value.trim();
-        var phone = document.getElementById('f-phone').value.trim();
-        var email = document.getElementById('f-email').value.trim();
-        var address = document.getElementById('f-address').value.trim();
-        var problem = document.getElementById('f-problem').value.trim();
-        var urgency = document.getElementById('f-urgency').value;
-        var errorEl = document.getElementById('form-error');
-
-        if (!name || !phone || !problem) {
-            errorEl.textContent = 'Please fill in all required fields.';
-            errorEl.style.display = 'block';
-            return;
-        }
-
-        var btn = document.getElementById('submit-btn');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Sending...';
-
-        fetch('/api/service-page-submit/', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                page_id: {{ page.pk }},
-                name: name, phone: phone, email: email,
-                address: address, problem: problem, urgency: urgency
-            })
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.ok) {
-                document.getElementById('service-form').style.display = 'none';
-                document.querySelector('.sp-form-title').style.display = 'none';
-                document.querySelector('.sp-form-sub').style.display = 'none';
-                var success = document.getElementById('form-success');
-                success.classList.add('visible');
-                success.scrollIntoView({behavior: 'smooth', block: 'center'});
-            } else {
-                errorEl.textContent = data.error || 'Something went wrong.';
-                errorEl.style.display = 'block';
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-send-fill"></i> Get Help Now';
-            }
-        })
-        .catch(function() {
-            errorEl.textContent = 'Connection error. Please try again.';
-            errorEl.style.display = 'block';
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-send-fill"></i> Get Help Now';
-        });
+        var n=document.getElementById('f-name').value.trim();
+        var p=document.getElementById('f-phone').value.trim();
+        var em=document.getElementById('f-email').value.trim();
+        var addr=document.getElementById('f-address').value.trim();
+        var prob=document.getElementById('f-problem').value.trim();
+        var urg=document.getElementById('f-urgency').value;
+        var err=document.getElementById('form-error');
+        if(!n||!p){err.textContent='Please enter your name and phone number.';err.style.display='block';return;}
+        var btn=document.getElementById('submit-btn');
+        btn.disabled=true;btn.innerHTML='<i class="bi bi-hourglass-split"></i> Sending...';
+        fetch('/api/service-page-submit/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({page_id:{{ page.pk }},name:n,phone:p,email:em,address:addr,problem:prob||'Callback requested',urgency:urg})})
+        .then(function(r){return r.json()}).then(function(d){
+            if(d.ok){document.getElementById('service-form').style.display='none';document.querySelector('.sp-form-title').style.display='none';document.querySelector('.sp-form-sub').style.display='none';var s=document.getElementById('form-success');s.classList.add('visible');s.scrollIntoView({behavior:'smooth',block:'center'});}
+            else{err.textContent=d.error||'Something went wrong.';err.style.display='block';btn.disabled=false;btn.innerHTML='<i class="bi bi-send-fill"></i> Get Help Now';}
+        }).catch(function(){err.textContent='Connection error. Please call us directly.';err.style.display='block';btn.disabled=false;btn.innerHTML='<i class="bi bi-send-fill"></i> Get Help Now';});
     }
     </script>
+
+    <div class="sp-mobile-bar"><a href="tel:{{ phone_raw }}"><i class="bi bi-telephone-fill"></i> Call Now &mdash; 24/7</a></div>
 </body>
 </html>
