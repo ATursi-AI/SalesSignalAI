@@ -94,6 +94,10 @@ GOOGLE_PLACES_API_KEY = config('GOOGLE_PLACES_API_KEY', default='') or GOOGLE_MA
 ANTHROPIC_API_KEY = config('ANTHROPIC_API_KEY', default='')
 SENDGRID_API_KEY = config('SENDGRID_API_KEY', default='')
 
+# Telegram
+TELEGRAM_BOT_TOKEN = config('TELEGRAM_BOT_TOKEN', default='')
+TELEGRAM_ALLOWED_USERS = config('TELEGRAM_ALLOWED_USERS', default='')
+
 TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='')
 TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='')
 TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER', default='')

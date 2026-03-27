@@ -2,7 +2,7 @@ from django.urls import path
 from core.views import landing, auth, onboarding, dashboard, leads, competitors, territory, campaigns, analytics
 from core.views import monitor_health, webhooks, user_settings, admin_leads, ingest_api, crm
 from core.views import sales_admin, sales, industries, prospect_videos, static_pages, seo, call_center
-from core.views import service_pages, signup, blog, workflows, conversations
+from core.views import service_pages, signup, blog, workflows, conversations, telegram_bot
 
 urlpatterns = [
     path('', landing.landing_page, name='landing'),
@@ -204,6 +204,8 @@ urlpatterns = [
     path('api/signalwire/recording-webhook/', call_center.recording_webhook, name='signalwire_recording_webhook'),
     path('api/signalwire/dialer-queue/', call_center.get_dialer_queue, name='dialer_queue'),
     path('api/signalwire/dialer-disposition/', call_center.log_dialer_disposition, name='dialer_disposition'),
+    # Telegram
+    path('api/telegram/webhook/', telegram_bot.telegram_webhook, name='telegram_webhook'),
     path('api/signalwire/transfer-call/', call_center.transfer_call, name='signalwire_transfer_call'),
     path('api/signalwire/transfer-xml/', call_center.transfer_xml, name='signalwire_transfer_xml'),
 
