@@ -184,9 +184,8 @@ body{font-family:'Open Sans',sans-serif;background:var(--white);color:var(--text
             {% if page.branded_review_count %}<span style="color:rgba(255,255,255,0.7);font-size:0.85rem;margin-left:6px;">({{ page.branded_review_count }} reviews)</span>{% endif %}
         </div>
         {% endif %}
-        <div class="sp-hero-emergency">EMERGENCY</div>
-        <h1>{% if is_branded and page.branded_business_name %}{{ page.branded_business_name }} &mdash; {% endif %}{{ trade_name }} in {{ area_name }}, {{ state_full }}</h1>
-        <p class="sp-hero-sub">Call 24/7 &bull; Licensed &amp; Insured &bull; Fast Response &bull; Free Estimates</p>
+        
+        <h1><span style="display:block;font-size:clamp(2.5rem,8vw,4.5rem);letter-spacing:2px;text-transform:uppercase;font-weight:900;color:#FF3B3B;">EMERGENCY {{ trade_name|upper }}</span><span style="display:block;font-size:clamp(1.5rem,4vw,2.2rem);font-weight:600;margin-top:8px;">in {{ area_name }}, {{ state_full }}</span><span style="display:block;font-size:clamp(0.9rem,2vw,1.1rem);font-weight:400;margin-top:12px;opacity:0.85;">Call 24/7 &bull; Licensed &amp; Insured &bull; Fast Response &bull; Free Estimates</span></h1>
         <a href="tel:{{ phone_raw }}" class="sp-hero-phone"><i class="bi bi-telephone-fill"></i> {{ phone }}</a>
         <div class="sp-hero-ctas">
             <a href="tel:{{ phone_raw }}" class="sp-btn sp-btn-green"><i class="bi bi-telephone-fill"></i> Call Now &mdash; 24/7</a>
