@@ -69,6 +69,66 @@ def _get_area_trade_stats(trade, area, days=7):
     return {k: v for k, v in stats.items() if v > 0}
 
 
+# ─── Trade-specific data ─────────────────────────────────────────
+
+TRADE_SERVICES = {
+    'emergency-plumber': {
+        'display': 'Plumber',
+        'items': [
+            {'icon': 'bi-droplet-fill', 'name': 'Burst Pipes', 'desc': 'Fast repair to stop water damage'},
+            {'icon': 'bi-fire', 'name': 'Water Heater', 'desc': 'Repair or replacement, same day'},
+            {'icon': 'bi-arrow-down-circle', 'name': 'Drain Cleaning', 'desc': 'Clear clogs and backups fast'},
+            {'icon': 'bi-water', 'name': 'Leak Detection', 'desc': 'Find and fix hidden leaks'},
+            {'icon': 'bi-wrench-adjustable', 'name': 'Sewer Line', 'desc': 'Sewer repair and replacement'},
+            {'icon': 'bi-wrench', 'name': 'Toilet Repair', 'desc': 'Fix running, leaking, or clogged toilets'},
+            {'icon': 'bi-thermometer-snow', 'name': 'Frozen Pipes', 'desc': 'Thaw and prevent burst pipes'},
+            {'icon': 'bi-tsunami', 'name': 'Sump Pump', 'desc': 'Install, repair, emergency service'},
+            {'icon': 'bi-fuel-pump', 'name': 'Gas Line', 'desc': 'Gas leak detection and repair'},
+            {'icon': 'bi-moisture', 'name': 'Water Damage', 'desc': 'Emergency water extraction'},
+        ],
+        'faqs': [
+            {'q': 'How fast can you get here?', 'a': 'We dispatch licensed plumbers 24/7. In most cases, someone is at your door within 30-60 minutes.'},
+            {'q': 'Do you charge extra for nights and weekends?', 'a': 'Our dispatch is always free. Your plumber will provide upfront pricing before any work begins.'},
+            {'q': 'Are your plumbers licensed?', 'a': 'Yes. Every plumber in our network is fully licensed, insured, and background-checked.'},
+            {'q': "What if my issue isn't an emergency?", 'a': "No problem. We handle routine plumbing too. Call us and we'll schedule at your convenience."},
+            {'q': 'Do you offer free estimates?', 'a': "Yes. Your plumber will assess the situation and give you a clear quote before starting any work."},
+        ],
+    },
+    'emergency-electrician': {
+        'display': 'Electrician',
+        'items': [
+            {'icon': 'bi-lightning-fill', 'name': 'Power Outage', 'desc': 'Restore power to your home fast'},
+            {'icon': 'bi-cpu', 'name': 'Panel Upgrade', 'desc': 'Upgrade for modern electrical loads'},
+            {'icon': 'bi-plug-fill', 'name': 'Wiring Repair', 'desc': 'Fix faulty or dangerous wiring'},
+            {'icon': 'bi-outlet', 'name': 'Outlets & Switches', 'desc': 'Repair or install new outlets'},
+            {'icon': 'bi-shield-exclamation', 'name': 'Circuit Breaker', 'desc': 'Fix tripping breakers and shorts'},
+            {'icon': 'bi-lightbulb-fill', 'name': 'Lighting', 'desc': 'Install, repair, indoor and outdoor'},
+            {'icon': 'bi-battery-charging', 'name': 'Generator', 'desc': 'Install backup power for your home'},
+            {'icon': 'bi-bell-fill', 'name': 'Smoke Detectors', 'desc': 'Install and test safety devices'},
+            {'icon': 'bi-fan', 'name': 'Ceiling Fans', 'desc': 'Install or repair ceiling fans'},
+            {'icon': 'bi-exclamation-triangle-fill', 'name': 'Emergency Rewiring', 'desc': 'Fix hazardous electrical situations'},
+        ],
+        'faqs': [
+            {'q': 'How fast can you get here?', 'a': 'We dispatch licensed electricians 24/7. Emergency calls are prioritized for fastest response.'},
+            {'q': 'Is it safe to wait?', 'a': 'If you smell burning, see sparks, or have exposed wires, call immediately. We treat electrical emergencies as urgent safety issues.'},
+            {'q': 'Are your electricians licensed?', 'a': 'Yes. Every electrician in our network is fully licensed, bonded, insured, and background-checked.'},
+            {'q': 'Do you handle commercial electrical?', 'a': 'Yes. We service both residential and commercial properties.'},
+            {'q': 'Do you offer free estimates?', 'a': 'Yes. Your electrician will assess the situation and provide a clear quote before any work begins.'},
+        ],
+    },
+}
+
+AREA_NEIGHBORHOODS = {
+    'queens': ['Astoria', 'Long Island City', 'Flushing', 'Jamaica', 'Bayside', 'Forest Hills', 'Rego Park', 'Woodside', 'Jackson Heights', 'Elmhurst'],
+    'brooklyn': ['Williamsburg', 'Park Slope', 'Bay Ridge', 'Flatbush', 'Bushwick', 'DUMBO', 'Bed-Stuy', 'Crown Heights', 'Greenpoint', 'Sunset Park'],
+    'manhattan': ['Upper East Side', 'Upper West Side', 'Midtown', 'Harlem', 'East Village', 'West Village', 'SoHo', 'Tribeca', 'Chelsea', 'Murray Hill'],
+    'bronx': ['Riverdale', 'Fordham', 'Pelham Bay', 'Morris Park', 'Kingsbridge', 'Mott Haven', 'Hunts Point', 'Tremont', 'Soundview', 'Eastchester'],
+    'staten-island': ['St. George', 'Tottenville', 'Great Kills', 'New Dorp', 'Stapleton', 'Port Richmond', 'Eltingville', 'Annadale', 'Huguenot', 'Midland Beach'],
+    'nassau-county': ['Lynbrook', 'Rockville Centre', 'Garden City', 'Mineola', 'Hempstead', 'Freeport', 'Valley Stream', 'Merrick', 'Massapequa', 'Hicksville'],
+    'suffolk-county': ['Babylon', 'Huntington', 'Islip', 'Smithtown', 'Brookhaven', 'Patchogue', 'Bay Shore', 'Commack', 'Dix Hills', 'Hauppauge'],
+}
+
+
 # ─── Public Landing Page ──────────────────────────────────────────
 
 def service_landing_page(request, trade_slug, area_slug):
@@ -80,11 +140,16 @@ def service_landing_page(request, trade_slug, area_slug):
         page_type='salessignal',
     )
 
-    # Track page view
     ServiceLandingPage.objects.filter(pk=page.pk).update(page_views=F('page_views') + 1)
 
     stats = _get_area_trade_stats(page.trade, page.area) if page.show_live_stats else {}
-    services = [s.strip() for s in page.services_offered.split('\n') if s.strip()] if page.services_offered else []
+    services_text = [s.strip() for s in page.services_offered.split('\n') if s.strip()] if page.services_offered else []
+
+    # Trade-specific structured data
+    trade_data = TRADE_SERVICES.get(trade_slug, {})
+    trade_services = trade_data.get('items', [])
+    trade_faqs = trade_data.get('faqs', page.faq_section or [])
+    neighborhoods = AREA_NEIGHBORHOODS.get(area_slug, [])
 
     # Internal linking
     neighboring = page.area.neighboring_areas.filter(is_active=True)[:6]
@@ -95,14 +160,28 @@ def service_landing_page(request, trade_slug, area_slug):
         trade=page.trade, status='active', page_type='salessignal',
     ).exclude(pk=page.pk).select_related('area')[:8]
 
+    phone = page.signalwire_phone or page.get_phone_display() or '(959) 247-2537'
+    phone_raw = phone.replace('(', '').replace(')', '').replace(' ', '').replace('-', '')
+    if not phone_raw.startswith('+'):
+        phone_raw = '+1' + phone_raw
+
     context = {
         'page': page,
         'stats': stats,
-        'services': services,
+        'services': services_text,
+        'trade_services': trade_services,
+        'trade_faqs': trade_faqs,
+        'neighborhoods': neighborhoods,
         'neighboring': neighboring,
         'same_area_pages': same_area_pages,
         'same_trade_pages': same_trade_pages,
         'is_branded': False,
+        'phone': phone,
+        'phone_raw': phone_raw,
+        'trade_name': page.trade.name,
+        'area_name': page.area.name,
+        'state': page.area.state,
+        'state_full': page.area.state_full,
     }
     return render(request, 'service_pages/landing.html', context)
 
@@ -119,16 +198,34 @@ def service_landing_page_branded(request, customer_slug, area_slug):
     ServiceLandingPage.objects.filter(pk=page.pk).update(page_views=F('page_views') + 1)
 
     stats = _get_area_trade_stats(page.trade, page.area) if page.show_live_stats else {}
-    services = [s.strip() for s in page.services_offered.split('\n') if s.strip()] if page.services_offered else []
+    services_text = [s.strip() for s in page.services_offered.split('\n') if s.strip()] if page.services_offered else []
+
+    trade_slug = page.trade.slug
+    trade_data = TRADE_SERVICES.get(trade_slug, {})
+    neighborhoods = AREA_NEIGHBORHOODS.get(page.area.slug, [])
+
+    phone = page.branded_phone or page.signalwire_phone or '(959) 247-2537'
+    phone_raw = phone.replace('(', '').replace(')', '').replace(' ', '').replace('-', '')
+    if not phone_raw.startswith('+'):
+        phone_raw = '+1' + phone_raw
 
     context = {
         'page': page,
         'stats': stats,
-        'services': services,
+        'services': services_text,
+        'trade_services': trade_data.get('items', []),
+        'trade_faqs': trade_data.get('faqs', page.faq_section or []),
+        'neighborhoods': neighborhoods,
         'neighboring': [],
         'same_area_pages': [],
         'same_trade_pages': [],
         'is_branded': True,
+        'phone': phone,
+        'phone_raw': phone_raw,
+        'trade_name': page.trade.name,
+        'area_name': page.area.name,
+        'state': page.area.state,
+        'state_full': page.area.state_full,
     }
     return render(request, 'service_pages/landing.html', context)
 
