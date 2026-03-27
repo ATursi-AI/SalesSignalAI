@@ -173,6 +173,7 @@ class LeadAssignment(models.Model):
         ('won', 'Won'),
         ('lost', 'Lost'),
         ('expired', 'Expired'),
+        ('dismissed', 'Dismissed'),
     ]
 
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='assignments')

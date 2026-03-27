@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.utils import timezone
 from django.db.models import Q
+from django.views.decorators.http import require_POST
 from core.models import LeadAssignment, Lead, ServiceCategory
 
 
@@ -11,6 +12,8 @@ def lead_feed(request):
     profile = request.user.business_profile
     assignments = LeadAssignment.objects.filter(
         business=profile
+    ).exclude(
+        status='dismissed'
     ).select_related('lead', 'lead__detected_service_type').order_by('-created_at')
 
     # Filters
@@ -31,18 +34,17 @@ def lead_feed(request):
             Q(lead__detected_location__icontains=search)
         )
 
-    # Urgency counts for header
-    all_assignments = LeadAssignment.objects.filter(business=profile)
-    hot_count = all_assignments.filter(lead__urgency_level='hot', status__in=['new', 'alerted', 'viewed']).count()
-    warm_count = all_assignments.filter(lead__urgency_level='warm', status__in=['new', 'alerted', 'viewed']).count()
-    new_count = all_assignments.filter(lead__urgency_level='new', status__in=['new', 'alerted', 'viewed']).count()
+    # Urgency counts for header (exclude dismissed)
+    active = LeadAssignment.objects.filter(business=profile).exclude(status='dismissed')
+    hot_count = active.filter(lead__urgency_level='hot', status__in=['new', 'alerted', 'viewed']).count()
+    warm_count = active.filter(lead__urgency_level='warm', status__in=['new', 'alerted', 'viewed']).count()
+    new_count = active.filter(lead__urgency_level='new', status__in=['new', 'alerted', 'viewed']).count()
 
-    # Platform choices for filter
     platforms = Lead.PLATFORM_CHOICES
     statuses = LeadAssignment.STATUS_CHOICES
 
     is_trial = (profile.account_status == 'trial' or profile.subscription_tier == 'none')
-    free_limit = 5  # First N leads show full details
+    free_limit = 5
 
     context = {
         'assignments': assignments[:50],
@@ -71,7 +73,6 @@ def lead_detail(request, assignment_id):
         business=profile,
     )
 
-    # Trial lead access check
     is_trial = (profile.account_status == 'trial' or profile.subscription_tier == 'none')
     lead_blocked = False
 
@@ -79,10 +80,9 @@ def lead_detail(request, assignment_id):
         lead_blocked = True
 
     # Mark as viewed and decrement trial counter
-    if assignment.status == 'new' or assignment.status == 'alerted':
+    if assignment.status in ('new', 'alerted'):
         if not assignment.viewed_at:
             assignment.viewed_at = timezone.now()
-            # Decrement trial leads on first view
             if is_trial and profile.trial_leads_remaining > 0:
                 profile.trial_leads_remaining -= 1
                 profile.save(update_fields=['trial_leads_remaining'])
@@ -90,21 +90,54 @@ def lead_detail(request, assignment_id):
             assignment.status = 'viewed'
         assignment.save()
 
+    # Auto-create CRM contact on first view
+    lead = assignment.lead
+    if (lead.contact_name or lead.contact_business) and not lead_blocked:
+        _auto_create_contact(profile, lead)
+
     # Similar leads in same area
     similar = LeadAssignment.objects.filter(
         business=profile,
-        lead__detected_location=assignment.lead.detected_location,
-    ).exclude(id=assignment.id).select_related('lead')[:5] if assignment.lead.detected_location else []
+        lead__detected_location=lead.detected_location,
+    ).exclude(id=assignment.id).select_related('lead')[:5] if lead.detected_location else []
+
+    # Active campaigns for "Add to Campaign" dropdown
+    from core.models import OutreachCampaign
+    campaigns = OutreachCampaign.objects.filter(
+        business=profile, status='active'
+    ).values_list('id', 'name')
 
     context = {
         'assignment': assignment,
-        'lead': assignment.lead,
+        'lead': lead,
         'similar_leads': similar,
         'is_trial': is_trial,
         'lead_blocked': lead_blocked,
         'trial_leads_remaining': profile.trial_leads_remaining,
+        'campaigns': list(campaigns),
     }
     return render(request, 'leads/detail.html', context)
+
+
+def _auto_create_contact(profile, lead):
+    """Auto-create a CRM contact from a lead if one doesn't exist."""
+    from core.models.crm import Contact
+    name = lead.contact_name or lead.contact_business or ''
+    if not name:
+        return
+    existing = Contact.objects.filter(business=profile, name=name).first()
+    if existing:
+        return
+    Contact.objects.create(
+        business=profile,
+        name=name,
+        phone=lead.contact_phone or '',
+        email=lead.contact_email or '',
+        address=lead.contact_address or '',
+        source='lead',
+        source_lead=lead,
+        notes=f'Auto-created from lead #{lead.id}',
+    )
 
 
 @login_required
@@ -127,7 +160,6 @@ def lead_update_status(request, assignment_id):
     if new_status == 'viewed' and not assignment.viewed_at:
         assignment.viewed_at = timezone.now()
 
-    # Save revenue/notes if provided
     revenue = request.POST.get('revenue', '')
     if revenue:
         try:
@@ -141,7 +173,10 @@ def lead_update_status(request, assignment_id):
 
     assignment.save()
 
-    # If AJAX
+    # Auto-create pipeline entry for contacted/quoted/won
+    if new_status in ('contacted', 'quoted', 'won'):
+        _auto_create_pipeline_entry(profile, assignment, new_status)
+
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return JsonResponse({
             'success': True,
@@ -150,6 +185,44 @@ def lead_update_status(request, assignment_id):
         })
 
     return redirect('lead_detail', assignment_id=assignment.id)
+
+
+def _auto_create_pipeline_entry(profile, assignment, status):
+    """Auto-create CRM Contact pipeline entry when lead status changes."""
+    from core.models.crm import Contact
+    lead = assignment.lead
+    name = lead.contact_name or lead.contact_business or 'Unknown'
+
+    contact = Contact.objects.filter(business=profile, source_lead=lead).first()
+    if not contact:
+        contact = Contact.objects.filter(business=profile, name=name).first()
+    if not contact:
+        contact = Contact.objects.create(
+            business=profile,
+            name=name,
+            phone=lead.contact_phone or '',
+            email=lead.contact_email or '',
+            address=lead.contact_address or '',
+            source='lead',
+            source_lead=lead,
+        )
+
+    stage_map = {'contacted': 'contacted', 'quoted': 'quoted', 'won': 'won'}
+    new_stage = stage_map.get(status, 'new')
+    if contact.pipeline_stage != new_stage:
+        contact.pipeline_stage = new_stage
+        contact.save(update_fields=['pipeline_stage'])
+
+
+@login_required
+@require_POST
+def lead_dismiss(request, assignment_id):
+    """Dismiss a lead — hides it from the feed."""
+    profile = request.user.business_profile
+    assignment = get_object_or_404(LeadAssignment, id=assignment_id, business=profile)
+    assignment.status = 'dismissed'
+    assignment.save(update_fields=['status'])
+    return JsonResponse({'ok': True})
 
 
 @login_required
@@ -164,14 +237,12 @@ def lead_bulk_action(request):
     if not ids or not action:
         return JsonResponse({'error': 'Missing params'}, status=400)
 
-    assignments = LeadAssignment.objects.filter(
-        id__in=ids, business=profile
-    )
+    assignments = LeadAssignment.objects.filter(id__in=ids, business=profile)
 
     if action == 'contacted':
         assignments.update(status='contacted', contacted_at=timezone.now())
     elif action == 'dismiss':
-        assignments.update(status='expired')
+        assignments.update(status='dismissed')
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return JsonResponse({'success': True, 'count': len(ids)})

@@ -183,7 +183,8 @@
       "Bash(venv/Scripts/python.exe manage.py run_all_monitors --list)",
       "Bash(venv/Scripts/python.exe manage.py makemigrations core --name agent_mission)",
       "Bash(venv/Scripts/pip show:*)",
-      "Bash(ls c:/Users/aturs/Documents/AI_Engineering_Course/SalesSignalAI/core/management/commands/seed_email* c:/Users/aturs/Documents/AI_Engineering_Course/SalesSignalAI/core/management/commands/seed_call*)"
+      "Bash(ls c:/Users/aturs/Documents/AI_Engineering_Course/SalesSignalAI/core/management/commands/seed_email* c:/Users/aturs/Documents/AI_Engineering_Course/SalesSignalAI/core/management/commands/seed_call*)",
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name lead_dismissed_status)"
     ],
     "additionalDirectories": [
       "c:\\Users\\aturs\\Documents\\AI_Engineering_Course\\SalesSignalAI\\core"

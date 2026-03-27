@@ -70,6 +70,7 @@ urlpatterns = [
     path('leads/', leads.lead_feed, name='lead_feed'),
     path('leads/<int:assignment_id>/', leads.lead_detail, name='lead_detail'),
     path('leads/<int:assignment_id>/status/', leads.lead_update_status, name='lead_update_status'),
+    path('leads/<int:assignment_id>/dismiss/', leads.lead_dismiss, name='lead_dismiss'),
     path('leads/bulk-action/', leads.lead_bulk_action, name='lead_bulk_action'),
 
     # Competitor Intelligence

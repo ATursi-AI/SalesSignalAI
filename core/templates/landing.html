@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales Signal AI — Humans Backed By AI | Real-Time Lead Generation for Service Businesses</title>
-    <meta name="description" content="SalesSignal AI monitors 37+ data sources 24/7 to find people who need your service right now. Public records, social channels, review sites — leads delivered in real-time with AI email campaigns and human phone follow-up. Plumbing, cleaning, electrical, HVAC, and 50+ service categories.">
-    <meta name="keywords" content="lead generation, AI lead generation, local service leads, plumber leads, cleaning leads, electrical leads, HVAC leads, contractor leads, real-time leads, building violation leads, permit leads, property sale leads, business filing leads, service business marketing, humans backed by AI">
+    <title>Sales Signal AI — You Do The Work. We Get You The Work. | Customer Acquisition for Service Businesses</title>
+    <meta name="description" content="SalesSignal AI gets you customers. AI finds people who need your service right now. Our sales team picks up the phone and books the appointment. You just show up and get paid. From $149/mo.">
+    <meta name="keywords" content="get more customers, customer acquisition, service business marketing, plumber marketing, contractor leads, AI sales, appointment setting, lead generation, humans backed by AI">
     <meta name="theme-color" content="#0D9488">
     <meta name="author" content="SalesSignal AI">
     <meta name="robots" content="index, follow">
@@ -16,8 +16,8 @@
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://salessignalai.com/">
-    <meta property="og:title" content="Sales Signal AI — Humans Backed By AI">
-    <meta property="og:description" content="We find people who need your service today and get them on the phone with you tomorrow. 37+ data sources. AI email campaigns. Human phone follow-up.">
+    <meta property="og:title" content="Sales Signal AI — You Do The Work. We Get You The Work.">
+    <meta property="og:description" content="AI finds people who need your service. Our sales team books the appointment. You show up and get paid.">
     <meta property="og:image" content="https://salessignalai.com/static/images/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -26,8 +26,8 @@
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Sales Signal AI — Humans Backed By AI">
-    <meta name="twitter:description" content="We find people who need your service today and get them on the phone with you tomorrow.">
+    <meta name="twitter:title" content="Sales Signal AI — You Do The Work. We Get You The Work.">
+    <meta name="twitter:description" content="AI finds people who need your service. Our sales team books the appointment. You show up and get paid.">
     <meta name="twitter:image" content="https://salessignalai.com/static/images/og-image.png">
 
     <!-- Favicons -->
@@ -44,6 +44,53 @@
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{% static 'css/salessignal.css' %}">
+    <style>
+    /* ── VS Comparison Section ── */
+    .vs-section { background: #0F172A; color: white; padding: 5rem 2rem; }
+    .vs-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 2rem; max-width: 960px; margin: 0 auto; align-items: start; }
+    .vs-col { padding: 2rem; border-radius: 16px; }
+    .vs-col-other { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+    .vs-col-us { background: rgba(13,148,136,0.12); border: 1px solid rgba(13,148,136,0.3); }
+    .vs-col h3 { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.2rem; margin-bottom: 1.25rem; }
+    .vs-col-other h3 { color: #94A3B8; }
+    .vs-col-us h3 { color: #2DD4BF; }
+    .vs-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 1rem; font-size: 0.92rem; line-height: 1.5; }
+    .vs-item-other .vs-icon { color: #EF4444; }
+    .vs-item-us .vs-icon { color: #10B981; }
+    .vs-divider { display: flex; align-items: center; justify-content: center; }
+    .vs-badge { background: #F59E0B; color: #0F172A; font-family: 'Exo 2', sans-serif; font-weight: 900; font-size: 1.1rem; width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+    /* ── Testimonials ── */
+    .testimonials-section { background: #FFFBEB; padding: 5rem 2rem; }
+    .testimonial-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; max-width: 1060px; margin: 0 auto 2rem; }
+    .testimonial-card { background: white; border-radius: 14px; padding: 28px; border: 1px solid #FDE68A; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .testimonial-text { font-size: 0.95rem; font-style: italic; line-height: 1.7; color: #1E293B; margin-bottom: 1rem; }
+    .testimonial-author { font-size: 0.8rem; font-weight: 600; color: #92400E; }
+    .testimonial-stars { color: #F59E0B; margin-bottom: 0.75rem; font-size: 0.85rem; }
+
+    /* ── Pick Your Level ── */
+    .level-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; max-width: 1200px; margin: 0 auto; }
+    .level-card { background: white; border-radius: 14px; border: 1px solid #E2E8F0; padding: 24px 20px; text-align: center; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
+    .level-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
+    .level-card.featured { border: 2px solid #0D9488; box-shadow: 0 4px 20px rgba(13,148,136,0.15); }
+    .level-tag { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+    .level-name { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.05rem; margin-bottom: 4px; }
+    .level-price { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.6rem; margin-bottom: 4px; }
+    .level-price span { font-size: 0.75rem; font-weight: 400; color: #64748B; }
+    .level-desc { font-size: 0.78rem; color: #64748B; margin-bottom: 14px; line-height: 1.5; }
+    .level-features { text-align: left; list-style: none; padding: 0; margin: 0 0 16px; }
+    .level-features li { font-size: 0.75rem; padding: 4px 0; color: #334155; display: flex; align-items: flex-start; gap: 6px; }
+    .level-features li i { color: #0D9488; margin-top: 2px; flex-shrink: 0; }
+    .level-popular { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #0D9488; color: white; padding: 3px 14px; border-radius: 20px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+
+    @media (max-width: 1024px) { .level-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 768px) {
+        .vs-grid { grid-template-columns: 1fr; gap: 1rem; }
+        .vs-divider { padding: 0.5rem 0; }
+        .testimonial-grid { grid-template-columns: 1fr; }
+        .level-grid { grid-template-columns: 1fr; max-width: 400px; }
+    }
+    </style>
 </head>
 <body class="landing-page">
 
@@ -55,7 +102,7 @@
         </a>
         <div class="landing-nav-links" id="landing-nav-links">
             <a href="#how-it-works">How it Works</a>
-            <a href="#features">Features</a>
+            <a href="#levels">Pricing</a>
             <div class="nav-dropdown">
                 <a href="{% url 'industry_index' %}" class="nav-dropdown-trigger">Industries <i class="bi bi-chevron-down" style="font-size: 0.7rem;"></i></a>
                 <div class="nav-dropdown-menu">
@@ -74,7 +121,6 @@
                     </div>
                 </div>
             </div>
-            <a href="#pricing">Pricing</a>
             <a href="{% url 'blog_list' %}">Blog</a>
             <a href="tel:+18886315426" class="nav-phone-link"><i class="bi bi-telephone-fill"></i> (888) 631-5426</a>
             <a href="{% url 'login' %}" class="btn-secondary btn-sm">Log In</a>
@@ -88,9 +134,8 @@
     <!-- Mobile nav overlay -->
     <div class="landing-mobile-menu" id="landing-mobile-menu">
         <a href="#how-it-works" onclick="closeLandingMenu()">How it Works</a>
-        <a href="#features" onclick="closeLandingMenu()">Features</a>
+        <a href="#levels" onclick="closeLandingMenu()">Pricing</a>
         <a href="{% url 'industry_index' %}" onclick="closeLandingMenu()">Industries</a>
-        <a href="#pricing" onclick="closeLandingMenu()">Pricing</a>
         <a href="{% url 'blog_list' %}" onclick="closeLandingMenu()">Blog</a>
         <a href="tel:+18886315426" style="color: #0F9D7A; font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; padding: 10px 0;">
             <i class="bi bi-telephone-fill"></i> (888) 631-5426
@@ -101,10 +146,11 @@
         </div>
     </div>
 
-    <!-- Hero -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- HERO -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <section class="hero-section">
         <div class="hero-bg-glow"></div>
-        <!-- Radar pulse rings -->
         <div class="signal-rings">
             <div class="signal-ring"></div>
             <div class="signal-ring"></div>
@@ -112,21 +158,24 @@
             <div class="signal-ring"></div>
         </div>
         <div class="animate-fade-in-up">
-            <h1 class="hero-brand-title">Sales Signal AI</h1>
+            <h1 class="hero-brand-title">You Do The Work.<br>We Get You The Work.</h1>
             <p class="hero-tagline">Humans Backed By AI <span class="hero-tagline-bullet">&bull;</span> <span class="hero-tagline-alt">AI Backed By Humans</span></p>
             <p class="hero-scroll-text">
-                SalesSignal monitors the internet 24/7 for people actively requesting services in your area.
-                When someone posts "I need a <span class="scroll-word" id="scroll-word">Plumber</span> ASAP" &mdash; you know about it in seconds, not days.
+                AI finds people who need a <span class="scroll-word" id="scroll-word">Plumber</span> right now.
+                Our sales team picks up the phone and gets them on your calendar. You just show up and get paid.
             </p>
-            <div class="hero-cta">
-                <a href="#live-preview" class="btn-primary-glow" style="padding: 0.85rem 2.5rem; font-size: 1rem;">
-                    See It In Action
+            <div class="hero-cta" style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="#how-it-works" class="btn-secondary" style="padding: 0.85rem 2rem; font-size: 1rem;">
+                    See How It Works
+                </a>
+                <a href="{% url 'signup' %}" class="btn-primary-glow" style="padding: 0.85rem 2.5rem; font-size: 1rem;">
+                    Get Started
                 </a>
             </div>
             <div class="hero-stats">
                 <div class="hero-stat">
                     <div class="hero-stat-value stat-coral" data-count="37">0</div>
-                    <div class="hero-stat-label">Lead Sources</div>
+                    <div class="hero-stat-label">Data Sources</div>
                 </div>
                 <div class="hero-stat">
                     <div class="hero-stat-value stat-blue" data-count="24" data-suffix="/7">0</div>
@@ -140,107 +189,56 @@
         </div>
     </section>
 
-    <!-- Live Lead Preview -->
-    <section class="live-preview-section" id="live-preview">
-        <div class="section-label mb-2 animate-on-scroll" style="color: #DC2626;">Live Preview</div>
-        <h2 class="animate-on-scroll" style="font-family: 'Exo 2', sans-serif; font-size: 2.25rem; text-align: center; margin-bottom: 0.75rem;">This Is What Your Dashboard Looks Like</h2>
-        <p class="animate-on-scroll" style="color: #4a4a68; text-align: center; margin-bottom: 3rem; font-size: 1.05rem;">Real leads, detected in real-time, from sources your competitors don't monitor.</p>
-
-        <div class="preview-lead-stream animate-on-scroll">
-            <!-- Lead 1: Building violation -->
-            <div class="preview-lead-card">
-                <div class="preview-lead-left">
-                    <span class="preview-pill preview-pill-coral"><i class="bi bi-exclamation-triangle-fill"></i> Violation</span>
-                    <span class="preview-urgency preview-urgency-hot"><i class="bi bi-fire"></i> HOT</span>
-                </div>
-                <div class="preview-lead-body">
-                    <div class="preview-lead-title">DOB Violation — $10,000 Penalty</div>
-                    <div class="preview-lead-detail">Owner: <span class="redacted-blur">Margaret Chen</span> &middot; 41-15 Kissena Blvd, Flushing, Queens NY</div>
-                    <div class="preview-lead-detail">Failure to maintain building facade. Must cure within 60 days or fines double.</div>
-                </div>
-                <div class="preview-lead-time">3 min ago</div>
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- WHAT MAKES US DIFFERENT (VS Section) -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <section class="vs-section">
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <h2 class="animate-on-scroll" style="font-family: 'Exo 2', sans-serif; font-weight: 900; font-size: 2.2rem; color: white; margin-bottom: 0.5rem;">Every Other Company Replaces Humans With AI.<br>We Put The Human Back.</h2>
+        </div>
+        <div class="vs-grid animate-on-scroll">
+            <div class="vs-col vs-col-other">
+                <h3><i class="bi bi-x-circle" style="color:#EF4444;"></i> Other Platforms</h3>
+                <div class="vs-item vs-item-other"><span class="vs-icon"><i class="bi bi-x-lg"></i></span> Give you software &mdash; YOU do the work</div>
+                <div class="vs-item vs-item-other"><span class="vs-icon"><i class="bi bi-x-lg"></i></span> Shared leads sold to 5 competitors</div>
+                <div class="vs-item vs-item-other"><span class="vs-icon"><i class="bi bi-x-lg"></i></span> AI chatbots that frustrate your customers</div>
+                <div class="vs-item vs-item-other"><span class="vs-icon"><i class="bi bi-x-lg"></i></span> "Here's a list of leads. Good luck."</div>
             </div>
-
-            <!-- Lead 2: Nextdoor post -->
-            <div class="preview-lead-card">
-                <div class="preview-lead-left">
-                    <span class="preview-pill preview-pill-green"><i class="bi bi-people-fill"></i> Nextdoor</span>
-                    <span class="preview-urgency preview-urgency-hot"><i class="bi bi-fire"></i> HOT</span>
-                </div>
-                <div class="preview-lead-body">
-                    <div class="preview-lead-title">"Looking for a plumber for 3 things..."</div>
-                    <div class="preview-lead-detail">Author: <span class="redacted-blur">David R.</span> &middot; Bay Ridge, Brooklyn NY</div>
-                    <div class="preview-lead-detail">Need someone who can fix a leaky faucet, replace a garbage disposal, and check the water heater. Recommendations?</div>
-                </div>
-                <div class="preview-lead-time">12 min ago</div>
-            </div>
-
-            <!-- Lead 3: Business filing -->
-            <div class="preview-lead-card">
-                <div class="preview-lead-left">
-                    <span class="preview-pill preview-pill-blue"><i class="bi bi-building"></i> Filing</span>
-                    <span class="preview-urgency preview-urgency-warm"><i class="bi bi-circle-fill"></i> WARM</span>
-                </div>
-                <div class="preview-lead-body">
-                    <div class="preview-lead-title">New LLC — Sunrise Kitchen & Bath Inc.</div>
-                    <div class="preview-lead-detail">Filed: <strong>Nassau County</strong> &middot; Domestic Business Corporation</div>
-                    <div class="preview-lead-detail">New business opening — needs cleaning, pest control, signage, insurance, HVAC maintenance.</div>
-                </div>
-                <div class="preview-lead-time">28 min ago</div>
-            </div>
-
-            <!-- Lead 4: Health inspection -->
-            <div class="preview-lead-card">
-                <div class="preview-lead-left">
-                    <span class="preview-pill preview-pill-purple"><i class="bi bi-clipboard2-pulse"></i> Health</span>
-                    <span class="preview-urgency preview-urgency-hot"><i class="bi bi-fire"></i> HOT</span>
-                </div>
-                <div class="preview-lead-body">
-                    <div class="preview-lead-title">Critical Health Violation — Score 42</div>
-                    <div class="preview-lead-detail">Restaurant: <span class="redacted-blur">Golden Dragon Palace</span> &middot; 188 Canal St, Manhattan NY</div>
-                    <div class="preview-lead-detail">Evidence of mice, improper food temps, grease trap not maintained. Needs pest control, deep cleaning, plumbing.</div>
-                </div>
-                <div class="preview-lead-time">1 hr ago</div>
-            </div>
-
-            <!-- Lead 5: Property sale -->
-            <div class="preview-lead-card">
-                <div class="preview-lead-left">
-                    <span class="preview-pill preview-pill-amber"><i class="bi bi-house-door-fill"></i> Sale</span>
-                    <span class="preview-urgency preview-urgency-warm"><i class="bi bi-circle-fill"></i> WARM</span>
-                </div>
-                <div class="preview-lead-body">
-                    <div class="preview-lead-title">Property Sold — $750,000</div>
-                    <div class="preview-lead-detail">Buyer: <span class="redacted-blur">James &amp; Lisa Kowalski</span> &middot; 842 Union St, Park Slope, Brooklyn NY</div>
-                    <div class="preview-lead-detail">New homeowner needs: movers, painters, cleaners, landscapers, locksmiths, pest control.</div>
-                </div>
-                <div class="preview-lead-time">2 hr ago</div>
+            <div class="vs-divider"><div class="vs-badge">VS</div></div>
+            <div class="vs-col vs-col-us">
+                <h3><i class="bi bi-check-circle-fill" style="color:#10B981;"></i> SalesSignal AI</h3>
+                <div class="vs-item vs-item-us"><span class="vs-icon"><i class="bi bi-check-lg"></i></span> We find leads AND close them for you</div>
+                <div class="vs-item vs-item-us"><span class="vs-icon"><i class="bi bi-check-lg"></i></span> Exclusive leads nobody else sees</div>
+                <div class="vs-item vs-item-us"><span class="vs-icon"><i class="bi bi-check-lg"></i></span> Real humans who pick up the phone</div>
+                <div class="vs-item vs-item-us"><span class="vs-icon"><i class="bi bi-check-lg"></i></span> "Here's your next appointment. Show up and get paid."</div>
             </div>
         </div>
     </section>
 
-    <!-- Pipeline: How Your Next Customer Finds You -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- HOW IT WORKS -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <section class="pipeline-section" id="how-it-works">
         <div class="section-label mb-2 animate-on-scroll" style="color: #3B82F6;">How It Works</div>
-        <h2 class="section-title animate-on-scroll">How Your Next Customer Finds You</h2>
+        <h2 class="section-title animate-on-scroll">Three Steps To A Full Calendar</h2>
 
         <div class="pipeline-flow animate-on-scroll">
             <div class="pipeline-stage pipeline-stage-detect">
-                <div class="pipeline-stage-number">Step 01 &mdash; Detect</div>
-                <h3>We Find Them</h3>
-                <p>Our AI monitors public records, social channels, and review sites 24/7. When someone posts "I need a plumber" or a building gets a violation, we catch it in minutes.</p>
+                <div class="pipeline-stage-number">Step 01</div>
+                <h3>AI Finds Them</h3>
+                <p>Our AI monitors 37+ sources 24/7 &mdash; public records, social media, review sites. When someone needs your service, we know about it in minutes.</p>
             </div>
             <div class="pipeline-connector"><i class="bi bi-arrow-right"></i></div>
             <div class="pipeline-stage pipeline-stage-contact">
-                <div class="pipeline-stage-number" style="color: #F59E0B;">Step 02 &mdash; Contact</div>
-                <h3>We Reach Out</h3>
-                <p>Personalized email outreach reaches them before they start searching Google. AI writes it. You approve it. Or let it fly on autopilot.</p>
+                <div class="pipeline-stage-number" style="color: #F59E0B;">Step 02</div>
+                <h3>Humans Reach Out</h3>
+                <p>Personalized emails, video messages, and real phone calls. Not robo-calls. Not spam. Real conversations with real people who know how to sell.</p>
             </div>
             <div class="pipeline-connector"><i class="bi bi-arrow-right"></i></div>
             <div class="pipeline-stage pipeline-stage-connect">
-                <div class="pipeline-stage-number" style="color: #10B981;">Step 03 &mdash; Connect</div>
-                <h3>We Call Them</h3>
-                <p>Our sales team follows up by phone. Real humans, real conversations. We book the appointment. You show up and close.</p>
+                <div class="pipeline-stage-number" style="color: #10B981;">Step 03</div>
+                <h3>You Get Paid</h3>
+                <p>We book the appointment. You show up, do what you do best, and get paid. That's it. No chasing. No cold calling. No wondering where the next job comes from.</p>
             </div>
         </div>
 
@@ -249,107 +247,229 @@
         </div>
     </section>
 
-    <!-- Social Monitoring: The Mystery Angle -->
-    <section class="social-monitoring-section animate-on-scroll">
-        <div class="section-inner">
-            <div class="social-icon-badge"><i class="bi bi-eye-fill"></i></div>
-            <h2>Leads From Places Your Competitors Don't Look</h2>
-            <p>
-                Every day, thousands of people ask their neighbors "does anyone know a good plumber?" on community forums and social platforms. Our systems detect these requests across dozens of private channels in real-time. Which channels? That's proprietary &mdash; and it's why your competitors won't see these leads first.
-            </p>
-        </div>
-    </section>
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- LEADS YOUR COMPETITORS CAN'T SEE -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <section class="live-preview-section" id="live-preview">
+        <div class="section-label mb-2 animate-on-scroll" style="color: #DC2626;">Live Preview</div>
+        <h2 class="animate-on-scroll" style="font-family: 'Exo 2', sans-serif; font-size: 2.25rem; text-align: center; margin-bottom: 0.75rem;">Leads Your Competitors Can't See</h2>
+        <p class="animate-on-scroll" style="color: #4a4a68; text-align: center; margin-bottom: 3rem; font-size: 1.05rem;">Real leads, detected in real-time, from sources nobody else monitors.</p>
 
-    <!-- Public Records: Leads Others Can't See -->
-    <section class="scenarios-section" id="leads">
-        <div class="section-label mb-2 animate-on-scroll" style="color: #F59E0B; text-align: center;">Public Records</div>
-        <h2 class="section-title animate-on-scroll">Leads Others Can't See</h2>
+        <div class="preview-lead-stream animate-on-scroll">
+            <div class="preview-lead-card">
+                <div class="preview-lead-left">
+                    <span class="preview-pill preview-pill-coral"><i class="bi bi-exclamation-triangle-fill"></i> Violation</span>
+                    <span class="preview-urgency preview-urgency-hot"><i class="bi bi-fire"></i> HOT</span>
+                </div>
+                <div class="preview-lead-body">
+                    <div class="preview-lead-title">DOB Violation &mdash; $10,000 Penalty</div>
+                    <div class="preview-lead-detail">Owner: <span class="redacted-blur">Margaret C.</span> &middot; 41-15 Kissena Blvd, Flushing, Queens NY</div>
+                    <div class="preview-lead-detail">They need a contractor NOW. You had their name at 6am &mdash; before the paper notice arrived.</div>
+                </div>
+                <div class="preview-lead-time">3 min ago</div>
+            </div>
 
-        <div class="scenario-cards">
-            <div class="scenario-card animate-on-scroll">
-                <div class="scenario-icon scenario-icon-coral"><i class="bi bi-exclamation-triangle"></i></div>
-                <p><strong>A building owner in Queens just got a $10,000 violation.</strong> They must hire a contractor or the fines double. You had their name and address at 6am.</p>
+            <div class="preview-lead-card">
+                <div class="preview-lead-left">
+                    <span class="preview-pill preview-pill-green"><i class="bi bi-people-fill"></i> Nextdoor</span>
+                    <span class="preview-urgency preview-urgency-hot"><i class="bi bi-fire"></i> HOT</span>
+                </div>
+                <div class="preview-lead-body">
+                    <div class="preview-lead-title">"Looking for a plumber for 3 things..."</div>
+                    <div class="preview-lead-detail">Author: <span class="redacted-blur">David R.</span> &middot; Bay Ridge, Brooklyn NY</div>
+                    <div class="preview-lead-detail">Leaky faucet, garbage disposal, water heater. They asked their neighbors. You're in their inbox before anyone replies.</div>
+                </div>
+                <div class="preview-lead-time">12 min ago</div>
             </div>
-            <div class="scenario-card animate-on-scroll">
-                <div class="scenario-icon scenario-icon-amber"><i class="bi bi-shop"></i></div>
-                <p><strong>A new restaurant just filed for a liquor license.</strong> They'll need cleaning, pest control, kitchen equipment, signage, insurance. You're in their inbox before they open the doors.</p>
-            </div>
-            <div class="scenario-card animate-on-scroll">
-                <div class="scenario-icon scenario-icon-blue"><i class="bi bi-house-door"></i></div>
-                <p><strong>A property just sold for $800,000.</strong> The new owner needs movers, painters, cleaners, landscapers, locksmiths. You're the first call they get.</p>
-            </div>
-        </div>
-    </section>
 
-    <!-- Features: Everything You Need -->
-    <section class="features-section" id="features">
-        <div class="text-center mb-4">
-            <div class="section-label mb-2 animate-on-scroll" style="color: #8B5CF6;">Powerful Features</div>
-            <h2 class="animate-on-scroll" style="font-family: 'Exo 2', sans-serif; font-size: 2.25rem;">Everything You Need to Dominate Your Market</h2>
-        </div>
-        <div class="features-grid">
-            <div class="feature-card glass-card animate-on-scroll">
-                <div class="feature-icon coral"><i class="bi bi-fire"></i></div>
-                <h4>Real-Time Lead Alerts</h4>
-                <p>Get notified within seconds when someone in your area needs your service. HOT leads pulse with urgency so you never miss a time-sensitive opportunity.</p>
+            <div class="preview-lead-card">
+                <div class="preview-lead-left">
+                    <span class="preview-pill preview-pill-blue"><i class="bi bi-building"></i> Filing</span>
+                    <span class="preview-urgency preview-urgency-warm"><i class="bi bi-circle-fill"></i> WARM</span>
+                </div>
+                <div class="preview-lead-body">
+                    <div class="preview-lead-title">New LLC &mdash; Sunrise Kitchen & Bath Inc.</div>
+                    <div class="preview-lead-detail">Filed: <strong>Nassau County</strong> &middot; Domestic Business Corporation</div>
+                    <div class="preview-lead-detail">New restaurant opening. Needs cleaning, pest control, signage, insurance, HVAC. You're there before they open the doors.</div>
+                </div>
+                <div class="preview-lead-time">28 min ago</div>
             </div>
-            <div class="feature-card glass-card animate-on-scroll">
-                <div class="feature-icon blue"><i class="bi bi-robot"></i></div>
-                <h4>AI-Powered Responses</h4>
-                <p>Claude AI analyzes each lead and generates a personalized response you can copy-paste. Sound professional and relevant every single time.</p>
-            </div>
-            <div class="feature-card glass-card animate-on-scroll">
-                <div class="feature-icon emerald"><i class="bi bi-geo-alt-fill"></i></div>
-                <h4>Territory Intelligence</h4>
-                <p>See demand heat maps, know which neighborhoods generate the most leads, and track your coverage area with precision.</p>
-            </div>
-            <div class="feature-card glass-card animate-on-scroll">
-                <div class="feature-icon amber"><i class="bi bi-binoculars-fill"></i></div>
-                <h4>Competitor Tracking</h4>
-                <p>Monitor competitor reviews in real-time. When they get a bad review, you get an opportunity alert to win that unsatisfied customer.</p>
-            </div>
-            <div class="feature-card glass-card animate-on-scroll">
-                <div class="feature-icon purple"><i class="bi bi-envelope-at-fill"></i></div>
-                <h4>Outreach Campaigns</h4>
-                <p>Build prospect lists from Google Maps, generate AI-personalized cold emails, and run automated follow-up sequences.</p>
-            </div>
-            <div class="feature-card glass-card animate-on-scroll">
-                <div class="feature-icon teal"><i class="bi bi-bar-chart-fill"></i></div>
-                <h4>Performance Analytics</h4>
-                <p>Track lead volume, response rates, conversion funnels, and revenue. Know exactly which platforms and areas drive your best results.</p>
+
+            <div class="preview-lead-card">
+                <div class="preview-lead-left">
+                    <span class="preview-pill preview-pill-amber"><i class="bi bi-house-door-fill"></i> Sale</span>
+                    <span class="preview-urgency preview-urgency-warm"><i class="bi bi-circle-fill"></i> WARM</span>
+                </div>
+                <div class="preview-lead-body">
+                    <div class="preview-lead-title">Property Sold &mdash; $750,000</div>
+                    <div class="preview-lead-detail">Buyer: <span class="redacted-blur">J. & L. Kowalski</span> &middot; 842 Union St, Park Slope, Brooklyn NY</div>
+                    <div class="preview-lead-detail">New homeowner needs movers, painters, cleaners, landscapers, locksmiths. You're the first call they get.</div>
+                </div>
+                <div class="preview-lead-time">2 hr ago</div>
             </div>
         </div>
     </section>
 
-    <!-- Industries -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- THE HUMAN DIFFERENCE -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <section class="testimonials-section">
+        <div style="text-align: center; margin-bottom: 2.5rem;">
+            <div class="section-label mb-2 animate-on-scroll" style="color: #92400E;">The Human Difference</div>
+            <h2 class="animate-on-scroll" style="font-family: 'Exo 2', sans-serif; font-size: 2.25rem; color: #1E293B;">In A World Of Chatbots And Hold Music, We Answer The Phone.</h2>
+        </div>
+        <div class="testimonial-grid animate-on-scroll">
+            <div class="testimonial-card">
+                <div class="testimonial-stars"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                <div class="testimonial-text">"I was tired of buying leads and getting voicemail. SalesSignal's team actually calls them and books the appointment. I just show up."</div>
+                <div class="testimonial-author">&mdash; Plumber, Queens NY</div>
+            </div>
+            <div class="testimonial-card">
+                <div class="testimonial-stars"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                <div class="testimonial-text">"They found 3 customers in my first week. The AI found the leads, their team made the calls. I didn't lift a finger."</div>
+                <div class="testimonial-author">&mdash; Commercial Cleaner, Nassau County</div>
+            </div>
+            <div class="testimonial-card">
+                <div class="testimonial-stars"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                <div class="testimonial-text">"I went from chasing leads to having a full calendar. Their sales team is better than mine."</div>
+                <div class="testimonial-author">&mdash; HVAC Tech, Brooklyn NY</div>
+            </div>
+        </div>
+        <p class="animate-on-scroll" style="text-align: center; color: #78350F; font-size: 1.05rem; font-weight: 500; max-width: 700px; margin: 0 auto;">Our salespeople are trained closers with 20+ years of experience. They don't just make calls &mdash; they sell.</p>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- PICK YOUR LEVEL -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <section class="pricing-section" id="levels">
+        <div class="section-label mb-2 animate-on-scroll" style="color: #F59E0B;">Pick Your Level</div>
+        <h2 class="animate-on-scroll" style="font-family: 'Exo 2', sans-serif; font-size: 2.25rem;">Start With AI. Scale Up To Humans. Move Up When You're Ready.</h2>
+        <p class="animate-on-scroll" style="color: #4a4a68; margin-bottom: 3rem; font-size: 1.05rem;">One new customer pays for 3&ndash;6 months. Every tier includes a money-back guarantee.</p>
+
+        <div class="level-grid animate-on-scroll">
+            <!-- Tier 1: Email Campaign -->
+            <div class="level-card">
+                <div class="level-tag" style="background:#DBEAFE;color:#1D4ED8;">AI Only</div>
+                <div class="level-name">Email Campaign</div>
+                <div class="level-price">$149<span>/mo</span></div>
+                <div class="level-desc">AI writes and sends email campaigns to your prospects.</div>
+                <ul class="level-features">
+                    <li><i class="bi bi-check2"></i> AI-written email sequences (3-5 emails)</li>
+                    <li><i class="bi bi-check2"></i> Open &amp; reply tracking</li>
+                    <li><i class="bi bi-check2"></i> You provide leads or buy a list</li>
+                    <li><i class="bi bi-check2"></i> You handle responses</li>
+                    <li><i class="bi bi-check2"></i> Add video emails: +$50/mo</li>
+                </ul>
+                <a href="/signup/?plan=email" class="btn-secondary w-100" style="justify-content:center;">Get Started</a>
+            </div>
+
+            <!-- Tier 2: Campaign + Leads -->
+            <div class="level-card featured">
+                <div class="level-popular">Most Popular</div>
+                <div class="level-tag" style="background:#CCFBF1;color:#0D9488;">AI + Data</div>
+                <div class="level-name">Campaign + Leads</div>
+                <div class="level-price">$349<span>/mo</span></div>
+                <div class="level-desc">We find the leads AND run the campaigns.</div>
+                <ul class="level-features">
+                    <li><i class="bi bi-check2"></i> Everything in Email Campaign</li>
+                    <li><i class="bi bi-check2"></i> Leads from 37+ real-time sources</li>
+                    <li><i class="bi bi-check2"></i> AI enrichment (phone, email, name)</li>
+                    <li><i class="bi bi-check2"></i> CRM dashboard &amp; pipeline</li>
+                    <li><i class="bi bi-check2"></i> Territory-based filtering</li>
+                </ul>
+                <a href="/signup/?plan=leads" class="btn-primary-glow w-100" style="justify-content:center;">Get Started</a>
+            </div>
+
+            <!-- Tier 3: Full Outreach -->
+            <div class="level-card">
+                <div class="level-tag" style="background:#FEF3C7;color:#92400E;">AI + Outreach</div>
+                <div class="level-name">Full Outreach</div>
+                <div class="level-price">$649<span>/mo</span></div>
+                <div class="level-desc">AI emails, texts, video, and lead qualifying.</div>
+                <ul class="level-features">
+                    <li><i class="bi bi-check2"></i> Everything in Campaign + Leads</li>
+                    <li><i class="bi bi-check2"></i> SMS/text follow-up campaigns</li>
+                    <li><i class="bi bi-check2"></i> Personalized video emails</li>
+                    <li><i class="bi bi-check2"></i> AI reply handling &amp; qualification</li>
+                    <li><i class="bi bi-check2"></i> Multi-territory coverage</li>
+                </ul>
+                <a href="/signup/?plan=outreach" class="btn-secondary w-100" style="justify-content:center;">Get Started</a>
+            </div>
+
+            <!-- Tier 4: Human Power -->
+            <div class="level-card">
+                <div class="level-tag" style="background:#FEE2E2;color:#DC2626;">AI + Humans</div>
+                <div class="level-name">Human Power</div>
+                <div class="level-price">$1,500<span>+/mo</span></div>
+                <div class="level-desc">Real salespeople call, qualify, and book appointments.</div>
+                <ul class="level-features">
+                    <li><i class="bi bi-check2"></i> Everything in Full Outreach</li>
+                    <li><i class="bi bi-check2"></i> Dedicated human callers</li>
+                    <li><i class="bi bi-check2"></i> Live lead qualifying</li>
+                    <li><i class="bi bi-check2"></i> Appointment setting</li>
+                    <li><i class="bi bi-check2"></i> Weekly strategy calls</li>
+                </ul>
+                <a href="/signup/" class="btn-secondary w-100" style="justify-content:center;">Contact Us</a>
+            </div>
+
+            <!-- Tier 5: Full Service -->
+            <div class="level-card">
+                <div class="level-tag" style="background:#E0E7FF;color:#4338CA;">Your Sales Army</div>
+                <div class="level-name">Full Service</div>
+                <div class="level-price" style="font-size:1.3rem;">Custom</div>
+                <div class="level-desc">We ARE your sales department.</div>
+                <ul class="level-features">
+                    <li><i class="bi bi-check2"></i> Everything in Human Power</li>
+                    <li><i class="bi bi-check2"></i> Outbound cold calling</li>
+                    <li><i class="bi bi-check2"></i> Live call transfer of hot leads</li>
+                    <li><i class="bi bi-check2"></i> We close deals on your behalf</li>
+                    <li><i class="bi bi-check2"></i> Custom scripts &amp; training</li>
+                    <li><i class="bi bi-check2"></i> Full reporting &amp; analytics</li>
+                </ul>
+                <a href="/signup/" class="btn-secondary w-100" style="justify-content:center;">Contact Us</a>
+            </div>
+        </div>
+
+        <div class="pricing-roi animate-on-scroll">
+            <strong>One new customer from our leads pays for 3&ndash;6 months of SalesSignalAI.</strong>
+        </div>
+        <div class="pricing-setup-note animate-on-scroll">
+            All plans include a one-time $299 setup and onboarding fee.
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- BUILT FOR SERVICE BUSINESSES -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <section class="industries-section">
-        <h2 class="animate-on-scroll">Built For Local Service Businesses</h2>
+        <h2 class="animate-on-scroll">Built For Service Businesses</h2>
+        <p class="animate-on-scroll" style="text-align: center; color: #4a4a68; margin-bottom: 2rem; font-size: 1.05rem;">From plumbers to insurance agents &mdash; if you need customers, we get them.</p>
         <div style="overflow: hidden;">
             <div class="industry-ticker">
-                <span class="industry-tag">Commercial Cleaning</span>
                 <span class="industry-tag">Plumbing</span>
                 <span class="industry-tag">Electrical</span>
                 <span class="industry-tag">HVAC</span>
+                <span class="industry-tag">Commercial Cleaning</span>
                 <span class="industry-tag">General Contracting</span>
+                <span class="industry-tag">Roofing</span>
                 <span class="industry-tag">Pest Control</span>
                 <span class="industry-tag">Landscaping</span>
-                <span class="industry-tag">Roofing</span>
                 <span class="industry-tag">Moving</span>
                 <span class="industry-tag">Painting</span>
                 <span class="industry-tag">Locksmith</span>
-                <span class="industry-tag">Window Cleaning</span>
-                <span class="industry-tag">Commercial Cleaning</span>
+                <span class="industry-tag">Insurance</span>
+                <span class="industry-tag">Mortgage</span>
+                <span class="industry-tag">Dentist</span>
+                <span class="industry-tag">Lawyer</span>
                 <span class="industry-tag">Plumbing</span>
                 <span class="industry-tag">Electrical</span>
                 <span class="industry-tag">HVAC</span>
+                <span class="industry-tag">Commercial Cleaning</span>
                 <span class="industry-tag">General Contracting</span>
+                <span class="industry-tag">Roofing</span>
                 <span class="industry-tag">Pest Control</span>
                 <span class="industry-tag">Landscaping</span>
-                <span class="industry-tag">Roofing</span>
                 <span class="industry-tag">Moving</span>
-                <span class="industry-tag">Painting</span>
-                <span class="industry-tag">Locksmith</span>
-                <span class="industry-tag">Window Cleaning</span>
             </div>
         </div>
     </section>
@@ -365,114 +485,25 @@
         </div>
     </section>
 
-    <!-- Pricing -->
-    <section class="pricing-section" id="pricing">
-        <div class="section-label mb-2 animate-on-scroll" style="color: #F59E0B;">Pricing</div>
-        <h2 class="animate-on-scroll" style="font-family: 'Exo 2', sans-serif; font-size: 2.25rem;">Plans Built Around ROI</h2>
-        <p class="animate-on-scroll" style="color: #4a4a68; margin-bottom: 3rem; font-size: 1.05rem;">One new customer from our leads pays for 3&ndash;6 months of SalesSignalAI.</p>
-
-        <div class="pricing-grid pricing-grid-5 animate-on-scroll">
-            <!-- Tier 1: Outreach -->
-            <div class="pricing-card pricing-card-outreach">
-                <div class="pricing-name" style="color: #3B82F6;">Outreach</div>
-                <div class="pricing-tagline">"Reach your market on autopilot."</div>
-                <div class="pricing-price">$149<span>/mo</span></div>
-                <div class="pricing-desc">AI-powered email campaigns to your leads. You provide the list, we handle the outreach.</div>
-                <ul class="pricing-features">
-                    <li><i class="bi bi-check-circle-fill"></i> AI email campaigns (3-email sequences)</li>
-                    <li><i class="bi bi-check-circle-fill"></i> Dashboard access (email tools)</li>
-                    <li><i class="bi bi-check-circle-fill"></i> You provide your leads or buy a list</li>
-                    <li><i class="bi bi-check-circle-fill"></i> You handle replies</li>
-                </ul>
-                <div class="pricing-setup">Setup fee: $299</div>
-                <a href="/signup/" class="btn-secondary w-100" style="justify-content: center;">Get Started</a>
-            </div>
-
-            <!-- Tier 2: Growth (MOST POPULAR) -->
-            <div class="pricing-card pricing-card-growth featured">
-                <div class="pricing-name">Growth</div>
-                <div class="pricing-tagline">"Find and reach your next customer."</div>
-                <div class="pricing-price">$349<span>/mo</span></div>
-                <div class="pricing-desc">Full lead intelligence + AI outreach. The complete package for growing businesses.</div>
-                <ul class="pricing-features">
-                    <li><i class="bi bi-check-circle-fill"></i> Everything in Outreach</li>
-                    <li><i class="bi bi-check-circle-fill"></i> Lead intelligence from 37+ sources</li>
-                    <li><i class="bi bi-check-circle-fill"></i> CRM &amp; sales pipeline</li>
-                    <li><i class="bi bi-check-circle-fill"></i> Competitor monitoring &amp; review alerts</li>
-                    <li><i class="bi bi-check-circle-fill"></i> Territory-based lead filtering</li>
-                </ul>
-                <div class="pricing-setup">Setup fee: $299</div>
-                <a href="/signup/" class="btn-primary-glow w-100" style="justify-content: center;">Get Started</a>
-            </div>
-
-            <!-- Tier 3: Dominate -->
-            <div class="pricing-card pricing-card-dominate">
-                <div class="pricing-name" style="color: #F59E0B;">Dominate</div>
-                <div class="pricing-tagline">"We handle the follow-up. You close the deal."</div>
-                <div class="pricing-price">$649<span>/mo</span></div>
-                <div class="pricing-desc">AI reply handling, SMS follow-up, auto-booking. Full autopilot lead machine.</div>
-                <ul class="pricing-features">
-                    <li><i class="bi bi-check-circle-fill"></i> Everything in Growth</li>
-                    <li><i class="bi bi-check-circle-fill"></i> AI reply handling &amp; lead qualification</li>
-                    <li><i class="bi bi-check-circle-fill"></i> SMS/text follow-up (via SignalWire)</li>
-                    <li><i class="bi bi-check-circle-fill"></i> Calendly integration for auto-booking</li>
-                    <li><i class="bi bi-check-circle-fill"></i> Multi-territory coverage</li>
-                </ul>
-                <div class="pricing-setup">Setup fee: $299</div>
-                <a href="/signup/" class="btn-secondary w-100" style="justify-content: center;">Get Started</a>
-            </div>
-
-            <!-- Tier 4: Concierge -->
-            <div class="pricing-card pricing-card-concierge">
-                <div class="pricing-name" style="color: #DC2626;">Concierge</div>
-                <div class="pricing-tagline">"We sell for you."</div>
-                <div class="pricing-price pricing-price-custom">Custom</div>
-                <div class="pricing-desc">Dedicated human sales team. Real phone calls, real appointments, real results.</div>
-                <ul class="pricing-features">
-                    <li><i class="bi bi-check-circle-fill"></i> Everything in Dominate</li>
-                    <li><i class="bi bi-check-circle-fill"></i> Dedicated human phone follow-up</li>
-                    <li><i class="bi bi-check-circle-fill"></i> Outbound appointment setting</li>
-                    <li><i class="bi bi-check-circle-fill"></i> Weekly strategy calls</li>
-                </ul>
-                <a href="/signup/" class="btn-secondary w-100" style="justify-content: center;">Contact Us</a>
-            </div>
-
-            <!-- Tier 5: Custom Outbound Programs -->
-            <div class="pricing-card pricing-card-custom">
-                <div class="pricing-name" style="color: #8B5CF6;">Custom Outbound</div>
-                <div class="pricing-tagline">"Full-service sales development."</div>
-                <div class="pricing-price pricing-price-custom">Custom</div>
-                <div class="pricing-desc">For multi-location businesses and franchises. Your own dedicated sales team.</div>
-                <ul class="pricing-features">
-                    <li><i class="bi bi-check-circle-fill"></i> Dedicated sales team with custom scripts</li>
-                    <li><i class="bi bi-check-circle-fill"></i> Multiple territories</li>
-                    <li><i class="bi bi-check-circle-fill"></i> Full reporting &amp; analytics</li>
-                    <li><i class="bi bi-check-circle-fill"></i> Multi-location &amp; franchise support</li>
-                </ul>
-                <a href="/signup/" class="btn-secondary w-100" style="justify-content: center;">Contact Us</a>
-            </div>
-        </div>
-
-        <div class="pricing-roi animate-on-scroll">
-            <strong>One new customer from our leads pays for 3&ndash;6 months of SalesSignalAI.</strong>
-        </div>
-        <div class="pricing-setup-note animate-on-scroll">
-            All plans include a one-time $299 setup and onboarding fee.
-        </div>
-    </section>
-
-    <!-- Final CTA -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- FINAL CTA -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <section class="cta-section">
         <div class="animate-on-scroll" style="position: relative; z-index: 1;">
             <h2 style="font-family: 'Exo 2', sans-serif; font-size: 2.5rem; margin-bottom: 1rem; color: #1a1a2e;">
-                Ready To Never Miss A Sale Again?
+                Ready To Stop Chasing Leads<br>And Start Getting Customers?
             </h2>
             <p style="color: #4a4a68; font-size: 1.15rem; margin-bottom: 2rem; max-width: 500px; margin-left: auto; margin-right: auto;">
                 Your competitors are getting the call because they saw the lead first. Change that today.
             </p>
-            <a href="/signup/" class="btn-primary-glow" style="padding: 1rem 3rem; font-size: 1.1rem;">
-                Get Started
-            </a>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="{% url 'signup' %}" class="btn-primary-glow" style="padding: 1rem 3rem; font-size: 1.1rem;">
+                    Get Started
+                </a>
+                <a href="tel:+18886315426" class="btn-secondary" style="padding: 1rem 2rem; font-size: 1.1rem;">
+                    <i class="bi bi-telephone-fill"></i> (888) 631-5426
+                </a>
+            </div>
         </div>
     </section>
 
@@ -502,25 +533,11 @@
       "legalName": "SalesSignal AI LLC",
       "url": "https://salessignalai.com",
       "logo": "https://salessignalai.com/static/images/logo.png",
-      "description": "AI-powered real-time lead generation platform for local service businesses. Monitors public records, social channels, and review sites to find customers who need your service right now.",
+      "description": "Customer acquisition service for local service businesses. AI finds people who need your service. Our sales team books the appointment. You show up and get paid.",
       "foundingDate": "2025",
-      "founder": {
-        "@type": "Person",
-        "name": "Andrew Tursi",
-        "jobTitle": "Founder & CEO"
-      },
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "New York",
-        "addressRegion": "NY",
-        "addressCountry": "US"
-      },
-      "contactPoint": {
-        "@type": "ContactPoint",
-        "contactType": "sales",
-        "url": "https://salessignalai.com"
-      },
-      "sameAs": []
+      "founder": { "@type": "Person", "name": "Andrew Tursi", "jobTitle": "Founder & CEO" },
+      "address": { "@type": "PostalAddress", "addressLocality": "New York", "addressRegion": "NY", "addressCountry": "US" },
+      "contactPoint": { "@type": "ContactPoint", "contactType": "sales", "telephone": "+1-888-631-5426", "url": "https://salessignalai.com" }
     }
     </script>
     <script type="application/ld+json">
@@ -530,14 +547,8 @@
       "name": "SalesSignal AI",
       "applicationCategory": "BusinessApplication",
       "operatingSystem": "Web",
-      "description": "Real-time lead generation platform monitoring 37+ data sources for local service businesses.",
-      "offers": {
-        "@type": "AggregateOffer",
-        "lowPrice": "149",
-        "highPrice": "649",
-        "priceCurrency": "USD",
-        "offerCount": "5"
-      }
+      "description": "Customer acquisition platform: AI finds leads, humans close deals. From $149/mo.",
+      "offers": { "@type": "AggregateOffer", "lowPrice": "149", "highPrice": "1500", "priceCurrency": "USD", "offerCount": "5" }
     }
     </script>
     <script type="application/ld+json">
@@ -545,46 +556,11 @@
       "@context": "https://schema.org",
       "@type": "FAQPage",
       "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "What is SalesSignal AI?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "SalesSignal AI is a real-time lead generation platform that monitors 37+ data sources including public records, social channels, and review sites to find people who need your service right now. We deliver leads with AI email campaigns and human phone follow-up."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of businesses use SalesSignal AI?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "SalesSignal AI serves over 50 service categories including plumbing, electrical, HVAC, commercial cleaning, roofing, pest control, landscaping, insurance, legal, and general contracting."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "How does SalesSignal AI find leads?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "We monitor public records like building violations, permits, health inspections, property sales, business filings, and liquor license applications. We also scan social channels and review sites for people actively requesting services."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "How much does SalesSignal AI cost?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Plans start at $149/month for email campaigns. Lead intelligence with CRM starts at $349/month. Full-service plans with human phone follow-up are available at custom pricing. All plans include a $299 setup fee."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What makes SalesSignal AI different from other lead generation services?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Unlike competitors who only scrape Google Maps or send automated emails, SalesSignal AI monitors 37+ data sources including public records and social channels, provides AI-powered email and SMS outreach, and offers real human phone follow-up to book appointments. Humans backed by AI."
-          }
-        }
+        { "@type": "Question", "name": "What is SalesSignal AI?", "acceptedAnswer": { "@type": "Answer", "text": "SalesSignal AI is a customer acquisition service for local service businesses. Our AI monitors 37+ data sources to find people who need your service right now. Then our sales team reaches out with emails, texts, and real phone calls to book appointments. You just show up and get paid." } },
+        { "@type": "Question", "name": "What types of businesses use SalesSignal AI?", "acceptedAnswer": { "@type": "Answer", "text": "Over 50 service categories: plumbing, electrical, HVAC, commercial cleaning, roofing, pest control, landscaping, insurance, legal, general contracting, and many more." } },
+        { "@type": "Question", "name": "How is SalesSignal AI different from other lead services?", "acceptedAnswer": { "@type": "Answer", "text": "Other platforms give you software and wish you luck. We find the leads, reach out with AI-powered campaigns, and have real humans pick up the phone to book appointments. You're never stuck with a chatbot — you're always one button press away from a live person." } },
+        { "@type": "Question", "name": "How much does SalesSignal AI cost?", "acceptedAnswer": { "@type": "Answer", "text": "Plans start at $149/month for AI email campaigns. Full lead intelligence starts at $349/month. Human-powered appointment setting starts at $1,500/month. One new customer typically pays for 3-6 months of service." } },
+        { "@type": "Question", "name": "Do I need to be tech-savvy to use SalesSignal AI?", "acceptedAnswer": { "@type": "Answer", "text": "No. We handle everything. You get a dashboard to see your leads and appointments, but you don't need to configure anything. Our team sets it up, runs it, and delivers results." } }
       ]
     }
     </script>
@@ -594,36 +570,16 @@
     function toggleLandingMenu() {
         var menu = document.getElementById('landing-mobile-menu');
         var icon = document.getElementById('landing-menu-icon');
-        var isOpen = menu.classList.contains('open');
-        if (isOpen) {
-            menu.classList.remove('open');
-            icon.className = 'bi bi-list';
-        } else {
-            menu.classList.add('open');
-            icon.className = 'bi bi-x-lg';
-        }
+        if (menu.classList.contains('open')) { menu.classList.remove('open'); icon.className = 'bi bi-list'; }
+        else { menu.classList.add('open'); icon.className = 'bi bi-x-lg'; }
     }
     function closeLandingMenu() {
-        var menu = document.getElementById('landing-mobile-menu');
-        var icon = document.getElementById('landing-menu-icon');
-        menu.classList.remove('open');
-        icon.className = 'bi bi-list';
+        document.getElementById('landing-mobile-menu').classList.remove('open');
+        document.getElementById('landing-menu-icon').className = 'bi bi-list';
     }
-
-    /* Scrolling service text */
     (function() {
-        var services = [
-            'Plumber', 'Electrician', 'HVAC Tech', 'House Cleaner', 'Roofer',
-            'Handyman', 'Painter', 'Landscaper', 'Pest Control', 'Locksmith',
-            'Mover', 'Contractor', 'Lawyer', 'Insurance Agent', 'Mortgage Broker',
-            'Tree Service', 'Fencing Company', 'Power Washer', 'Paving Company', 'Mason'
-        ];
-        var colors = [
-            '#DC2626', '#3B82F6', '#F59E0B', '#8B5CF6', '#10B981',
-            '#DC2626', '#3B82F6', '#F59E0B', '#8B5CF6', '#10B981',
-            '#DC2626', '#3B82F6', '#F59E0B', '#8B5CF6', '#10B981',
-            '#DC2626', '#3B82F6', '#F59E0B', '#8B5CF6', '#10B981'
-        ];
+        var services = ['Plumber','Electrician','HVAC Tech','House Cleaner','Roofer','Handyman','Painter','Landscaper','Pest Control','Locksmith','Mover','Contractor','Lawyer','Insurance Agent','Mortgage Broker','Tree Service','Fencing Company','Power Washer','Paving Company','Mason'];
+        var colors = ['#DC2626','#3B82F6','#F59E0B','#8B5CF6','#10B981','#DC2626','#3B82F6','#F59E0B','#8B5CF6','#10B981','#DC2626','#3B82F6','#F59E0B','#8B5CF6','#10B981','#DC2626','#3B82F6','#F59E0B','#8B5CF6','#10B981'];
         var el = document.getElementById('scroll-word');
         if (!el) return;
         var idx = 0;
@@ -641,11 +597,8 @@
     })();
     </script>
 
-    <!-- Sticky mobile call bar -->
     <div class="mobile-call-bar">
-        <a href="tel:+18886315426">
-            <i class="bi bi-telephone-fill"></i> Call (888) 631-5426
-        </a>
+        <a href="tel:+18886315426"><i class="bi bi-telephone-fill"></i> Call (888) 631-5426</a>
     </div>
 </body>
 </html>

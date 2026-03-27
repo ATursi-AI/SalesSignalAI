@@ -178,6 +178,7 @@
                     </div>
                 </div>
                 <div style="flex-shrink: 0; display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-end;">
+                    <button onclick="event.preventDefault();event.stopPropagation();dismissLead({{ assignment.id }},this)" title="Dismiss" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:0.85rem;padding:4px;opacity:0.4;transition:opacity 0.15s;" onmouseover="this.style.opacity='1';this.style.color='#DC2626'" onmouseout="this.style.opacity='0.4';this.style.color='var(--text-muted)'"><i class="bi bi-x-lg"></i></button>
                     <i class="bi bi-chevron-right" style="color: var(--text-muted); font-size: 1.2rem;"></i>
                 </div>
             </div>
@@ -198,4 +199,24 @@
         </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function dismissLead(assignmentId, btn) {
+    var card = btn.closest('.lead-card').parentElement;
+    fetch('/leads/' + assignmentId + '/dismiss/', {
+        method: 'POST',
+        headers: {'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : getCsrf(), 'Content-Type': 'application/json'},
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.ok) {
+            card.style.transition = 'opacity 0.3s, transform 0.3s';
+            card.style.opacity = '0';
+            card.style.transform = 'translateX(30px)';
+            setTimeout(function() { card.remove(); }, 350);
+        }
+    });
+}
+function getCsrf() { var m = document.cookie.match(/csrftoken=([^;]+)/); return m ? m[1] : ''; }
+</script>
 {% endblock %}

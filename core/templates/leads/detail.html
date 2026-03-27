@@ -250,6 +250,16 @@
                     </button>
                 </form>
                 {% endif %}
+
+                <!-- Book Appointment -->
+                <a href="{% url 'crm_appointments' %}?contact_name={{ lead.contact_name|urlencode }}&phone={{ lead.contact_phone|urlencode }}&lead_id={{ lead.id }}" class="btn-secondary btn-sm w-100" style="justify-content:center;color:#0D9488;border-color:rgba(13,148,136,0.3);text-decoration:none;display:flex;align-items:center;gap:6px;">
+                    <i class="bi bi-calendar-plus"></i> Book Appointment
+                </a>
+
+                <!-- Dismiss -->
+                <button onclick="dismissLead({{ assignment.id }})" class="btn-secondary btn-sm w-100" style="color:var(--text-muted);border-color:var(--border-subtle);">
+                    <i class="bi bi-eye-slash"></i> Dismiss
+                </button>
             </div>
         </div>
 
@@ -361,5 +371,15 @@ function copyResponse() {
         setTimeout(() => btn.innerHTML = orig, 2000);
     });
 }
+function dismissLead(assignmentId) {
+    if (!confirm('Dismiss this lead? It will be hidden from your feed.')) return;
+    fetch('/leads/' + assignmentId + '/dismiss/', {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCsrf(), 'Content-Type': 'application/json'},
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.ok) window.location.href = '{% url "lead_feed" %}';
+    });
+}
+function getCsrf() { var m = document.cookie.match(/csrftoken=([^;]+)/); return m ? m[1] : ''; }
 </script>
 {% endblock %}

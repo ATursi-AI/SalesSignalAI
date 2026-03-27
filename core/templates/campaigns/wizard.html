@@ -22,6 +22,7 @@
 .lead-urgency-hot { background: #FEE2E2; color: #DC2626; }
 .lead-urgency-warm { background: #FEF3C7; color: #92400E; }
 .lead-urgency-new { background: #DBEAFE; color: #1D4ED8; }
+.lead-urgency-stale { background: #F1F5F9; color: #94A3B8; }
 .lead-source-pill { padding: 2px 7px; border-radius: 6px; font-size: 0.65rem; font-weight: 600; background: #F0FDFA; color: #0D9488; }
 
 @media (max-width: 480px) {
@@ -542,7 +543,7 @@ function loadLeadFeed() {
             data.leads.forEach(l => {
                 const checked = selectedLeadIds.has(l.id) ? 'checked' : '';
                 const hasEmail = l.email ? '' : ' style="opacity:0.5;" title="No email — cannot add to campaign"';
-                const urgClass = l.urgency === 'hot' ? 'hot' : l.urgency === 'warm' ? 'warm' : 'new';
+                const urgClass = l.urgency === 'hot' ? 'hot' : l.urgency === 'warm' ? 'warm' : l.urgency === 'stale' ? 'stale' : 'new';
                 html += `<label class="lead-row"${hasEmail}>
                     <input type="checkbox" value="${l.id}" ${checked} ${l.email ? '' : 'disabled'} onchange="toggleLeadSelect(${l.id}, this.checked)">
                     <div class="lead-meta">
