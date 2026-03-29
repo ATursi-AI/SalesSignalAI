@@ -342,91 +342,135 @@
     <!-- PICK YOUR LEVEL -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <section class="pricing-section" id="levels">
+        <style>
+        .alacarte-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem;margin-bottom:2rem}
+        .package-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1.25rem}
+        .price-row{display:flex;justify-content:space-between;align-items:center;padding:0.65rem 0.9rem;background:#f0fdf4;border-radius:8px;margin-bottom:0.4rem;flex-wrap:wrap;gap:4px}
+        .price-row.human{background:#eff6ff}
+        .tier-label{font-size:0.78rem;color:#4a4a68}
+        .tier-price{font-size:1.15rem;font-weight:700;color:#1a1a2e;white-space:nowrap}
+        .tier-price small{font-size:0.55em;font-weight:400}
+        .tier-price span{font-size:0.65em;font-weight:400;color:#6b7280}
+        .overage{font-size:0.68rem;color:#6b7280;width:100%;margin-top:2px}
+        .row-header h3{font-family:'Exo 2',sans-serif;font-weight:800;margin:0 0 0.25rem}
+        .row-header p{margin:0;font-size:0.9rem;color:#64748B}
+        .level-card .level-desc{font-size:0.78rem;color:#64748B;margin-bottom:0.75rem;line-height:1.4}
+        @media(max-width:768px){.package-grid{grid-template-columns:1fr;max-width:400px;margin:0 auto}.alacarte-grid{grid-template-columns:1fr}}
+        </style>
         <div class="section-label mb-2 animate-on-scroll" style="color: #F59E0B;">Pick Your Level</div>
-        <h2 class="animate-on-scroll" style="font-family: 'Exo 2', sans-serif; font-size: 2.25rem;">Start With AI. Scale Up To Humans. Move Up When You're Ready.</h2>
-        <p class="animate-on-scroll" style="color: #4a4a68; margin-bottom: 3rem; font-size: 1.05rem;">One new customer pays for 3–6 months of SalesSignal AI. Start with AI. Scale up to humans.</p>
+        <h2 class="animate-on-scroll" style="font-family: 'Exo 2', sans-serif; font-size: 2.25rem;">A La Carte Services or Full Packages</h2>
+        <p class="animate-on-scroll" style="color: #4a4a68; margin-bottom: 3rem; font-size: 1.05rem;">One new customer pays for 3&ndash;6 months. Whether you're a plumber, accountant, attorney, or insurance agent &mdash; we get you customers.</p>
 
-        <div class="level-grid animate-on-scroll">
-            <!-- Tier 1: Email Campaign -->
+        <!-- ROW 1: A LA CARTE -->
+        <div class="row-header animate-on-scroll" style="margin-bottom:1.5rem;">
+            <h3 style="font-size:1.5rem;">A La Carte Services</h3>
+            <p>Pick individual services &bull; AI automated OR human-in-the-loop</p>
+        </div>
+
+        <div class="alacarte-grid animate-on-scroll">
             <div class="level-card">
-                <div class="level-tag" style="background:#DBEAFE;color:#1D4ED8;">AI Only</div>
-                <div class="level-name">Email Campaign</div>
-                <div class="level-price"><small style="font-size:0.5em;font-weight:400;">Starting at </small>$149<span>/mo</span></div>
-                <div class="level-desc">AI writes and sends email campaigns to your prospects.</div>
-                <ul class="level-features">
-                    <li><i class="bi bi-check2"></i> AI-written email sequences (3-5 emails)</li>
-                    <li><i class="bi bi-check2"></i> Open &amp; reply tracking</li>
-                    <li><i class="bi bi-check2"></i> You provide leads or buy a list</li>
-                    <li><i class="bi bi-check2"></i> You handle responses</li>
-                    <li><i class="bi bi-check2"></i> Add video emails: +$99/mo</li>
-                </ul>
-                <a href="/signup/?plan=email" class="btn-secondary w-100" style="justify-content:center;">Get Started</a>
+                <div class="level-name">Email drip campaign</div>
+                <p class="level-desc">Automated sequences, A/B testing, analytics</p>
+                <div class="price-row"><span class="tier-label">AI automated</span><span class="tier-price">$199<span>/mo</span></span></div>
+                <div class="price-row human"><span class="tier-label">Human + AI</span><span class="tier-price">$399<span>/mo</span></span></div>
             </div>
-
-            <!-- Tier 2: Growth -->
             <div class="level-card">
-                <div class="level-tag" style="background:#EDE9FE;color:#7C3AED;">AI + Data</div>
+                <div class="level-name">Video email drip</div>
+                <p class="level-desc">Personalized video messages, engagement tracking</p>
+                <div class="price-row"><span class="tier-label">AI automated</span><span class="tier-price">$349<span>/mo</span></span></div>
+                <div class="price-row human"><span class="tier-label">Human + AI</span><span class="tier-price">$599<span>/mo</span></span></div>
+            </div>
+            <div class="level-card">
+                <div class="level-name">Lead access</div>
+                <p class="level-desc">Leads populated to your dashboard</p>
+                <div class="price-row"><span class="tier-label">Dashboard access</span><span class="tier-price">$299<span>/mo</span></span><span class="overage">Raw leads &mdash; you decide action</span></div>
+                <div class="price-row human"><span class="tier-label">Human-qualified</span><span class="tier-price">$125<span>/lead</span></span><span class="overage">Verified by our team</span></div>
+            </div>
+            <div class="level-card">
+                <div class="level-name">Social listings + posting</div>
+                <p class="level-desc">LinkedIn, Nextdoor, Reddit, Facebook, GMB</p>
+                <div class="price-row"><span class="tier-label">AI automated (3 platforms)</span><span class="tier-price">$349<span>/mo</span></span></div>
+                <div class="price-row human"><span class="tier-label">Human + AI (5+ platforms)</span><span class="tier-price">$699<span>/mo</span></span></div>
+            </div>
+            <div class="level-card">
+                <div class="level-name">Appointment setting</div>
+                <p class="level-desc">Appointments booked to your calendar</p>
+                <div class="price-row"><span class="tier-label">AI scheduled</span><span class="tier-price"><small>Starting at </small>$99<span>/appt</span></span></div>
+                <div class="price-row human"><span class="tier-label">Human scheduled</span><span class="tier-price"><small>Starting at </small>$175<span>/appt</span></span></div>
+            </div>
+            <div class="level-card">
+                <div class="level-name">Inbound call center</div>
+                <p class="level-desc">Answer calls on your behalf, CRM integration</p>
+                <div class="price-row"><span class="tier-label">AI voice (200 min incl)</span><span class="tier-price"><small>Starting at </small>$399<span>/mo</span></span><span class="overage">Overage: $1.25/min</span></div>
+                <div class="price-row human"><span class="tier-label">Human team (200 min incl)</span><span class="tier-price"><small>Starting at </small>$699<span>/mo</span></span><span class="overage">Overage: $2.00/min</span></div>
+            </div>
+            <div class="level-card">
+                <div class="level-name">Outbound call center</div>
+                <p class="level-desc">Proactive outreach, lead follow-up</p>
+                <div class="price-row"><span class="tier-label">AI voice (300 min incl)</span><span class="tier-price"><small>Starting at </small>$599<span>/mo</span></span><span class="overage">Overage: $1.50/min</span></div>
+                <div class="price-row human"><span class="tier-label">Human team (300 min incl)</span><span class="tier-price"><small>Starting at </small>$1,199<span>/mo</span></span><span class="overage">Overage: $2.00/min</span></div>
+            </div>
+            <div class="level-card">
+                <div class="level-name">Exclusive landing page</div>
+                <p class="level-desc">SEO-optimized, lead capture, no branding</p>
+                <div class="price-row"><span class="tier-label">AI generated</span><span class="tier-price">$399 + $99<span>/mo</span></span></div>
+                <div class="price-row human"><span class="tier-label">Custom design</span><span class="tier-price">$999 + $149<span>/mo</span></span></div>
+            </div>
+            <div class="level-card">
+                <div class="level-name">Outbound sales team</div>
+                <p class="level-desc">Full sales cycle, pipeline management</p>
+                <div class="price-row"><span class="tier-label">AI-first + oversight</span><span class="tier-price"><small>Starting at </small>$3,999<span>/mo</span></span></div>
+                <div class="price-row human"><span class="tier-label">Dedicated rep team</span><span class="tier-price"><small>Starting at </small>$7,499<span>/mo</span></span></div>
+            </div>
+        </div>
+
+        <!-- ROW 2: PACKAGES -->
+        <div class="row-header animate-on-scroll" style="margin:3rem 0 1.5rem;">
+            <h3 style="font-size:1.5rem;">Package Bundles</h3>
+            <p>Bundled services at discount &bull; $499 setup waived on annual</p>
+        </div>
+
+        <div class="package-grid animate-on-scroll">
+            <div class="level-card">
+                <div class="level-tag" style="background:#DBEAFE;color:#1D4ED8;">Starter</div>
+                <div class="level-name">Starter</div>
+                <p class="level-desc">Email drip + Social listings + Dashboard lead access</p>
+                <div class="price-row"><span class="tier-label">AI automated</span><span class="tier-price"><small>Starting at </small>$599<span>/mo</span></span></div>
+                <div class="price-row human"><span class="tier-label">Human + AI</span><span class="tier-price"><small>Starting at </small>$999<span>/mo</span></span></div>
+                <a href="/signup/?plan=starter" class="btn-secondary w-100" style="justify-content:center;margin-top:0.75rem;">Get Started</a>
+            </div>
+            <div class="level-card">
+                <div class="level-tag" style="background:#EDE9FE;color:#7C3AED;">Growth</div>
                 <div class="level-name">Growth</div>
-                <div class="level-price"><small style="font-size:0.5em;font-weight:400;">Starting at </small>$599<span>/mo</span></div>
-                <div class="level-desc">We find the leads AND run the campaigns.</div>
-                <ul class="level-features">
-                    <li><i class="bi bi-check2"></i> Everything in Email Campaign</li>
-                    <li><i class="bi bi-check2"></i> Leads from 37+ real-time sources</li>
-                    <li><i class="bi bi-check2"></i> AI enrichment (phone, email, name)</li>
-                    <li><i class="bi bi-check2"></i> CRM dashboard &amp; pipeline</li>
-                    <li><i class="bi bi-check2"></i> Territory-based filtering</li>
-                </ul>
-                <a href="/signup/?plan=growth" class="btn-secondary w-100" style="justify-content:center;">Get Started</a>
+                <p class="level-desc">+ Video email + Appointment setting + Social (5 platforms)</p>
+                <div class="price-row"><span class="tier-label">AI automated</span><span class="tier-price"><small>Starting at </small>$1,199<span>/mo</span></span></div>
+                <div class="price-row human"><span class="tier-label">Human + AI</span><span class="tier-price"><small>Starting at </small>$1,999<span>/mo</span></span></div>
+                <a href="/signup/?plan=growth" class="btn-secondary w-100" style="justify-content:center;margin-top:0.75rem;">Get Started</a>
             </div>
-
-            <!-- Tier 3: Dominate (MOST POPULAR) -->
             <div class="level-card featured">
                 <div class="level-popular">Most Popular</div>
-                <div class="level-tag" style="background:#CCFBF1;color:#0D9488;">AI + Outreach</div>
+                <div class="level-tag" style="background:#CCFBF1;color:#0D9488;">Dominate</div>
                 <div class="level-name">Dominate</div>
-                <div class="level-price"><small style="font-size:0.5em;font-weight:400;">Starting at </small>$899<span>/mo</span></div>
-                <div class="level-desc">Multi-channel outreach &mdash; email, text, video. Everywhere at once.</div>
-                <ul class="level-features">
-                    <li><i class="bi bi-check2"></i> Everything in Growth</li>
-                    <li><i class="bi bi-check2"></i> SMS/text follow-up campaigns</li>
-                    <li><i class="bi bi-check2"></i> Personalized video emails</li>
-                    <li><i class="bi bi-check2"></i> AI reply handling &amp; qualification</li>
-                    <li><i class="bi bi-check2"></i> Multi-territory coverage</li>
-                </ul>
-                <a href="/signup/?plan=dominate" class="btn-primary-glow w-100" style="justify-content:center;">Get Started</a>
+                <p class="level-desc">+ Inbound call center + Landing page</p>
+                <div class="price-row"><span class="tier-label">AI automated</span><span class="tier-price"><small>Starting at </small>$1,999<span>/mo</span></span></div>
+                <div class="price-row human"><span class="tier-label">Human + AI</span><span class="tier-price"><small>Starting at </small>$3,499<span>/mo</span></span></div>
+                <a href="/signup/?plan=dominate" class="btn-primary-glow w-100" style="justify-content:center;margin-top:0.75rem;">Get Started</a>
             </div>
-
-            <!-- Tier 4: Closer -->
             <div class="level-card">
-                <div class="level-tag" style="background:#FEF3C7;color:#92400E;">AI + Humans</div>
+                <div class="level-tag" style="background:#FEF3C7;color:#92400E;">Closer</div>
                 <div class="level-name">Closer</div>
-                <div class="level-price"><small style="font-size:0.5em;font-weight:400;">Starting at </small>$2,499<span>/mo</span></div>
-                <div class="level-desc">Real salespeople call, qualify, and book appointments for you.</div>
-                <ul class="level-features">
-                    <li><i class="bi bi-check2"></i> Everything in Dominate</li>
-                    <li><i class="bi bi-check2"></i> Dedicated human callers</li>
-                    <li><i class="bi bi-check2"></i> Live lead qualifying</li>
-                    <li><i class="bi bi-check2"></i> Appointment setting</li>
-                    <li><i class="bi bi-check2"></i> Weekly strategy calls</li>
-                </ul>
-                <a href="/signup/" class="btn-secondary w-100" style="justify-content:center;">Contact Us</a>
+                <p class="level-desc">+ Outbound call center + Appointment setting</p>
+                <div class="price-row"><span class="tier-label">AI automated</span><span class="tier-price"><small>Starting at </small>$3,999<span>/mo</span></span></div>
+                <div class="price-row human"><span class="tier-label">Human + AI</span><span class="tier-price"><small>Starting at </small>$6,499<span>/mo</span></span></div>
+                <a href="/signup/" class="btn-secondary w-100" style="justify-content:center;margin-top:0.75rem;">Contact Us</a>
             </div>
-
-            <!-- Tier 5: Full Service -->
             <div class="level-card">
-                <div class="level-tag" style="background:#FEE2E2;color:#DC2626;">Full Team</div>
+                <div class="level-tag" style="background:#FEE2E2;color:#DC2626;">White Glove</div>
                 <div class="level-name">Full Service</div>
-                <div class="level-price"><small style="font-size:0.5em;font-weight:400;">Starting at </small>$4,999<span>/mo</span></div>
-                <div class="level-desc">Your complete outsourced sales department.</div>
-                <ul class="level-features">
-                    <li><i class="bi bi-check2"></i> Everything in Closer</li>
-                    <li><i class="bi bi-check2"></i> Outbound cold calling</li>
-                    <li><i class="bi bi-check2"></i> Live call transfer of hot leads</li>
-                    <li><i class="bi bi-check2"></i> We close deals on your behalf</li>
-                    <li><i class="bi bi-check2"></i> Custom scripts &amp; training</li>
-                    <li><i class="bi bi-check2"></i> Full reporting &amp; analytics</li>
-                </ul>
-                <a href="/signup/" class="btn-secondary w-100" style="justify-content:center;">Contact Us</a>
+                <p class="level-desc">Everything + Outbound sales team + Account manager</p>
+                <div class="price-row"><span class="tier-label">AI + Human hybrid</span><span class="tier-price"><small>Starting at </small>$7,999<span>/mo</span></span></div>
+                <div class="price-row human"><span class="tier-label">Full human team</span><span class="tier-price"><small>Starting at </small>$12,999<span>/mo</span></span></div>
+                <a href="/signup/" class="btn-secondary w-100" style="justify-content:center;margin-top:0.75rem;">Contact Us</a>
             </div>
         </div>
 
