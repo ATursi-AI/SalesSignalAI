@@ -187,7 +187,12 @@
       "Bash(venv/Scripts/python.exe manage.py makemigrations core --name lead_dismissed_status)",
       "Bash(echo \"exists: $?\")",
       "Bash(venv/Scripts/python.exe manage.py seed_emergency_pages)",
-      "Bash(venv/Scripts/python.exe manage.py shell -c \"from django.urls import reverse; print\\(reverse\\(''pricing''\\)\\)\")"
+      "Bash(venv/Scripts/python.exe manage.py shell -c \"from django.urls import reverse; print\\(reverse\\(''pricing''\\)\\)\")",
+      "Bash(venv/Scripts/python.exe manage.py monitor_la_building_violations --days 7 --limit 5 --dry-run)",
+      "Bash(venv/Scripts/python.exe manage.py monitor_la_building_violations --days 30 --limit 5 --dry-run)",
+      "Bash(venv/Scripts/python.exe manage.py monitor_sf_building_violations --days 7 --limit 5 --dry-run)",
+      "Bash(venv/Scripts/python.exe manage.py monitor_sf_permits --days 7 --limit 5 --dry-run)",
+      "Bash(venv/Scripts/python.exe manage.py monitor_sf_permits --days 7 --limit 5 --min-cost 10000 --dry-run)"
     ],
     "additionalDirectories": [
       "c:\\Users\\aturs\\Documents\\AI_Engineering_Course\\SalesSignalAI\\core"

@@ -31,7 +31,16 @@ MONITOR_SCHEDULE = [
     ('monitor_google_places', {'category': 'plumber', 'city': 'Queens, NY'}, 12, 'Google Places — Plumber Queens'),
     ('monitor_google_places', {'category': 'electrician', 'city': 'Queens, NY'}, 12, 'Google Places — Electrician Queens'),
 
-    # California
+    # California — general
     ('monitor_ca_contractors', {'days': 7}, 24, 'CA Contractor Licenses'),
     ('monitor_ca_violations', {'days': 7}, 24, 'CA OSHA Violations'),
+
+    # California — LA Building Violations (weekly update, check daily)
+    ('monitor_la_building_violations', {'days': 14}, 24, 'LA Building Violations'),
+
+    # California — SF Building Violations (daily update)
+    ('monitor_sf_building_violations', {'days': 7}, 24, 'SF Building Violations'),
+
+    # California — SF Building Permits (nightly update)
+    ('monitor_sf_permits', {'days': 7}, 24, 'SF Building Permits'),
 ]
