@@ -10,3 +10,7 @@ def landing_page(request):
         elif profile:
             return redirect('onboarding')
     return render(request, 'landing.html')
+
+
+def pricing_page(request):
+    return render(request, 'pricing.html')

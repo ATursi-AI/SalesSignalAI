@@ -6,6 +6,7 @@ from core.views import service_pages, signup, blog, workflows, conversations, te
 
 urlpatterns = [
     path('', landing.landing_page, name='landing'),
+    path('pricing/', landing.pricing_page, name='pricing'),
     path('about/', static_pages.about_page, name='about_page'),
     path('privacy/', static_pages.privacy_page, name='privacy_page'),
     path('terms/', static_pages.terms_page, name='terms_page'),
