@@ -231,15 +231,20 @@ def lead_repository(request):
     businesses = BusinessProfile.objects.filter(is_active=True).order_by('business_name')
     salespeople = SalesPerson.objects.filter(status='active').order_by('user__first_name')
 
-    # Urgency counts
+    # State filter — applies to all counts
+    current_state = request.GET.get('state', '')
     unreviewed = Lead.objects.filter(review_status='unreviewed')
+    if current_state:
+        unreviewed = unreviewed.filter(state=current_state)
+
+    # Urgency counts (filtered by state)
     urgency_counts = dict(
         unreviewed.values_list('urgency_level')
         .annotate(c=Count('id'))
         .values_list('urgency_level', 'c')
     )
 
-    # Source group overview with sub-type counts
+    # Source group overview with sub-type counts (filtered by state)
     source_overview = []
     for group_key, group_label in [('public_records', 'Public Records'),
                                      ('social_media', 'Social Media'),
@@ -280,6 +285,7 @@ def lead_repository(request):
         'urgency_counts': urgency_counts,
         'source_overview': source_overview,
         'states': list(states),
+        'current_state': current_state,
         'hot_count': urgency_counts.get('hot', 0),
         'warm_count': urgency_counts.get('warm', 0),
         'new_count': urgency_counts.get('new', 0),
@@ -302,8 +308,13 @@ def source_group_page(request, group):
     group_label = GROUP_DISPLAY.get(group_key, group_key)
     source_types = GROUP_SOURCE_TYPES.get(group_key, [])
 
-    # Get counts per type (unreviewed)
+    # State filter
+    current_state = request.GET.get('state', '')
     unreviewed = Lead.objects.filter(review_status='unreviewed', source_group=group_key)
+    if current_state:
+        unreviewed = unreviewed.filter(state=current_state)
+
+    # Get counts per type (filtered by state)
     type_counts = dict(
         unreviewed.values_list('source_type')
         .annotate(c=Count('id'))
@@ -323,8 +334,10 @@ def source_group_page(request, group):
     businesses = BusinessProfile.objects.filter(is_active=True).order_by('business_name')
     salespeople = SalesPerson.objects.filter(status='active').order_by('user__first_name')
 
-    # Source group navigation counts (same as command center)
+    # Source group navigation counts (filtered by state)
     all_unreviewed = Lead.objects.filter(review_status='unreviewed')
+    if current_state:
+        all_unreviewed = all_unreviewed.filter(state=current_state)
     source_nav = []
     for gk, gl in [('public_records', 'Public Records'),
                     ('social_media', 'Social Media'),
@@ -337,6 +350,9 @@ def source_group_page(request, group):
             'total': all_unreviewed.filter(source_group=gk).count(),
         })
 
+    # Available states
+    states = Lead.objects.exclude(state='').values_list('state', flat=True).distinct().order_by('state')
+
     return render(request, 'admin_leads/source_group.html', {
         'group_key': group_key,
         'group_slug': group,
@@ -348,6 +364,8 @@ def source_group_page(request, group):
         'businesses': businesses,
         'salespeople': salespeople,
         'source_nav': source_nav,
+        'states': list(states),
+        'current_state': current_state,
     })
 
 

@@ -465,10 +465,10 @@
 <!-- State Selector -->
 <div class="state-bar">
     <label>State</label>
-    <select id="stateFilter" onchange="applyFilters()">
+    <select id="stateFilter" onchange="var v=this.value;window.location.href=v?'/admin-leads/?state='+v:'/admin-leads/';">
         <option value="">All States</option>
         {% for s in states %}
-        <option value="{{ s }}">{{ s }}</option>
+        <option value="{{ s }}" {% if s == current_state %}selected{% endif %}>{{ s }}</option>
         {% endfor %}
     </select>
 </div>
