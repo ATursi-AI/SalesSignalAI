@@ -50,7 +50,17 @@ class BaseAgent:
                     "input_schema": info.get("schema", {"type": "object", "properties": {}}),
                 })
 
-        kwargs = {"model": self.model, "max_tokens": 4096, "messages": messages}
+        # Extract system message from messages list
+        system_msg = ""
+        filtered_messages = []
+        for m in messages:
+            if m.get("role") == "system":
+                system_msg = m["content"]
+            else:
+                filtered_messages.append(m)
+        kwargs = {"model": self.model, "max_tokens": 4096, "messages": filtered_messages}
+        if system_msg:
+            kwargs["system"] = system_msg
         if tool_defs:
             kwargs["tools"] = tool_defs
 

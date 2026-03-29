@@ -24,7 +24,7 @@ class Orchestrator(BaseAgent):
         "End with a clear summary suitable for an SMS response."
     )
     model = "claude-sonnet-4-20250514"
-    max_steps = 20
+    max_steps = 30
 
     def _register_tools(self):
         self.tools = {name: info for name, info in TOOL_DEFINITIONS.items()}
