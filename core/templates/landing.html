@@ -161,7 +161,7 @@
             <h1 class="hero-brand-title">You Do The Work.<br>We Get You The Work.</h1>
             <p class="hero-tagline">Humans Backed By AI <span class="hero-tagline-bullet">&bull;</span> <span class="hero-tagline-alt">AI Backed By Humans</span></p>
             <p class="hero-scroll-text">
-                AI finds people who need a <span class="scroll-word" id="scroll-word">Plumber</span> right now.
+                AI finds people who need <span id="scroll-article">a</span> <span class="scroll-word" id="scroll-word">Plumber</span> right now.
                 Our sales team picks up the phone and gets them on your calendar. You just show up and get paid.
             </p>
             <div class="hero-cta" style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
@@ -355,6 +355,13 @@
         .row-header h3{font-family:'Exo 2',sans-serif;font-weight:800;margin:0 0 0.25rem}
         .row-header p{margin:0;font-size:0.9rem;color:#64748B}
         .level-card .level-desc{font-size:0.78rem;color:#64748B;margin-bottom:0.75rem;line-height:1.4}
+        .alacarte-grid .level-card{border-left:3px solid #1D9E75;transition:box-shadow 0.2s,transform 0.2s}
+        .alacarte-grid .level-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.08);transform:translateY(-2px)}
+        .package-grid .level-card{border-left:3px solid #378ADD;transition:box-shadow 0.2s,transform 0.2s}
+        .package-grid .level-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.08);transform:translateY(-2px)}
+        .package-grid .level-card.featured{border-left:3px solid #F59E0B;border-top:2px solid #F59E0B}
+        .price-row{border-left:2px solid #1D9E75}
+        .price-row.human{border-left:2px solid #378ADD}
         @media(max-width:768px){.package-grid{grid-template-columns:1fr;max-width:400px;margin:0 auto}.alacarte-grid{grid-template-columns:1fr}}
         </style>
         <div class="section-label mb-2 animate-on-scroll" style="color: #F59E0B;">Pick Your Level</div>
@@ -376,7 +383,7 @@
             </div>
             <div class="level-card">
                 <div class="level-name">Video email drip</div>
-                <p class="level-desc">Personalized video messages, engagement tracking</p>
+                <p class="level-desc">Includes 1 custom video per campaign. Additional videos available separately.</p>
                 <div class="price-row"><span class="tier-label">AI automated</span><span class="tier-price">$349<span>/mo</span></span></div>
                 <div class="price-row human"><span class="tier-label">Human + AI</span><span class="tier-price">$599<span>/mo</span></span></div>
             </div>
@@ -427,7 +434,7 @@
         <!-- ROW 2: PACKAGES -->
         <div class="row-header animate-on-scroll" style="margin:3rem 0 1.5rem;">
             <h3 style="font-size:1.5rem;">Package Bundles</h3>
-            <p>Bundled services at discount &bull; $499 setup waived on annual</p>
+            <p>Bundled services at discount &bull; $299 setup waived on annual</p>
         </div>
 
         <div class="package-grid animate-on-scroll">
@@ -478,7 +485,7 @@
             <strong>One new customer from our leads pays for 3&ndash;6 months of SalesSignalAI.</strong>
         </div>
         <div class="pricing-setup-note animate-on-scroll">
-            All plans include a one-time $499 setup and onboarding fee. Waived for annual commitments.
+            All plans include a one-time $299 setup and onboarding fee. Waived for annual commitments.
         </div>
     </section>
 
@@ -622,16 +629,25 @@
         document.getElementById('landing-menu-icon').className = 'bi bi-list';
     }
     (function() {
-        var services = ['Plumber','Electrician','HVAC Tech','House Cleaner','Roofer','Handyman','Painter','Landscaper','Pest Control','Locksmith','Mover','Contractor','Lawyer','Insurance Agent','Mortgage Broker','Tree Service','Fencing Company','Power Washer','Paving Company','Mason'];
-        var colors = ['#DC2626','#3B82F6','#F59E0B','#8B5CF6','#10B981','#DC2626','#3B82F6','#F59E0B','#8B5CF6','#10B981','#DC2626','#3B82F6','#F59E0B','#8B5CF6','#10B981','#DC2626','#3B82F6','#F59E0B','#8B5CF6','#10B981'];
+        var professions = [
+            {article:'a',name:'Plumber'},{article:'an',name:'Insurance Agent'},
+            {article:'an',name:'Electrician'},{article:'a',name:'Lawyer'},
+            {article:'an',name:'HVAC Contractor'},{article:'an',name:'Accountant'},
+            {article:'a',name:'Roofer'},{article:'a',name:'Financial Advisor'},
+            {article:'a',name:'Landscaper'},{article:'a',name:'Real Estate Agent'},
+            {article:'an',name:'Auto Mechanic'},{article:'a',name:'Dentist'}
+        ];
+        var colors = ['#DC2626','#3B82F6','#F59E0B','#8B5CF6','#10B981','#DC2626','#3B82F6','#F59E0B','#8B5CF6','#10B981','#DC2626','#3B82F6'];
         var el = document.getElementById('scroll-word');
+        var artEl = document.getElementById('scroll-article');
         if (!el) return;
         var idx = 0;
         setInterval(function() {
             el.classList.add('scroll-out');
             setTimeout(function() {
-                idx = (idx + 1) % services.length;
-                el.textContent = services[idx];
+                idx = (idx + 1) % professions.length;
+                el.textContent = professions[idx].name;
+                if (artEl) artEl.textContent = professions[idx].article;
                 el.style.color = colors[idx];
                 el.classList.remove('scroll-out');
                 el.classList.add('scroll-in');
