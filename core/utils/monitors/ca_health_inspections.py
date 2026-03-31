@@ -199,73 +199,177 @@ def _process_facilities(facilities, source_name, source_url, state, region, dry_
 
 
 # ──────────────────────────────────────────────
-# SANTA CLARA COUNTY — Socrata API
+# SANTA CLARA COUNTY — Socrata API (3 datasets)
+#   Inspections: 2u2d-8jej  (business_id, date, score, result)
+#   Business:    vuw7-jmjk  (business_id, name, address, city, phone_number)
+#   Violations:  wkaa-4ccv  (inspection_id, description, critical, violation_comment)
 # ──────────────────────────────────────────────
-SCC_SODA_URL = 'https://data.sccgov.org/resource/2u2d-8jej.json'
+SCC_INSPECTIONS_URL = 'https://data.sccgov.org/resource/2u2d-8jej.json'
+SCC_BUSINESS_URL = 'https://data.sccgov.org/resource/vuw7-jmjk.json'
+SCC_VIOLATIONS_URL = 'https://data.sccgov.org/resource/wkaa-4ccv.json'
+
+HEADERS = {'User-Agent': 'SalesSignalAI/1.0'}
+
+
+def _scc_fetch_json(url, params):
+    """Fetch JSON from Santa Clara Socrata API with error handling."""
+    try:
+        resp = requests.get(url, params=params, timeout=60, headers=HEADERS)
+        if resp.status_code == 200:
+            data = resp.json()
+            if isinstance(data, list):
+                return data
+    except Exception as e:
+        logger.warning(f'[santa_clara] Fetch error for {url}: {e}')
+    return []
 
 
 def monitor_santa_clara_health(days=7, dry_run=False):
     stats = {'sources_checked': 1, 'items_scraped': 0, 'created': 0,
              'duplicates': 0, 'assigned': 0, 'errors': 0}
 
-    since = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%dT00:00:00')
-    params = {
-        '$where': f"inspection_date >= '{since}'",
-        '$limit': 5000,
-        '$order': 'inspection_date DESC',
-    }
-
-    logger.info(f'[santa_clara] Querying Socrata API, days={days}')
-    try:
-        resp = requests.get(SCC_SODA_URL, params=params, timeout=60,
-                            headers={'User-Agent': 'SalesSignalAI/1.0'})
-        if resp.status_code != 200:
-            logger.error(f'[santa_clara] SODA returned {resp.status_code}')
-            stats['errors'] += 1
-            return stats
-        data = resp.json()
-    except Exception as e:
-        logger.error(f'[santa_clara] API error: {e}')
-        stats['errors'] += 1
-        return stats
-
-    if not isinstance(data, list):
-        stats['errors'] += 1
-        return stats
-
-    logger.info(f'[santa_clara] Fetched {len(data)} records')
-
-    facilities = {}
+    # Date field in inspections is YYYYMMDD format (e.g., "20250609")
+    since_yyyymmdd = (datetime.now() - timedelta(days=days)).strftime('%Y%m%d')
     cutoff = timezone.now() - timedelta(days=days)
-    for rec in data:
-        name = (rec.get('facility_name', '') or rec.get('name', '')).strip()
+
+    # ── Step 1: Fetch recent inspections ──
+    if dry_run:
+        print(f'  Fetching inspections since {since_yyyymmdd}...')
+    inspections = _scc_fetch_json(SCC_INSPECTIONS_URL, {
+        '$where': f"date >= '{since_yyyymmdd}'",
+        '$limit': 5000,
+        '$order': 'date DESC',
+    })
+    if dry_run:
+        print(f'  Inspections fetched: {len(inspections)}')
+        if inspections:
+            print(f'  Sample inspection: {inspections[0]}')
+
+    if not inspections:
+        logger.warning('[santa_clara] No recent inspections found')
+        return stats
+
+    # Collect unique business_ids and inspection_ids
+    business_ids = set()
+    inspection_ids = set()
+    for insp in inspections:
+        bid = insp.get('business_id', '')
+        iid = insp.get('inpsection_id', '') or insp.get('inspection_id', '')  # note typo in API
+        if bid:
+            business_ids.add(bid)
+        if iid:
+            inspection_ids.add(iid)
+
+    if dry_run:
+        print(f'  Unique businesses: {len(business_ids)}')
+        print(f'  Unique inspections: {len(inspection_ids)}')
+
+    # ── Step 2: Fetch business details for those business_ids ──
+    biz_lookup = {}
+    # Fetch in batches (Socrata $where IN clause)
+    bid_list = list(business_ids)
+    batch_size = 200
+    for i in range(0, len(bid_list), batch_size):
+        batch = bid_list[i:i + batch_size]
+        in_clause = ','.join(f"'{b}'" for b in batch)
+        biz_data = _scc_fetch_json(SCC_BUSINESS_URL, {
+            '$where': f"business_id in({in_clause})",
+            '$limit': 5000,
+        })
+        for biz in biz_data:
+            bid = biz.get('business_id', '')
+            if bid:
+                biz_lookup[bid] = biz
+
+    if dry_run:
+        print(f'  Business records fetched: {len(biz_lookup)}')
+        if biz_lookup:
+            sample_biz = list(biz_lookup.values())[0]
+            print(f'  Sample business: {sample_biz.get("name", "")} — {sample_biz.get("phone_number", "no phone")}')
+
+    # ── Step 3: Fetch violations for those inspection_ids ──
+    violations_lookup = {}  # inspection_id -> list of violation texts
+    iid_list = list(inspection_ids)
+    for i in range(0, len(iid_list), batch_size):
+        batch = iid_list[i:i + batch_size]
+        in_clause = ','.join(f"'{v}'" for v in batch)
+        viol_data = _scc_fetch_json(SCC_VIOLATIONS_URL, {
+            '$where': f"inspection_id in({in_clause})",
+            '$limit': 10000,
+        })
+        for v in viol_data:
+            iid = v.get('inspection_id', '')
+            desc = v.get('description', '')
+            comment = v.get('violation_comment', '')
+            is_critical = v.get('critical', False)
+            viol_text = desc
+            if comment:
+                viol_text += f' — {comment[:200]}'
+            if is_critical:
+                viol_text = f'[CRITICAL] {viol_text}'
+            if iid and viol_text:
+                violations_lookup.setdefault(iid, []).append(viol_text)
+
+    if dry_run:
+        print(f'  Violation records fetched: {sum(len(v) for v in violations_lookup.values())}')
+
+    # ── Step 4: Join everything and build facilities dict ──
+    facilities = {}
+    for insp in inspections:
+        bid = insp.get('business_id', '')
+        iid = insp.get('inpsection_id', '') or insp.get('inspection_id', '')
+        biz = biz_lookup.get(bid, {})
+
+        name = (biz.get('name', '') or '').strip()
         if not name:
             continue
 
-        address = (rec.get('address', '') or rec.get('facility_address', '')).strip()
-        city = (rec.get('city', '') or 'San Jose').strip()
-        phone = (rec.get('phone', '') or rec.get('telephone', '')).strip()
-        insp_date = _parse_date(rec.get('inspection_date', ''))
-        score = rec.get('score', rec.get('compliance_score', ''))
-        grade = rec.get('grade', '')
-        violations = rec.get('violation_description', '') or rec.get('violations', '')
+        address = (biz.get('address', '') or '').strip()
+        city = (biz.get('city', '') or 'San Jose').strip()
+        phone = (biz.get('phone_number', '') or '').strip()
+        postal = (biz.get('postal_code', '') or '').strip()
+
+        # Parse YYYYMMDD date
+        date_str = insp.get('date', '')
+        insp_date = _parse_date(date_str)
+        if not insp_date and date_str and len(date_str) == 8:
+            try:
+                insp_date = _parse_date(f'{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}')
+            except Exception:
+                pass
 
         if insp_date and insp_date < cutoff:
             continue
 
-        full_addr = f"{address}, {city}, CA" if address else f"{city}, CA"
-        fac_key = f"{name}|{full_addr}"
+        score = insp.get('score', '')
+        result = insp.get('result', '')
+
+        full_addr = f"{address}, {city}, CA {postal}".strip() if address else f"{city}, CA"
+        fac_key = bid or f"{name}|{full_addr}"
+
         if fac_key not in facilities:
             facilities[fac_key] = {
                 'name': name, 'address': full_addr, 'phone': phone,
-                'inspection_date': insp_date, 'score': score, 'grade': grade,
+                'inspection_date': insp_date, 'score': score, 'grade': result,
                 'violations': [],
             }
-        if violations:
-            facilities[fac_key]['violations'].append(str(violations))
+
+        # Keep most recent inspection
+        if insp_date and facilities[fac_key]['inspection_date']:
+            if insp_date > facilities[fac_key]['inspection_date']:
+                facilities[fac_key]['inspection_date'] = insp_date
+                facilities[fac_key]['score'] = score
+                facilities[fac_key]['grade'] = result
+
+        # Add violations for this inspection
+        if iid and iid in violations_lookup:
+            facilities[fac_key]['violations'].extend(violations_lookup[iid])
 
     stats['items_scraped'] = len(facilities)
-    _process_facilities(facilities, 'santa_clara_county', SCC_SODA_URL, 'CA',
+    if dry_run:
+        print(f'  Facilities with recent inspections: {len(facilities)}')
+
+    _process_facilities(facilities, 'santa_clara_county', SCC_INSPECTIONS_URL, 'CA',
                         'Santa Clara County', dry_run, stats)
     logger.info(f'Santa Clara health monitor complete: {stats}')
     return stats
