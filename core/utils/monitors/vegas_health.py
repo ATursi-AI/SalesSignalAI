@@ -26,10 +26,12 @@ from .lead_processor import process_lead
 
 logger = logging.getLogger(__name__)
 
-# SNHD nightly CSV download
-SNHD_CSV_URL = 'https://www.southernnevadahealthdistrict.org/permits-and-regulations/restaurant-inspections/developers/download/'
-# Fallback: ArcGIS open data
+# PRIMARY: SNHD Socrata open data portal
+SNHD_SOCRATA_URL = 'https://data.snhd.org/resource/96em-8cmh.json'
+# Fallback: ArcGIS Las Vegas open data portal
 ARCGIS_URL = 'https://services.arcgis.com/YSN1DaSBQGSIVjMd/arcgis/rest/services/SNHD_Restaurant_Inspections/FeatureServer/0/query'
+# CSV fallback (nightly dump from SNHD developers page)
+SNHD_CSV_URL = 'https://www.southernnevadahealthdistrict.org/permits-and-regulations/restaurant-inspections/developers/download/'
 
 VIOLATION_SERVICE_MAP = {
     'pest': ['pest control', 'exterminator'],
@@ -99,17 +101,53 @@ def _parse_date(date_str):
     return None
 
 
-def _fetch_csv(days):
-    """Try the SNHD developer CSV download first."""
+def _fetch_socrata(days):
+    """PRIMARY: Query SNHD Socrata open data portal."""
+    since = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%dT00:00:00')
+    params = {
+        '$where': f"inspection_date >= '{since}'",
+        '$limit': 5000,
+        '$order': 'inspection_date DESC',
+    }
     try:
-        resp = requests.get(SNHD_CSV_URL, timeout=60, headers={
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        })
-        if resp.status_code == 200 and len(resp.text) > 500:
-            return resp.text
+        resp = requests.get(SNHD_SOCRATA_URL, params=params, timeout=60,
+                            headers={'User-Agent': 'SalesSignalAI/1.0'})
+        if resp.status_code == 200:
+            data = resp.json()
+            if isinstance(data, list) and data:
+                logger.info(f'[vegas_health] Socrata returned {len(data)} records')
+                return data
+            # If date filter returns empty, try without filter to check field names
+            logger.info('[vegas_health] Socrata date filter empty, trying $limit only')
+            resp2 = requests.get(SNHD_SOCRATA_URL, params={'$limit': 5}, timeout=30,
+                                 headers={'User-Agent': 'SalesSignalAI/1.0'})
+            if resp2.status_code == 200:
+                sample = resp2.json()
+                if isinstance(sample, list) and sample:
+                    # Log field names so we can fix the date filter
+                    logger.info(f'[vegas_health] Sample fields: {list(sample[0].keys())}')
+                    # Try common date field names
+                    for date_field in ['inspection_date', 'inspectiondate', 'inspection_time',
+                                       'date', 'activity_date', 'insp_date']:
+                        if date_field in sample[0]:
+                            logger.info(f'[vegas_health] Found date field: {date_field}, retrying')
+                            retry_params = {
+                                '$where': f"{date_field} >= '{since}'",
+                                '$limit': 5000,
+                                '$order': f'{date_field} DESC',
+                            }
+                            resp3 = requests.get(SNHD_SOCRATA_URL, params=retry_params,
+                                                 timeout=60, headers={'User-Agent': 'SalesSignalAI/1.0'})
+                            if resp3.status_code == 200:
+                                data3 = resp3.json()
+                                if isinstance(data3, list) and data3:
+                                    return data3
+                            break
+                    # Return the sample so we at least get some data and can debug
+                    return sample
     except Exception as e:
-        logger.warning(f'[vegas_health] CSV download failed: {e}')
-    return None
+        logger.warning(f'[vegas_health] Socrata error: {e}')
+    return []
 
 
 def _fetch_arcgis(days):
@@ -126,10 +164,26 @@ def _fetch_arcgis(days):
         resp = requests.get(ARCGIS_URL, params=params, timeout=60)
         if resp.status_code == 200:
             data = resp.json()
-            return data.get('features', [])
+            features = data.get('features', [])
+            if features:
+                logger.info(f'[vegas_health] ArcGIS returned {len(features)} features')
+                return [f.get('attributes', f) for f in features]
     except Exception as e:
         logger.warning(f'[vegas_health] ArcGIS fallback failed: {e}')
     return []
+
+
+def _fetch_csv(days):
+    """Last resort: SNHD developer CSV download."""
+    try:
+        resp = requests.get(SNHD_CSV_URL, timeout=60, headers={
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        })
+        if resp.status_code == 200 and len(resp.text) > 500:
+            return resp.text
+    except Exception as e:
+        logger.warning(f'[vegas_health] CSV download failed: {e}')
+    return None
 
 
 def monitor_vegas_health(days=7, dry_run=False):
@@ -155,19 +209,25 @@ def monitor_vegas_health(days=7, dry_run=False):
     cutoff = timezone.now() - timedelta(days=days)
     records = []
 
-    # Try CSV first
-    csv_text = _fetch_csv(days)
-    if csv_text:
-        logger.info('[vegas_health] Parsing SNHD CSV download')
-        reader = csv.DictReader(io.StringIO(csv_text))
-        for row in reader:
-            records.append(row)
+    # Try Socrata API first (most reliable)
+    socrata_data = _fetch_socrata(days)
+    if socrata_data:
+        logger.info(f'[vegas_health] Using Socrata data ({len(socrata_data)} records)')
+        records = socrata_data
     else:
-        # Fallback to ArcGIS
+        # Try ArcGIS
         logger.info('[vegas_health] Trying ArcGIS fallback')
-        features = _fetch_arcgis(days)
-        for f in features:
-            records.append(f.get('attributes', f))
+        arcgis_data = _fetch_arcgis(days)
+        if arcgis_data:
+            records = arcgis_data
+        else:
+            # Last resort: CSV download
+            logger.info('[vegas_health] Trying CSV fallback')
+            csv_text = _fetch_csv(days)
+            if csv_text:
+                reader = csv.DictReader(io.StringIO(csv_text))
+                for row in reader:
+                    records.append(row)
 
     logger.info(f'[vegas_health] Fetched {len(records)} total records')
 
