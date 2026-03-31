@@ -237,6 +237,11 @@ h1,h2,h3,h4{font-family:'Montserrat',sans-serif}
         </div>
         {% endif %}
 
+        <div style="font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(1.1rem,3vw,1.5rem);color:#fff;letter-spacing:0.04em;margin-bottom:6px;">
+            {% if is_branded and page.branded_business_name %}{{ page.branded_business_name }}{% else %}{{ brand_name }}{% endif %}
+        </div>
+        <div style="font-size:0.78rem;color:rgba(255,255,255,0.5);letter-spacing:0.12em;text-transform:uppercase;font-weight:600;margin-bottom:20px;">{{ brand_tagline }}</div>
+
         <div class="sp-hero-badge"><span class="pulse"></span> Available Now &mdash; 24/7 Emergency Service</div>
 
         <h1>
