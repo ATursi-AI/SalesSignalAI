@@ -3,11 +3,10 @@ California county health inspection monitors for SalesSignal AI.
 
 Covers multiple CA counties via their respective open data portals:
 
-  - Sacramento County:  inspections.myhealthdepartment.com/sacramento
-                        (also SACOG open data + EMD site) — DAILY updates
-  - San Diego County:   data.sandiegocounty.gov — 95K+ facilities
-  - Santa Clara County: data.sccgov.org dataset 2u2d-8jej — Socrata API
-  - LA County:          data.lacounty.gov — has owner_name field (quarterly)
+  - Santa Clara County: data.sccgov.org Socrata API (3 joined datasets) — WORKING
+  - Sacramento County:  ArcGIS FeatureServer (services1.arcgis.com) — ~6K records, daily updates
+  - San Diego County:   data.sandiegocounty.gov — endpoints unverified
+  - LA County:          ArcGIS FeatureServer (services.arcgis.com) — 106K+ records, quarterly, has owner_name
 
 Each county function returns stats in the standard monitor format.
 """
@@ -196,6 +195,55 @@ def _process_facilities(facilities, source_name, source_url, state, region, dry_
         except Exception as e:
             logger.error(f'[{source_name}] Error processing {name}: {e}')
             stats['errors'] += 1
+
+
+def _arcgis_fetch(url, params, dry_run=False):
+    """Fetch features from ArcGIS FeatureServer REST API with pagination."""
+    all_features = []
+    offset = 0
+    batch_size = params.get('resultRecordCount', 2000)
+
+    while True:
+        p = {**params, 'resultOffset': offset}
+        try:
+            resp = requests.get(url, params=p, timeout=120, headers=HEADERS)
+            if resp.status_code != 200:
+                if dry_run:
+                    print(f'  ArcGIS returned HTTP {resp.status_code}')
+                break
+            data = resp.json()
+            if 'error' in data:
+                if dry_run:
+                    print(f'  ArcGIS error: {data["error"]}')
+                break
+            features = data.get('features', [])
+            if not features:
+                break
+            all_features.extend(features)
+            if dry_run:
+                print(f'  Fetched batch: {len(features)} (total: {len(all_features)})')
+            # ArcGIS returns exceededTransferLimit if there are more pages
+            if not data.get('exceededTransferLimit', False):
+                break
+            offset += batch_size
+        except Exception as e:
+            if dry_run:
+                print(f'  ArcGIS fetch error: {e}')
+            break
+
+    return all_features
+
+
+def _parse_epoch_ms(val):
+    """Parse ArcGIS epoch-millisecond date fields."""
+    if not val:
+        return None
+    try:
+        ts = int(val) / 1000
+        dt = datetime.utcfromtimestamp(ts)
+        return timezone.make_aware(dt)
+    except (ValueError, TypeError, OSError):
+        return None
 
 
 # ──────────────────────────────────────────────
@@ -470,196 +518,296 @@ def monitor_san_diego_health(days=7, dry_run=False):
 
 
 # ──────────────────────────────────────────────
-# LA COUNTY — Socrata API (has owner_name!)
+# LA COUNTY — ArcGIS FeatureServer (has owner_name!)
+#   Inspections: 106K+ records, quarterly updates (last: Jan 7 2026)
+#   Fields: ACTIVITY_DATE, OWNER_NAME, FACILITY_ID, FACILITY_NAME,
+#           FACILITY_ADDRESS, FACILITY_CITY, FACILITY_ZIP, SCORE, GRADE,
+#           SERIAL_NUMBER (joins to violations), SERVICE_DESCRIPTION
+#   Violations: SERIAL_NUMBER, VIOLATION_CODE, VIOLATION_DESCRIPTION, POINTS
 # ──────────────────────────────────────────────
-LA_INSPECTIONS_URL = 'https://data.lacounty.gov/resource/6ni6-h5kp.json'
-LA_VIOLATIONS_URL = 'https://data.lacounty.gov/resource/8jyd-4pv9.json'
+LA_INSPECTIONS_URL = (
+    'https://services.arcgis.com/RmCCgQtiZLDCtblq/arcgis/rest/services/'
+    'Environmental_Health_Restaurant_and_Market_Inspections_01012023_to_123120025/'
+    'FeatureServer/0/query'
+)
+LA_VIOLATIONS_URL = (
+    'https://services.arcgis.com/RmCCgQtiZLDCtblq/arcgis/rest/services/'
+    'Environmental_Health_Restaurant_and_Market_Violations_01012023_to_123120025/'
+    'FeatureServer/0/query'
+)
 
 
 def monitor_la_county_health(days=30, dry_run=False):
-    """LA County — quarterly update but has owner_name field."""
+    """LA County — ArcGIS FeatureServer (quarterly update, has owner_name, 106K+ records)."""
     stats = {'sources_checked': 1, 'items_scraped': 0, 'created': 0,
              'duplicates': 0, 'assigned': 0, 'errors': 0}
 
-    since = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%dT00:00:00')
-    params = {
-        '$where': f"activity_date >= '{since}'",
-        '$select': (
-            'facility_id,facility_name,owner_id,owner_name,'
-            'facility_address,facility_city,facility_zip,'
-            'activity_date,score,grade'
-        ),
-        '$limit': 5000,
-        '$order': 'activity_date DESC',
-    }
-
-    logger.info(f'[la_county] Querying Socrata API, days={days}')
-    try:
-        resp = requests.get(LA_INSPECTIONS_URL, params=params, timeout=60,
-                            headers={'User-Agent': 'SalesSignalAI/1.0'})
-        if resp.status_code != 200:
-            logger.error(f'[la_county] SODA returned {resp.status_code}')
-            stats['errors'] += 1
-            return stats
-        data = resp.json()
-    except Exception as e:
-        logger.error(f'[la_county] API error: {e}')
-        stats['errors'] += 1
-        return stats
-
-    if not isinstance(data, list):
-        return stats
-
-    logger.info(f'[la_county] Fetched {len(data)} inspection records')
-
-    facilities = {}
     cutoff = timezone.now() - timedelta(days=days)
-    for rec in data:
-        name = (rec.get('facility_name', '') or '').strip()
+    cutoff_ms = int(cutoff.timestamp() * 1000)
+
+    if dry_run:
+        print(f'  Querying LA County ArcGIS FeatureServer (last {days} days)...')
+        print(f'  URL: {LA_INSPECTIONS_URL}')
+
+    # ── Fetch recent inspections ──
+    params = {
+        'where': f'ACTIVITY_DATE >= {cutoff_ms}',
+        'outFields': ('ACTIVITY_DATE,OWNER_NAME,FACILITY_ID,FACILITY_NAME,'
+                      'FACILITY_ADDRESS,FACILITY_CITY,FACILITY_ZIP,'
+                      'SCORE,GRADE,SERIAL_NUMBER,SERVICE_DESCRIPTION'),
+        'f': 'json',
+        'resultRecordCount': 2000,
+    }
+    features = _arcgis_fetch(LA_INSPECTIONS_URL, params, dry_run)
+
+    if dry_run:
+        print(f'  Inspection records fetched: {len(features)}')
+        if features:
+            sample = features[0].get('attributes', {})
+            print(f'  Sample fields: {list(sample.keys())}')
+            print(f'  Sample: {sample.get("FACILITY_NAME", "")} — '
+                  f'Score: {sample.get("SCORE", "")} Grade: {sample.get("GRADE", "")}')
+
+    if not features:
+        logger.warning('[la_county] No data from ArcGIS FeatureServer')
+        if dry_run:
+            print('  No data returned — check if ACTIVITY_DATE field uses epoch ms')
+        return stats
+
+    # ── Build facilities dict + collect serial numbers for violation lookup ──
+    facilities = {}
+    serial_to_facility = {}  # SERIAL_NUMBER -> fac_key
+
+    for feat in features:
+        attrs = feat.get('attributes', {})
+        if not attrs:
+            continue
+
+        name = (str(attrs.get('FACILITY_NAME', '') or '')).strip()
         if not name:
             continue
 
-        fac_id = rec.get('facility_id', '')
-        owner_name = (rec.get('owner_name', '') or '').strip()
-        address = (rec.get('facility_address', '') or '').strip()
-        city = (rec.get('facility_city', '') or '').strip()
-        zipcode = (rec.get('facility_zip', '') or '').strip()
-        insp_date = _parse_date(rec.get('activity_date', ''))
-        score = rec.get('score', '')
-        grade = rec.get('grade', '')
+        fac_id = str(attrs.get('FACILITY_ID', '') or '').strip()
+        owner_name = (str(attrs.get('OWNER_NAME', '') or '')).strip()
+        address = (str(attrs.get('FACILITY_ADDRESS', '') or '')).strip()
+        city = (str(attrs.get('FACILITY_CITY', '') or '')).strip()
+        zipcode = (str(attrs.get('FACILITY_ZIP', '') or '')).strip()
+        score = attrs.get('SCORE', '')
+        grade = (str(attrs.get('GRADE', '') or '')).strip()
+        serial = str(attrs.get('SERIAL_NUMBER', '') or '').strip()
 
+        insp_date = _parse_epoch_ms(attrs.get('ACTIVITY_DATE'))
         if insp_date and insp_date < cutoff:
             continue
 
-        full_addr = f"{address}, {city}, CA {zipcode}".strip()
+        full_addr = f"{address}, {city}, CA {zipcode}".strip() if address else f"{city}, CA"
         fac_key = fac_id or f"{name}|{full_addr}"
 
         if fac_key not in facilities:
             facilities[fac_key] = {
-                'name': name, 'owner_name': owner_name, 'address': full_addr,
-                'inspection_date': insp_date, 'score': score, 'grade': grade,
+                'name': name,
+                'owner_name': owner_name,
+                'address': full_addr,
+                'inspection_date': insp_date,
+                'score': score,
+                'grade': grade,
                 'violations': [],
             }
 
-    # Now fetch violations for these facilities
-    if facilities and not dry_run:
+        # Keep most recent inspection
+        if insp_date and facilities[fac_key]['inspection_date']:
+            if insp_date > facilities[fac_key]['inspection_date']:
+                facilities[fac_key]['inspection_date'] = insp_date
+                facilities[fac_key]['score'] = score
+                facilities[fac_key]['grade'] = grade
+
+        if serial:
+            serial_to_facility[serial] = fac_key
+
+    if dry_run:
+        print(f'  Unique facilities: {len(facilities)}')
+        print(f'  Serial numbers for violation lookup: {len(serial_to_facility)}')
+
+    # ── Fetch violations by SERIAL_NUMBER in batches ──
+    serial_list = list(serial_to_facility.keys())
+    batch_size = 200
+    violations_fetched = 0
+
+    for i in range(0, len(serial_list), batch_size):
+        batch = serial_list[i:i + batch_size]
+        in_clause = ','.join(f"'{s}'" for s in batch)
+        viol_params = {
+            'where': f"SERIAL_NUMBER in({in_clause})",
+            'outFields': 'SERIAL_NUMBER,VIOLATION_DESCRIPTION,VIOLATION_CODE,POINTS',
+            'f': 'json',
+            'resultRecordCount': 2000,
+        }
         try:
-            viol_params = {
-                '$where': f"activity_date >= '{since}'",
-                '$limit': 10000,
-                '$select': 'facility_id,violation_code,violation_description,points',
-            }
-            viol_resp = requests.get(LA_VIOLATIONS_URL, params=viol_params, timeout=60,
-                                     headers={'User-Agent': 'SalesSignalAI/1.0'})
-            if viol_resp.status_code == 200:
-                viols = viol_resp.json()
-                for v in viols:
-                    fid = v.get('facility_id', '')
-                    desc = v.get('violation_description', '')
-                    if fid in facilities and desc:
-                        facilities[fid]['violations'].append(desc)
+            resp = requests.get(LA_VIOLATIONS_URL, params=viol_params,
+                                timeout=120, headers=HEADERS)
+            if resp.status_code == 200:
+                data = resp.json()
+                for feat in data.get('features', []):
+                    va = feat.get('attributes', {})
+                    serial = str(va.get('SERIAL_NUMBER', '') or '').strip()
+                    desc = (str(va.get('VIOLATION_DESCRIPTION', '') or '')).strip()
+                    points = va.get('POINTS', '')
+                    fac_key = serial_to_facility.get(serial)
+                    if fac_key and desc and fac_key in facilities:
+                        viol_text = desc
+                        if points:
+                            viol_text += f' ({points} pts)'
+                        facilities[fac_key]['violations'].append(viol_text)
+                        violations_fetched += 1
         except Exception as e:
-            logger.warning(f'[la_county] Violations fetch error: {e}')
+            logger.warning(f'[la_county] Violation batch fetch error: {e}')
+            if dry_run:
+                print(f'  Violation batch error: {e}')
+
+    if dry_run:
+        print(f'  Violations fetched: {violations_fetched}')
 
     stats['items_scraped'] = len(facilities)
-    _process_facilities(facilities, 'la_county', LA_INSPECTIONS_URL, 'CA',
-                        'Los Angeles County', dry_run, stats)
+    _process_facilities(
+        facilities, 'la_county',
+        'https://data.lacounty.gov/datasets/19b6607ac82c4512b10811870975dbdc',
+        'CA', 'Los Angeles County', dry_run, stats,
+    )
     logger.info(f'LA County health monitor complete: {stats}')
     return stats
 
 
 # ──────────────────────────────────────────────
-# SACRAMENTO COUNTY — myhealthdepartment.com + SACOG
+# SACRAMENTO COUNTY — ArcGIS FeatureServer
+#   Sacramento County Environmental Management Dept
+#   Layer 0: Facilities (points with lat/lon)
+#   Layer 1: Inspection & Violation History (table)
+#   Fields: Facility_ID, Facility_Name, Facility_Address, Description,
+#           Inspection_Service, Inspection_Type, Inspection_Result,
+#           Inspection_Date (epoch ms), Inspection_Report, Violation_Description
+#   ~6,200 records, updated daily
 # ──────────────────────────────────────────────
-SACRAMENTO_SACOG_URL = 'https://data.sacog.org/resource/h3pu-mmdq.json'
-SACRAMENTO_EMD_URL = 'https://emdinspections.saccounty.net/api/inspections'
+SACRAMENTO_FEATURESERVER = (
+    'https://services1.arcgis.com/5NARefyPVtAeuJPU/arcgis/rest/services/'
+    'Food_Inspections/FeatureServer'
+)
+SACRAMENTO_FACILITIES_URL = f'{SACRAMENTO_FEATURESERVER}/0/query'
+SACRAMENTO_HISTORY_URL = f'{SACRAMENTO_FEATURESERVER}/1/query'
 
 
 def monitor_sacramento_health(days=7, dry_run=False):
-    """Sacramento County — daily updates via multiple endpoints."""
+    """Sacramento County — ArcGIS FeatureServer (daily updates, ~6K records)."""
     stats = {'sources_checked': 1, 'items_scraped': 0, 'created': 0,
              'duplicates': 0, 'assigned': 0, 'errors': 0}
 
-    since = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%dT00:00:00')
     cutoff = timezone.now() - timedelta(days=days)
+    # ArcGIS date filter uses epoch ms
+    cutoff_ms = int(cutoff.timestamp() * 1000)
 
-    data = []
+    if dry_run:
+        print(f'  Querying Sacramento ArcGIS FeatureServer (last {days} days)...')
+        print(f'  URL: {SACRAMENTO_FACILITIES_URL}')
 
-    # Try SACOG Socrata endpoint
-    try:
-        params = {
-            '$where': f"inspection_date >= '{since}'",
-            '$limit': 5000,
-            '$order': 'inspection_date DESC',
-        }
-        resp = requests.get(SACRAMENTO_SACOG_URL, params=params, timeout=60,
-                            headers={'User-Agent': 'SalesSignalAI/1.0'})
-        if resp.status_code == 200:
-            data = resp.json()
-            if isinstance(data, list):
-                logger.info(f'[sacramento] Got {len(data)} from SACOG')
-    except Exception as e:
-        logger.warning(f'[sacramento] SACOG error: {e}')
+    # ── Fetch from Layer 0 (Facilities — has geometry) ──
+    params = {
+        'where': f'Inspection_Date >= {cutoff_ms}',
+        'outFields': '*',
+        'f': 'json',
+        'resultRecordCount': 2000,
+    }
+    features = _arcgis_fetch(SACRAMENTO_FACILITIES_URL, params, dry_run)
 
-    # Try EMD API if SACOG didn't work
-    if not data:
-        try:
-            resp = requests.get(SACRAMENTO_EMD_URL, params={
-                'startDate': (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d'),
-                'pageSize': 500,
-            }, timeout=30, headers={
-                'User-Agent': 'SalesSignalAI/1.0',
-                'Accept': 'application/json',
-            })
-            if resp.status_code == 200:
-                raw = resp.json()
-                data = raw if isinstance(raw, list) else raw.get('results', raw.get('data', []))
-                logger.info(f'[sacramento] Got {len(data)} from EMD API')
-        except Exception as e:
-            logger.warning(f'[sacramento] EMD error: {e}')
+    if dry_run:
+        print(f'  Layer 0 features: {len(features)}')
+        if features:
+            sample = features[0].get('attributes', {})
+            print(f'  Sample fields: {list(sample.keys())}')
+            print(f'  Sample: {sample.get("Facility_Name", "")} — '
+                  f'{sample.get("Facility_Address", "")}')
 
-    if not data:
-        logger.warning('[sacramento] No data from any endpoint')
+    # If Layer 0 returned nothing, try Layer 1 (History table)
+    if not features:
+        if dry_run:
+            print(f'  Trying Layer 1 (History)...')
+            print(f'  URL: {SACRAMENTO_HISTORY_URL}')
+        features = _arcgis_fetch(SACRAMENTO_HISTORY_URL, params, dry_run)
+        if dry_run:
+            print(f'  Layer 1 features: {len(features)}')
+            if features:
+                sample = features[0].get('attributes', {})
+                print(f'  Sample fields: {list(sample.keys())}')
+
+    if not features:
+        if dry_run:
+            print('  No data from Sacramento ArcGIS')
+        logger.warning('[sacramento] No data from ArcGIS FeatureServer')
         return stats
 
+    # ── Build facilities dict ──
     facilities = {}
-    for rec in data:
-        if not isinstance(rec, dict):
+    for feat in features:
+        attrs = feat.get('attributes', {})
+        if not attrs:
             continue
-        r = {k.lower(): v for k, v in rec.items() if v}
-        name = (
-            r.get('facility_name', '') or r.get('name', '')
-            or r.get('establishment', '') or r.get('dba', '')
-        ).strip()
+
+        name = (attrs.get('Facility_Name', '') or '').strip()
         if not name:
             continue
 
-        address = (r.get('address', '') or r.get('facility_address', '')).strip()
-        city = (r.get('city', '') or 'Sacramento').strip()
-        phone = (r.get('phone', '') or r.get('telephone', '')).strip()
-        insp_date = _parse_date(
-            r.get('inspection_date', '') or r.get('date', '')
-        )
-        score = r.get('score', r.get('total_score', ''))
-        violations = r.get('violation_description', '') or r.get('violations', '')
-        result = r.get('result', '') or r.get('status', '')
+        fac_id = attrs.get('Facility_ID', '') or ''
+        address = (attrs.get('Facility_Address', '') or '').strip()
+        description = (attrs.get('Description', '') or '').strip()
+        service = (attrs.get('Inspection_Service', '') or '').strip()
+        insp_type = (attrs.get('Inspection_Type', '') or '').strip()
+        result = (attrs.get('Inspection_Result', '') or '').strip()
+        violations = (attrs.get('Violation_Description', '') or '').strip()
+        report_url = (attrs.get('Inspection_Report', '') or '').strip()
 
+        # Parse epoch-ms date
+        insp_date = _parse_epoch_ms(attrs.get('Inspection_Date'))
         if insp_date and insp_date < cutoff:
             continue
 
-        full_addr = f"{address}, {city}, CA" if address else f"{city}, CA"
-        fac_key = f"{name}|{full_addr}"
+        # Build full address — Sacramento County doesn't include city in data,
+        # most facilities are in Sacramento metro area
+        full_addr = f"{address}, Sacramento, CA" if address else "Sacramento, CA"
+
+        fac_key = str(fac_id) if fac_id else f"{name}|{full_addr}"
+
         if fac_key not in facilities:
             facilities[fac_key] = {
-                'name': name, 'address': full_addr, 'phone': phone,
-                'inspection_date': insp_date, 'score': score, 'grade': '',
+                'name': name,
+                'address': full_addr,
+                'phone': '',
+                'inspection_date': insp_date,
+                'score': '',
+                'grade': result,
                 'violations': [],
             }
+
+        # Keep most recent inspection
+        if insp_date and facilities[fac_key]['inspection_date']:
+            if insp_date > facilities[fac_key]['inspection_date']:
+                facilities[fac_key]['inspection_date'] = insp_date
+                facilities[fac_key]['grade'] = result
+
+        # Add violations
         if violations:
-            facilities[fac_key]['violations'].append(str(violations))
+            facilities[fac_key]['violations'].append(violations)
+        # Also include description/service/type as context if they contain
+        # violation-relevant keywords
+        if description and any(kw in description.lower() for kw in
+                               ['violation', 'fail', 'critical', 'major']):
+            facilities[fac_key]['violations'].append(description)
 
     stats['items_scraped'] = len(facilities)
-    _process_facilities(facilities, 'sacramento_county', SACRAMENTO_SACOG_URL, 'CA',
-                        'Sacramento County', dry_run, stats)
+    if dry_run:
+        print(f'  Facilities with recent inspections: {len(facilities)}')
+
+    _process_facilities(
+        facilities, 'sacramento_county',
+        'https://services1.arcgis.com/5NARefyPVtAeuJPU/arcgis/rest/services/Food_Inspections/FeatureServer',
+        'CA', 'Sacramento County', dry_run, stats,
+    )
     logger.info(f'Sacramento health monitor complete: {stats}')
     return stats
