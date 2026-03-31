@@ -43,4 +43,27 @@ MONITOR_SCHEDULE = [
 
     # California — SF Building Permits (nightly update)
     ('monitor_sf_permits', {'days': 7}, 24, 'SF Building Permits'),
+
+    # ── WESTERN STATES — Health Inspections (late-night calling) ──
+
+    # Las Vegas / Clark County NV — nightly CSV update
+    ('monitor_vegas_health', {'days': 7}, 24, 'Las Vegas Health Inspections (SNHD)'),
+
+    # Phoenix / Maricopa County AZ — weekly reports
+    ('monitor_maricopa_health', {'days': 7}, 24, 'Phoenix/Maricopa Health Inspections'),
+
+    # Tucson / Pima County AZ — current portal
+    ('monitor_pima_health', {'days': 7}, 24, 'Tucson/Pima Health Inspections'),
+
+    # California — County Health Inspections
+    ('monitor_ca_health', {'county': 'sacramento', 'days': 7}, 24, 'Sacramento Health Inspections (daily)'),
+    ('monitor_ca_health', {'county': 'san_diego', 'days': 7}, 24, 'San Diego Health Inspections'),
+    ('monitor_ca_health', {'county': 'santa_clara', 'days': 7}, 24, 'Santa Clara Health Inspections'),
+    ('monitor_ca_health', {'county': 'la', 'days': 30}, 168, 'LA County Health Inspections (weekly — quarterly data)'),
+
+    # myhealthdepartment.com jurisdictions — daily
+    ('monitor_myhealthdept', {'jurisdiction': 'denver', 'days': 7}, 24, 'Denver Health Inspections'),
+    ('monitor_myhealthdept', {'jurisdiction': 'portland', 'days': 7}, 24, 'Portland Health Inspections'),
+    ('monitor_myhealthdept', {'jurisdiction': 'colorado_springs', 'days': 7}, 24, 'Colorado Springs Health Inspections'),
+    ('monitor_myhealthdept', {'jurisdiction': 'honolulu', 'days': 7}, 24, 'Honolulu Health Inspections'),
 ]
