@@ -4,12 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ page.page_title }}</title>
-    <meta name="description" content="{{ page.meta_description }}">
+    <title>{% if is_branded and page.branded_business_name %}{{ page.page_title }}{% else %}{{ brand_name }} — Emergency {{ trade_name }} in {{ area_name }}, {{ state }} | 24/7{% endif %}</title>
+    <meta name="description" content="{% if is_branded %}{{ page.meta_description }}{% else %}{{ brand_name }} provides 24/7 emergency {{ trade_name|lower }} service in {{ area_name }}, {{ state_full }}. Licensed, insured, fast response. Call now for a free estimate.{% endif %}">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://salessignalai.com{% if is_branded %}/pro/{{ page.slug }}/{% else %}/find/{{ page.trade.slug }}/{{ page.area.slug }}/{% endif %}">
-    <meta property="og:title" content="{{ page.page_title }}">
-    <meta property="og:description" content="{{ page.meta_description }}">
+    <meta property="og:title" content="{% if is_branded and page.branded_business_name %}{{ page.page_title }}{% else %}{{ brand_name }} — Emergency {{ trade_name }} in {{ area_name }}, {{ state }} | 24/7{% endif %}">
+    <meta property="og:description" content="{% if is_branded %}{{ page.meta_description }}{% else %}{{ brand_name }} provides 24/7 emergency {{ trade_name|lower }} service in {{ area_name }}, {{ state_full }}. Licensed, insured, fast response. Call now for a free estimate.{% endif %}">
     <meta property="og:type" content="website">
     <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
