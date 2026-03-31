@@ -220,7 +220,7 @@ def monitor_vegas_health(days=7, dry_run=False):
     if inspections_rows:
         # Join inspections with establishments
         for row in inspections_rows:
-            r = {k.lower().strip(): (v or '').strip() for k, v in row.items()}
+            r = {k.lower().strip(): (v or '').strip() for k, v in row.items() if k}
 
             insp_date = _parse_date(r.get('inspection_date', ''))
             if not insp_date or insp_date < cutoff:
@@ -284,7 +284,7 @@ def monitor_vegas_health(days=7, dry_run=False):
         # No inspections CSV — use establishments with date_current field
         logger.info('[vegas_health] No inspections CSV, using establishments date_current')
         for row in establishments_rows:
-            r = {k.lower().strip(): (v or '').strip() for k, v in row.items()}
+            r = {k.lower().strip(): (v or '').strip() for k, v in row.items() if k}
 
             name = r.get('restaurant_name', '') or r.get('location_name', '')
             if not name:
