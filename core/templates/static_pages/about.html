@@ -47,19 +47,7 @@
     </style>
 </head>
 <body class="landing-page">
-    <nav class="landing-nav">
-        <a href="/" class="brand" style="text-decoration: none; color: inherit;">
-            <div class="brand-icon"><i class="bi bi-broadcast"></i></div>
-            <span class="brand-name">Sales Signal AI</span>
-        </a>
-        <div class="landing-nav-links" id="landing-nav-links">
-            <a href="/#how-it-works">How it Works</a>
-            <a href="/#features">Features</a>
-            <a href="{% url 'industry_index' %}">Industries</a>
-            <a href="/#pricing">Pricing</a>
-            <a href="{% url 'login' %}" class="btn-secondary btn-sm">Log In</a>
-        </div>
-    </nav>
+    {% include "partials/public_nav.html" %}
 
     <div class="sp-container">
         <div class="sp-hero">

@@ -1,144 +1,91 @@
-{% extends "base.html" %}
 {% load static %}
-{% block robots %}<meta name="robots" content="index, follow">{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog — SalesSignal AI | Lead Generation Insights</title>
+    <meta name="description" content="Insights on lead generation, sales strategies, and the human side of AI for local service businesses.">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#0D9488">
+    <link rel="canonical" href="https://salessignalai.com/blog/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Blog — SalesSignal AI">
+    <meta property="og:description" content="Insights on lead generation, sales strategies, and the human side of AI for local service businesses.">
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'css/salessignal.css' %}">
+    <style>
+    .blog-hero { text-align: center; padding: 5rem 2rem 2.5rem; }
+    .blog-hero h1 { font-family: 'Exo 2', sans-serif; font-weight: 900; font-size: clamp(2rem, 5vw, 3rem); margin-bottom: 0.5rem; }
+    .blog-hero p { color: #64748B; font-size: 1.05rem; max-width: 540px; margin: 0 auto; }
+    .blog-grid { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 4rem; display: flex; flex-direction: column; gap: 24px; }
+    .blog-card { background: #fff; border: 1px solid #E2E8F0; border-radius: 14px; padding: 28px 30px; transition: border-color 0.15s, box-shadow 0.15s; text-decoration: none; color: inherit; display: block; }
+    .blog-card:hover { border-color: #0D9488; box-shadow: 0 4px 20px rgba(13, 148, 136, 0.08); }
+    .blog-card-title { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.25rem; color: #0F172A; margin-bottom: 8px; line-height: 1.3; }
+    .blog-card-excerpt { color: #64748B; font-size: 0.92rem; line-height: 1.65; margin-bottom: 12px; }
+    .blog-card-meta { display: flex; align-items: center; gap: 12px; font-size: 0.78rem; color: #94A3B8; }
+    .blog-card-tag { background: rgba(13, 148, 136, 0.08); color: #0D9488; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 600; }
+    .blog-pagination { display: flex; justify-content: center; gap: 8px; padding: 2rem 0; }
+    .blog-pagination a, .blog-pagination span { padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; border: 1px solid #E2E8F0; color: #64748B; }
+    .blog-pagination a:hover { border-color: #0D9488; color: #0D9488; }
+    .blog-pagination .current { background: #0D9488; color: white; border-color: #0D9488; }
+    </style>
+</head>
+<body class="landing-page">
+    {% with active_nav='blog' %}
+    {% include "partials/public_nav.html" %}
+    {% endwith %}
 
-{% block title %}Blog — SalesSignal AI | Lead Generation Insights{% endblock %}
-{% block meta_description %}Insights on lead generation, sales strategies, and the human side of AI for local service businesses.{% endblock %}
+    <div class="blog-hero">
+        <h1>SalesSignal AI Blog</h1>
+        <p>Insights on lead generation, sales, and the human side of AI</p>
+    </div>
 
-{% block extra_css %}
-<style>
-.blog-hero {
-    text-align: center;
-    padding: 4rem 2rem 2.5rem;
-}
-.blog-hero h1 {
-    font-family: 'Exo 2', sans-serif;
-    font-weight: 900;
-    font-size: clamp(2rem, 5vw, 3rem);
-    color: var(--text-primary);
-    margin-bottom: 0.5rem;
-}
-.blog-hero p {
-    color: var(--text-secondary);
-    font-size: 1.05rem;
-    max-width: 540px;
-    margin: 0 auto;
-}
-.blog-grid {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 0 1.5rem 4rem;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-.blog-card {
-    background: var(--bg-surface);
-    border: 1px solid var(--border-subtle);
-    border-radius: 14px;
-    padding: 28px 30px;
-    transition: border-color 0.15s, box-shadow 0.15s;
-    text-decoration: none;
-    color: inherit;
-    display: block;
-}
-.blog-card:hover {
-    border-color: #0D9488;
-    box-shadow: 0 4px 20px rgba(13, 148, 136, 0.08);
-}
-.blog-card-title {
-    font-family: 'Exo 2', sans-serif;
-    font-weight: 800;
-    font-size: 1.25rem;
-    color: var(--text-primary);
-    margin-bottom: 8px;
-    line-height: 1.3;
-}
-.blog-card-excerpt {
-    color: var(--text-secondary);
-    font-size: 0.92rem;
-    line-height: 1.65;
-    margin-bottom: 12px;
-}
-.blog-card-meta {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 0.78rem;
-    color: var(--text-muted);
-}
-.blog-card-tag {
-    background: rgba(13, 148, 136, 0.08);
-    color: #0D9488;
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-size: 0.72rem;
-    font-weight: 600;
-}
-.blog-pagination {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    padding: 2rem 0;
-}
-.blog-pagination a, .blog-pagination span {
-    padding: 8px 14px;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-decoration: none;
-    border: 1px solid var(--border-subtle);
-    color: var(--text-secondary);
-}
-.blog-pagination a:hover { border-color: #0D9488; color: #0D9488; }
-.blog-pagination .current { background: #0D9488; color: white; border-color: #0D9488; }
-</style>
-{% endblock %}
+    <div class="blog-grid">
+        {% for post in posts %}
+        <a href="{% url 'blog_detail' post.slug %}" class="blog-card">
+            <div class="blog-card-title">{{ post.title }}</div>
+            <div class="blog-card-excerpt">{{ post.excerpt }}</div>
+            <div class="blog-card-meta">
+                <span>{{ post.published_at|date:"M d, Y" }}</span>
+                <span>&middot;</span>
+                <span>{{ post.author }}</span>
+                {% for tag in post.get_tag_list %}
+                {% if forloop.counter <= 3 %}
+                <span class="blog-card-tag">{{ tag }}</span>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </a>
+        {% empty %}
+        <div style="text-align: center; padding: 3rem; color: #94A3B8;">
+            No posts yet. Check back soon.
+        </div>
+        {% endfor %}
 
-{% block content %}
-<div class="blog-hero">
-    <h1>SalesSignal AI Blog</h1>
-    <p>Insights on lead generation, sales, and the human side of AI</p>
-</div>
-
-<div class="blog-grid">
-    {% for post in posts %}
-    <a href="{% url 'blog_detail' post.slug %}" class="blog-card">
-        <div class="blog-card-title">{{ post.title }}</div>
-        <div class="blog-card-excerpt">{{ post.excerpt }}</div>
-        <div class="blog-card-meta">
-            <span>{{ post.published_at|date:"M d, Y" }}</span>
-            <span>&middot;</span>
-            <span>{{ post.author }}</span>
-            {% for tag in post.get_tag_list %}
-            {% if forloop.counter <= 3 %}
-            <span class="blog-card-tag">{{ tag }}</span>
+        {% if page_obj.has_other_pages %}
+        <div class="blog-pagination">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}">&laquo; Prev</a>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <span class="current">{{ num }}</span>
+            {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+            <a href="?page={{ num }}">{{ num }}</a>
             {% endif %}
             {% endfor %}
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">Next &raquo;</a>
+            {% endif %}
         </div>
-    </a>
-    {% empty %}
-    <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
-        No posts yet. Check back soon.
+        {% endif %}
     </div>
-    {% endfor %}
 
-    {% if page_obj.has_other_pages %}
-    <div class="blog-pagination">
-        {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}">&laquo; Prev</a>
-        {% endif %}
-        {% for num in page_obj.paginator.page_range %}
-        {% if page_obj.number == num %}
-        <span class="current">{{ num }}</span>
-        {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
-        <a href="?page={{ num }}">{{ num }}</a>
-        {% endif %}
-        {% endfor %}
-        {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}">Next &raquo;</a>
-        {% endif %}
-    </div>
-    {% endif %}
-</div>
-{% endblock %}
+    <script src="{% static 'js/salessignal.js' %}"></script>
+</body>
+</html>

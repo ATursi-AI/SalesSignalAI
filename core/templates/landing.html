@@ -94,57 +94,9 @@
 </head>
 <body class="landing-page">
 
-    <!-- Navigation -->
-    <nav class="landing-nav">
-        <a href="/" class="brand" style="text-decoration: none; color: inherit;">
-            <div class="brand-icon"><i class="bi bi-broadcast"></i></div>
-            <span class="brand-name">Sales Signal AI</span>
-        </a>
-        <div class="landing-nav-links" id="landing-nav-links">
-            <a href="#how-it-works">How it Works</a>
-            <a href="#levels">Pricing</a>
-            <div class="nav-dropdown">
-                <a href="{% url 'industry_index' %}" class="nav-dropdown-trigger">Industries <i class="bi bi-chevron-down" style="font-size: 0.7rem;"></i></a>
-                <div class="nav-dropdown-menu">
-                    <a href="{% url 'industry_detail' 'commercial-cleaning' %}"><i class="bi bi-stars"></i> Commercial Cleaning</a>
-                    <a href="{% url 'industry_detail' 'plumbing' %}"><i class="bi bi-droplet-fill"></i> Plumbing</a>
-                    <a href="{% url 'industry_detail' 'electrical' %}"><i class="bi bi-lightning-fill"></i> Electrical</a>
-                    <a href="{% url 'industry_detail' 'hvac' %}"><i class="bi bi-thermometer-half"></i> HVAC</a>
-                    <a href="{% url 'industry_detail' 'general-contracting' %}"><i class="bi bi-hammer"></i> General Contracting</a>
-                    <a href="{% url 'industry_detail' 'pest-control' %}"><i class="bi bi-bug-fill"></i> Pest Control</a>
-                    <a href="{% url 'industry_detail' 'landscaping' %}"><i class="bi bi-tree-fill"></i> Landscaping</a>
-                    <a href="{% url 'industry_detail' 'roofing' %}"><i class="bi bi-house-fill"></i> Roofing</a>
-                    <a href="{% url 'industry_detail' 'moving' %}"><i class="bi bi-truck"></i> Moving</a>
-                    <a href="{% url 'industry_detail' 'insurance' %}"><i class="bi bi-shield-check"></i> Insurance</a>
-                    <div style="border-top: 1px solid rgba(0,0,0,0.06); margin-top: 0.25rem; padding-top: 0.25rem;">
-                        <a href="{% url 'industry_index' %}" style="font-weight: 600; color: #0D9488;"><i class="bi bi-grid-fill"></i> View All Industries</a>
-                    </div>
-                </div>
-            </div>
-            <a href="{% url 'blog_list' %}">Blog</a>
-            <a href="tel:+19592472537" class="nav-phone-link"><i class="bi bi-telephone-fill"></i> (959) AI-SALES</a>
-            <a href="{% url 'login' %}" class="btn-secondary btn-sm">Log In</a>
-            <a href="{% url 'signup' %}" class="btn-primary-glow btn-sm">Sign Up Free</a>
-        </div>
-        <button class="landing-hamburger" id="landing-hamburger" onclick="toggleLandingMenu()" aria-label="Open menu">
-            <i class="bi bi-list" id="landing-menu-icon"></i>
-        </button>
-    </nav>
-
-    <!-- Mobile nav overlay -->
-    <div class="landing-mobile-menu" id="landing-mobile-menu">
-        <a href="#how-it-works" onclick="closeLandingMenu()">How it Works</a>
-        <a href="#levels" onclick="closeLandingMenu()">Pricing</a>
-        <a href="{% url 'industry_index' %}" onclick="closeLandingMenu()">Industries</a>
-        <a href="{% url 'blog_list' %}" onclick="closeLandingMenu()">Blog</a>
-        <a href="tel:+19592472537" style="color: #0F9D7A; font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; padding: 10px 0;">
-            <i class="bi bi-telephone-fill"></i> (959) AI SALES 
-        </a>
-        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid rgba(0,0,0,0.06);">
-            <a href="{% url 'login' %}" class="btn-secondary" style="justify-content: center;">Log In</a>
-            <a href="{% url 'signup' %}" class="btn-primary-glow" style="justify-content: center;" onclick="closeLandingMenu()">Sign Up Free</a>
-        </div>
-    </div>
+    {% with is_landing_page=True %}
+    {% include "partials/public_nav.html" %}
+    {% endwith %}
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- HERO -->

@@ -4,72 +4,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pricing — SalesSignal AI | Customer Acquisition for Local Businesses</title>
-    <meta name="description" content="Simple pricing for lead generation, email campaigns, social media, and full-service customer acquisition. Plans starting at $299/mo. One new customer pays for itself.">
+    <title>Pricing — SalesSignal AI | Customer Acquisition for Service Businesses</title>
+    <meta name="description" content="Simple pricing for customer acquisition. A la carte services from $99/appt or bundled packages from $599/mo. AI automated or human-in-the-loop. One new customer pays for 3-6 months.">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://salessignalai.com/pricing/">
     <meta property="og:title" content="Pricing — SalesSignal AI">
-    <meta property="og:description" content="Simple pricing for lead generation, email campaigns, and full-service customer acquisition. Starting at $299/mo.">
+    <meta property="og:description" content="A la carte services or full packages. AI automated or human-in-the-loop. From $99/appointment to full-service customer acquisition.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://salessignalai.com/pricing/">
     <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
     <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{% static 'css/salessignal.css' %}">
     <style>
-    .pp{max-width:1200px;margin:0 auto;padding:0 20px}
-    .pp-hero{text-align:center;padding:60px 20px 40px}
+    /* ── Pricing page specific styles ── */
+    .pp-hero{text-align:center;padding:80px 20px 48px}
     .pp-hero h1{font-family:'Exo 2',sans-serif;font-weight:900;font-size:clamp(2rem,5vw,2.8rem);margin-bottom:12px;color:#1a1a2e}
     .pp-hero p{color:#64748B;font-size:1.1rem;max-width:640px;margin:0 auto 8px;line-height:1.7}
-    .pp-hero-note{font-size:0.85rem;color:#94A3B8;margin-top:12px}
-    .pp-section{padding:48px 0}
-    .pp-section-title{font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.8rem;text-align:center;margin-bottom:6px;color:#1a1a2e}
-    .pp-section-sub{text-align:center;color:#64748B;font-size:1rem;margin-bottom:36px;max-width:600px;margin-left:auto;margin-right:auto}
+    .pp-hero-note{font-size:0.85rem;color:#94A3B8;margin-top:16px}
 
-    /* A la carte grid */
-    .alc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-    .alc-card{background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:28px 24px;transition:transform 0.2s,box-shadow 0.2s}
-    .alc-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.06)}
-    .alc-icon{width:48px;height:48px;border-radius:12px;background:rgba(13,148,136,0.08);display:flex;align-items:center;justify-content:center;color:#0D9488;font-size:1.3rem;margin-bottom:14px}
-    .alc-name{font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.05rem;margin-bottom:4px}
-    .alc-price{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.25rem;color:#0D9488;margin-bottom:6px}
-    .alc-price span{font-size:0.7rem;font-weight:400;color:#94A3B8}
-    .alc-desc{font-size:0.85rem;color:#64748B;margin-bottom:14px;line-height:1.5}
-    .alc-features{list-style:none;padding:0;margin:0 0 10px}
-    .alc-features li{font-size:0.8rem;padding:3px 0;color:#334155;display:flex;align-items:flex-start;gap:6px}
-    .alc-features li i{color:#0D9488;margin-top:2px;flex-shrink:0;font-size:0.7rem}
-    .alc-addon{font-size:0.75rem;color:#64748B;padding-top:8px;border-top:1px solid #F1F5F9}
+    /* A la carte + package reuse from landing */
+    .alacarte-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem;margin-bottom:2rem}
+    .package-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1.25rem}
+    .price-row{display:flex;justify-content:space-between;align-items:center;padding:0.65rem 0.9rem;background:#f0fdf4;border-radius:8px;margin-bottom:0.4rem;flex-wrap:wrap;gap:4px;border-left:2px solid #1D9E75}
+    .price-row.human{background:#eff6ff;border-left:2px solid #378ADD}
+    .tier-label{font-size:0.78rem;color:#4a4a68}
+    .tier-price{font-size:1.15rem;font-weight:700;color:#1a1a2e;white-space:nowrap}
+    .tier-price small{font-size:0.55em;font-weight:400}
+    .tier-price span{font-size:0.65em;font-weight:400;color:#6b7280}
+    .overage{font-size:0.68rem;color:#6b7280;width:100%;margin-top:2px}
+    .row-header h3{font-family:'Exo 2',sans-serif;font-weight:800;margin:0 0 0.25rem}
+    .row-header p{margin:0;font-size:0.9rem;color:#64748B}
 
-    /* Package cards */
-    .pkg-scroll{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
-    .pkg-card{background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:28px 22px;text-align:center;position:relative;transition:transform 0.2s,box-shadow 0.2s}
-    .pkg-card:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,0.07)}
-    .pkg-card.featured{border:2px solid #0D9488;box-shadow:0 4px 20px rgba(13,148,136,0.15)}
-    .pkg-popular{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:#0D9488;color:#fff;padding:3px 16px;border-radius:20px;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap}
-    .pkg-tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px}
-    .pkg-name{font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:4px}
-    .pkg-price{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.5rem;margin-bottom:2px}
-    .pkg-price span{font-size:0.7rem;font-weight:400;color:#64748B}
-    .pkg-desc{font-size:0.78rem;color:#64748B;margin-bottom:16px;font-weight:500}
-    .pkg-features{text-align:left;list-style:none;padding:0;margin:0 0 18px}
-    .pkg-features li{font-size:0.75rem;padding:4px 0;color:#334155;display:flex;align-items:flex-start;gap:6px}
-    .pkg-features li i{color:#0D9488;margin-top:2px;flex-shrink:0}
-    .pkg-btn{display:block;width:100%;text-align:center;padding:12px;border-radius:10px;font-family:'Exo 2',sans-serif;font-weight:700;font-size:0.9rem;text-decoration:none;transition:transform 0.15s,box-shadow 0.15s}
-    .pkg-btn:hover{transform:translateY(-1px)}
-    .pkg-btn-primary{background:#0D9488;color:#fff;box-shadow:0 4px 12px rgba(13,148,136,0.25)}
-    .pkg-btn-outline{background:transparent;color:#0D9488;border:2px solid #0D9488}
+    .level-card{background:white;border-radius:14px;border:1px solid #E2E8F0;padding:24px 20px;transition:transform 0.2s,box-shadow 0.2s;position:relative}
+    .level-card:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,0.08)}
+    .level-card.featured{border:2px solid #0D9488;box-shadow:0 4px 20px rgba(13,148,136,0.15)}
+    .level-card .level-name{font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.05rem;margin-bottom:4px}
+    .level-card .level-desc{font-size:0.78rem;color:#64748B;margin-bottom:0.75rem;line-height:1.4}
+    .level-tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px}
+    .level-popular{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#0D9488;color:white;padding:3px 14px;border-radius:20px;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap}
+    .alacarte-grid .level-card{border-left:3px solid #1D9E75}
+    .package-grid .level-card{border-left:3px solid #378ADD}
+    .package-grid .level-card.featured{border-left:3px solid #F59E0B;border-top:2px solid #F59E0B}
 
-    /* ROI */
+    /* ROI section */
     .roi-section{background:#0F172A;color:#fff;padding:56px 20px}
     .roi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:1000px;margin:0 auto}
     .roi-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:28px}
     .roi-card p{font-size:0.88rem;color:rgba(255,255,255,0.7);line-height:1.6;margin-bottom:6px}
     .roi-card .roi-result{font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.4rem;color:#2DD4BF;margin-top:8px}
 
-    /* VS */
+    /* VS section */
     .vs-section{background:#0F172A;color:#fff;padding:56px 20px}
     .vs-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:2rem;max-width:900px;margin:0 auto;align-items:start}
     .vs-col{padding:2rem;border-radius:14px}
@@ -85,6 +76,7 @@
     .vs-badge{background:#F59E0B;color:#0F172A;font-family:'Exo 2',sans-serif;font-weight:900;font-size:1rem;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center}
 
     /* FAQ */
+    .faq-section{max-width:760px;margin:0 auto;padding:56px 20px}
     .faq-item{background:#fff;border:1px solid #E2E8F0;border-radius:12px;margin-bottom:10px;overflow:hidden}
     .faq-q{font-weight:700;font-size:0.95rem;padding:18px 24px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;color:#1a1a2e}
     .faq-q::after{content:'+';font-size:1.2rem;color:#94A3B8;transition:transform 0.2s}
@@ -98,10 +90,12 @@
     .pp-cta p{color:#64748B;font-size:1.05rem;margin-bottom:24px}
     .pp-cta-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
 
-    @media(max-width:1024px){.pkg-scroll{grid-template-columns:repeat(3,1fr)}.alc-grid{grid-template-columns:repeat(2,1fr)}}
+    .section-wrap{max-width:1200px;margin:0 auto;padding:0 20px}
+
+    @media(max-width:1024px){.roi-grid{grid-template-columns:1fr}}
     @media(max-width:768px){
-        .pkg-scroll{grid-template-columns:1fr;max-width:400px;margin:0 auto}
-        .alc-grid{grid-template-columns:1fr}
+        .package-grid{grid-template-columns:1fr;max-width:400px;margin:0 auto}
+        .alacarte-grid{grid-template-columns:1fr}
         .roi-grid{grid-template-columns:1fr}
         .vs-grid{grid-template-columns:1fr;gap:1rem}
         .vs-divider{padding:0.5rem 0}
@@ -110,30 +104,55 @@
 </head>
 <body class="landing-page">
 
-    <!-- Nav -->
+    <!-- Navigation — matches landing.html exactly -->
     <nav class="landing-nav">
-        <a href="/" class="brand" style="text-decoration:none;color:inherit;">
+        <a href="/" class="brand" style="text-decoration: none; color: inherit;">
             <div class="brand-icon"><i class="bi bi-broadcast"></i></div>
             <span class="brand-name">Sales Signal AI</span>
         </a>
         <div class="landing-nav-links" id="landing-nav-links">
-            <a href="/">Home</a>
+            <a href="/#how-it-works">How it Works</a>
             <a href="{% url 'pricing' %}" style="color:#0D9488;font-weight:600;">Pricing</a>
+            <div class="nav-dropdown">
+                <a href="{% url 'industry_index' %}" class="nav-dropdown-trigger">Industries <i class="bi bi-chevron-down" style="font-size: 0.7rem;"></i></a>
+                <div class="nav-dropdown-menu">
+                    <a href="{% url 'industry_detail' 'commercial-cleaning' %}"><i class="bi bi-stars"></i> Commercial Cleaning</a>
+                    <a href="{% url 'industry_detail' 'plumbing' %}"><i class="bi bi-droplet-fill"></i> Plumbing</a>
+                    <a href="{% url 'industry_detail' 'electrical' %}"><i class="bi bi-lightning-fill"></i> Electrical</a>
+                    <a href="{% url 'industry_detail' 'hvac' %}"><i class="bi bi-thermometer-half"></i> HVAC</a>
+                    <a href="{% url 'industry_detail' 'general-contracting' %}"><i class="bi bi-hammer"></i> General Contracting</a>
+                    <a href="{% url 'industry_detail' 'pest-control' %}"><i class="bi bi-bug-fill"></i> Pest Control</a>
+                    <a href="{% url 'industry_detail' 'landscaping' %}"><i class="bi bi-tree-fill"></i> Landscaping</a>
+                    <a href="{% url 'industry_detail' 'roofing' %}"><i class="bi bi-house-fill"></i> Roofing</a>
+                    <a href="{% url 'industry_detail' 'moving' %}"><i class="bi bi-truck"></i> Moving</a>
+                    <a href="{% url 'industry_detail' 'insurance' %}"><i class="bi bi-shield-check"></i> Insurance</a>
+                    <div style="border-top: 1px solid rgba(0,0,0,0.06); margin-top: 0.25rem; padding-top: 0.25rem;">
+                        <a href="{% url 'industry_index' %}" style="font-weight: 600; color: #0D9488;"><i class="bi bi-grid-fill"></i> View All Industries</a>
+                    </div>
+                </div>
+            </div>
             <a href="{% url 'blog_list' %}">Blog</a>
-            <a href="tel:+19592472537" class="nav-phone-link"><i class="bi bi-telephone-fill"></i> (959) 247-2537</a>
+            <a href="tel:+19592472537" class="nav-phone-link"><i class="bi bi-telephone-fill"></i> (959) AI-SALES</a>
             <a href="{% url 'login' %}" class="btn-secondary btn-sm">Log In</a>
-            <a href="{% url 'signup' %}" class="btn-primary-glow btn-sm">Get Started</a>
+            <a href="{% url 'signup' %}" class="btn-primary-glow btn-sm">Sign Up Free</a>
         </div>
-        <button class="landing-hamburger" id="landing-hamburger" onclick="toggleMenu()" aria-label="Menu"><i class="bi bi-list" id="menu-icon"></i></button>
+        <button class="landing-hamburger" id="landing-hamburger" onclick="toggleLandingMenu()" aria-label="Open menu">
+            <i class="bi bi-list" id="landing-menu-icon"></i>
+        </button>
     </nav>
-    <div class="landing-mobile-menu" id="mobile-menu">
-        <a href="/" onclick="closeMenu()">Home</a>
-        <a href="{% url 'pricing' %}" onclick="closeMenu()">Pricing</a>
-        <a href="{% url 'blog_list' %}" onclick="closeMenu()">Blog</a>
-        <a href="tel:+19592472537" style="color:#0D9488;font-weight:700;font-size:1.1rem;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;padding:10px 0;"><i class="bi bi-telephone-fill"></i> (959) 247-2537</a>
-        <div style="display:flex;flex-direction:column;gap:0.75rem;margin-top:0.5rem;padding-top:1rem;border-top:1px solid rgba(0,0,0,0.06);">
-            <a href="{% url 'login' %}" class="btn-secondary" style="justify-content:center;">Log In</a>
-            <a href="{% url 'signup' %}" class="btn-primary-glow" style="justify-content:center;">Get Started</a>
+
+    <!-- Mobile nav overlay -->
+    <div class="landing-mobile-menu" id="landing-mobile-menu">
+        <a href="/" onclick="closeLandingMenu()">Home</a>
+        <a href="{% url 'pricing' %}" onclick="closeLandingMenu()">Pricing</a>
+        <a href="{% url 'industry_index' %}" onclick="closeLandingMenu()">Industries</a>
+        <a href="{% url 'blog_list' %}" onclick="closeLandingMenu()">Blog</a>
+        <a href="tel:+19592472537" style="color: #0F9D7A; font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; padding: 10px 0;">
+            <i class="bi bi-telephone-fill"></i> (959) AI SALES
+        </a>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid rgba(0,0,0,0.06);">
+            <a href="{% url 'login' %}" class="btn-secondary" style="justify-content: center;">Log In</a>
+            <a href="{% url 'signup' %}" class="btn-primary-glow" style="justify-content: center;" onclick="closeLandingMenu()">Sign Up Free</a>
         </div>
     </div>
 
@@ -141,186 +160,154 @@
     <section class="pp-hero">
         <h1>Simple Pricing. Real Results.</h1>
         <p>Start with AI. Scale up to humans. Move up when you're ready.</p>
-        <div class="pp-hero-note">All plans include a one-time $499 setup fee. Waived for annual commitments.</div>
+        <div class="pp-hero-note">All plans include a one-time $299 setup and onboarding fee.</div>
     </section>
 
     <!-- ══════════════════════════════════════════════════════ -->
-    <!-- A LA CARTE -->
+    <!-- A LA CARTE SERVICES -->
     <!-- ══════════════════════════════════════════════════════ -->
-    <section class="pp-section" style="background:#F8FAFC;padding:48px 20px;">
-        <div class="pp">
-            <div class="pp-section-title">Build Your Own</div>
-            <div class="pp-section-sub">Pick the services you need. Mix and match.</div>
-            <div class="alc-grid">
-                <div class="alc-card">
-                    <div class="alc-icon"><i class="bi bi-envelope-fill"></i></div>
-                    <div class="alc-name">Email Drip Campaign</div>
-                    <div class="alc-price">Starting at $149<span>/mo</span></div>
-                    <div class="alc-desc">AI-written 3-email sequence sent to your prospects.</div>
-                    <ul class="alc-features">
-                        <li><i class="bi bi-check2"></i> AI-personalized emails</li>
-                        <li><i class="bi bi-check2"></i> Open &amp; reply tracking</li>
-                        <li><i class="bi bi-check2"></i> CAN-SPAM compliant</li>
-                        <li><i class="bi bi-check2"></i> You handle responses</li>
-                    </ul>
-                    <div class="alc-addon">Add video emails: +$99/mo per video</div>
+    <section style="background:#F8FAFC;padding:48px 20px;">
+        <div class="section-wrap">
+            <div class="row-header" style="margin-bottom:1.5rem;text-align:center;">
+                <h3 style="font-size:1.8rem;">A La Carte Services</h3>
+                <p>Pick individual services &bull; AI automated OR human-in-the-loop</p>
+            </div>
+
+            <div class="alacarte-grid">
+                <div class="level-card">
+                    <div class="level-name">Email drip campaign</div>
+                    <p class="level-desc">Automated sequences, A/B testing, analytics</p>
+                    <div class="price-row"><span class="tier-label">AI automated</span><span class="tier-price">$199<span>/mo</span></span></div>
+                    <div class="price-row human"><span class="tier-label">Human + AI</span><span class="tier-price">$399<span>/mo</span></span></div>
                 </div>
-                <div class="alc-card">
-                    <div class="alc-icon"><i class="bi bi-megaphone-fill"></i></div>
-                    <div class="alc-name">Social Media Presence</div>
-                    <div class="alc-price">Starting at $199<span>/mo</span></div>
-                    <div class="alc-desc">We build and manage your online presence.</div>
-                    <ul class="alc-features">
-                        <li><i class="bi bi-check2"></i> Google Business setup</li>
-                        <li><i class="bi bi-check2"></i> Facebook + LinkedIn + Yelp</li>
-                        <li><i class="bi bi-check2"></i> 1 post/week across all platforms</li>
-                        <li><i class="bi bi-check2"></i> Engagement monitoring</li>
-                    </ul>
-                    <div class="alc-addon">Premium (3 posts/week): Starting at $349/mo<br>Profile setup: $399 one-time</div>
+                <div class="level-card">
+                    <div class="level-name">Video email drip</div>
+                    <p class="level-desc">Includes 1 custom video per campaign. Additional videos available separately.</p>
+                    <div class="price-row"><span class="tier-label">AI automated</span><span class="tier-price">$349<span>/mo</span></span></div>
+                    <div class="price-row human"><span class="tier-label">Human + AI</span><span class="tier-price">$599<span>/mo</span></span></div>
                 </div>
-                <div class="alc-card">
-                    <div class="alc-icon"><i class="bi bi-broadcast-pin"></i></div>
-                    <div class="alc-name">Lead Intelligence</div>
-                    <div class="alc-price">Starting at $249<span>/mo</span></div>
-                    <div class="alc-desc">AI monitors 37+ sources and delivers leads to your dashboard.</div>
-                    <ul class="alc-features">
-                        <li><i class="bi bi-check2"></i> Real-time monitoring</li>
-                        <li><i class="bi bi-check2"></i> Violation &amp; permit alerts</li>
-                        <li><i class="bi bi-check2"></i> Property sales tracking</li>
-                        <li><i class="bi bi-check2"></i> Enriched contact info</li>
-                        <li><i class="bi bi-check2"></i> CRM dashboard</li>
-                    </ul>
-                    <div class="alc-addon">With phone + email enrichment: Starting at $349/mo</div>
+                <div class="level-card">
+                    <div class="level-name">Lead access</div>
+                    <p class="level-desc">Leads populated to your dashboard</p>
+                    <div class="price-row"><span class="tier-label">Dashboard access</span><span class="tier-price">$299<span>/mo</span></span><span class="overage">Raw leads &mdash; you decide action</span></div>
+                    <div class="price-row human"><span class="tier-label">Human-qualified</span><span class="tier-price">$125<span>/lead</span></span><span class="overage">Verified by our team</span></div>
                 </div>
-                <div class="alc-card">
-                    <div class="alc-icon"><i class="bi bi-telephone-outbound-fill"></i></div>
-                    <div class="alc-name">Human Outbound Calling</div>
-                    <div class="alc-price">Starting at $2,000<span>/mo</span></div>
-                    <div class="alc-desc">A real salesperson calls your prospects and sets appointments.</div>
-                    <ul class="alc-features">
-                        <li><i class="bi bi-check2"></i> Dedicated human caller</li>
-                        <li><i class="bi bi-check2"></i> Custom scripts</li>
-                        <li><i class="bi bi-check2"></i> Objection handling</li>
-                        <li><i class="bi bi-check2"></i> Appointment booking</li>
-                        <li><i class="bi bi-check2"></i> Call recordings &amp; daily reporting</li>
-                    </ul>
+                <div class="level-card">
+                    <div class="level-name">Social listings + posting</div>
+                    <p class="level-desc">LinkedIn, Nextdoor, Reddit, Facebook, GMB</p>
+                    <div class="price-row"><span class="tier-label">AI automated (3 platforms)</span><span class="tier-price">$349<span>/mo</span></span></div>
+                    <div class="price-row human"><span class="tier-label">Human + AI (5+ platforms)</span><span class="tier-price">$699<span>/mo</span></span></div>
                 </div>
-                <div class="alc-card">
-                    <div class="alc-icon"><i class="bi bi-headset"></i></div>
-                    <div class="alc-name">Inbound Call Answering</div>
-                    <div class="alc-price">Starting at $499<span>/mo + $1.50/min</span></div>
-                    <div class="alc-desc">We answer your phone, qualify callers, and route to you.</div>
-                    <ul class="alc-features">
-                        <li><i class="bi bi-check2"></i> Live human answering</li>
-                        <li><i class="bi bi-check2"></i> Lead qualifying</li>
-                        <li><i class="bi bi-check2"></i> 100 minutes included</li>
-                        <li><i class="bi bi-check2"></i> After-hours coverage</li>
-                    </ul>
+                <div class="level-card">
+                    <div class="level-name">Appointment setting</div>
+                    <p class="level-desc">Appointments booked to your calendar</p>
+                    <div class="price-row"><span class="tier-label">AI scheduled</span><span class="tier-price"><small>Starting at </small>$99<span>/appt</span></span></div>
+                    <div class="price-row human"><span class="tier-label">Human scheduled</span><span class="tier-price"><small>Starting at </small>$175<span>/appt</span></span></div>
                 </div>
-                <div class="alc-card">
-                    <div class="alc-icon"><i class="bi bi-telephone-forward-fill"></i></div>
-                    <div class="alc-name">Live Transfer</div>
-                    <div class="alc-price">Starting at $1,499<span>/mo + $1/min</span></div>
-                    <div class="alc-desc">We qualify and warm-transfer hot leads to your cell.</div>
-                    <ul class="alc-features">
-                        <li><i class="bi bi-check2"></i> Real-time qualifying</li>
-                        <li><i class="bi bi-check2"></i> Warm transfer</li>
-                        <li><i class="bi bi-check2"></i> 200 minutes included</li>
-                        <li><i class="bi bi-check2"></i> Caller briefing before transfer</li>
-                    </ul>
+                <div class="level-card">
+                    <div class="level-name">Inbound call center</div>
+                    <p class="level-desc">Answer calls on your behalf, CRM integration</p>
+                    <div class="price-row"><span class="tier-label">AI voice (200 min incl)</span><span class="tier-price"><small>Starting at </small>$399<span>/mo</span></span><span class="overage">Overage: $1.25/min</span></div>
+                    <div class="price-row human"><span class="tier-label">Human team (200 min incl)</span><span class="tier-price"><small>Starting at </small>$699<span>/mo</span></span><span class="overage">Overage: $2.00/min</span></div>
+                </div>
+                <div class="level-card">
+                    <div class="level-name">Outbound call center</div>
+                    <p class="level-desc">Proactive outreach, lead follow-up</p>
+                    <div class="price-row"><span class="tier-label">AI voice (300 min incl)</span><span class="tier-price"><small>Starting at </small>$599<span>/mo</span></span><span class="overage">Overage: $1.50/min</span></div>
+                    <div class="price-row human"><span class="tier-label">Human team (300 min incl)</span><span class="tier-price"><small>Starting at </small>$1,199<span>/mo</span></span><span class="overage">Overage: $2.00/min</span></div>
+                </div>
+                <div class="level-card">
+                    <div class="level-name">Exclusive landing page</div>
+                    <p class="level-desc">SEO-optimized, lead capture, no branding</p>
+                    <div class="price-row"><span class="tier-label">AI generated</span><span class="tier-price">$399 + $99<span>/mo</span></span></div>
+                    <div class="price-row human"><span class="tier-label">Custom design</span><span class="tier-price">$999 + $149<span>/mo</span></span></div>
+                </div>
+                <div class="level-card">
+                    <div class="level-name">Outbound sales team</div>
+                    <p class="level-desc">Full sales cycle, pipeline management</p>
+                    <div class="price-row"><span class="tier-label">AI-first + oversight</span><span class="tier-price"><small>Starting at </small>$3,999<span>/mo</span></span></div>
+                    <div class="price-row human"><span class="tier-label">Dedicated rep team</span><span class="tier-price"><small>Starting at </small>$7,499<span>/mo</span></span></div>
+                </div>
+                <div class="level-card">
+                    <div class="level-name">SEO + AEO optimization</div>
+                    <p class="level-desc">Google ranking + AI search visibility (ChatGPT, Perplexity, Gemini)</p>
+                    <div class="price-row"><span class="tier-label">AI-powered optimization</span><span class="tier-price"><small>Starting at </small>$399<span>/mo</span></span></div>
+                    <div class="price-row human"><span class="tier-label">AIO Agent + AI optimization</span><span class="tier-price"><small>Starting at </small>$799<span>/mo</span></span></div>
+                </div>
+                <div class="level-card">
+                    <div class="level-name">BYO leads appointment setting</div>
+                    <p class="level-desc">You run the ads. We book the jobs.</p>
+                    <div class="price-row"><span class="tier-label">Standard leads</span><span class="tier-price">$199<span>/mo</span> + $99<span>/appt</span></span></div>
+                    <div class="price-row human"><span class="tier-label">Emergency leads</span><span class="tier-price">$299<span>/mo</span> + $149<span>/appt</span></span></div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- ══════════════════════════════════════════════════════ -->
-    <!-- PACKAGES -->
+    <!-- PACKAGE BUNDLES -->
     <!-- ══════════════════════════════════════════════════════ -->
-    <section class="pp-section">
-        <div class="pp">
-            <div class="pp-section-title">The Full Court Press</div>
-            <div class="pp-section-sub">Each service works on its own. But together? Your competitors don't stand a chance.</div>
-            <div class="pkg-scroll">
-                <!-- Email Campaign -->
-                <div class="pkg-card">
-                    <div class="pkg-tag" style="background:#DBEAFE;color:#1D4ED8;">AI Only</div>
-                    <div class="pkg-name">Email Campaign</div>
-                    <div class="pkg-price">Starting at $149<span>/mo</span></div>
-                    <div class="pkg-desc">AI writes and sends email campaigns to your prospects.</div>
-                    <ul class="pkg-features">
-                        <li><i class="bi bi-check2"></i> AI-written email sequences (3-5 emails)</li>
-                        <li><i class="bi bi-check2"></i> Open &amp; reply tracking</li>
-                        <li><i class="bi bi-check2"></i> CAN-SPAM compliant</li>
-                        <li><i class="bi bi-check2"></i> You handle responses</li>
-                        <li><i class="bi bi-check2"></i> Add video emails: +$99/mo</li>
-                    </ul>
-                    <a href="{% url 'signup' %}?plan=email" class="pkg-btn pkg-btn-outline">Get Started</a>
+    <section style="padding:48px 20px;">
+        <div class="section-wrap">
+            <div class="row-header" style="margin-bottom:1.5rem;text-align:center;">
+                <h3 style="font-size:1.8rem;">Package Bundles</h3>
+                <p>Bundled services at discount &bull; Your competitors don't stand a chance.</p>
+            </div>
+
+            <div class="package-grid">
+                <!-- Starter -->
+                <div class="level-card">
+                    <div class="level-tag" style="background:#DBEAFE;color:#1D4ED8;">Starter</div>
+                    <div class="level-name">Starter</div>
+                    <p class="level-desc">Email drip + Social listings + Dashboard lead access</p>
+                    <div class="price-row"><span class="tier-label">AI automated</span><span class="tier-price"><small>Starting at </small>$599<span>/mo</span></span></div>
+                    <div class="price-row human"><span class="tier-label">Human + AI</span><span class="tier-price"><small>Starting at </small>$999<span>/mo</span></span></div>
+                    <a href="{% url 'signup' %}?plan=starter" class="btn-secondary w-100" style="justify-content:center;margin-top:0.75rem;">Get Started</a>
                 </div>
                 <!-- Growth -->
-                <div class="pkg-card">
-                    <div class="pkg-tag" style="background:#EDE9FE;color:#7C3AED;">AI + Data</div>
-                    <div class="pkg-name">Growth</div>
-                    <div class="pkg-price">Starting at $599<span>/mo</span></div>
-                    <div class="pkg-desc">We find the leads AND run the campaigns.</div>
-                    <ul class="pkg-features">
-                        <li><i class="bi bi-check2"></i> Everything in Email Campaign</li>
-                        <li><i class="bi bi-check2"></i> Leads from 37+ real-time sources</li>
-                        <li><i class="bi bi-check2"></i> AI enrichment (phone, email, name)</li>
-                        <li><i class="bi bi-check2"></i> CRM pipeline &amp; contacts</li>
-                        <li><i class="bi bi-check2"></i> Territory-based filtering</li>
-                        <li><i class="bi bi-check2"></i> Dedicated onboarding call</li>
-                    </ul>
-                    <a href="{% url 'signup' %}?plan=growth" class="pkg-btn pkg-btn-outline">Get Started</a>
+                <div class="level-card">
+                    <div class="level-tag" style="background:#EDE9FE;color:#7C3AED;">Growth</div>
+                    <div class="level-name">Growth</div>
+                    <p class="level-desc">+ Video email + Appointment setting + Social (5 platforms)</p>
+                    <div class="price-row"><span class="tier-label">AI automated</span><span class="tier-price"><small>Starting at </small>$1,199<span>/mo</span></span></div>
+                    <div class="price-row human"><span class="tier-label">Human + AI</span><span class="tier-price"><small>Starting at </small>$1,999<span>/mo</span></span></div>
+                    <a href="{% url 'signup' %}?plan=growth" class="btn-secondary w-100" style="justify-content:center;margin-top:0.75rem;">Get Started</a>
                 </div>
                 <!-- Dominate -->
-                <div class="pkg-card featured">
-                    <div class="pkg-popular">Most Popular</div>
-                    <div class="pkg-tag" style="background:#CCFBF1;color:#0D9488;">AI + Outreach</div>
-                    <div class="pkg-name">Dominate</div>
-                    <div class="pkg-price">Starting at $899<span>/mo</span></div>
-                    <div class="pkg-desc">Multi-channel outreach &mdash; email, text, video. Everywhere at once.</div>
-                    <ul class="pkg-features">
-                        <li><i class="bi bi-check2"></i> Everything in Growth</li>
-                        <li><i class="bi bi-check2"></i> Personalized video email campaigns</li>
-                        <li><i class="bi bi-check2"></i> SMS/text outreach</li>
-                        <li><i class="bi bi-check2"></i> AI lead qualifying</li>
-                        <li><i class="bi bi-check2"></i> Multi-channel sequences</li>
-                        <li><i class="bi bi-check2"></i> Weekly strategy email</li>
-                    </ul>
-                    <a href="{% url 'signup' %}?plan=dominate" class="pkg-btn pkg-btn-primary">Get Started</a>
+                <div class="level-card featured">
+                    <div class="level-popular">Most Popular</div>
+                    <div class="level-tag" style="background:#CCFBF1;color:#0D9488;">Dominate</div>
+                    <div class="level-name">Dominate</div>
+                    <p class="level-desc">+ Inbound call center + Landing page</p>
+                    <div class="price-row"><span class="tier-label">AI automated</span><span class="tier-price"><small>Starting at </small>$1,999<span>/mo</span></span></div>
+                    <div class="price-row human"><span class="tier-label">Human + AI</span><span class="tier-price"><small>Starting at </small>$3,499<span>/mo</span></span></div>
+                    <a href="{% url 'signup' %}?plan=dominate" class="btn-primary-glow w-100" style="justify-content:center;margin-top:0.75rem;">Get Started</a>
                 </div>
                 <!-- Closer -->
-                <div class="pkg-card">
-                    <div class="pkg-tag" style="background:#FEF3C7;color:#92400E;">AI + Humans</div>
-                    <div class="pkg-name">Closer</div>
-                    <div class="pkg-price">Starting at $2,499<span>/mo</span></div>
-                    <div class="pkg-desc">Real salespeople call, qualify, and book appointments for you.</div>
-                    <ul class="pkg-features">
-                        <li><i class="bi bi-check2"></i> Everything in Dominate</li>
-                        <li><i class="bi bi-check2"></i> Dedicated human sales caller</li>
-                        <li><i class="bi bi-check2"></i> Appointment setting</li>
-                        <li><i class="bi bi-check2"></i> Custom call scripts</li>
-                        <li><i class="bi bi-check2"></i> Objection handling playbook</li>
-                        <li><i class="bi bi-check2"></i> Weekly strategy call</li>
-                    </ul>
-                    <a href="{% url 'signup' %}" class="pkg-btn pkg-btn-outline">Contact Us</a>
+                <div class="level-card">
+                    <div class="level-tag" style="background:#FEF3C7;color:#92400E;">Closer</div>
+                    <div class="level-name">Closer</div>
+                    <p class="level-desc">+ Outbound call center + Appointment setting</p>
+                    <div class="price-row"><span class="tier-label">AI automated</span><span class="tier-price"><small>Starting at </small>$3,999<span>/mo</span></span></div>
+                    <div class="price-row human"><span class="tier-label">Human + AI</span><span class="tier-price"><small>Starting at </small>$6,499<span>/mo</span></span></div>
+                    <a href="{% url 'signup' %}" class="btn-secondary w-100" style="justify-content:center;margin-top:0.75rem;">Contact Us</a>
                 </div>
                 <!-- Full Service -->
-                <div class="pkg-card">
-                    <div class="pkg-tag" style="background:#FEE2E2;color:#DC2626;">Your Sales Army</div>
-                    <div class="pkg-name">Full Service</div>
-                    <div class="pkg-price">Starting at $4,999<span>/mo</span></div>
-                    <div class="pkg-desc">We ARE your sales department. You do the work. We get you the work.</div>
-                    <ul class="pkg-features">
-                        <li><i class="bi bi-check2"></i> Everything in Closer</li>
-                        <li><i class="bi bi-check2"></i> Inbound call answering</li>
-                        <li><i class="bi bi-check2"></i> Live transfer of qualified leads</li>
-                        <li><i class="bi bi-check2"></i> Full outbound prospecting</li>
-                        <li><i class="bi bi-check2"></i> We close deals on your behalf</li>
-                        <li><i class="bi bi-check2"></i> Daily reporting &amp; analytics</li>
-                    </ul>
-                    <a href="{% url 'signup' %}" class="pkg-btn pkg-btn-outline">Contact Us</a>
+                <div class="level-card">
+                    <div class="level-tag" style="background:#FEE2E2;color:#DC2626;">White Glove</div>
+                    <div class="level-name">Full Service</div>
+                    <p class="level-desc">Everything + Outbound sales team + Account manager</p>
+                    <div class="price-row"><span class="tier-label">AI + Human hybrid</span><span class="tier-price"><small>Starting at </small>$7,999<span>/mo</span></span></div>
+                    <div class="price-row human"><span class="tier-label">Full human team</span><span class="tier-price"><small>Starting at </small>$12,999<span>/mo</span></span></div>
+                    <a href="{% url 'signup' %}" class="btn-secondary w-100" style="justify-content:center;margin-top:0.75rem;">Contact Us</a>
                 </div>
+            </div>
+
+            <div style="text-align:center;margin-top:2rem;">
+                <p style="background:linear-gradient(135deg,#F0FDFA,#ECFDF5);display:inline-block;padding:14px 32px;border-radius:12px;font-weight:700;color:#0D9488;font-size:1.05rem;">
+                    One new customer from our leads pays for 3&ndash;6 months of SalesSignalAI.
+                </p>
+                <p style="font-size:0.85rem;color:#94A3B8;margin-top:8px;">All plans include a one-time $299 setup and onboarding fee.</p>
             </div>
         </div>
     </section>
@@ -329,9 +316,9 @@
     <!-- ROI -->
     <!-- ══════════════════════════════════════════════════════ -->
     <section class="roi-section">
-        <div class="pp">
-            <div class="pp-section-title" style="color:#fff;">The Math Is Simple</div>
-            <div class="pp-section-sub" style="color:rgba(255,255,255,0.6);">Whether you're a plumber, accountant, attorney, insurance agent, or any business that needs customers &mdash; we get them for you.</div>
+        <div class="section-wrap">
+            <h2 style="font-family:'Exo 2',sans-serif;font-weight:900;font-size:2rem;text-align:center;margin-bottom:6px;">The Math Is Simple</h2>
+            <p style="text-align:center;color:rgba(255,255,255,0.6);font-size:1rem;margin-bottom:36px;max-width:600px;margin-left:auto;margin-right:auto;">Whether you're a plumber, accountant, attorney, insurance agent, or any business that needs customers &mdash; we get them for you.</p>
             <div class="roi-grid">
                 <div class="roi-card">
                     <p>A plumber averages <b style="color:#fff;">$800 per job</b>.</p>
@@ -362,9 +349,9 @@
     <!-- VS -->
     <!-- ══════════════════════════════════════════════════════ -->
     <section class="vs-section">
-        <div class="pp">
-            <div class="pp-section-title" style="color:#fff;">Why SalesSignal AI?</div>
-            <div class="pp-section-sub" style="color:rgba(255,255,255,0.6);">Every other company is replacing humans with AI. We put the human back.</div>
+        <div class="section-wrap">
+            <h2 style="font-family:'Exo 2',sans-serif;font-weight:900;font-size:2rem;text-align:center;margin-bottom:6px;">Why SalesSignal AI?</h2>
+            <p style="text-align:center;color:rgba(255,255,255,0.6);font-size:1rem;margin-bottom:36px;">Every other company is replacing humans with AI. We put the human back.</p>
             <div class="vs-grid">
                 <div class="vs-col vs-col-other">
                     <h3><i class="bi bi-x-circle" style="color:#EF4444;"></i> Other Platforms</h3>
@@ -388,18 +375,14 @@
     <!-- ══════════════════════════════════════════════════════ -->
     <!-- FAQ -->
     <!-- ══════════════════════════════════════════════════════ -->
-    <section class="pp-section">
-        <div class="pp">
-            <div class="pp-section-title">Common Questions</div>
-            <div style="max-width:760px;margin:28px auto 0;">
-                <div class="faq-item"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">How quickly will I see results?</div><div class="faq-a">Most clients see their first leads within 24-48 hours of onboarding. Human outreach campaigns typically generate callbacks within the first week.</div></div>
-                <div class="faq-item"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Are the leads exclusive to me?</div><div class="faq-a">Yes. Every lead we deliver is exclusive to your business. We never sell the same lead to multiple companies.</div></div>
-                <div class="faq-item"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">What's the setup fee for?</div><div class="faq-a">The $499 setup covers onboarding, social profile creation, initial campaign setup, CRM configuration, and your first strategy session. It's waived if you commit to an annual plan.</div></div>
-                <div class="faq-item"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Can I upgrade or downgrade anytime?</div><div class="faq-a">Absolutely. Move up or down at any time. Changes take effect at your next billing cycle. No long-term contracts.</div></div>
-                <div class="faq-item"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">What if it doesn't work?</div><div class="faq-a">We're month-to-month. No long-term contracts. If you don't see value, you can cancel anytime. We stand behind our service because it works.</div></div>
-                <div class="faq-item"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Do I need to do anything?</div><div class="faq-a">On Starter and Growth, you handle responses when leads come in. On Dominate and above, we handle everything &mdash; you just show up and do the work.</div></div>
-            </div>
-        </div>
+    <section class="faq-section">
+        <h2 style="font-family:'Exo 2',sans-serif;font-weight:900;font-size:1.8rem;text-align:center;margin-bottom:28px;color:#1a1a2e;">Common Questions</h2>
+        <div class="faq-item"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">How quickly will I see results?</div><div class="faq-a">Most clients see their first leads within 24-48 hours of onboarding. Human outreach campaigns typically generate callbacks within the first week.</div></div>
+        <div class="faq-item"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Are the leads exclusive to me?</div><div class="faq-a">Yes. Every lead we deliver is exclusive to your business. We never sell the same lead to multiple companies.</div></div>
+        <div class="faq-item"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">What's the setup fee for?</div><div class="faq-a">The $299 setup covers onboarding, initial campaign setup, CRM configuration, and your first strategy session.</div></div>
+        <div class="faq-item"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Can I upgrade or downgrade anytime?</div><div class="faq-a">Absolutely. Move up or down at any time. Changes take effect at your next billing cycle. No long-term contracts.</div></div>
+        <div class="faq-item"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">What if it doesn't work?</div><div class="faq-a">We're month-to-month. No long-term contracts. If you don't see value, you can cancel anytime. We stand behind our service because it works.</div></div>
+        <div class="faq-item"><div class="faq-q" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">Do I need to do anything?</div><div class="faq-a">On Starter and Growth, you handle responses when leads come in. On Dominate and above, we handle everything &mdash; you just show up and do the work.</div></div>
     </section>
 
     <!-- ══════════════════════════════════════════════════════ -->
@@ -407,14 +390,14 @@
     <!-- ══════════════════════════════════════════════════════ -->
     <section class="pp-cta">
         <h2>Ready To Stop Chasing Leads And Start Getting Customers?</h2>
-        <p>You do the work. We get you the work.</p>
+        <p>Your competitors are getting the call because they saw the lead first. Change that today.</p>
         <div class="pp-cta-btns">
             <a href="{% url 'signup' %}" class="btn-primary-glow" style="padding:1rem 3rem;font-size:1.1rem;">Get Started</a>
-            <a href="tel:+19592472537" class="btn-secondary" style="padding:1rem 2rem;font-size:1.1rem;"><i class="bi bi-telephone-fill"></i> (959) 247-2537</a>
+            <a href="tel:+19592472537" class="btn-secondary" style="padding:1rem 2rem;font-size:1.1rem;"><i class="bi bi-telephone-fill"></i> (959) AI-SALES</a>
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- Footer — matches landing.html -->
     <footer class="landing-footer">
         <div class="footer-links">
             <a href="{% url 'about_page' %}">About</a>
@@ -427,37 +410,33 @@
         <div class="footer-copy">
             &copy; 2026 Sales Signal AI. All rights reserved.
             <br>Support: <a href="mailto:support@salessignalai.com" style="color:#0D9488;">support@salessignalai.com</a>
-            <br>Phone: <a href="tel:+19592472537" style="color:#0D9488;">(959) 247-2537</a>
+            <br>Phone: <a href="tel:+19592472537" style="color:#0D9488;">(959) AI-SALES</a> | <a href="tel:+19592472537" style="color:#0D9488;">(959) 247-2537</a>
         </div>
     </footer>
 
     <!-- Structured Data -->
     <script type="application/ld+json">
     {"@context":"https://schema.org","@type":"Product","name":"SalesSignal AI","description":"AI-powered customer acquisition for local service businesses.","offers":[
-    {"@type":"Offer","name":"Email Campaign","price":"149","priceCurrency":"USD","priceSpecification":{"@type":"UnitPriceSpecification","price":"149","priceCurrency":"USD","billingDuration":"P1M"}},
-    {"@type":"Offer","name":"Growth","price":"599","priceCurrency":"USD","priceSpecification":{"@type":"UnitPriceSpecification","price":"599","priceCurrency":"USD","billingDuration":"P1M"}},
-    {"@type":"Offer","name":"Dominate","price":"899","priceCurrency":"USD","priceSpecification":{"@type":"UnitPriceSpecification","price":"899","priceCurrency":"USD","billingDuration":"P1M"}},
-    {"@type":"Offer","name":"Closer","price":"2499","priceCurrency":"USD","priceSpecification":{"@type":"UnitPriceSpecification","price":"2499","priceCurrency":"USD","billingDuration":"P1M"}},
-    {"@type":"Offer","name":"Full Service","price":"4999","priceCurrency":"USD","priceSpecification":{"@type":"UnitPriceSpecification","price":"4999","priceCurrency":"USD","billingDuration":"P1M"}}
+    {"@type":"Offer","name":"Starter","price":"599","priceCurrency":"USD","priceSpecification":{"@type":"UnitPriceSpecification","price":"599","priceCurrency":"USD","billingDuration":"P1M"}},
+    {"@type":"Offer","name":"Growth","price":"1199","priceCurrency":"USD","priceSpecification":{"@type":"UnitPriceSpecification","price":"1199","priceCurrency":"USD","billingDuration":"P1M"}},
+    {"@type":"Offer","name":"Dominate","price":"1999","priceCurrency":"USD","priceSpecification":{"@type":"UnitPriceSpecification","price":"1999","priceCurrency":"USD","billingDuration":"P1M"}},
+    {"@type":"Offer","name":"Closer","price":"3999","priceCurrency":"USD","priceSpecification":{"@type":"UnitPriceSpecification","price":"3999","priceCurrency":"USD","billingDuration":"P1M"}},
+    {"@type":"Offer","name":"Full Service","price":"7999","priceCurrency":"USD","priceSpecification":{"@type":"UnitPriceSpecification","price":"7999","priceCurrency":"USD","billingDuration":"P1M"}}
     ]}
     </script>
     <script type="application/ld+json">
     {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
     {"@type":"Question","name":"How quickly will I see results?","acceptedAnswer":{"@type":"Answer","text":"Most clients see their first leads within 24-48 hours of onboarding. Human outreach campaigns typically generate callbacks within the first week."}},
     {"@type":"Question","name":"Are the leads exclusive to me?","acceptedAnswer":{"@type":"Answer","text":"Yes. Every lead we deliver is exclusive to your business. We never sell the same lead to multiple companies."}},
-    {"@type":"Question","name":"What's the setup fee for?","acceptedAnswer":{"@type":"Answer","text":"The $499 setup covers onboarding, social profile creation, initial campaign setup, CRM configuration, and your first strategy session. It's waived if you commit to an annual plan."}},
+    {"@type":"Question","name":"What's the setup fee for?","acceptedAnswer":{"@type":"Answer","text":"The $299 setup covers onboarding, initial campaign setup, CRM configuration, and your first strategy session."}},
     {"@type":"Question","name":"Can I upgrade or downgrade anytime?","acceptedAnswer":{"@type":"Answer","text":"Absolutely. Move up or down at any time. Changes take effect at your next billing cycle. No long-term contracts."}},
-    {"@type":"Question","name":"What if it doesn't work?","acceptedAnswer":{"@type":"Answer","text":"We're month-to-month. No long-term contracts. If you don't see value, you can cancel anytime. We stand behind our service because it works."}},
+    {"@type":"Question","name":"What if it doesn't work?","acceptedAnswer":{"@type":"Answer","text":"We're month-to-month. No long-term contracts. If you don't see value, you can cancel anytime."}},
     {"@type":"Question","name":"Do I need to do anything?","acceptedAnswer":{"@type":"Answer","text":"On Starter and Growth, you handle responses when leads come in. On Dominate and above, we handle everything."}}
     ]}
     </script>
 
     <script src="{% static 'js/salessignal.js' %}"></script>
-    <script>
-    function toggleMenu(){var m=document.getElementById('mobile-menu'),i=document.getElementById('menu-icon');if(m.classList.contains('open')){m.classList.remove('open');i.className='bi bi-list';}else{m.classList.add('open');i.className='bi bi-x-lg';}}
-    function closeMenu(){document.getElementById('mobile-menu').classList.remove('open');document.getElementById('menu-icon').className='bi bi-list';}
-    </script>
 
-    <div class="mobile-call-bar"><a href="tel:+19592472537"><i class="bi bi-telephone-fill"></i> Call (959) 247-2537</a></div>
+    <div class="mobile-call-bar"><a href="tel:+19592472537"><i class="bi bi-telephone-fill"></i> Call (959) AI-SALES</a></div>
 </body>
 </html>

@@ -41,43 +41,9 @@
 </head>
 <body class="landing-page">
 
-    <!-- Navigation -->
-    <nav class="landing-nav">
-        <a href="/" class="brand" style="text-decoration: none; color: inherit;">
-            <div class="brand-icon"><i class="bi bi-broadcast"></i></div>
-            <span class="brand-name">Sales Signal AI</span>
-        </a>
-        <div class="landing-nav-links" id="landing-nav-links">
-            <a href="/#how-it-works">How it Works</a>
-            <a href="/#features">Features</a>
-            <div class="nav-dropdown">
-                <a href="{% url 'industry_index' %}" class="nav-dropdown-trigger">Industries <i class="bi bi-chevron-down" style="font-size: 0.7rem;"></i></a>
-                <div class="nav-dropdown-menu">
-                    {% for ind in industries %}
-                    <a href="{% url 'industry_detail' ind.slug %}"><i class="{{ ind.icon }}"></i> {{ ind.name }}</a>
-                    {% endfor %}
-                </div>
-            </div>
-            <a href="/#pricing">Pricing</a>
-            <a href="{% url 'login' %}" class="btn-secondary btn-sm">Log In</a>
-            <a href="mailto:hello@salessignalai.com" class="btn-primary-glow btn-sm">Get Started</a>
-        </div>
-        <button class="landing-hamburger" id="landing-hamburger" onclick="toggleLandingMenu()" aria-label="Open menu">
-            <i class="bi bi-list" id="landing-menu-icon"></i>
-        </button>
-    </nav>
-
-    <!-- Mobile nav overlay -->
-    <div class="landing-mobile-menu" id="landing-mobile-menu">
-        <a href="/#how-it-works" onclick="closeLandingMenu()">How it Works</a>
-        <a href="/#features" onclick="closeLandingMenu()">Features</a>
-        <a href="{% url 'industry_index' %}" onclick="closeLandingMenu()">Industries</a>
-        <a href="/#pricing" onclick="closeLandingMenu()">Pricing</a>
-        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid rgba(0,0,0,0.06);">
-            <a href="{% url 'login' %}" class="btn-secondary" style="justify-content: center;">Log In</a>
-            <a href="mailto:hello@salessignalai.com" class="btn-primary-glow" style="justify-content: center;">Get Started</a>
-        </div>
-    </div>
+    {% with active_nav='industries' %}
+    {% include "partials/public_nav.html" %}
+    {% endwith %}
 
     <!-- Hero -->
     <section class="industry-hero-section" style="--industry-color: {{ industry.color }};">
