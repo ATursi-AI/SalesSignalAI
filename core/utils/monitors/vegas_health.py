@@ -104,22 +104,27 @@ def _parse_date(date_str):
 
 
 def _read_csv_from_zip(zf, possible_names):
-    """Find and read a CSV file from the ZIP by trying multiple filenames."""
+    """Find and read a CSV file from the ZIP by trying multiple filenames.
+    SNHD uses semicolons as delimiters — auto-detect from first line."""
     zip_names = zf.namelist()
-    logger.info(f'[vegas_health] ZIP contains: {zip_names}')
 
     for name in possible_names:
-        # Try exact match first
+        matched = None
         if name in zip_names:
-            with zf.open(name) as f:
+            matched = name
+        else:
+            for zn in zip_names:
+                if name.lower() in zn.lower():
+                    matched = zn
+                    break
+        if matched:
+            with zf.open(matched) as f:
                 text = io.TextIOWrapper(f, encoding='utf-8', errors='replace')
-                return list(csv.DictReader(text))
-        # Try case-insensitive / partial match
-        for zn in zip_names:
-            if name.lower() in zn.lower():
-                with zf.open(zn) as f:
-                    text = io.TextIOWrapper(f, encoding='utf-8', errors='replace')
-                    return list(csv.DictReader(text))
+                # Peek at first line to detect delimiter
+                first_line = text.readline()
+                text.seek(0)
+                delimiter = ';' if first_line.count(';') > first_line.count(',') else ','
+                return list(csv.DictReader(text, delimiter=delimiter))
     return []
 
 
