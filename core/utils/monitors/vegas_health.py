@@ -149,55 +149,84 @@ def monitor_vegas_health(days=7, dry_run=False):
     cutoff = timezone.now() - timedelta(days=days)
 
     # ── Download the ZIP ──
+    if dry_run:
+        print(f'  Downloading SNHD ZIP from {SNHD_ZIP_URL}...')
     logger.info(f'[vegas_health] Downloading SNHD ZIP from {SNHD_ZIP_URL}')
     try:
         resp = requests.get(SNHD_ZIP_URL, timeout=120, headers={
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         })
         if resp.status_code != 200:
-            logger.error(f'[vegas_health] ZIP download returned {resp.status_code}')
+            if dry_run:
+                print(f'  ERROR: ZIP download returned HTTP {resp.status_code}')
             stats['errors'] += 1
             return stats
         if len(resp.content) < 1000:
-            logger.error(f'[vegas_health] ZIP too small ({len(resp.content)} bytes)')
+            if dry_run:
+                print(f'  ERROR: ZIP too small ({len(resp.content)} bytes) — might be HTML error page')
+                print(f'  First 500 chars: {resp.content[:500]}')
             stats['errors'] += 1
             return stats
     except Exception as e:
-        logger.error(f'[vegas_health] ZIP download failed: {e}')
+        if dry_run:
+            print(f'  ERROR: ZIP download failed: {e}')
         stats['errors'] += 1
         return stats
 
-    logger.info(f'[vegas_health] Downloaded {len(resp.content):,} bytes')
+    if dry_run:
+        print(f'  Downloaded {len(resp.content):,} bytes')
 
     # ── Extract CSVs from ZIP ──
     try:
         zf = zipfile.ZipFile(io.BytesIO(resp.content))
     except zipfile.BadZipFile:
-        logger.error('[vegas_health] Downloaded file is not a valid ZIP')
+        if dry_run:
+            print('  ERROR: Downloaded file is not a valid ZIP')
+            print(f'  Content-Type: {resp.headers.get("Content-Type", "unknown")}')
+            print(f'  First 200 bytes: {resp.content[:200]}')
         stats['errors'] += 1
         return stats
+
+    if dry_run:
+        print(f'  ZIP contents: {zf.namelist()}')
 
     # Read establishments (has restaurant name, address, city, grade, demerits)
     establishments_rows = _read_csv_from_zip(zf, [
         'restaurant_establishments.csv', 'establishments.csv', 'restaurants.csv',
     ])
-    logger.info(f'[vegas_health] Establishments loaded: {len(establishments_rows)}')
-    if establishments_rows:
-        logger.info(f'[vegas_health] Establishment fields: {list(establishments_rows[0].keys())}')
+    if dry_run:
+        print(f'  Establishments loaded: {len(establishments_rows)}')
+        if establishments_rows:
+            print(f'  Establishment fields: {list(establishments_rows[0].keys())}')
+            # Show a sample row
+            sample = {k: v for k, v in establishments_rows[0].items() if k and v}
+            print(f'  Sample establishment: {dict(list(sample.items())[:8])}')
 
     # Read inspections (has inspection_date, demerits, grade, violations)
     inspections_rows = _read_csv_from_zip(zf, [
         'restaurant_inspections.csv', 'inspections.csv',
     ])
-    logger.info(f'[vegas_health] Inspections loaded: {len(inspections_rows)}')
-    if inspections_rows:
-        logger.info(f'[vegas_health] Inspection fields: {list(inspections_rows[0].keys())}')
+    if dry_run:
+        print(f'  Inspections loaded: {len(inspections_rows)}')
+        if inspections_rows:
+            print(f'  Inspection fields: {list(inspections_rows[0].keys())}')
+            # Show most recent inspection dates
+            dates = []
+            for row in inspections_rows[:100]:
+                d = row.get('inspection_date', '')
+                if d:
+                    dates.append(d)
+            if dates:
+                dates.sort(reverse=True)
+                print(f'  Most recent inspection dates: {dates[:5]}')
 
     # Read violation definitions (optional — for better descriptions)
     violations_def = {}
     violations_rows = _read_csv_from_zip(zf, [
         'restaurant_violations.csv', 'violations.csv',
     ])
+    if dry_run:
+        print(f'  Violation definitions loaded: {len(violations_rows)}')
     for vr in violations_rows:
         vid = vr.get('violation_id', '') or vr.get('violation_code', '')
         desc = vr.get('violation_description', '')
