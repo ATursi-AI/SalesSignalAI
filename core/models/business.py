@@ -58,9 +58,9 @@ class ServiceSubcategory(models.Model):
 class BusinessProfile(models.Model):
     TIER_CHOICES = [
         ('none', 'No Plan'),
-        ('outreach', 'Outreach ($149/mo)'),
-        ('growth', 'Growth ($349/mo)'),
-        ('dominate', 'Dominate ($649/mo)'),
+        ('outreach', 'Starter AI ($599/mo)'),
+        ('growth', 'Growth AI ($1,199/mo)'),
+        ('dominate', 'Dominate AI ($1,999/mo)'),
         ('concierge', 'Concierge (Custom)'),
         ('custom_outbound', 'Custom Outbound (Custom)'),
     ]

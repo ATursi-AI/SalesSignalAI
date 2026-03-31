@@ -21,9 +21,9 @@ from core.models import BusinessProfile
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 PLAN_PRICES = {
-    'outreach': {'name': 'Outreach', 'price': 149, 'stripe_price': settings.STRIPE_PRICE_OUTREACH},
-    'growth': {'name': 'Growth', 'price': 349, 'stripe_price': settings.STRIPE_PRICE_GROWTH},
-    'dominate': {'name': 'Dominate', 'price': 649, 'stripe_price': settings.STRIPE_PRICE_DOMINATE},
+    'outreach': {'name': 'Starter AI', 'price': 599, 'stripe_price': settings.STRIPE_PRICE_OUTREACH},
+    'growth': {'name': 'Growth AI', 'price': 1199, 'stripe_price': settings.STRIPE_PRICE_GROWTH},
+    'dominate': {'name': 'Dominate AI', 'price': 1999, 'stripe_price': settings.STRIPE_PRICE_DOMINATE},
 }
 
 
