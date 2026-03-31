@@ -217,8 +217,8 @@ h1,h2,h3,h4{font-family:'Montserrat',sans-serif}
                 {{ page.branded_business_name }}
                 <span>{% if page.branded_tagline %}{{ page.branded_tagline }}{% else %}Licensed &bull; Insured &bull; {{ area_name }}, {{ state }}{% endif %}</span>
                 {% else %}
-                SalesSignal &bull; {{ trade_name }} Services
-                <span>{{ area_name }}, {{ state }} &bull; Licensed &bull; Insured &bull; 24/7</span>
+                {{ brand_name }}
+                <span>{{ brand_tagline }} &bull; {{ area_name }}, {{ state }}</span>
                 {% endif %}
             </div>
         </div>
@@ -336,7 +336,7 @@ h1,h2,h3,h4{font-family:'Montserrat',sans-serif}
         {% if banner_image %}
         <div class="sp-photo-banner">
             <img src="{{ banner_image }}" alt="{{ trade_name }} service in {{ area_name }}" loading="lazy">
-            <div class="sp-photo-overlay"><div class="sp-photo-text"><h3>Licensed {{ trade_name }}s. Ready Now.</h3><p>Real professionals who show up on time, do the job right, and clean up when they're done.</p></div></div>
+            <div class="sp-photo-overlay"><div class="sp-photo-text"><h3>{% if is_branded and page.branded_business_name %}{{ page.branded_business_name }}{% else %}{{ brand_name }}{% endif %} &mdash; Ready Now.</h3><p>Real professionals who show up on time, do the job right, and clean up when they're done.</p></div></div>
         </div>
         {% endif %}
 
@@ -380,7 +380,7 @@ h1,h2,h3,h4{font-family:'Montserrat',sans-serif}
         <!-- Why Choose Us -->
         <div class="sp-section">
             <div class="sp-section-label">Why Choose Us</div>
-            <div class="sp-section-title">Why {{ area_name }} Trusts {% if is_branded and page.branded_business_name %}{{ page.branded_business_name }}{% else %}SalesSignal{% endif %}</div>
+            <div class="sp-section-title">Why {{ area_name }} Trusts {% if is_branded and page.branded_business_name %}{{ page.branded_business_name }}{% else %}{{ brand_name }}{% endif %}</div>
             <div class="sp-section-sub">{% if is_branded %}Trusted local professionals with a proven track record in {{ area_name }}.{% else %}We're not a referral service. We're not a directory. We dispatch licensed professionals to your home.{% endif %}</div>
             <div class="sp-why-grid">
                 <div class="sp-why-card">
@@ -550,8 +550,8 @@ h1,h2,h3,h4{font-family:'Montserrat',sans-serif}
         &copy; 2026 {{ page.branded_business_name }}. Serving {{ area_name }}, {{ state_full }} and surrounding areas.
         {% if page.branded_website %}<br><a href="{{ page.branded_website }}" style="color:var(--teal)">{{ page.branded_website }}</a>{% endif %}
         {% else %}
-        &copy; 2026 <a href="/" style="color:var(--teal);font-weight:600">Sales Signal AI</a>. Licensed {{ trade_name|lower }} dispatch serving {{ area_name }}, {{ state_full }} and surrounding areas.
-        <br><span style="font-size:0.72rem;color:var(--text-light)">We connect you with licensed, insured professionals. All {{ trade_name|lower }}s in our network are independently licensed and insured.</span>
+        &copy; 2026 <span style="font-weight:600;color:var(--teal)">{{ brand_name }}</span>. Licensed {{ trade_name|lower }} service in {{ area_name }}, {{ state_full }} and surrounding areas.
+        <br><span style="font-size:0.72rem;color:var(--text-light)">{{ brand_name }} connects you with licensed, insured professionals. All {{ trade_name|lower }}s are independently licensed and insured. A <a href="/" style="color:var(--text-light);text-decoration:underline">SalesSignal AI</a> service.</span>
         {% endif %}
         <div class="sp-footer-links">
             <a href="/">Home</a>
@@ -571,12 +571,12 @@ h1,h2,h3,h4{font-family:'Montserrat',sans-serif}
 
     <!-- Local Business Structured Data -->
     <script type="application/ld+json">
-    {"@context":"https://schema.org","@type":"LocalBusiness",{% if is_branded and page.branded_business_name %}"name":"{{ page.branded_business_name|escapejs }}",{% else %}"name":"SalesSignal {{ trade_name|escapejs }} Services — {{ area_name|escapejs }}",{% endif %}"description":"{{ page.meta_description|escapejs }}","telephone":"{{ phone }}","areaServed":{"@type":"City","name":"{{ area_name|escapejs }}","containedIn":"{{ state_full|escapejs }}"}{% if page.area.latitude %},"geo":{"@type":"GeoCoordinates","latitude":{{ page.area.latitude }},"longitude":{{ page.area.longitude }}}{% endif %},"openingHoursSpecification":{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],"opens":"00:00","closes":"23:59"},"priceRange":"$$"}
+    {"@context":"https://schema.org","@type":"LocalBusiness",{% if is_branded and page.branded_business_name %}"name":"{{ page.branded_business_name|escapejs }}",{% else %}"name":"{{ brand_name|escapejs }} — {{ area_name|escapejs }}",{% endif %}"description":"{{ page.meta_description|escapejs }}","telephone":"{{ phone }}","areaServed":{"@type":"City","name":"{{ area_name|escapejs }}","containedIn":"{{ state_full|escapejs }}"}{% if page.area.latitude %},"geo":{"@type":"GeoCoordinates","latitude":{{ page.area.latitude }},"longitude":{{ page.area.longitude }}}{% endif %},"openingHoursSpecification":{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],"opens":"00:00","closes":"23:59"},"priceRange":"$$"}
     </script>
 
     <!-- Service Structured Data -->
     <script type="application/ld+json">
-    {"@context":"https://schema.org","@type":"Service","serviceType":"{{ trade_name|escapejs }}","provider":{"@type":"LocalBusiness","name":"{% if is_branded and page.branded_business_name %}{{ page.branded_business_name|escapejs }}{% else %}SalesSignal {{ trade_name|escapejs }} Services{% endif %}","telephone":"{{ phone }}"},"areaServed":{"@type":"City","name":"{{ area_name|escapejs }}"},"description":"24/7 emergency {{ trade_name|lower|escapejs }} service in {{ area_name|escapejs }}, {{ state_full|escapejs }}. Licensed, insured, fast response.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD","description":"Free Estimate"}}
+    {"@context":"https://schema.org","@type":"Service","serviceType":"{{ trade_name|escapejs }}","provider":{"@type":"LocalBusiness","name":"{% if is_branded and page.branded_business_name %}{{ page.branded_business_name|escapejs }}{% else %}{{ brand_name|escapejs }}{% endif %}","telephone":"{{ phone }}"},"areaServed":{"@type":"City","name":"{{ area_name|escapejs }}"},"description":"24/7 emergency {{ trade_name|lower|escapejs }} service in {{ area_name|escapejs }}, {{ state_full|escapejs }}. Licensed, insured, fast response.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD","description":"Free Estimate"}}
     </script>
 
     <script>

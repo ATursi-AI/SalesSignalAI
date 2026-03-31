@@ -75,6 +75,8 @@ TRADE_SERVICES = {
     # Keys match DB trade slugs (not "emergency-plumber" — DB has "plumber")
     'plumber': {
         'display': 'Plumber',
+        'brand_name': '911 Plumbing Pros',
+        'brand_tagline': 'Fast. Licensed. Guaranteed.',
         'emergency_label': 'EMERGENCY PLUMBER',
         'response_time': '30-60 minutes',
         'hero_image': 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=1400&h=500&fit=crop',
@@ -107,6 +109,8 @@ TRADE_SERVICES = {
     },
     'electrician': {
         'display': 'Electrician',
+        'brand_name': '911 Electric Pros',
+        'brand_tagline': 'Fast. Licensed. Guaranteed.',
         'emergency_label': 'EMERGENCY ELECTRICIAN',
         'response_time': '30-60 minutes',
         'hero_image': 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1400&h=500&fit=crop',
@@ -200,6 +204,10 @@ def service_landing_page(request, trade_slug, area_slug):
     if not phone_raw.startswith('+'):
         phone_raw = '+1' + phone_raw
 
+    # Trade brand for SalesSignal-owned pages (e.g. "911 Plumbing Pros")
+    brand_name = trade_data.get('brand_name', f'SalesSignal {page.trade.name}')
+    brand_tagline = trade_data.get('brand_tagline', 'Fast. Licensed. Guaranteed.')
+
     context = {
         'page': page,
         'stats': stats,
@@ -222,6 +230,8 @@ def service_landing_page(request, trade_slug, area_slug):
         'area_name': page.area.name,
         'state': page.area.state,
         'state_full': page.area.state_full,
+        'brand_name': brand_name,
+        'brand_tagline': brand_tagline,
     }
     return render(request, 'service_pages/landing.html', context)
 
