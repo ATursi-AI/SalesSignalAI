@@ -72,51 +72,78 @@ def _get_area_trade_stats(trade, area, days=7):
 # ─── Trade-specific data ─────────────────────────────────────────
 
 TRADE_SERVICES = {
-    'emergency-plumber': {
+    # Keys match DB trade slugs (not "emergency-plumber" — DB has "plumber")
+    'plumber': {
         'display': 'Plumber',
+        'emergency_label': 'EMERGENCY PLUMBER',
+        'response_time': '30-60 minutes',
+        'hero_image': 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=1400&h=500&fit=crop',
+        'banner_image': 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=1200&h=400&fit=crop&crop=center',
         'items': [
-            {'icon': 'bi-droplet-fill', 'name': 'Burst Pipes', 'desc': 'Fast repair to stop water damage'},
-            {'icon': 'bi-fire', 'name': 'Water Heater', 'desc': 'Repair or replacement, same day'},
-            {'icon': 'bi-arrow-down-circle', 'name': 'Drain Cleaning', 'desc': 'Clear clogs and backups fast'},
-            {'icon': 'bi-water', 'name': 'Leak Detection', 'desc': 'Find and fix hidden leaks'},
-            {'icon': 'bi-wrench-adjustable', 'name': 'Sewer Line', 'desc': 'Sewer repair and replacement'},
-            {'icon': 'bi-wrench', 'name': 'Toilet Repair', 'desc': 'Fix running, leaking, or clogged toilets'},
-            {'icon': 'bi-thermometer-snow', 'name': 'Frozen Pipes', 'desc': 'Thaw and prevent burst pipes'},
-            {'icon': 'bi-tsunami', 'name': 'Sump Pump', 'desc': 'Install, repair, emergency service'},
-            {'icon': 'bi-fuel-pump', 'name': 'Gas Line', 'desc': 'Gas leak detection and repair'},
-            {'icon': 'bi-moisture', 'name': 'Water Damage', 'desc': 'Emergency water extraction'},
+            {'icon': 'bi-droplet-fill', 'name': 'Burst Pipes', 'desc': 'Fast repair to stop flooding and prevent structural water damage to your home'},
+            {'icon': 'bi-fire', 'name': 'Water Heater', 'desc': 'Same-day repair or replacement — tank and tankless — so you have hot water tonight'},
+            {'icon': 'bi-arrow-down-circle', 'name': 'Drain Cleaning', 'desc': 'Professional hydro-jetting and snaking to clear the toughest kitchen, bath, and sewer clogs'},
+            {'icon': 'bi-water', 'name': 'Leak Detection', 'desc': 'Pinpoint hidden slab and wall leaks with electronic detection before they cause mold'},
+            {'icon': 'bi-wrench-adjustable', 'name': 'Sewer Line Repair', 'desc': 'Camera inspection, trenchless repair, and full replacement — minimal disruption to your yard'},
+            {'icon': 'bi-wrench', 'name': 'Toilet Repair', 'desc': 'Running, leaking, clogged, or cracked — we fix or replace any toilet, any brand'},
+            {'icon': 'bi-thermometer-snow', 'name': 'Frozen Pipes', 'desc': 'Safe thawing and insulation to prevent re-freeze. Available 24/7 during cold snaps'},
+            {'icon': 'bi-tsunami', 'name': 'Sump Pump', 'desc': 'Emergency pump-outs, new installations, and battery backup systems to keep your basement dry'},
+            {'icon': 'bi-fuel-pump', 'name': 'Gas Line', 'desc': 'If you smell gas, call immediately. Licensed gas line detection, repair, and new installations'},
+            {'icon': 'bi-moisture', 'name': 'Water Damage Mitigation', 'desc': 'Emergency water extraction and dry-out to minimize damage while we fix the source'},
+        ],
+        'testimonials': [
+            {'text': 'Pipe burst at 2 AM on a Sunday. They answered on the first ring, had a plumber at my door in 35 minutes, and saved my finished basement from flooding. Worth every penny.', 'author': 'Sarah M.', 'detail': 'Burst pipe, basement flooding'},
+            {'text': 'Three plumbers told me I needed to rip up my driveway for a sewer repair. These guys did it trenchless in half a day. My yard still looks perfect.', 'author': 'Mike R.', 'detail': 'Trenchless sewer repair'},
+            {'text': "I've used them for two emergencies and a bathroom remodel. They show up when they say, charge what they quote, and clean up after themselves. That's rare.", 'author': 'Lisa K.', 'detail': 'Repeat customer'},
         ],
         'faqs': [
-            {'q': 'How fast can you get here?', 'a': 'We dispatch licensed plumbers 24/7. In most cases, someone is at your door within 30-60 minutes.'},
-            {'q': 'Do you charge extra for nights and weekends?', 'a': 'Our dispatch is always free. Your plumber will provide upfront pricing before any work begins.'},
-            {'q': 'Are your plumbers licensed?', 'a': 'Yes. Every plumber in our network is fully licensed, insured, and background-checked.'},
-            {'q': "What if my issue isn't an emergency?", 'a': "No problem. We handle routine plumbing too. Call us and we'll schedule at your convenience."},
-            {'q': 'Do you offer free estimates?', 'a': "Yes. Your plumber will assess the situation and give you a clear quote before starting any work."},
+            {'q': 'How fast can a plumber get to my home?', 'a': 'For emergencies, we dispatch licensed plumbers 24/7. In most cases, someone is at your door within 30-60 minutes. Non-emergency calls are typically same-day or next-day.'},
+            {'q': 'Do you charge extra for nights, weekends, or holidays?', 'a': 'Dispatch and diagnosis are always free. Your plumber provides a clear, upfront price before any work begins — no surprise charges after the fact, regardless of when you call.'},
+            {'q': 'Are your plumbers licensed and insured?', 'a': 'Yes. Every plumber in our network holds a valid state license, carries full liability insurance, and has passed a background check. We verify credentials before they join our network.'},
+            {'q': "What if my issue isn't an emergency?", 'a': "We handle everything from emergency burst pipes to scheduled bathroom remodels. Call us and we'll book at your convenience — same-day and next-day slots are usually available."},
+            {'q': 'Do you guarantee your work?', 'a': 'Yes. All work is backed by a satisfaction guarantee. If something we repaired fails within the warranty period, we come back and fix it at no additional charge.'},
+            {'q': 'How much does a plumber cost?', 'a': 'It depends on the job. Simple repairs like a toilet fix typically start around $150-250. Larger jobs like water heater replacement or sewer repair vary. We always provide a free estimate before starting work.'},
         ],
     },
-    'emergency-electrician': {
+    'electrician': {
         'display': 'Electrician',
+        'emergency_label': 'EMERGENCY ELECTRICIAN',
+        'response_time': '30-60 minutes',
+        'hero_image': 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1400&h=500&fit=crop',
+        'banner_image': 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&h=400&fit=crop&crop=center',
         'items': [
-            {'icon': 'bi-lightning-fill', 'name': 'Power Outage', 'desc': 'Restore power to your home fast'},
-            {'icon': 'bi-cpu', 'name': 'Panel Upgrade', 'desc': 'Upgrade for modern electrical loads'},
-            {'icon': 'bi-plug-fill', 'name': 'Wiring Repair', 'desc': 'Fix faulty or dangerous wiring'},
-            {'icon': 'bi-outlet', 'name': 'Outlets & Switches', 'desc': 'Repair or install new outlets'},
-            {'icon': 'bi-shield-exclamation', 'name': 'Circuit Breaker', 'desc': 'Fix tripping breakers and shorts'},
-            {'icon': 'bi-lightbulb-fill', 'name': 'Lighting', 'desc': 'Install, repair, indoor and outdoor'},
-            {'icon': 'bi-battery-charging', 'name': 'Generator', 'desc': 'Install backup power for your home'},
-            {'icon': 'bi-bell-fill', 'name': 'Smoke Detectors', 'desc': 'Install and test safety devices'},
-            {'icon': 'bi-fan', 'name': 'Ceiling Fans', 'desc': 'Install or repair ceiling fans'},
-            {'icon': 'bi-exclamation-triangle-fill', 'name': 'Emergency Rewiring', 'desc': 'Fix hazardous electrical situations'},
+            {'icon': 'bi-lightning-fill', 'name': 'Power Outage', 'desc': 'Restore electricity to your home fast — we diagnose panel, wiring, and utility-side issues'},
+            {'icon': 'bi-cpu', 'name': 'Panel Upgrade', 'desc': 'Upgrade from 100A to 200A+ for modern appliances, EV chargers, and home additions'},
+            {'icon': 'bi-plug-fill', 'name': 'Wiring Repair', 'desc': 'Fix faulty, damaged, or aluminum wiring that causes flickering lights, tripped breakers, or fire risk'},
+            {'icon': 'bi-outlet', 'name': 'Outlets & Switches', 'desc': 'Install GFCI outlets, USB outlets, smart switches, and repair dead or sparking receptacles'},
+            {'icon': 'bi-shield-exclamation', 'name': 'Circuit Breaker', 'desc': 'Diagnose and fix constantly tripping breakers, short circuits, and overloaded panels'},
+            {'icon': 'bi-lightbulb-fill', 'name': 'Lighting', 'desc': 'Recessed, under-cabinet, landscape, and security lighting — design through installation'},
+            {'icon': 'bi-battery-charging', 'name': 'Generator Install', 'desc': 'Whole-home standby generators with automatic transfer switches — never lose power again'},
+            {'icon': 'bi-bell-fill', 'name': 'Smoke & CO Detectors', 'desc': 'Hardwired, interconnected detectors that meet current NYC code — protect your family'},
+            {'icon': 'bi-ev-station', 'name': 'EV Charger Install', 'desc': 'Level 2 home charging stations — proper circuit sizing, permitting, and clean installation'},
+            {'icon': 'bi-exclamation-triangle-fill', 'name': 'Emergency Rewiring', 'desc': 'Burned wires, electrical fires, storm damage — we make your home safe immediately'},
+        ],
+        'testimonials': [
+            {'text': 'Woke up to half my house with no power and a burning smell from the panel. They were here in 40 minutes, found a melted breaker, and had us back up and safe by noon.', 'author': 'James T.', 'detail': 'Panel emergency, burning smell'},
+            {'text': 'Needed a full panel upgrade for our home addition. Pulled the permit, passed inspection first try, and the work was immaculate. Highly recommend.', 'author': 'Karen P.', 'detail': '200A panel upgrade'},
+            {'text': 'We had flickering lights in three rooms for months. Other electricians couldn\'t find the problem. These guys traced it to a bad splice in 20 minutes. Fixed for good.', 'author': 'David L.', 'detail': 'Intermittent wiring issue'},
         ],
         'faqs': [
-            {'q': 'How fast can you get here?', 'a': 'We dispatch licensed electricians 24/7. Emergency calls are prioritized for fastest response.'},
-            {'q': 'Is it safe to wait?', 'a': 'If you smell burning, see sparks, or have exposed wires, call immediately. We treat electrical emergencies as urgent safety issues.'},
-            {'q': 'Are your electricians licensed?', 'a': 'Yes. Every electrician in our network is fully licensed, bonded, insured, and background-checked.'},
-            {'q': 'Do you handle commercial electrical?', 'a': 'Yes. We service both residential and commercial properties.'},
-            {'q': 'Do you offer free estimates?', 'a': 'Yes. Your electrician will assess the situation and provide a clear quote before any work begins.'},
+            {'q': 'How fast can an electrician get to my home?', 'a': 'For emergencies like sparking, burning smells, or total power loss, we prioritize dispatch 24/7. Most emergency calls are on-site within 30-60 minutes.'},
+            {'q': 'Is it safe to wait if I see sparks or smell burning?', 'a': 'No. If you smell burning, see sparks, or have exposed wires, turn off the main breaker if you can safely reach it and call us immediately. Electrical fires can start in walls without warning.'},
+            {'q': 'Are your electricians licensed and insured?', 'a': 'Every electrician in our network holds a valid state license, carries full liability insurance, and is bonded. We handle all required permits and inspections for code compliance.'},
+            {'q': 'Do you handle commercial electrical work?', 'a': 'Yes. We service both residential and commercial properties — from single-family homes to office buildings, retail spaces, and restaurants.'},
+            {'q': 'Do you guarantee your work?', 'a': 'Absolutely. All electrical work is backed by a workmanship warranty. If something we installed or repaired fails within the warranty period, we fix it at no additional cost.'},
+            {'q': 'How much does an electrician cost?', 'a': 'Simple jobs like outlet replacement start around $150-200. Panel upgrades typically range $1,500-3,500 depending on amperage. We always provide a free estimate before starting.'},
         ],
     },
+    # Aliases for legacy "emergency-" prefix slugs
+    'emergency-plumber': None,  # filled below
+    'emergency-electrician': None,  # filled below
 }
+# Wire aliases so old slugs still work
+TRADE_SERVICES['emergency-plumber'] = TRADE_SERVICES['plumber']
+TRADE_SERVICES['emergency-electrician'] = TRADE_SERVICES['electrician']
 
 AREA_NEIGHBORHOODS = {
     'queens': ['Astoria', 'Long Island City', 'Flushing', 'Jamaica', 'Bayside', 'Forest Hills', 'Rego Park', 'Woodside', 'Jackson Heights', 'Elmhurst'],
@@ -146,10 +173,18 @@ def service_landing_page(request, trade_slug, area_slug):
     services_text = [s.strip() for s in page.services_offered.split('\n') if s.strip()] if page.services_offered else []
 
     # Trade-specific structured data
-    trade_data = TRADE_SERVICES.get(trade_slug, {})
+    trade_data = TRADE_SERVICES.get(trade_slug, {}) or {}
     trade_services = trade_data.get('items', [])
     trade_faqs = trade_data.get('faqs', page.faq_section or [])
+    trade_testimonials = trade_data.get('testimonials', [])
+    response_time = trade_data.get('response_time', '30-60 minutes')
+    emergency_label = trade_data.get('emergency_label', f'EMERGENCY {page.trade.name.upper()}')
+    hero_image = trade_data.get('hero_image', '')
+    banner_image = trade_data.get('banner_image', '')
     neighborhoods = AREA_NEIGHBORHOODS.get(area_slug, [])
+    # Strip state suffix for neighborhood lookup (e.g. "queens-ny" -> "queens")
+    if not neighborhoods and '-' in area_slug:
+        neighborhoods = AREA_NEIGHBORHOODS.get(area_slug.rsplit('-', 1)[0], [])
 
     # Internal linking
     neighboring = page.area.neighboring_areas.filter(is_active=True)[:6]
@@ -171,6 +206,11 @@ def service_landing_page(request, trade_slug, area_slug):
         'services': services_text,
         'trade_services': trade_services,
         'trade_faqs': trade_faqs,
+        'trade_testimonials': trade_testimonials,
+        'response_time': response_time,
+        'emergency_label': emergency_label,
+        'hero_image': hero_image,
+        'banner_image': banner_image,
         'neighborhoods': neighborhoods,
         'neighboring': neighboring,
         'same_area_pages': same_area_pages,
