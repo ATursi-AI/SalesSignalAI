@@ -1,22 +1,27 @@
 """
 Las Vegas / Clark County NV health inspection monitor for SalesSignal AI.
 
-Southern Nevada Health District publishes a nightly CSV of ALL food
-establishment inspections.  Data is posted ~5 business days after
-the inspection.
+Southern Nevada Health District publishes a nightly ZIP of ALL food
+establishment inspections as CSV files.
 
 Developer page:
   https://www.southernnevadahealthdistrict.org/permits-and-regulations/
   restaurant-inspections/developers/
 
-Covers: restaurants, bars, hotels, buffets, food trucks, convenience
-stores across Las Vegas, Henderson, North Las Vegas, Boulder City.
+ZIP contains CSV tables matching this schema (from restaurants.sql):
+  - restaurant_establishments: permit_number, restaurant_name, address,
+        city_name, zip_code, current_grade, current_demerits, date_current
+  - restaurant_inspections: permit_number, inspection_date, inspection_demerits,
+        inspection_grade, violations
+  - restaurant_violations: violation_code, violation_demerits, violation_description
 
-Violation → service mapping follows the same pattern as NYC.
+We download the ZIP, extract CSVs, join establishments + inspections,
+and filter to recent inspection dates.
 """
 import csv
 import io
 import logging
+import zipfile
 from datetime import datetime, timedelta
 
 import requests
@@ -26,12 +31,8 @@ from .lead_processor import process_lead
 
 logger = logging.getLogger(__name__)
 
-# PRIMARY: SNHD Socrata open data portal
-SNHD_SOCRATA_URL = 'https://data.snhd.org/resource/96em-8cmh.json'
-# Fallback: ArcGIS Las Vegas open data portal
-ARCGIS_URL = 'https://services.arcgis.com/YSN1DaSBQGSIVjMd/arcgis/rest/services/SNHD_Restaurant_Inspections/FeatureServer/0/query'
-# CSV fallback (nightly dump from SNHD developers page)
-SNHD_CSV_URL = 'https://www.southernnevadahealthdistrict.org/permits-and-regulations/restaurant-inspections/developers/download/'
+# Nightly ZIP dump from SNHD developers page
+SNHD_ZIP_URL = 'https://www.southernnevadahealthdistrict.org/restaurants/download/restaurants.zip'
 
 VIOLATION_SERVICE_MAP = {
     'pest': ['pest control', 'exterminator'],
@@ -88,10 +89,11 @@ def _detect_services(violation_text):
 def _parse_date(date_str):
     if not date_str:
         return None
-    date_str = date_str.strip()
+    date_str = str(date_str).strip()
     for fmt in [
         '%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d',
-        '%m/%d/%Y', '%m/%d/%y', '%m-%d-%Y',
+        '%m/%d/%Y', '%m/%d/%y', '%m-%d-%Y', '%Y-%m-%d %H:%M:%S',
+        '%Y-%m-%d %H:%M:%S.%f',
     ]:
         try:
             dt = datetime.strptime(date_str, fmt)
@@ -101,94 +103,32 @@ def _parse_date(date_str):
     return None
 
 
-def _fetch_socrata(days):
-    """PRIMARY: Query SNHD Socrata open data portal."""
-    since = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%dT00:00:00')
-    params = {
-        '$where': f"inspection_date >= '{since}'",
-        '$limit': 5000,
-        '$order': 'inspection_date DESC',
-    }
-    try:
-        resp = requests.get(SNHD_SOCRATA_URL, params=params, timeout=60,
-                            headers={'User-Agent': 'SalesSignalAI/1.0'})
-        if resp.status_code == 200:
-            data = resp.json()
-            if isinstance(data, list) and data:
-                logger.info(f'[vegas_health] Socrata returned {len(data)} records')
-                return data
-            # If date filter returns empty, try without filter to check field names
-            logger.info('[vegas_health] Socrata date filter empty, trying $limit only')
-            resp2 = requests.get(SNHD_SOCRATA_URL, params={'$limit': 5}, timeout=30,
-                                 headers={'User-Agent': 'SalesSignalAI/1.0'})
-            if resp2.status_code == 200:
-                sample = resp2.json()
-                if isinstance(sample, list) and sample:
-                    # Log field names so we can fix the date filter
-                    logger.info(f'[vegas_health] Sample fields: {list(sample[0].keys())}')
-                    # Try common date field names
-                    for date_field in ['inspection_date', 'inspectiondate', 'inspection_time',
-                                       'date', 'activity_date', 'insp_date']:
-                        if date_field in sample[0]:
-                            logger.info(f'[vegas_health] Found date field: {date_field}, retrying')
-                            retry_params = {
-                                '$where': f"{date_field} >= '{since}'",
-                                '$limit': 5000,
-                                '$order': f'{date_field} DESC',
-                            }
-                            resp3 = requests.get(SNHD_SOCRATA_URL, params=retry_params,
-                                                 timeout=60, headers={'User-Agent': 'SalesSignalAI/1.0'})
-                            if resp3.status_code == 200:
-                                data3 = resp3.json()
-                                if isinstance(data3, list) and data3:
-                                    return data3
-                            break
-                    # Return the sample so we at least get some data and can debug
-                    return sample
-    except Exception as e:
-        logger.warning(f'[vegas_health] Socrata error: {e}')
+def _read_csv_from_zip(zf, possible_names):
+    """Find and read a CSV file from the ZIP by trying multiple filenames."""
+    zip_names = zf.namelist()
+    logger.info(f'[vegas_health] ZIP contains: {zip_names}')
+
+    for name in possible_names:
+        # Try exact match first
+        if name in zip_names:
+            with zf.open(name) as f:
+                text = io.TextIOWrapper(f, encoding='utf-8', errors='replace')
+                return list(csv.DictReader(text))
+        # Try case-insensitive / partial match
+        for zn in zip_names:
+            if name.lower() in zn.lower():
+                with zf.open(zn) as f:
+                    text = io.TextIOWrapper(f, encoding='utf-8', errors='replace')
+                    return list(csv.DictReader(text))
     return []
-
-
-def _fetch_arcgis(days):
-    """Fallback: query ArcGIS open data endpoint."""
-    cutoff = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
-    params = {
-        'where': f"Inspection_Date >= '{cutoff}'",
-        'outFields': '*',
-        'f': 'json',
-        'resultRecordCount': 5000,
-        'orderByFields': 'Inspection_Date DESC',
-    }
-    try:
-        resp = requests.get(ARCGIS_URL, params=params, timeout=60)
-        if resp.status_code == 200:
-            data = resp.json()
-            features = data.get('features', [])
-            if features:
-                logger.info(f'[vegas_health] ArcGIS returned {len(features)} features')
-                return [f.get('attributes', f) for f in features]
-    except Exception as e:
-        logger.warning(f'[vegas_health] ArcGIS fallback failed: {e}')
-    return []
-
-
-def _fetch_csv(days):
-    """Last resort: SNHD developer CSV download."""
-    try:
-        resp = requests.get(SNHD_CSV_URL, timeout=60, headers={
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        })
-        if resp.status_code == 200 and len(resp.text) > 500:
-            return resp.text
-    except Exception as e:
-        logger.warning(f'[vegas_health] CSV download failed: {e}')
-    return None
 
 
 def monitor_vegas_health(days=7, dry_run=False):
     """
     Monitor Southern Nevada Health District restaurant inspections.
+
+    Downloads the nightly ZIP dump, joins establishments with recent
+    inspections, and creates leads for facilities with violations.
 
     Args:
         days: how many days back to include (default: 7)
@@ -207,100 +147,185 @@ def monitor_vegas_health(days=7, dry_run=False):
     }
 
     cutoff = timezone.now() - timedelta(days=days)
-    records = []
 
-    # Try Socrata API first (most reliable)
-    socrata_data = _fetch_socrata(days)
-    if socrata_data:
-        logger.info(f'[vegas_health] Using Socrata data ({len(socrata_data)} records)')
-        records = socrata_data
-    else:
-        # Try ArcGIS
-        logger.info('[vegas_health] Trying ArcGIS fallback')
-        arcgis_data = _fetch_arcgis(days)
-        if arcgis_data:
-            records = arcgis_data
-        else:
-            # Last resort: CSV download
-            logger.info('[vegas_health] Trying CSV fallback')
-            csv_text = _fetch_csv(days)
-            if csv_text:
-                reader = csv.DictReader(io.StringIO(csv_text))
-                for row in reader:
-                    records.append(row)
+    # ── Download the ZIP ──
+    logger.info(f'[vegas_health] Downloading SNHD ZIP from {SNHD_ZIP_URL}')
+    try:
+        resp = requests.get(SNHD_ZIP_URL, timeout=120, headers={
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        })
+        if resp.status_code != 200:
+            logger.error(f'[vegas_health] ZIP download returned {resp.status_code}')
+            stats['errors'] += 1
+            return stats
+        if len(resp.content) < 1000:
+            logger.error(f'[vegas_health] ZIP too small ({len(resp.content)} bytes)')
+            stats['errors'] += 1
+            return stats
+    except Exception as e:
+        logger.error(f'[vegas_health] ZIP download failed: {e}')
+        stats['errors'] += 1
+        return stats
 
-    logger.info(f'[vegas_health] Fetched {len(records)} total records')
+    logger.info(f'[vegas_health] Downloaded {len(resp.content):,} bytes')
 
-    # Normalize field names (SNHD CSV uses various casing)
+    # ── Extract CSVs from ZIP ──
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(resp.content))
+    except zipfile.BadZipFile:
+        logger.error('[vegas_health] Downloaded file is not a valid ZIP')
+        stats['errors'] += 1
+        return stats
+
+    # Read establishments (has restaurant name, address, city, grade, demerits)
+    establishments_rows = _read_csv_from_zip(zf, [
+        'restaurant_establishments.csv', 'establishments.csv', 'restaurants.csv',
+    ])
+    logger.info(f'[vegas_health] Establishments loaded: {len(establishments_rows)}')
+    if establishments_rows:
+        logger.info(f'[vegas_health] Establishment fields: {list(establishments_rows[0].keys())}')
+
+    # Read inspections (has inspection_date, demerits, grade, violations)
+    inspections_rows = _read_csv_from_zip(zf, [
+        'restaurant_inspections.csv', 'inspections.csv',
+    ])
+    logger.info(f'[vegas_health] Inspections loaded: {len(inspections_rows)}')
+    if inspections_rows:
+        logger.info(f'[vegas_health] Inspection fields: {list(inspections_rows[0].keys())}')
+
+    # Read violation definitions (optional — for better descriptions)
+    violations_def = {}
+    violations_rows = _read_csv_from_zip(zf, [
+        'restaurant_violations.csv', 'violations.csv',
+    ])
+    for vr in violations_rows:
+        vid = vr.get('violation_id', '') or vr.get('violation_code', '')
+        desc = vr.get('violation_description', '')
+        if vid and desc:
+            violations_def[str(vid)] = desc
+
+    zf.close()
+
+    # ── Build establishment lookup by permit_number ──
+    est_lookup = {}
+    for row in establishments_rows:
+        r = {k.lower().strip(): (v or '').strip() for k, v in row.items()}
+        permit = r.get('permit_number', '')
+        if permit:
+            est_lookup[permit] = r
+
+    # ── Process inspections — filter to recent dates ──
     facilities = {}
-    for row in records:
-        # Normalize keys to lowercase
-        r = {k.lower().strip(): v for k, v in row.items() if v}
 
-        name = (
-            r.get('restaurant_name', '') or r.get('facility_name', '')
-            or r.get('name', '') or r.get('establishment_name', '')
-            or r.get('dba', '')
-        ).strip()
-        if not name:
-            continue
+    if inspections_rows:
+        # Join inspections with establishments
+        for row in inspections_rows:
+            r = {k.lower().strip(): (v or '').strip() for k, v in row.items()}
 
-        address = (
-            r.get('address', '') or r.get('location_address', '')
-            or r.get('site_address', '')
-        ).strip()
-        city = (r.get('city', '') or r.get('city_name', '') or 'Las Vegas').strip()
-        zipcode = (r.get('zip', '') or r.get('zipcode', '') or r.get('zip_code', '')).strip()
-        phone = (r.get('phone', '') or r.get('telephone', '') or r.get('phone_number', '')).strip()
+            insp_date = _parse_date(r.get('inspection_date', ''))
+            if not insp_date or insp_date < cutoff:
+                continue
 
-        insp_date_str = (
-            r.get('inspection_date', '') or r.get('inspectiondate', '')
-            or r.get('inspection_time', '') or r.get('date', '')
-        )
-        insp_date = _parse_date(str(insp_date_str))
-        if insp_date and insp_date < cutoff:
-            continue
+            permit = r.get('permit_number', '')
+            est = est_lookup.get(permit, {})
 
-        grade = (r.get('grade', '') or r.get('current_grade', '') or r.get('inspection_grade', '')).strip()
-        violations_text = (
-            r.get('violations', '') or r.get('violation_description', '')
-            or r.get('violation', '') or r.get('demerits', '')
-        )
+            name = est.get('restaurant_name', '') or est.get('location_name', '')
+            if not name:
+                continue
 
-        demerits = 0
-        for k, v in r.items():
-            if 'demerit' in k.lower():
-                try:
-                    demerits = int(v)
-                except (ValueError, TypeError):
-                    pass
+            address = est.get('address', '')
+            city = est.get('city_name', '') or 'Las Vegas'
+            zipcode = est.get('zip_code', '')
 
-        fac_key = f"{name}|{address}"
-        if fac_key not in facilities:
-            facilities[fac_key] = {
-                'name': name,
-                'address': address,
-                'city': city,
-                'zipcode': zipcode,
-                'phone': phone,
-                'inspection_date': insp_date,
-                'grade': grade,
-                'demerits': demerits,
-                'violations': [],
-            }
+            # Inspection-level data
+            insp_grade = r.get('inspection_grade', '') or r.get('inspection_grade_new', '')
+            insp_demerits = 0
+            try:
+                insp_demerits = int(r.get('inspection_demerits', 0))
+            except (ValueError, TypeError):
+                pass
 
-        if violations_text:
-            facilities[fac_key]['violations'].append(str(violations_text))
+            violations_text = r.get('violations', '')
+            # Expand violation IDs if we have definitions
+            if violations_text and violations_def:
+                expanded = []
+                for vid in violations_text.split(','):
+                    vid = vid.strip()
+                    if vid in violations_def:
+                        expanded.append(violations_def[vid])
+                    elif vid:
+                        expanded.append(vid)
+                if expanded:
+                    violations_text = '; '.join(expanded)
 
-    logger.info(f'[vegas_health] {len(facilities)} facilities after grouping')
+            fac_key = f"{name}|{address}"
+            if fac_key not in facilities:
+                facilities[fac_key] = {
+                    'name': name,
+                    'address': address,
+                    'city': city,
+                    'zipcode': zipcode,
+                    'inspection_date': insp_date,
+                    'grade': insp_grade,
+                    'demerits': insp_demerits,
+                    'violations': [],
+                }
+            # Keep the most recent inspection date
+            if insp_date and (not facilities[fac_key]['inspection_date']
+                              or insp_date > facilities[fac_key]['inspection_date']):
+                facilities[fac_key]['inspection_date'] = insp_date
+                facilities[fac_key]['grade'] = insp_grade
+                facilities[fac_key]['demerits'] = insp_demerits
+
+            if violations_text:
+                facilities[fac_key]['violations'].append(violations_text)
+
+    elif establishments_rows:
+        # No inspections CSV — use establishments with date_current field
+        logger.info('[vegas_health] No inspections CSV, using establishments date_current')
+        for row in establishments_rows:
+            r = {k.lower().strip(): (v or '').strip() for k, v in row.items()}
+
+            name = r.get('restaurant_name', '') or r.get('location_name', '')
+            if not name:
+                continue
+
+            insp_date = _parse_date(r.get('date_current', ''))
+            if not insp_date or insp_date < cutoff:
+                continue
+
+            address = r.get('address', '')
+            city = r.get('city_name', '') or 'Las Vegas'
+            zipcode = r.get('zip_code', '')
+            grade = r.get('current_grade', '')
+            demerits = 0
+            try:
+                demerits = int(r.get('current_demerits', 0))
+            except (ValueError, TypeError):
+                pass
+
+            fac_key = f"{name}|{address}"
+            if fac_key not in facilities:
+                facilities[fac_key] = {
+                    'name': name,
+                    'address': address,
+                    'city': city,
+                    'zipcode': zipcode,
+                    'inspection_date': insp_date,
+                    'grade': grade,
+                    'demerits': demerits,
+                    'violations': [],
+                }
+
+    logger.info(f'[vegas_health] {len(facilities)} facilities with recent inspections')
     stats['items_scraped'] = len(facilities)
 
+    # ── Create leads ──
     printed = 0
     for fac_key, fac in facilities.items():
         name = fac['name']
         address = fac['address']
         city = fac['city']
-        phone = fac['phone']
         grade = fac['grade']
         demerits = fac['demerits']
         insp_date = fac['inspection_date']
@@ -326,8 +351,6 @@ def monitor_vegas_health(days=7, dry_run=False):
         content_parts = [f'HEALTH VIOLATION: {name}']
         if full_address:
             content_parts.append(f'Address: {full_address}')
-        if phone:
-            content_parts.append(f'Phone: {phone}')
         if grade:
             content_parts.append(f'Grade: {grade}')
         if demerits:
@@ -345,9 +368,9 @@ def monitor_vegas_health(days=7, dry_run=False):
             if printed < 10:
                 print(f'\n  [{city}] {name}')
                 print(f'    {full_address}')
-                if phone:
-                    print(f'    Phone: {phone}')
                 print(f'    Grade: {grade}  Demerits: {demerits}  Urgency: {urgency.upper()}')
+                if all_violations:
+                    print(f'    Violations: {all_violations[:120]}')
                 printed += 1
             stats['created'] += 1
             continue
@@ -363,7 +386,6 @@ def monitor_vegas_health(days=7, dry_run=False):
                     'data_source': 'snhd_vegas',
                     'business_name': name,
                     'address': full_address,
-                    'phone': phone,
                     'grade': grade,
                     'demerits': demerits,
                     'urgency': urgency,
@@ -374,7 +396,6 @@ def monitor_vegas_health(days=7, dry_run=False):
                 source_group='public_records',
                 source_type='health_inspections',
                 contact_business=name,
-                contact_phone=phone,
                 contact_address=full_address,
             )
             if created:
