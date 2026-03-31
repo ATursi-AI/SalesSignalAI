@@ -1166,6 +1166,12 @@ select.form-control-dark {
     font-weight: 500;
     transition: color var(--transition-fast);
 }
+.landing-nav-links a.btn-primary-glow {
+    color: #FFFFFF !important;
+}
+.landing-nav-links a.btn-primary-glow:hover {
+    color: #FFFFFF !important;
+}
 
 .landing-nav-links a:hover { color: #1a1a2e; }
 
