@@ -209,7 +209,7 @@ def monitor_vegas_health(days=7, dry_run=False):
     # ── Build establishment lookup by permit_number ──
     est_lookup = {}
     for row in establishments_rows:
-        r = {k.lower().strip(): (v or '').strip() for k, v in row.items()}
+        r = {k.lower().strip(): (v or '').strip() for k, v in row.items() if k}
         permit = r.get('permit_number', '')
         if permit:
             est_lookup[permit] = r
