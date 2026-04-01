@@ -197,14 +197,22 @@ def _process_facilities(facilities, source_name, source_url, state, region, dry_
             stats['errors'] += 1
 
 
-def _arcgis_fetch(url, params, dry_run=False):
-    """Fetch features from ArcGIS FeatureServer REST API with pagination."""
+def _arcgis_fetch(url, params, dry_run=False, max_records=10000):
+    """Fetch features from ArcGIS FeatureServer REST API with pagination.
+
+    Many ArcGIS services cap at maxRecordCount=1000 per request, so we
+    use 1000 as our page size and paginate until we get fewer than a full
+    page, or exceededTransferLimit is False, or we hit max_records.
+    """
     all_features = []
     offset = 0
-    batch_size = params.get('resultRecordCount', 2000)
+    page_size = 1000  # Most ArcGIS services cap at 1000
 
-    while True:
-        p = {**params, 'resultOffset': offset}
+    # Override caller's resultRecordCount with our safe page size
+    fetch_params = {**params, 'resultRecordCount': page_size}
+
+    while len(all_features) < max_records:
+        p = {**fetch_params, 'resultOffset': offset}
         try:
             resp = requests.get(url, params=p, timeout=120, headers=HEADERS)
             if resp.status_code != 200:
@@ -222,10 +230,14 @@ def _arcgis_fetch(url, params, dry_run=False):
             all_features.extend(features)
             if dry_run:
                 print(f'  Fetched batch: {len(features)} (total: {len(all_features)})')
-            # ArcGIS returns exceededTransferLimit if there are more pages
-            if not data.get('exceededTransferLimit', False):
+            # Stop if: explicit flag says no more, OR we got fewer than
+            # a full page (server returned less than page_size)
+            exceeded = data.get('exceededTransferLimit', None)
+            if exceeded is False:
                 break
-            offset += batch_size
+            if len(features) < page_size:
+                break
+            offset += page_size
         except Exception as e:
             if dry_run:
                 print(f'  ArcGIS fetch error: {e}')
