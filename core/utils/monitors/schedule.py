@@ -59,7 +59,7 @@ MONITOR_SCHEDULE = [
     ('monitor_ca_health', {'county': 'sacramento', 'days': 7}, 24, 'Sacramento Health Inspections (daily)'),
     ('monitor_ca_health', {'county': 'san_diego', 'days': 7}, 24, 'San Diego Health Inspections'),
     ('monitor_ca_health', {'county': 'santa_clara', 'days': 7}, 24, 'Santa Clara Health Inspections'),
-    ('monitor_ca_health', {'county': 'la', 'days': 30}, 168, 'LA County Health Inspections (weekly — quarterly data)'),
+    ('monitor_ca_health', {'county': 'la', 'days': 120}, 168, 'LA County Health Inspections (weekly — quarterly data)'),
 
     # myhealthdepartment.com jurisdictions — daily
     ('monitor_myhealthdept', {'jurisdiction': 'denver', 'days': 7}, 24, 'Denver Health Inspections'),

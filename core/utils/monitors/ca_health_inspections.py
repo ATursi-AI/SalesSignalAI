@@ -537,8 +537,12 @@ LA_VIOLATIONS_URL = (
 )
 
 
-def monitor_la_county_health(days=30, dry_run=False):
-    """LA County — ArcGIS FeatureServer (quarterly update, has owner_name, 106K+ records)."""
+def monitor_la_county_health(days=120, dry_run=False):
+    """LA County — ArcGIS FeatureServer (quarterly update, has owner_name, 106K+ records).
+
+    Default days=120 because data is updated quarterly — a 30-day window
+    would miss everything between updates.
+    """
     stats = {'sources_checked': 1, 'items_scraped': 0, 'created': 0,
              'duplicates': 0, 'assigned': 0, 'errors': 0}
 
