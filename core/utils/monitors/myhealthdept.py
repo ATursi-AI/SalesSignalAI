@@ -137,76 +137,80 @@ def _parse_date(date_str):
 
 
 def _fetch_inspections(path, days, dry_run=False):
-    """Fetch inspections via the myhealthdepartment.com POST API."""
-    end_date = datetime.now().strftime('%Y-%m-%d')
-    start_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
+    """
+    Fetch inspections via the myhealthdepartment.com POST API.
 
+    The API caps results at 25 per request with no working pagination params.
+    Workaround: request one day at a time so each day's 25-cap is independent.
+    """
     all_records = []
-    page = 1
-    page_size = 500
+    seen_ids = set()  # dedup by inspectionID or name+date
 
-    while True:
+    if dry_run:
+        print(f'  POST {API_URL}')
+        print(f'  Strategy: day-by-day requests over {days} days')
+
+    for day_offset in range(days):
+        day = datetime.now() - timedelta(days=day_offset)
+        day_str = day.strftime('%Y-%m-%d')
+
         payload = {
             'task': 'searchInspections',
             'data': {
                 'path': path,
                 'programName': '',
                 'filters': {
-                    'date': f'{start_date} to {end_date}',
+                    'date': f'{day_str} to {day_str}',
                 },
-                'page': page,
-                'pageSize': page_size,
             },
         }
-
-        if dry_run and page == 1:
-            print(f'  POST {API_URL}')
-            print(f'  Payload: task=searchInspections, path={path}, date={start_date} to {end_date}')
 
         try:
             resp = requests.post(API_URL, json=payload, headers=HEADERS, timeout=60)
             if resp.status_code != 200:
                 if dry_run:
-                    print(f'  HTTP {resp.status_code}')
-                logger.warning(f'[myhealthdept] HTTP {resp.status_code} for {path}')
-                break
+                    print(f'  {day_str}: HTTP {resp.status_code}')
+                logger.warning(f'[myhealthdept] HTTP {resp.status_code} for {path} on {day_str}')
+                continue
 
             data = resp.json()
             records = []
 
-            # Handle both array response and wrapped response
             if isinstance(data, list):
                 records = data
             elif isinstance(data, dict):
                 if data.get('error'):
                     if dry_run:
-                        print(f'  API error: {data.get("msg", "")}')
-                    break
+                        print(f'  {day_str}: API error: {data.get("msg", "")}')
+                    continue
                 records = data.get('data', data.get('results', data.get('items', [])))
                 if not isinstance(records, list):
                     records = []
 
-            if not records:
-                break
+            # Dedup across days (some records may span date boundaries)
+            new_count = 0
+            for rec in records:
+                if not isinstance(rec, dict):
+                    continue
+                rec_id = rec.get('inspectionID', '')
+                if not rec_id:
+                    rec_id = f"{rec.get('establishmentName', '')}|{rec.get('inspectionDate', '')}"
+                if rec_id not in seen_ids:
+                    seen_ids.add(rec_id)
+                    all_records.append(rec)
+                    new_count += 1
 
-            all_records.extend(records)
             if dry_run:
-                print(f'  Page {page}: {len(records)} records (total: {len(all_records)})')
-
-            # If we got fewer than page_size, no more pages
-            if len(records) < page_size:
-                break
-
-            page += 1
-            # Safety limit
-            if page > 20:
-                break
+                print(f'  {day_str}: {len(records)} returned, {new_count} new (total: {len(all_records)})')
 
         except Exception as e:
             if dry_run:
-                print(f'  Request error: {e}')
-            logger.error(f'[myhealthdept] Request error for {path}: {e}')
-            break
+                print(f'  {day_str}: Request error: {e}')
+            logger.error(f'[myhealthdept] Request error for {path} on {day_str}: {e}')
+            continue
+
+    if dry_run:
+        print(f'  Total unique records: {len(all_records)}')
 
     return all_records
 
