@@ -141,48 +141,74 @@ def _fetch_inspections(path, days, dry_run=False):
     end_date = datetime.now().strftime('%Y-%m-%d')
     start_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
 
-    payload = {
-        'task': 'searchInspections',
-        'data': {
-            'path': path,
-            'programName': '',
-            'filters': {
-                'date': f'{start_date} to {end_date}',
+    all_records = []
+    page = 1
+    page_size = 500
+
+    while True:
+        payload = {
+            'task': 'searchInspections',
+            'data': {
+                'path': path,
+                'programName': '',
+                'filters': {
+                    'date': f'{start_date} to {end_date}',
+                },
+                'page': page,
+                'pageSize': page_size,
             },
-        },
-    }
+        }
 
-    if dry_run:
-        print(f'  POST {API_URL}')
-        print(f'  Payload: task=searchInspections, path={path}, date={start_date} to {end_date}')
+        if dry_run and page == 1:
+            print(f'  POST {API_URL}')
+            print(f'  Payload: task=searchInspections, path={path}, date={start_date} to {end_date}')
 
-    try:
-        resp = requests.post(API_URL, json=payload, headers=HEADERS, timeout=60)
-        if resp.status_code != 200:
-            if dry_run:
-                print(f'  HTTP {resp.status_code}')
-            logger.warning(f'[myhealthdept] HTTP {resp.status_code} for {path}')
-            return []
-
-        data = resp.json()
-
-        # Handle both array response and wrapped response
-        if isinstance(data, list):
-            return data
-        if isinstance(data, dict):
-            if data.get('error'):
+        try:
+            resp = requests.post(API_URL, json=payload, headers=HEADERS, timeout=60)
+            if resp.status_code != 200:
                 if dry_run:
-                    print(f'  API error: {data.get("msg", "")}')
-                return []
-            # Data might be nested
-            return data.get('data', data.get('results', data.get('items', [])))
+                    print(f'  HTTP {resp.status_code}')
+                logger.warning(f'[myhealthdept] HTTP {resp.status_code} for {path}')
+                break
 
-    except Exception as e:
-        if dry_run:
-            print(f'  Request error: {e}')
-        logger.error(f'[myhealthdept] Request error for {path}: {e}')
+            data = resp.json()
+            records = []
 
-    return []
+            # Handle both array response and wrapped response
+            if isinstance(data, list):
+                records = data
+            elif isinstance(data, dict):
+                if data.get('error'):
+                    if dry_run:
+                        print(f'  API error: {data.get("msg", "")}')
+                    break
+                records = data.get('data', data.get('results', data.get('items', [])))
+                if not isinstance(records, list):
+                    records = []
+
+            if not records:
+                break
+
+            all_records.extend(records)
+            if dry_run:
+                print(f'  Page {page}: {len(records)} records (total: {len(all_records)})')
+
+            # If we got fewer than page_size, no more pages
+            if len(records) < page_size:
+                break
+
+            page += 1
+            # Safety limit
+            if page > 20:
+                break
+
+        except Exception as e:
+            if dry_run:
+                print(f'  Request error: {e}')
+            logger.error(f'[myhealthdept] Request error for {path}: {e}')
+            break
+
+    return all_records
 
 
 def monitor_myhealthdept(jurisdiction='denver', days=7, dry_run=False):
@@ -237,12 +263,17 @@ def monitor_myhealthdept(jurisdiction='denver', days=7, dry_run=False):
         city = (rec.get('city', '') or '').strip()
         rec_state = (rec.get('state', '') or state).strip()
         zipcode = (rec.get('zip', '') or '').strip()
-        county = (rec.get('ADCounty', '') or '').strip()
+        county = (rec.get('ADCounty', '') or rec.get('county', '') or '').strip()
 
         score = rec.get('score', '')
-        score_display = (rec.get('scoreDisplay', '') or '').strip()
-        insp_type = (rec.get('inspectionType', '') or '').strip()
-        purpose = (rec.get('purpose', '') or '').strip()
+        if score is None:
+            score = ''
+        # Different jurisdictions use different field names for result
+        score_display = (
+            rec.get('scoreDisplay', '') or rec.get('result', '') or ''
+        ).strip()
+        insp_type = (rec.get('inspectionType', '') or rec.get('InspectionType', '') or '').strip()
+        purpose = (rec.get('purpose', '') or rec.get('PurposeofInspection', '') or '').strip()
         comments = (rec.get('comments', '') or '').strip()
         permit_type = (rec.get('permitType', '') or '').strip()
         inspection_id = (rec.get('inspectionID', '') or '').strip()
