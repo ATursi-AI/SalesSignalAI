@@ -63,7 +63,7 @@ MONITOR_SCHEDULE = [
 
     # myhealthdepartment.com jurisdictions — daily
     ('monitor_myhealthdept', {'jurisdiction': 'denver', 'days': 7}, 24, 'Denver Health Inspections'),
-    ('monitor_myhealthdept', {'jurisdiction': 'portland', 'days': 7}, 24, 'Portland Health Inspections'),
+    ('monitor_myhealthdept', {'jurisdiction': 'portland', 'days': 14}, 24, 'Portland Health Inspections'),
     ('monitor_myhealthdept', {'jurisdiction': 'colorado_springs', 'days': 7}, 24, 'Colorado Springs Health Inspections'),
     ('monitor_myhealthdept', {'jurisdiction': 'honolulu', 'days': 7}, 24, 'Honolulu Health Inspections'),
 ]
