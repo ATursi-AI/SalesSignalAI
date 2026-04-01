@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Review Campaigns{% endblock %}
+{% block page_title %}Review Campaigns{% endblock %}
+
+{% block content %}
+<div class="review-campaigns-page">
+    <div class="contacts-header">
+        <div class="contacts-count">
+            <i class="bi bi-star-fill"></i> Review Campaigns
+        </div>
+        <button class="btn-primary btn-sm" onclick="showCreateModal()">
+            <i class="bi bi-plus-lg"></i> New Campaign
+        </button>
+    </div>
+
+    <!-- Campaign Cards -->
+    {% for campaign in campaigns %}
+    <div class="glass-card" style="margin-bottom:1rem;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+                <h3 style="font-size:1.1rem;font-weight:600;margin-bottom:.25rem;">{{ campaign.name }}</h3>
+                <div class="text-muted" style="font-size:.85rem;">
+                    {{ campaign.get_channel_display }} &middot;
+                    {% if campaign.auto_send_on_won %}Auto-sends on win{% else %}Manual send{% endif %} &middot;
+                    {{ campaign.delay_hours }}h delay
+                </div>
+            </div>
+            <span class="stage-badge stage-{% if campaign.status == 'active' %}won{% elif campaign.status == 'paused' %}follow_up{% else %}new{% endif %}">
+                {{ campaign.get_status_display }}
+            </span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:1rem;">
+            <div style="text-align:center;">
+                <div style="font-size:1.4rem;font-weight:700;">{{ campaign.total_sent }}</div>
+                <div class="text-muted" style="font-size:.8rem;">Sent</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-size:1.4rem;font-weight:700;">{{ campaign.total_clicked }}</div>
+                <div class="text-muted" style="font-size:.8rem;">Clicked</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-size:1.4rem;font-weight:700;">{{ campaign.click_rate }}%</div>
+                <div class="text-muted" style="font-size:.8rem;">Click Rate</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-size:1.4rem;font-weight:700;">{{ campaign.request_count }}</div>
+                <div class="text-muted" style="font-size:.8rem;">Total Requests</div>
+            </div>
+        </div>
+        <div style="display:flex;gap:.5rem;margin-top:1rem;justify-content:flex-end;">
+            <a href="{% url 'review_campaign_detail' campaign.id %}" class="btn-secondary btn-sm">
+                <i class="bi bi-eye"></i> Details
+            </a>
+            <button class="btn-primary btn-sm" onclick="toggleCampaign({{ campaign.id }})">
+                {% if campaign.status == 'active' %}
+                <i class="bi bi-pause-fill"></i> Pause
+                {% else %}
+                <i class="bi bi-play-fill"></i> Activate
+                {% endif %}
+            </button>
+        </div>
+    </div>
+    {% empty %}
+    <div class="glass-card">
+        <p class="text-muted" style="padding:1rem 0;text-align:center;">
+            No review campaigns yet. Create one to start collecting Google reviews from happy customers.
+        </p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Create Modal -->
+<div id="createModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width:550px;">
+        <div class="modal-header">
+            <h3>New Review Campaign</h3>
+            <button onclick="closeModal('createModal')" class="btn-icon"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <form onsubmit="createCampaign(event)">
+            <div class="form-group">
+                <label>Campaign Name</label>
+                <input type="text" name="name" class="form-input" required placeholder="e.g. Happy Customers Review Drive">
+            </div>
+            <div class="form-group">
+                <label>Google Review URL</label>
+                <input type="url" name="google_review_url" class="form-input" placeholder="https://g.page/r/...">
+                <small class="text-muted">Get this from your Google Business Profile &rarr; "Ask for reviews"</small>
+            </div>
+            <div class="form-group">
+                <label>Channel</label>
+                <select name="channel" class="form-input">
+                    <option value="sms">SMS Only</option>
+                    <option value="email">Email Only</option>
+                    <option value="both">SMS + Email</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>SMS Message Template</label>
+                <textarea name="sms_template" rows="3" class="form-input">Hi {name}! Thanks for choosing {business}. We'd love your feedback — would you mind leaving us a quick Google review? {link}</textarea>
+                <small class="text-muted">Variables: {name}, {business}, {link}</small>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div class="form-group">
+                    <label>Delay (hours after win)</label>
+                    <input type="number" name="delay_hours" value="24" min="1" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label style="display:flex;align-items:center;gap:.5rem;margin-top:1.5rem;">
+                        <input type="checkbox" name="auto_send_on_won" value="true">
+                        Auto-send on win
+                    </label>
+                </div>
+            </div>
+            <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:1rem;">
+                <button type="button" class="btn-secondary btn-sm" onclick="closeModal('createModal')">Cancel</button>
+                <button type="submit" class="btn-primary btn-sm">Create Campaign</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:1000;}
+.modal-card{background:var(--glass-bg);border:1px solid var(--border);border-radius:12px;padding:1.5rem;width:90%;backdrop-filter:blur(16px);}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;}
+.modal-header h3{margin:0;}
+.form-group{margin-bottom:1rem;}
+.form-group label{display:block;font-weight:600;margin-bottom:.3rem;font-size:.9rem;}
+.form-input{width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--glass-bg);color:var(--text);font-size:.9rem;}
+</style>
+
+<script>
+function showCreateModal(){document.getElementById('createModal').style.display='flex';}
+function closeModal(id){document.getElementById(id).style.display='none';}
+
+async function createCampaign(e){
+    e.preventDefault();
+    const fd=new FormData(e.target);
+    const r=await fetch('{% url "review_campaign_create" %}',{method:'POST',body:fd,headers:{'X-CSRFToken':'{{ csrf_token }}'}});
+    const d=await r.json();
+    if(d.ok){location.reload();}else{alert(d.error||'Error');}
+}
+
+async function toggleCampaign(id){
+    const r=await fetch(`/dashboard/review-campaigns/${id}/toggle/`,{method:'POST',headers:{'X-CSRFToken':'{{ csrf_token }}'}});
+    const d=await r.json();
+    if(d.ok)location.reload();
+}
+</script>
+{% endblock %}

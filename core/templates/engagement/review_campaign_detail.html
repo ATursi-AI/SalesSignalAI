@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ campaign.name }}{% endblock %}
+{% block page_title %}{{ campaign.name }}{% endblock %}
+
+{% block content %}
+<div class="review-detail-page">
+    <!-- Back link -->
+    <a href="{% url 'review_campaigns' %}" style="color:var(--muted);font-size:.9rem;text-decoration:none;display:inline-block;margin-bottom:1rem;">
+        <i class="bi bi-arrow-left"></i> All Campaigns
+    </a>
+
+    <!-- Stats -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;">
+        <div class="glass-card" style="padding:1rem;text-align:center;">
+            <div style="font-size:1.8rem;font-weight:700;color:var(--accent);">{{ campaign.total_sent }}</div>
+            <div class="text-muted" style="font-size:.85rem;">Sent</div>
+        </div>
+        <div class="glass-card" style="padding:1rem;text-align:center;">
+            <div style="font-size:1.8rem;font-weight:700;color:var(--info);">{{ clicked_count }}</div>
+            <div class="text-muted" style="font-size:.85rem;">Clicked</div>
+        </div>
+        <div class="glass-card" style="padding:1rem;text-align:center;">
+            <div style="font-size:1.8rem;font-weight:700;color:var(--success);">{{ reviewed_count }}</div>
+            <div class="text-muted" style="font-size:.85rem;">Reviewed</div>
+        </div>
+        <div class="glass-card" style="padding:1rem;text-align:center;">
+            <div style="font-size:1.8rem;font-weight:700;">{{ campaign.click_rate }}%</div>
+            <div class="text-muted" style="font-size:.85rem;">Click Rate</div>
+        </div>
+    </div>
+
+    <!-- Send to Won Contacts -->
+    {% if available_contacts %}
+    <div class="glass-card" style="margin-bottom:1.5rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+                <h3 class="card-section-title" style="margin:0;">Ready to Send</h3>
+                <p class="text-muted" style="font-size:.85rem;">{{ available_contacts|length }} won contacts haven't been sent a review request yet</p>
+            </div>
+            <button class="btn-primary btn-sm" onclick="sendToAll()" id="sendAllBtn">
+                <i class="bi bi-send"></i> Send to All ({{ available_contacts|length }})
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Requests Table -->
+    <div class="glass-card">
+        <h3 class="card-section-title">Review Requests</h3>
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:.9rem;">
+                <thead>
+                    <tr style="text-align:left;border-bottom:1px solid var(--border);">
+                        <th style="padding:.5rem;">Contact</th>
+                        <th style="padding:.5rem;">Phone</th>
+                        <th style="padding:.5rem;">Sent</th>
+                        <th style="padding:.5rem;">Status</th>
+                        <th style="padding:.5rem;">Clicked</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rr in review_requests %}
+                    <tr style="border-bottom:1px solid var(--border);">
+                        <td style="padding:.5rem;font-weight:500;">{{ rr.contact.name }}</td>
+                        <td style="padding:.5rem;font-family:var(--font-mono);font-size:.85rem;">{{ rr.contact.phone }}</td>
+                        <td style="padding:.5rem;" class="text-muted">
+                            {% if rr.sent_at %}{{ rr.sent_at|timesince }} ago{% else %}—{% endif %}
+                        </td>
+                        <td style="padding:.5rem;">
+                            <span class="stage-badge stage-{% if rr.status == 'clicked' %}contacted{% elif rr.status == 'reviewed' %}won{% elif rr.status == 'sent' %}new{% elif rr.status == 'failed' %}lost{% else %}{{ rr.status }}{% endif %}">
+                                {{ rr.get_status_display }}
+                            </span>
+                        </td>
+                        <td style="padding:.5rem;" class="text-muted">
+                            {% if rr.clicked_at %}{{ rr.clicked_at|timesince }} ago{% else %}—{% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-muted" style="padding:1rem;">No requests sent yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+async function sendToAll(){
+    const btn=document.getElementById('sendAllBtn');
+    if(!confirm(`Send review requests to all available contacts?`))return;
+    btn.disabled=true;btn.textContent='Sending...';
+    const r=await fetch('{% url "review_campaign_send" campaign.id %}',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
+        body:JSON.stringify({contact_ids:[]})
+    });
+    const d=await r.json();
+    if(d.ok){alert(`Done! ${d.sent} sent, ${d.failed} failed, ${d.skipped} skipped`);location.reload();}
+    else{alert(d.error||'Error');btn.disabled=false;btn.textContent='Send to All';}
+}
+</script>
+{% endblock %}

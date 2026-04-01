@@ -86,6 +86,54 @@ def make_call(to_number, from_number=None, webhook_url=None):
         return {'ok': False, 'error': str(e)}
 
 
+def drop_voicemail(to_number, audio_url, status_callback_url=None):
+    """
+    Place a call that plays a pre-recorded voicemail.
+    Uses machine detection — if a human answers, hangs up; if voicemail, plays audio.
+    Returns dict with ok, sid, status, or error.
+    """
+    try:
+        client = _get_client()
+        # Build TwiML inline — plays the audio then hangs up
+        twiml = f'<Response><Pause length="1"/><Play>{audio_url}</Play><Pause length="1"/></Response>'
+
+        kwargs = {
+            'from_': _from_number(),
+            'to': to_number,
+            'twiml': twiml,
+            'machine_detection': 'Enable',
+            'machine_detection_timeout': 5,
+            'timeout': 25,
+        }
+        if status_callback_url:
+            kwargs['status_callback'] = status_callback_url
+            kwargs['status_callback_event'] = ['completed', 'busy', 'no-answer', 'failed']
+
+        call = client.calls.create(**kwargs)
+        logger.info(f'[signalwire] Voicemail drop to {to_number}: sid={call.sid}')
+        return {'ok': True, 'sid': call.sid, 'status': call.status}
+    except Exception as e:
+        logger.error(f'[signalwire] Voicemail drop error to {to_number}: {e}')
+        return {'ok': False, 'error': str(e)}
+
+
+def drop_voicemail_bulk(recipients, audio_url, status_callback_url=None):
+    """
+    Drop voicemails to multiple numbers.
+    recipients = [{'number': str, 'log_id': int (optional)}, ...]
+    Returns list of results.
+    """
+    results = []
+    for r in recipients:
+        result = drop_voicemail(r['number'], audio_url, status_callback_url)
+        result['number'] = r['number']
+        result['log_id'] = r.get('log_id')
+        results.append(result)
+    sent = sum(1 for r in results if r.get('ok'))
+    logger.info(f'[signalwire] Bulk VM drop: {sent}/{len(recipients)} initiated')
+    return results
+
+
 def get_call_status(call_sid):
     """Get status of a call by SID."""
     try:

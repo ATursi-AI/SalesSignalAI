@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page.title }} | {{ business.business_name }}</title>
+    <meta name="robots" content="noindex">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --accent: {{ page.accent_color }};
+            --accent-light: {{ page.accent_color }}22;
+            --bg: #0a0f1a;
+            --card-bg: #111827;
+            --border: #1e293b;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family:'DM Sans',sans-serif;
+            background:var(--bg);
+            color:var(--text);
+            min-height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:2rem 1rem;
+        }
+        .booking-container {
+            max-width:600px;
+            width:100%;
+        }
+        .business-header {
+            text-align:center;
+            margin-bottom:2rem;
+        }
+        .business-header h1 {
+            font-size:1.6rem;
+            font-weight:700;
+            margin-bottom:.5rem;
+        }
+        .business-header .subtitle {
+            color:var(--muted);
+            font-size:.95rem;
+        }
+        .business-meta {
+            display:flex;
+            gap:1.5rem;
+            justify-content:center;
+            margin-top:.75rem;
+            font-size:.85rem;
+            color:var(--muted);
+        }
+        .business-meta i { color:var(--accent); margin-right:.3rem; }
+        .booking-card {
+            background:var(--card-bg);
+            border:1px solid var(--border);
+            border-radius:16px;
+            padding:1.5rem;
+        }
+        .step-indicator {
+            display:flex;
+            gap:.5rem;
+            margin-bottom:1.5rem;
+        }
+        .step-dot {
+            flex:1;
+            height:4px;
+            border-radius:2px;
+            background:var(--border);
+            transition:background .3s;
+        }
+        .step-dot.active { background:var(--accent); }
+        .step { display:none; }
+        .step.active { display:block; }
+        .step-title {
+            font-size:1.1rem;
+            font-weight:600;
+            margin-bottom:1rem;
+        }
+        /* Date picker */
+        .date-grid {
+            display:grid;
+            grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+            gap:.5rem;
+            max-height:300px;
+            overflow-y:auto;
+        }
+        .date-btn {
+            background:transparent;
+            border:1px solid var(--border);
+            border-radius:10px;
+            padding:.65rem .75rem;
+            color:var(--text);
+            cursor:pointer;
+            font-size:.9rem;
+            text-align:left;
+            transition:all .2s;
+        }
+        .date-btn:hover { border-color:var(--accent); background:var(--accent-light); }
+        .date-btn.selected { border-color:var(--accent); background:var(--accent-light); font-weight:600; }
+        .date-btn .slot-count { font-size:.75rem; color:var(--muted); }
+        /* Time picker */
+        .time-grid {
+            display:grid;
+            grid-template-columns:repeat(3,1fr);
+            gap:.5rem;
+            max-height:250px;
+            overflow-y:auto;
+        }
+        .time-btn {
+            background:transparent;
+            border:1px solid var(--border);
+            border-radius:8px;
+            padding:.5rem;
+            color:var(--text);
+            cursor:pointer;
+            font-size:.9rem;
+            text-align:center;
+            transition:all .2s;
+        }
+        .time-btn:hover { border-color:var(--accent); background:var(--accent-light); }
+        .time-btn.selected { border-color:var(--accent); background:var(--accent-light); font-weight:600; }
+        /* Form */
+        .form-group { margin-bottom:1rem; }
+        .form-group label { display:block; font-weight:500; margin-bottom:.3rem; font-size:.9rem; }
+        .form-input {
+            width:100%;
+            padding:.6rem .8rem;
+            border:1px solid var(--border);
+            border-radius:8px;
+            background:var(--bg);
+            color:var(--text);
+            font-size:.95rem;
+            font-family:inherit;
+        }
+        .form-input:focus { outline:none; border-color:var(--accent); }
+        .btn-primary {
+            background:var(--accent);
+            color:#fff;
+            border:none;
+            border-radius:10px;
+            padding:.7rem 1.5rem;
+            font-size:1rem;
+            font-weight:600;
+            cursor:pointer;
+            width:100%;
+            margin-top:.5rem;
+            transition:opacity .2s;
+        }
+        .btn-primary:hover { opacity:.9; }
+        .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+        .btn-back {
+            background:transparent;
+            border:1px solid var(--border);
+            border-radius:8px;
+            padding:.4rem 1rem;
+            color:var(--muted);
+            cursor:pointer;
+            font-size:.85rem;
+            margin-bottom:1rem;
+        }
+        /* Confirmation */
+        .confirmation {
+            text-align:center;
+            padding:2rem 0;
+        }
+        .confirmation .check-icon {
+            width:64px;height:64px;
+            border-radius:50%;
+            background:var(--accent-light);
+            display:inline-flex;
+            align-items:center;justify-content:center;
+            font-size:2rem;
+            color:var(--accent);
+            margin-bottom:1rem;
+        }
+        .confirmation h2 { margin-bottom:.5rem; }
+        .confirmation .code { font-family:monospace; font-size:1.1rem; color:var(--accent); }
+        .powered-by {
+            text-align:center;
+            margin-top:1.5rem;
+            font-size:.75rem;
+            color:var(--muted);
+        }
+        .powered-by a { color:var(--accent); text-decoration:none; }
+    </style>
+</head>
+<body>
+<div class="booking-container">
+    <div class="business-header">
+        <h1>{{ page.title }}</h1>
+        {% if page.description %}
+        <p class="subtitle">{{ page.description }}</p>
+        {% endif %}
+        <div class="business-meta">
+            {% if page.show_phone and business.phone %}
+            <span><i class="bi bi-telephone"></i> {{ business.phone }}</span>
+            {% endif %}
+            {% if page.show_address and business.city %}
+            <span><i class="bi bi-geo-alt"></i> {{ business.city }}, {{ business.state }}</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="booking-card">
+        <div class="step-indicator">
+            <div class="step-dot active" id="dot1"></div>
+            <div class="step-dot" id="dot2"></div>
+            <div class="step-dot" id="dot3"></div>
+        </div>
+
+        <!-- Step 1: Pick a Date -->
+        <div class="step active" id="step1">
+            <div class="step-title"><i class="bi bi-calendar3"></i> Pick a Date</div>
+            <div class="date-grid" id="dateGrid"></div>
+        </div>
+
+        <!-- Step 2: Pick a Time -->
+        <div class="step" id="step2">
+            <button class="btn-back" onclick="goStep(1)"><i class="bi bi-arrow-left"></i> Back</button>
+            <div class="step-title"><i class="bi bi-clock"></i> Pick a Time — <span id="selectedDateDisplay"></span></div>
+            <div class="time-grid" id="timeGrid"></div>
+        </div>
+
+        <!-- Step 3: Your Info -->
+        <div class="step" id="step3">
+            <button class="btn-back" onclick="goStep(2)"><i class="bi bi-arrow-left"></i> Back</button>
+            <div class="step-title"><i class="bi bi-person"></i> Your Information</div>
+            <form id="bookingForm" onsubmit="submitBooking(event)">
+                <input type="hidden" id="inputDate" name="date">
+                <input type="hidden" id="inputTime" name="time">
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" name="name" class="form-input" required placeholder="Your full name">
+                </div>
+                <div class="form-group">
+                    <label>Phone *</label>
+                    <input type="tel" name="phone" class="form-input" required placeholder="(555) 123-4567">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" class="form-input" placeholder="you@email.com">
+                </div>
+                <div class="form-group">
+                    <label>What do you need help with?</label>
+                    <input type="text" name="service_needed" class="form-input" placeholder="e.g. Pest control, plumbing repair">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea name="notes" rows="2" class="form-input" placeholder="Anything else we should know?"></textarea>
+                </div>
+                <button type="submit" class="btn-primary" id="submitBtn">
+                    <i class="bi bi-check-circle"></i> Confirm Booking
+                </button>
+            </form>
+        </div>
+
+        <!-- Step 4: Confirmation -->
+        <div class="step" id="step4">
+            <div class="confirmation">
+                <div class="check-icon"><i class="bi bi-check-lg"></i></div>
+                <h2>You're booked!</h2>
+                <p style="color:var(--muted);margin-bottom:.75rem;" id="confirmDetails"></p>
+                <p>Confirmation code: <span class="code" id="confirmCode"></span></p>
+                <p style="color:var(--muted);font-size:.85rem;margin-top:1rem;">
+                    You'll receive an SMS confirmation shortly.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="powered-by">
+        Powered by <a href="/">SalesSignal AI</a>
+    </div>
+</div>
+
+<script>
+const slots = {{ slots_by_date|safe }};
+let selectedDate = null;
+let selectedTime = null;
+
+// Render dates
+const dateGrid = document.getElementById('dateGrid');
+Object.entries(slots).forEach(([dateStr, info]) => {
+    const btn = document.createElement('button');
+    btn.className = 'date-btn';
+    btn.innerHTML = `${info.display}<div class="slot-count">${info.slots.length} slots available</div>`;
+    btn.onclick = () => {
+        selectedDate = dateStr;
+        document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        renderTimes(dateStr, info);
+        goStep(2);
+    };
+    dateGrid.appendChild(btn);
+});
+
+if (Object.keys(slots).length === 0) {
+    dateGrid.innerHTML = '<p style="color:var(--muted);padding:1rem;">No available slots in the next 14 days.</p>';
+}
+
+function renderTimes(dateStr, info) {
+    const timeGrid = document.getElementById('timeGrid');
+    timeGrid.innerHTML = '';
+    document.getElementById('selectedDateDisplay').textContent = info.display;
+    info.slots.forEach(t => {
+        const btn = document.createElement('button');
+        btn.className = 'time-btn';
+        btn.textContent = t;
+        btn.onclick = () => {
+            selectedTime = t;
+            document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            document.getElementById('inputDate').value = selectedDate;
+            document.getElementById('inputTime').value = selectedTime;
+            goStep(3);
+        };
+        timeGrid.appendChild(btn);
+    });
+}
+
+function goStep(n) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step' + n).classList.add('active');
+    for (let i = 1; i <= 3; i++) {
+        document.getElementById('dot' + i).classList.toggle('active', i <= n);
+    }
+}
+
+async function submitBooking(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Booking...';
+
+    const fd = new FormData(e.target);
+    try {
+        const r = await fetch('/book/{{ page.slug }}/submit/', {
+            method: 'POST',
+            body: fd,
+        });
+        const d = await r.json();
+        if (d.ok) {
+            document.getElementById('confirmDetails').textContent = `${d.date} at ${d.time}`;
+            document.getElementById('confirmCode').textContent = d.confirmation_code;
+            goStep(4);
+            // Hide step indicator
+            document.querySelector('.step-indicator').style.display = 'none';
+        } else {
+            alert(d.error || 'Something went wrong');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle"></i> Confirm Booking';
+        }
+    } catch (err) {
+        alert('Connection error. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-circle"></i> Confirm Booking';
+    }
+}
+</script>
+</body>
+</html>

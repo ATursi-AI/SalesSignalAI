@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Voicemail Drops{% endblock %}
+{% block page_title %}Voicemail Drops{% endblock %}
+
+{% block content %}
+<div class="voicemail-drops-page">
+    <!-- Header -->
+    <div class="contacts-header">
+        <div class="contacts-count">
+            <i class="bi bi-voicemail"></i> Voicemail Drops
+        </div>
+        <button class="btn-primary btn-sm" onclick="showCreateModal()">
+            <i class="bi bi-plus-lg"></i> New Template
+        </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;">
+        <div class="glass-card" style="padding:1rem;text-align:center;">
+            <div style="font-size:1.8rem;font-weight:700;color:var(--accent);">{{ total_drops }}</div>
+            <div class="text-muted" style="font-size:.85rem;">Total Drops</div>
+        </div>
+        <div class="glass-card" style="padding:1rem;text-align:center;">
+            <div style="font-size:1.8rem;font-weight:700;color:var(--success);">{{ delivered }}</div>
+            <div class="text-muted" style="font-size:.85rem;">Delivered</div>
+        </div>
+        <div class="glass-card" style="padding:1rem;text-align:center;">
+            <div style="font-size:1.8rem;font-weight:700;color:var(--info);">{{ delivery_rate }}%</div>
+            <div class="text-muted" style="font-size:.85rem;">Delivery Rate</div>
+        </div>
+    </div>
+
+    <!-- Templates -->
+    <div class="glass-card">
+        <h3 class="card-section-title">Templates</h3>
+        {% for vm in templates %}
+        <div class="appointment-row" style="display:flex;align-items:center;justify-content:space-between;padding:.75rem 0;border-bottom:1px solid var(--border);">
+            <div>
+                <div style="font-weight:600;">{{ vm.name }}</div>
+                <div class="text-muted" style="font-size:.85rem;">
+                    {% if vm.description %}{{ vm.description|truncatechars:80 }} &middot; {% endif %}
+                    Used {{ vm.times_used }} times
+                </div>
+            </div>
+            <div style="display:flex;gap:.5rem;">
+                <button class="btn-primary btn-sm" onclick="showSendModal({{ vm.id }}, '{{ vm.name|escapejs }}')">
+                    <i class="bi bi-send"></i> Send
+                </button>
+                <button class="btn-sm btn-icon" title="Delete" onclick="deleteTemplate({{ vm.id }})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-muted" style="padding:1rem 0;">No voicemail templates yet. Create one to get started.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="glass-card" style="margin-top:1.5rem;">
+        <h3 class="card-section-title">Recent Drops</h3>
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:.9rem;">
+                <thead>
+                    <tr style="text-align:left;border-bottom:1px solid var(--border);">
+                        <th style="padding:.5rem;">Template</th>
+                        <th style="padding:.5rem;">To</th>
+                        <th style="padding:.5rem;">Status</th>
+                        <th style="padding:.5rem;">When</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in recent_logs %}
+                    <tr style="border-bottom:1px solid var(--border);">
+                        <td style="padding:.5rem;">{{ log.voicemail.name }}</td>
+                        <td style="padding:.5rem;font-family:var(--font-mono);">{{ log.to_number }}</td>
+                        <td style="padding:.5rem;">
+                            <span class="stage-badge stage-{{ log.status }}">{{ log.get_status_display }}</span>
+                        </td>
+                        <td style="padding:.5rem;" class="text-muted">{{ log.created_at|timesince }} ago</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-muted" style="padding:1rem;">No drops yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Create Template Modal -->
+<div id="createModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width:500px;">
+        <div class="modal-header">
+            <h3>New Voicemail Template</h3>
+            <button onclick="closeModal('createModal')" class="btn-icon"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <form onsubmit="createTemplate(event)">
+            <div class="form-group">
+                <label>Template Name</label>
+                <input type="text" name="name" required placeholder="e.g. Health Violation Intro" class="form-input">
+            </div>
+            <div class="form-group">
+                <label>Audio URL</label>
+                <input type="url" name="audio_url" required placeholder="https://your-host.com/voicemail.mp3" class="form-input">
+                <small class="text-muted">Upload your MP3/WAV to any file host and paste the direct URL</small>
+            </div>
+            <div class="form-group">
+                <label>Description (optional)</label>
+                <textarea name="description" rows="2" class="form-input" placeholder="What this voicemail is for..."></textarea>
+            </div>
+            <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:1rem;">
+                <button type="button" class="btn-secondary btn-sm" onclick="closeModal('createModal')">Cancel</button>
+                <button type="submit" class="btn-primary btn-sm">Create Template</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Send Modal -->
+<div id="sendModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width:500px;">
+        <div class="modal-header">
+            <h3>Send Voicemail Drop</h3>
+            <button onclick="closeModal('sendModal')" class="btn-icon"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <form onsubmit="sendDrop(event)">
+            <input type="hidden" name="voicemail_id" id="sendVmId">
+            <p style="margin-bottom:1rem;">Sending: <strong id="sendVmName"></strong></p>
+            <div class="form-group">
+                <label>Phone Numbers (one per line)</label>
+                <textarea name="numbers" rows="5" class="form-input" placeholder="+1234567890&#10;+1987654321" id="sendNumbers"></textarea>
+                <small class="text-muted">Enter numbers with country code, one per line</small>
+            </div>
+            <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:1rem;">
+                <button type="button" class="btn-secondary btn-sm" onclick="closeModal('sendModal')">Cancel</button>
+                <button type="submit" class="btn-primary btn-sm" id="sendBtn">
+                    <i class="bi bi-send"></i> Drop Voicemails
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:1000;}
+.modal-card{background:var(--glass-bg);border:1px solid var(--border);border-radius:12px;padding:1.5rem;width:90%;backdrop-filter:blur(16px);}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;}
+.modal-header h3{margin:0;}
+.form-group{margin-bottom:1rem;}
+.form-group label{display:block;font-weight:600;margin-bottom:.3rem;font-size:.9rem;}
+.form-input{width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--glass-bg);color:var(--text);font-size:.9rem;}
+</style>
+
+<script>
+function showCreateModal(){document.getElementById('createModal').style.display='flex';}
+function showSendModal(id,name){
+    document.getElementById('sendVmId').value=id;
+    document.getElementById('sendVmName').textContent=name;
+    document.getElementById('sendNumbers').value='';
+    document.getElementById('sendModal').style.display='flex';
+}
+function closeModal(id){document.getElementById(id).style.display='none';}
+
+async function createTemplate(e){
+    e.preventDefault();
+    const form=e.target;
+    const fd=new FormData(form);
+    const r=await fetch('{% url "voicemail_drop_create" %}',{method:'POST',body:fd,headers:{'X-CSRFToken':'{{ csrf_token }}'}});
+    const d=await r.json();
+    if(d.ok){location.reload();}else{alert(d.error||'Error creating template');}
+}
+
+async function sendDrop(e){
+    e.preventDefault();
+    const btn=document.getElementById('sendBtn');
+    btn.disabled=true;btn.textContent='Sending...';
+    const vmId=document.getElementById('sendVmId').value;
+    const nums=document.getElementById('sendNumbers').value.trim().split('\n').map(n=>n.trim()).filter(Boolean);
+    const r=await fetch('{% url "voicemail_drop_send" %}',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
+        body:JSON.stringify({voicemail_id:vmId,numbers:nums})
+    });
+    const d=await r.json();
+    if(d.ok){alert(`Done! ${d.sent} sent, ${d.failed} failed`);location.reload();}
+    else{alert(d.error||'Error');btn.disabled=false;btn.textContent='Drop Voicemails';}
+}
+
+async function deleteTemplate(id){
+    if(!confirm('Delete this template?'))return;
+    const r=await fetch(`/dashboard/voicemail-drops/${id}/delete/`,{method:'POST',headers:{'X-CSRFToken':'{{ csrf_token }}'}});
+    const d=await r.json();
+    if(d.ok)location.reload();
+}
+</script>
+{% endblock %}

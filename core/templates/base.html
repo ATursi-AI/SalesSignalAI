@@ -91,8 +91,22 @@
                     <span>Competitors</span>
                 </a>
 
+                <div class="sidebar-section-label">Engagement</div>
+                <a href="{% url 'voicemail_drops' %}" class="sidebar-link {% if request.resolver_match.url_name == 'voicemail_drops' %}active{% endif %}">
+                    <i class="bi bi-voicemail"></i>
+                    <span>Voicemail Drops</span>
+                </a>
+                <a href="{% url 'booking_page_list' %}" class="sidebar-link {% if 'booking' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-calendar2-plus"></i>
+                    <span>Booking Pages</span>
+                </a>
+                <a href="{% url 'review_campaigns' %}" class="sidebar-link {% if 'review_campaign' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-star-fill"></i>
+                    <span>Reviews</span>
+                </a>
+
                 <div class="sidebar-section-label">Outreach</div>
-                <a href="{% url 'campaign_list' %}" class="sidebar-link {% if 'campaign' in request.resolver_match.url_name %}active{% endif %}">
+                <a href="{% url 'campaign_list' %}" class="sidebar-link {% if 'campaign' in request.resolver_match.url_name and 'review' not in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-megaphone-fill"></i>
                     <span>Campaigns</span>
                 </a>

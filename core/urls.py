@@ -2,7 +2,7 @@ from django.urls import path
 from core.views import landing, auth, onboarding, dashboard, leads, competitors, territory, campaigns, analytics
 from core.views import monitor_health, webhooks, user_settings, admin_leads, ingest_api, crm
 from core.views import sales_admin, sales, industries, prospect_videos, static_pages, seo, call_center
-from core.views import service_pages, signup, blog, workflows, conversations, telegram_bot
+from core.views import service_pages, signup, blog, workflows, conversations, telegram_bot, engagement
 
 urlpatterns = [
     path('', landing.landing_page, name='landing'),
@@ -216,6 +216,29 @@ urlpatterns = [
     path('sales/phone/', call_center.softphone, name='softphone'),
     path('sales/call-center/', call_center.call_center_dashboard, name='call_center_dashboard'),
     path('sales/my-calls/', call_center.my_calls, name='my_calls'),
+
+    # ── Engagement: Voicemail Drops ──
+    path('dashboard/voicemail-drops/', engagement.voicemail_drops, name='voicemail_drops'),
+    path('dashboard/voicemail-drops/create/', engagement.voicemail_drop_create, name='voicemail_drop_create'),
+    path('dashboard/voicemail-drops/<int:vm_id>/delete/', engagement.voicemail_drop_delete, name='voicemail_drop_delete'),
+    path('api/voicemail-drop/send/', engagement.voicemail_drop_send, name='voicemail_drop_send'),
+    path('api/voicemail-drop/status/', engagement.voicemail_drop_status_webhook, name='voicemail_drop_status'),
+
+    # ── Engagement: Booking Pages ──
+    path('dashboard/booking-pages/', engagement.booking_page_list, name='booking_page_list'),
+    path('dashboard/booking-pages/create/', engagement.booking_page_create, name='booking_page_create'),
+    path('dashboard/booking-pages/<int:page_id>/update/', engagement.booking_page_update, name='booking_page_update'),
+    path('dashboard/bookings/<int:submission_id>/action/', engagement.booking_submission_action, name='booking_submission_action'),
+    path('book/<slug:slug>/', engagement.booking_public_page, name='booking_public_page'),
+    path('book/<slug:slug>/submit/', engagement.booking_submit, name='booking_submit'),
+
+    # ── Engagement: Review Campaigns ──
+    path('dashboard/review-campaigns/', engagement.review_campaigns, name='review_campaigns'),
+    path('dashboard/review-campaigns/create/', engagement.review_campaign_create, name='review_campaign_create'),
+    path('dashboard/review-campaigns/<int:campaign_id>/', engagement.review_campaign_detail, name='review_campaign_detail'),
+    path('dashboard/review-campaigns/<int:campaign_id>/send/', engagement.review_campaign_send, name='review_campaign_send'),
+    path('dashboard/review-campaigns/<int:campaign_id>/toggle/', engagement.review_campaign_toggle, name='review_campaign_toggle'),
+    path('r/<int:request_id>/', engagement.review_click_track, name='review_click_track'),
 
     # Webhooks & Compliance
     path('webhooks/sendgrid/', webhooks.sendgrid_webhook, name='sendgrid_webhook'),

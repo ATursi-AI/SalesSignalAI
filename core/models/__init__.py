@@ -18,6 +18,11 @@ from .call_center import CallLog, SMSMessage, SMSOptOut
 from .service_pages import TradeCategory, ServiceArea, ServiceLandingPage, ServicePageSubmission
 from .blog import BlogPost
 from .workflows import WorkflowRule, WorkflowExecution
+from .engagement import (
+    VoicemailDrop, VoicemailDropLog,
+    BookingPage, BookingSubmission,
+    ReviewCampaign, ReviewRequest,
+)
 
 __all__ = [
     'ServiceCategory', 'ServiceSubcategory', 'BusinessProfile', 'UserKeyword',
@@ -38,4 +43,7 @@ __all__ = [
     'TradeCategory', 'ServiceArea', 'ServiceLandingPage', 'ServicePageSubmission',
     'BlogPost',
     'WorkflowRule', 'WorkflowExecution',
+    'VoicemailDrop', 'VoicemailDropLog',
+    'BookingPage', 'BookingSubmission',
+    'ReviewCampaign', 'ReviewRequest',
 ]
