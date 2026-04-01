@@ -543,7 +543,7 @@ def monitor_la_county_health(days=30, dry_run=False):
              'duplicates': 0, 'assigned': 0, 'errors': 0}
 
     cutoff = timezone.now() - timedelta(days=days)
-    cutoff_ms = int(cutoff.timestamp() * 1000)
+    cutoff_str = cutoff.strftime('%Y-%m-%d %H:%M:%S')
 
     if dry_run:
         print(f'  Querying LA County ArcGIS FeatureServer (last {days} days)...')
@@ -551,7 +551,7 @@ def monitor_la_county_health(days=30, dry_run=False):
 
     # ── Fetch recent inspections ──
     params = {
-        'where': f'ACTIVITY_DATE >= {cutoff_ms}',
+        'where': f"ACTIVITY_DATE >= timestamp '{cutoff_str}'",
         'outFields': ('ACTIVITY_DATE,OWNER_NAME,FACILITY_ID,FACILITY_NAME,'
                       'FACILITY_ADDRESS,FACILITY_CITY,FACILITY_ZIP,'
                       'SCORE,GRADE,SERIAL_NUMBER,SERVICE_DESCRIPTION'),
@@ -702,7 +702,7 @@ def monitor_sacramento_health(days=7, dry_run=False):
 
     cutoff = timezone.now() - timedelta(days=days)
     # ArcGIS date filter uses epoch ms
-    cutoff_ms = int(cutoff.timestamp() * 1000)
+    cutoff_str = cutoff.strftime('%Y-%m-%d %H:%M:%S')
 
     if dry_run:
         print(f'  Querying Sacramento ArcGIS FeatureServer (last {days} days)...')
@@ -710,7 +710,7 @@ def monitor_sacramento_health(days=7, dry_run=False):
 
     # ── Fetch from Layer 0 (Facilities — has geometry) ──
     params = {
-        'where': f'Inspection_Date >= {cutoff_ms}',
+        'where': f"Inspection_Date >= timestamp '{cutoff_str}'",
         'outFields': '*',
         'f': 'json',
         'resultRecordCount': 2000,
