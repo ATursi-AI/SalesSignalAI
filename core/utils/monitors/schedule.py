@@ -1,69 +1,96 @@
 """
 Monitor schedule — single source of truth for all automated monitors.
 Used by run_all_monitors command and Mission Control dashboard.
+
+Each entry: (command_name, kwargs_dict, frequency_hours, description, group)
+  group is used for Mission Control dashboard grouping.
 """
 
-MONITOR_SCHEDULE = [
-    # (command_name, kwargs_dict, frequency_hours, description)
+MONITOR_GROUPS = {
+    'public_records': {'label': 'Public Records', 'icon': 'bi-file-earmark-text', 'color': '#3B82F6'},
+    'health':         {'label': 'Health Inspections', 'icon': 'bi-heart-pulse', 'color': '#DC2626'},
+    'social_media':   {'label': 'Social Media', 'icon': 'bi-chat-dots', 'color': '#8B5CF6'},
+    'reviews':        {'label': 'Reviews & Reputation', 'icon': 'bi-star', 'color': '#F59E0B'},
+    'community':      {'label': 'Community & Forums', 'icon': 'bi-people', 'color': '#0D9488'},
+    'google':         {'label': 'Google & Maps', 'icon': 'bi-google', 'color': '#059669'},
+}
 
+MONITOR_SCHEDULE = [
+    # (command_name, kwargs_dict, frequency_hours, description, group)
+
+    # ── PUBLIC RECORDS ────────────────────────────────────────────
     # NYC DOB Violations — every 6 hours, all boroughs
-    ('monitor_nyc_dob', {'type': 'violations', 'borough': 'queens', 'days': 7}, 6, 'NYC DOB Violations — Queens'),
-    ('monitor_nyc_dob', {'type': 'violations', 'borough': 'brooklyn', 'days': 7}, 6, 'NYC DOB Violations — Brooklyn'),
-    ('monitor_nyc_dob', {'type': 'violations', 'borough': 'manhattan', 'days': 7}, 6, 'NYC DOB Violations — Manhattan'),
-    ('monitor_nyc_dob', {'type': 'violations', 'borough': 'bronx', 'days': 7}, 6, 'NYC DOB Violations — Bronx'),
-    ('monitor_nyc_dob', {'type': 'violations', 'borough': 'staten_island', 'days': 7}, 6, 'NYC DOB Violations — Staten Island'),
+    ('monitor_nyc_dob', {'type': 'violations', 'borough': 'queens', 'days': 7}, 6, 'NYC DOB Violations — Queens', 'public_records'),
+    ('monitor_nyc_dob', {'type': 'violations', 'borough': 'brooklyn', 'days': 7}, 6, 'NYC DOB Violations — Brooklyn', 'public_records'),
+    ('monitor_nyc_dob', {'type': 'violations', 'borough': 'manhattan', 'days': 7}, 6, 'NYC DOB Violations — Manhattan', 'public_records'),
+    ('monitor_nyc_dob', {'type': 'violations', 'borough': 'bronx', 'days': 7}, 6, 'NYC DOB Violations — Bronx', 'public_records'),
+    ('monitor_nyc_dob', {'type': 'violations', 'borough': 'staten_island', 'days': 7}, 6, 'NYC DOB Violations — Staten Island', 'public_records'),
 
     # NYC DOB Permits — daily
-    ('monitor_nyc_dob', {'type': 'permits', 'borough': 'queens', 'days': 3}, 24, 'NYC DOB Permits — Queens'),
-    ('monitor_nyc_dob', {'type': 'permits', 'borough': 'brooklyn', 'days': 3}, 24, 'NYC DOB Permits — Brooklyn'),
-    ('monitor_nyc_dob', {'type': 'permits', 'borough': 'manhattan', 'days': 3}, 24, 'NYC DOB Permits — Manhattan'),
-
-    # Health Inspections — daily
-    ('monitor_health_inspections', {'days': 7}, 24, 'NYC Health Inspections'),
+    ('monitor_nyc_dob', {'type': 'permits', 'borough': 'queens', 'days': 3}, 24, 'NYC DOB Permits — Queens', 'public_records'),
+    ('monitor_nyc_dob', {'type': 'permits', 'borough': 'brooklyn', 'days': 3}, 24, 'NYC DOB Permits — Brooklyn', 'public_records'),
+    ('monitor_nyc_dob', {'type': 'permits', 'borough': 'manhattan', 'days': 3}, 24, 'NYC DOB Permits — Manhattan', 'public_records'),
 
     # Property Sales — daily
-    ('monitor_property_sales_ny', {'days': 30}, 24, 'NYC Property Sales (ACRIS)'),
+    ('monitor_property_sales_ny', {'days': 30}, 24, 'NYC Property Sales (ACRIS)', 'public_records'),
 
     # Business Filings — daily
-    ('monitor_ny_business_filings', {'days': 7}, 24, 'NY Business Filings'),
-
-    # Google Places — every 12 hours
-    ('monitor_google_places', {'category': 'plumber', 'city': 'Queens, NY'}, 12, 'Google Places — Plumber Queens'),
-    ('monitor_google_places', {'category': 'electrician', 'city': 'Queens, NY'}, 12, 'Google Places — Electrician Queens'),
+    ('monitor_ny_business_filings', {'days': 7}, 24, 'NY Business Filings', 'public_records'),
 
     # California — general
-    ('monitor_ca_contractors', {'days': 7}, 24, 'CA Contractor Licenses'),
-    ('monitor_ca_violations', {'days': 7}, 24, 'CA OSHA Violations'),
+    ('monitor_ca_contractors', {'days': 7}, 24, 'CA Contractor Licenses', 'public_records'),
+    ('monitor_ca_violations', {'days': 7}, 24, 'CA OSHA Violations', 'public_records'),
 
-    # California — LA Building Violations (weekly update, check daily)
-    ('monitor_la_building_violations', {'days': 14}, 24, 'LA Building Violations'),
+    # California — Building Violations & Permits
+    ('monitor_la_building_violations', {'days': 14}, 24, 'LA Building Violations', 'public_records'),
+    ('monitor_sf_building_violations', {'days': 7}, 24, 'SF Building Violations', 'public_records'),
+    ('monitor_sf_permits', {'days': 7}, 24, 'SF Building Permits', 'public_records'),
 
-    # California — SF Building Violations (daily update)
-    ('monitor_sf_building_violations', {'days': 7}, 24, 'SF Building Violations'),
+    # ── HEALTH INSPECTIONS ────────────────────────────────────────
+    ('monitor_health_inspections', {'days': 7}, 24, 'NYC Health Inspections', 'health'),
+    ('monitor_vegas_health', {'days': 7}, 24, 'Las Vegas Health (SNHD)', 'health'),
+    ('monitor_maricopa_health', {'days': 7}, 24, 'Phoenix/Maricopa Health', 'health'),
+    ('monitor_pima_health', {'days': 7}, 24, 'Tucson/Pima Health', 'health'),
+    ('monitor_ca_health', {'county': 'sacramento', 'days': 7}, 24, 'Sacramento Health', 'health'),
+    ('monitor_ca_health', {'county': 'san_diego', 'days': 7}, 24, 'San Diego Health', 'health'),
+    ('monitor_ca_health', {'county': 'santa_clara', 'days': 7}, 24, 'Santa Clara Health', 'health'),
+    ('monitor_ca_health', {'county': 'la', 'days': 120}, 168, 'LA County Health (weekly)', 'health'),
+    ('monitor_myhealthdept', {'jurisdiction': 'denver', 'days': 7}, 24, 'Denver Health', 'health'),
+    ('monitor_myhealthdept', {'jurisdiction': 'portland', 'days': 14}, 24, 'Portland Health', 'health'),
+    ('monitor_myhealthdept', {'jurisdiction': 'colorado_springs', 'days': 7}, 24, 'Colorado Springs Health', 'health'),
+    ('monitor_myhealthdept', {'jurisdiction': 'honolulu', 'days': 7}, 24, 'Honolulu Health', 'health'),
 
-    # California — SF Building Permits (nightly update)
-    ('monitor_sf_permits', {'days': 7}, 24, 'SF Building Permits'),
+    # ── SOCIAL MEDIA ──────────────────────────────────────────────
+    ('monitor_reddit', {'days': 3}, 12, 'Reddit — Local Subs', 'social_media'),
+    ('monitor_nextdoor_search', {'days': 3}, 12, 'Nextdoor Search', 'social_media'),
+    ('monitor_facebook_apify', {'days': 3}, 24, 'Facebook Groups (Apify)', 'social_media'),
+    ('monitor_twitter_apify', {'days': 3}, 24, 'Twitter/X (Apify)', 'social_media'),
+    ('monitor_threads', {'days': 3}, 24, 'Threads (Apify)', 'social_media'),
+    ('monitor_tiktok', {'days': 3}, 24, 'TikTok (Apify)', 'social_media'),
 
-    # ── WESTERN STATES — Health Inspections (late-night calling) ──
+    # ── REVIEWS & REPUTATION ──────────────────────────────────────
+    ('monitor_google_reviews', {'days': 7}, 24, 'Google Reviews', 'reviews'),
+    ('monitor_yelp_reviews', {'days': 7}, 24, 'Yelp Reviews', 'reviews'),
+    ('monitor_bbb', {'days': 7}, 24, 'BBB Complaints', 'reviews'),
+    ('monitor_angi_reviews', {'days': 7}, 24, 'Angi Reviews', 'reviews'),
+    ('monitor_trustpilot', {'days': 7}, 24, 'Trustpilot Reviews', 'reviews'),
+    ('monitor_porch', {'days': 7}, 24, 'Porch Reviews', 'reviews'),
+    ('monitor_thumbtack', {'days': 7}, 24, 'Thumbtack Reviews', 'reviews'),
+    ('monitor_houzz', {'days': 7}, 24, 'Houzz Reviews', 'reviews'),
+    ('monitor_google_qna', {'days': 7}, 24, 'Google Q&A', 'reviews'),
 
-    # Las Vegas / Clark County NV — nightly CSV update
-    ('monitor_vegas_health', {'days': 7}, 24, 'Las Vegas Health Inspections (SNHD)'),
+    # ── COMMUNITY & FORUMS ────────────────────────────────────────
+    ('monitor_biggerpockets', {'days': 7}, 24, 'BiggerPockets', 'community'),
+    ('monitor_alignable', {'days': 7}, 24, 'Alignable', 'community'),
+    ('monitor_quora', {'days': 7}, 24, 'Quora (Apify)', 'community'),
+    ('monitor_trade_forums', {'days': 7}, 24, 'Trade Forums', 'community'),
+    ('monitor_parent_communities', {'days': 7}, 24, 'Parent Communities', 'community'),
+    ('monitor_citydata', {'days': 7}, 24, 'City-Data Forums', 'community'),
+    ('monitor_patch', {'days': 3}, 24, 'Patch.com Local News', 'community'),
+    ('monitor_craigslist', {'days': 3}, 24, 'Craigslist Services', 'community'),
+    ('monitor_local_news', {'days': 3}, 24, 'Local News', 'community'),
 
-    # Phoenix / Maricopa County AZ — weekly reports
-    ('monitor_maricopa_health', {'days': 7}, 24, 'Phoenix/Maricopa Health Inspections'),
-
-    # Tucson / Pima County AZ — current portal
-    ('monitor_pima_health', {'days': 7}, 24, 'Tucson/Pima Health Inspections'),
-
-    # California — County Health Inspections
-    ('monitor_ca_health', {'county': 'sacramento', 'days': 7}, 24, 'Sacramento Health Inspections (daily)'),
-    ('monitor_ca_health', {'county': 'san_diego', 'days': 7}, 24, 'San Diego Health Inspections'),
-    ('monitor_ca_health', {'county': 'santa_clara', 'days': 7}, 24, 'Santa Clara Health Inspections'),
-    ('monitor_ca_health', {'county': 'la', 'days': 120}, 168, 'LA County Health Inspections (weekly — quarterly data)'),
-
-    # myhealthdepartment.com jurisdictions — daily
-    ('monitor_myhealthdept', {'jurisdiction': 'denver', 'days': 7}, 24, 'Denver Health Inspections'),
-    ('monitor_myhealthdept', {'jurisdiction': 'portland', 'days': 14}, 24, 'Portland Health Inspections'),
-    ('monitor_myhealthdept', {'jurisdiction': 'colorado_springs', 'days': 7}, 24, 'Colorado Springs Health Inspections'),
-    ('monitor_myhealthdept', {'jurisdiction': 'honolulu', 'days': 7}, 24, 'Honolulu Health Inspections'),
+    # ── GOOGLE & MAPS ─────────────────────────────────────────────
+    ('monitor_google_places', {'category': 'plumber', 'city': 'Queens, NY'}, 12, 'Google Places — Plumber Queens', 'google'),
+    ('monitor_google_places', {'category': 'electrician', 'city': 'Queens, NY'}, 12, 'Google Places — Electrician Queens', 'google'),
 ]

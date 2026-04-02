@@ -708,13 +708,17 @@ def customer_accounts(request):
 
 @staff_or_salesperson_required
 def mission_control(request):
-    """Dashboard showing all monitor health and run history."""
+    """Dashboard showing all monitor health and run history, grouped by category."""
     from core.models.monitoring import MonitorRun
-    from core.utils.monitors.schedule import MONITOR_SCHEDULE
+    from core.utils.monitors.schedule import MONITOR_SCHEDULE, MONITOR_GROUPS
     from datetime import timedelta
+    from collections import OrderedDict
 
     monitors = []
-    for cmd_name, kwargs, freq_hours, description in MONITOR_SCHEDULE:
+    for entry in MONITOR_SCHEDULE:
+        cmd_name, kwargs, freq_hours, description = entry[0], entry[1], entry[2], entry[3]
+        group = entry[4] if len(entry) > 4 else 'other'
+
         key = f"{cmd_name}_{'_'.join(str(v) for v in kwargs.values())}"
         last_run = MonitorRun.objects.filter(monitor_name=key).order_by('-started_at').first()
 
@@ -737,7 +741,22 @@ def mission_control(request):
             'last_run': last_run,
             'is_overdue': is_overdue,
             'status': status,
+            'group': group,
         })
+
+    # Build grouped monitor dict preserving MONITOR_GROUPS order
+    grouped_monitors = OrderedDict()
+    for group_key, group_meta in MONITOR_GROUPS.items():
+        group_items = [m for m in monitors if m['group'] == group_key]
+        if group_items:
+            grouped_monitors[group_key] = {
+                'label': group_meta['label'],
+                'icon': group_meta['icon'],
+                'color': group_meta['color'],
+                'monitors': group_items,
+                'healthy': sum(1 for m in group_items if m['status'] == 'healthy'),
+                'total': len(group_items),
+            }
 
     recent_runs = MonitorRun.objects.all()[:30]
     today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -747,10 +766,12 @@ def mission_control(request):
 
     return render(request, 'admin_leads/mission_control.html', {
         'monitors': monitors,
+        'grouped_monitors': grouped_monitors,
         'recent_runs': recent_runs,
         'total_healthy': sum(1 for m in monitors if m['status'] == 'healthy'),
         'total_overdue': sum(1 for m in monitors if m['status'] in ('overdue', 'never')),
         'total_error': sum(1 for m in monitors if m['status'] == 'error'),
+        'total_monitors': len(monitors),
         'leads_today': sum(leads_today),
     })
 
@@ -766,7 +787,8 @@ def run_monitor_now(request):
     data = json.loads(request.body)
     target_key = data.get('monitor_key', '')
 
-    for cmd_name, kwargs, freq_hours, description in MONITOR_SCHEDULE:
+    for entry in MONITOR_SCHEDULE:
+        cmd_name, kwargs, freq_hours, description = entry[0], entry[1], entry[2], entry[3]
         key = f"{cmd_name}_{'_'.join(str(v) for v in kwargs.values())}"
         if key == target_key:
             run = MonitorRun.objects.create(

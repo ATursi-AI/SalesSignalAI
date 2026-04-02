@@ -35,7 +35,8 @@ class Command(BaseCommand):
         total_skipped = 0
         total_errors = 0
 
-        for cmd_name, kwargs, freq_hours, description in MONITOR_SCHEDULE:
+        for entry in MONITOR_SCHEDULE:
+            cmd_name, kwargs, freq_hours, description = entry[0], entry[1], entry[2], entry[3]
             key = _make_key(cmd_name, kwargs)
 
             # Check if due
@@ -77,7 +78,8 @@ class Command(BaseCommand):
 
     def _list_monitors(self):
         self.stdout.write("\n=== Monitor Status ===\n")
-        for cmd_name, kwargs, freq_hours, description in MONITOR_SCHEDULE:
+        for entry in MONITOR_SCHEDULE:
+            cmd_name, kwargs, freq_hours, description = entry[0], entry[1], entry[2], entry[3]
             key = _make_key(cmd_name, kwargs)
             last = MonitorRun.objects.filter(monitor_name=key).order_by('-started_at').first()
             if last and last.finished_at:

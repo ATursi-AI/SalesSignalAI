@@ -5,20 +5,32 @@
 
 {% block extra_css %}
 <style>
-.mc-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
-.mc-stat-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 18px; text-align: center; }
-.mc-stat-value { font-family: 'JetBrains Mono', monospace; font-size: 2rem; font-weight: 800; }
-.mc-stat-label { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+.mc-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+.mc-stat-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 20px; text-align: center; position: relative; overflow: hidden; }
+.mc-stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.mc-stat-card.healthy::before { background: linear-gradient(90deg, #059669, #34D399); }
+.mc-stat-card.overdue::before { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
+.mc-stat-card.error::before { background: linear-gradient(90deg, #DC2626, #F87171); }
+.mc-stat-card.total::before { background: linear-gradient(90deg, #0D9488, #2DD4BF); }
+.mc-stat-value { font-family: 'JetBrains Mono', monospace; font-size: 2.2rem; font-weight: 800; line-height: 1; }
+.mc-stat-label { font-size: 0.72rem; color: var(--text-muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
 
-.mc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; margin-bottom: 28px; }
-.mc-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 16px; display: flex; gap: 12px; align-items: flex-start; transition: border-color 0.15s; }
-.mc-card:hover { border-color: #0D9488; }
-.mc-card.healthy { border-left: 4px solid #059669; }
-.mc-card.overdue { border-left: 4px solid #F59E0B; }
-.mc-card.error { border-left: 4px solid #DC2626; }
-.mc-card.never { border-left: 4px solid #94A3B8; }
+/* Group sections */
+.mc-group { margin-bottom: 24px; }
+.mc-group-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-subtle); }
+.mc-group-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: white; }
+.mc-group-title { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1rem; }
+.mc-group-count { font-size: 0.72rem; color: var(--text-muted); margin-left: auto; font-family: 'JetBrains Mono', monospace; }
 
-.mc-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.mc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.mc-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px 16px; display: flex; gap: 10px; align-items: flex-start; transition: all 0.15s; }
+.mc-card:hover { border-color: #0D9488; box-shadow: 0 2px 12px rgba(13,148,136,0.08); }
+.mc-card.healthy { border-left: 3px solid #059669; }
+.mc-card.overdue { border-left: 3px solid #F59E0B; }
+.mc-card.error { border-left: 3px solid #DC2626; }
+.mc-card.never { border-left: 3px solid #94A3B8; }
+
+.mc-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
 .mc-dot.healthy { background: #059669; animation: mc-pulse 2s ease-in-out infinite; }
 .mc-dot.overdue { background: #F59E0B; }
 .mc-dot.error { background: #DC2626; animation: mc-pulse 1s ease-in-out infinite; }
@@ -26,31 +38,51 @@
 @keyframes mc-pulse { 0%,100%{opacity:1;}50%{opacity:0.4;} }
 
 .mc-info { flex: 1; min-width: 0; }
-.mc-name { font-weight: 600; font-size: 0.85rem; margin-bottom: 2px; }
-.mc-meta { font-size: 0.72rem; color: var(--text-muted); }
-.mc-freq { padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 600; background: #F0FDFA; color: #0D9488; }
-.mc-run-btn { padding: 6px 12px; border-radius: 7px; font-size: 0.72rem; font-weight: 600; border: 1px solid var(--border-subtle); background: var(--bg-page); cursor: pointer; color: var(--text-secondary); white-space: nowrap; align-self: center; }
-.mc-run-btn:hover { border-color: #0D9488; color: #0D9488; }
+.mc-name { font-weight: 600; font-size: 0.82rem; margin-bottom: 2px; }
+.mc-meta { font-size: 0.7rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.mc-freq { padding: 2px 6px; border-radius: 4px; font-size: 0.58rem; font-weight: 700; background: #F0FDFA; color: #0D9488; letter-spacing: 0.02em; }
+.mc-leads-badge { color: #0D9488; font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.mc-run-btn { padding: 5px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; border: 1px solid var(--border-subtle); background: var(--bg-page); cursor: pointer; color: var(--text-secondary); white-space: nowrap; align-self: center; transition: all 0.15s; }
+.mc-run-btn:hover { border-color: #0D9488; color: #0D9488; background: #F0FDFA; }
 .mc-run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.mc-run-all { display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px; border-radius: 10px; font-weight: 700; font-size: 0.92rem; border: none; cursor: pointer; background: linear-gradient(135deg, #0D9488, #059669); color: white; box-shadow: 0 4px 16px rgba(13,148,136,0.3); margin-bottom: 20px; }
-.mc-run-all:hover { box-shadow: 0 6px 24px rgba(13,148,136,0.4); transform: translateY(-1px); }
+.mc-action-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+.mc-run-all { display: inline-flex; align-items: center; gap: 8px; padding: 10px 24px; border-radius: 10px; font-weight: 700; font-size: 0.88rem; border: none; cursor: pointer; background: linear-gradient(135deg, #0D9488, #059669); color: white; box-shadow: 0 4px 16px rgba(13,148,136,0.25); transition: all 0.2s; }
+.mc-run-all:hover { box-shadow: 0 6px 24px rgba(13,148,136,0.35); transform: translateY(-1px); }
 
-.mc-log { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 12px; overflow: hidden; }
-.mc-log-header { padding: 14px 18px; font-family: 'Exo 2', sans-serif; font-weight: 700; font-size: 0.9rem; border-bottom: 1px solid var(--border-subtle); }
-.mc-log-item { display: flex; align-items: center; gap: 10px; padding: 10px 18px; border-bottom: 1px solid var(--border-subtle); font-size: 0.78rem; }
+/* Agent Command */
+.mc-agent { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 14px 18px; display: flex; gap: 10px; align-items: center; flex: 1; }
+.mc-agent select { padding: 7px 10px; border: 1px solid var(--border-subtle); border-radius: 8px; font-size: 0.82rem; background: var(--bg-page); color: var(--text-primary); }
+.mc-agent input { flex: 1; padding: 7px 14px; border: 1px solid var(--border-subtle); border-radius: 8px; font-size: 0.82rem; background: var(--bg-page); color: var(--text-primary); }
+.mc-agent button { padding: 7px 16px; border-radius: 8px; background: #0D9488; color: white; border: none; cursor: pointer; font-weight: 600; font-size: 0.82rem; white-space: nowrap; transition: background 0.15s; }
+.mc-agent button:hover { background: #0F766E; }
+
+/* Activity Log */
+.mc-log { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 12px; overflow: hidden; margin-top: 28px; }
+.mc-log-header { padding: 14px 18px; font-family: 'Exo 2', sans-serif; font-weight: 700; font-size: 0.9rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 8px; }
+.mc-log-item { display: flex; align-items: center; gap: 10px; padding: 9px 18px; border-bottom: 1px solid var(--border-subtle); font-size: 0.76rem; transition: background 0.1s; }
 .mc-log-item:last-child { border-bottom: none; }
+.mc-log-item:hover { background: rgba(13,148,136,0.03); }
 .mc-log-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .mc-log-dot.success { background: #059669; }
 .mc-log-dot.failed { background: #DC2626; }
 .mc-log-dot.running { background: #F59E0B; }
 .mc-log-name { flex: 1; font-weight: 500; }
 .mc-log-leads { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #0D9488; }
-.mc-log-time { color: var(--text-muted); font-size: 0.7rem; }
+.mc-log-time { color: var(--text-muted); font-size: 0.68rem; }
+
+/* Collapsible groups */
+.mc-group-toggle { cursor: pointer; user-select: none; }
+.mc-group-toggle:hover .mc-group-title { color: #0D9488; }
+.mc-group-chevron { transition: transform 0.2s; font-size: 0.8rem; color: var(--text-muted); }
+.mc-group.collapsed .mc-group-chevron { transform: rotate(-90deg); }
+.mc-group.collapsed .mc-grid { display: none; }
 
 @media (max-width: 768px) {
     .mc-summary { grid-template-columns: repeat(2, 1fr); }
     .mc-grid { grid-template-columns: 1fr; }
+    .mc-action-bar { flex-direction: column; }
+    .mc-agent { width: 100%; }
 }
 </style>
 {% endblock %}
@@ -60,86 +92,100 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <div>
             <h2 style="font-family:'Exo 2',sans-serif;font-weight:800;font-size:1.5rem;margin:0;">Mission Control</h2>
-            <p style="color:var(--text-muted);font-size:0.82rem;margin-top:4px;">Lead monitor orchestration &amp; health</p>
+            <p style="color:var(--text-muted);font-size:0.82rem;margin-top:4px;">{{ total_monitors }} monitors across {{ grouped_monitors|length }} source categories</p>
         </div>
-        <button class="mc-run-all" onclick="runAllMonitors()"><i class="bi bi-rocket-takeoff-fill"></i> Run All Now</button>
     </div>
 
     <!-- Summary -->
     <div class="mc-summary">
-        <div class="mc-stat-card">
+        <div class="mc-stat-card healthy">
             <div class="mc-stat-value" style="color:#059669;">{{ total_healthy }}</div>
             <div class="mc-stat-label">Healthy</div>
         </div>
-        <div class="mc-stat-card">
+        <div class="mc-stat-card overdue">
             <div class="mc-stat-value" style="color:#F59E0B;">{{ total_overdue }}</div>
             <div class="mc-stat-label">Overdue / Never</div>
         </div>
-        <div class="mc-stat-card">
+        <div class="mc-stat-card error">
             <div class="mc-stat-value" style="color:#DC2626;">{{ total_error }}</div>
             <div class="mc-stat-label">Errors</div>
         </div>
-        <div class="mc-stat-card">
+        <div class="mc-stat-card total">
             <div class="mc-stat-value" style="color:#0D9488;">{{ leads_today }}</div>
             <div class="mc-stat-label">Leads Today</div>
         </div>
     </div>
 
-    <!-- Agent Command -->
-    <div style="background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;gap:10px;align-items:center;">
-        <i class="bi bi-robot" style="font-size:1.3rem;color:#0D9488;"></i>
-        <select id="agentSelect" style="padding:8px 12px;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.85rem;background:var(--bg-page);">
-            <option value="orchestrator">Orchestrator</option>
-            <option value="discovery">Discovery</option>
-        </select>
-        <input type="text" id="agentGoal" placeholder="e.g. Find 20 plumbing leads in Queens NY" style="flex:1;padding:8px 14px;border:1px solid var(--border-subtle);border-radius:8px;font-size:0.85rem;">
-        <button onclick="launchAgent()" style="padding:8px 20px;border-radius:8px;background:#0D9488;color:white;border:none;cursor:pointer;font-weight:600;font-size:0.85rem;white-space:nowrap;"><i class="bi bi-send-fill"></i> Deploy Agent</button>
+    <!-- Action Bar -->
+    <div class="mc-action-bar">
+        <button class="mc-run-all" onclick="runAllMonitors()"><i class="bi bi-rocket-takeoff-fill"></i> Run All Now</button>
+        <div class="mc-agent">
+            <i class="bi bi-robot" style="font-size:1.2rem;color:#0D9488;"></i>
+            <select id="agentSelect">
+                <option value="orchestrator">Orchestrator</option>
+                <option value="discovery">Discovery</option>
+            </select>
+            <input type="text" id="agentGoal" placeholder="e.g. Find 20 plumbing leads in Queens NY">
+            <button onclick="launchAgent()"><i class="bi bi-send-fill"></i> Deploy</button>
+        </div>
     </div>
     <div id="agentStatus" style="display:none;background:#F0FDFA;border:1px solid #99F6E4;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:0.82rem;color:#0D9488;">
         <i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite;display:inline-block;"></i> <span id="agentStatusText">Agent working...</span>
     </div>
     <style>@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}</style>
 
-    <!-- Monitor Grid -->
-    <div class="mc-grid">
-        {% for m in monitors %}
-        <div class="mc-card {{ m.status }}" id="mc-{{ forloop.counter }}">
-            <div class="mc-dot {{ m.status }}"></div>
-            <div class="mc-info">
-                <div class="mc-name">{{ m.description }}</div>
-                <div class="mc-meta">
-                    {% if m.last_run %}
-                        {% if m.last_run.finished_at %}
-                            {{ m.last_run.finished_at|timesince }} ago
-                            {% if m.last_run.leads_created %} · <span style="color:#0D9488;">{{ m.last_run.leads_created }} leads</span>{% endif %}
-                        {% else %}
-                            Running...
-                        {% endif %}
-                    {% else %}
-                        Never run
-                    {% endif %}
-                    <span class="mc-freq" style="margin-left:6px;">Every {{ m.frequency_hours }}h</span>
-                </div>
-                {% if m.last_run and m.last_run.error_message %}
-                <div style="font-size:0.68rem;color:#DC2626;margin-top:3px;max-height:32px;overflow:hidden;">{{ m.last_run.error_message|truncatewords:20 }}</div>
-                {% endif %}
+    <!-- Grouped Monitor Grid -->
+    {% for group_key, group in grouped_monitors.items %}
+    <div class="mc-group" id="group-{{ group_key }}">
+        <div class="mc-group-header mc-group-toggle" onclick="toggleGroup('{{ group_key }}')">
+            <div class="mc-group-icon" style="background: {{ group.color }};">
+                <i class="{{ group.icon }}"></i>
             </div>
-            <button class="mc-run-btn" onclick="runMonitor('{{ m.key }}', this)"><i class="bi bi-play-fill"></i> Run</button>
+            <div class="mc-group-title">{{ group.label }}</div>
+            <div class="mc-group-count">{{ group.healthy }}/{{ group.total }} healthy</div>
+            <i class="bi bi-chevron-down mc-group-chevron"></i>
         </div>
-        {% endfor %}
+        <div class="mc-grid">
+            {% for m in group.monitors %}
+            <div class="mc-card {{ m.status }}" id="mc-{{ m.key|slugify }}">
+                <div class="mc-dot {{ m.status }}"></div>
+                <div class="mc-info">
+                    <div class="mc-name">{{ m.description }}</div>
+                    <div class="mc-meta">
+                        {% if m.last_run %}
+                            {% if m.last_run.finished_at %}
+                                <span>{{ m.last_run.finished_at|timesince }} ago</span>
+                                {% if m.last_run.leads_created %}<span class="mc-leads-badge">{{ m.last_run.leads_created }} leads</span>{% endif %}
+                            {% else %}
+                                <span style="color:#F59E0B;">Running...</span>
+                            {% endif %}
+                        {% else %}
+                            <span>Never run</span>
+                        {% endif %}
+                        <span class="mc-freq">{{ m.frequency_hours }}h</span>
+                    </div>
+                    {% if m.last_run and m.last_run.error_message %}
+                    <div style="font-size:0.66rem;color:#DC2626;margin-top:3px;max-height:28px;overflow:hidden;">{{ m.last_run.error_message|truncatewords:15 }}</div>
+                    {% endif %}
+                </div>
+                <button class="mc-run-btn" onclick="runMonitor('{{ m.key }}', this)"><i class="bi bi-play-fill"></i></button>
+            </div>
+            {% endfor %}
+        </div>
     </div>
+    {% endfor %}
 
     <!-- Activity Log -->
     <div class="mc-log">
-        <div class="mc-log-header">Recent Runs</div>
+        <div class="mc-log-header"><i class="bi bi-clock-history" style="color:#0D9488;"></i> Recent Runs</div>
         {% for r in recent_runs %}
         <div class="mc-log-item">
             <div class="mc-log-dot {{ r.status }}"></div>
-            <div class="mc-log-name">{{ r.monitor_name|truncatechars:40 }}</div>
+            <div class="mc-log-name">{{ r.monitor_name|truncatechars:45 }}</div>
             <div class="mc-log-leads">{% if r.leads_created %}{{ r.leads_created }} leads{% endif %}</div>
             <div class="mc-log-time">
                 {% if r.finished_at %}{{ r.finished_at|timesince }} ago{% else %}running{% endif %}
-                {% if r.duration_seconds %} · {{ r.duration_seconds|floatformat:0 }}s{% endif %}
+                {% if r.duration_seconds %} &middot; {{ r.duration_seconds|floatformat:0 }}s{% endif %}
             </div>
         </div>
         {% empty %}
@@ -153,25 +199,30 @@
 <script>
 function getCsrf(){var m=document.cookie.match(/csrftoken=([^;]+)/);return m?m[1]:'';}
 
+function toggleGroup(key) {
+    var el = document.getElementById('group-' + key);
+    el.classList.toggle('collapsed');
+}
+
 function runMonitor(key, btn) {
-    btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Running...';
+    btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
     fetch('/admin-leads/mission-control/run/', {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()},
         body: JSON.stringify({monitor_key: key})
     }).then(r => r.json()).then(data => {
         if (data.ok) {
-            btn.innerHTML = '<i class="bi bi-check-lg"></i> Done';
+            btn.innerHTML = '<i class="bi bi-check-lg"></i>';
             btn.style.color = '#059669'; btn.style.borderColor = '#059669';
             setTimeout(() => location.reload(), 1500);
         } else {
-            btn.innerHTML = '<i class="bi bi-x-lg"></i> Failed';
+            btn.innerHTML = '<i class="bi bi-x-lg"></i>';
             btn.style.color = '#DC2626'; btn.style.borderColor = '#DC2626';
             alert('Error: ' + (data.error || 'Unknown'));
-            setTimeout(() => { btn.disabled = false; btn.innerHTML = '<i class="bi bi-play-fill"></i> Run'; btn.style.color = ''; btn.style.borderColor = ''; }, 3000);
+            setTimeout(() => { btn.disabled = false; btn.innerHTML = '<i class="bi bi-play-fill"></i>'; btn.style.color = ''; btn.style.borderColor = ''; }, 3000);
         }
     }).catch(() => {
-        btn.innerHTML = '<i class="bi bi-x-lg"></i> Error';
+        btn.innerHTML = '<i class="bi bi-x-lg"></i>';
         btn.disabled = false;
     });
 }
@@ -181,9 +232,25 @@ function runAllMonitors() {
     var btns = document.querySelectorAll('.mc-run-btn');
     btns.forEach((btn, i) => {
         setTimeout(() => {
-            var key = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
-            runMonitor(key, btn);
+            var card = btn.closest('.mc-card');
+            if (!card) return;
+            var key = card.id.replace('mc-', '');
+            // Use data attribute instead
         }, i * 2000);
+    });
+    // Simpler: just reload after triggering all
+    var cards = document.querySelectorAll('.mc-card');
+    var keys = [];
+    cards.forEach(c => {
+        var btn = c.querySelector('.mc-run-btn');
+        if (btn) {
+            var onclickAttr = btn.getAttribute('onclick');
+            var match = onclickAttr.match(/'([^']+)'/);
+            if (match) keys.push({key: match[1], btn: btn});
+        }
+    });
+    keys.forEach((item, i) => {
+        setTimeout(() => runMonitor(item.key, item.btn), i * 2000);
     });
 }
 

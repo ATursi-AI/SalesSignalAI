@@ -4,32 +4,125 @@
 {% block title %}{{ campaign.name }}{% endblock %}
 {% block page_title %}{{ campaign.name }}{% endblock %}
 
-{% block content %}
-<div style="margin-bottom: 1rem;">
-    <a href="{% url 'campaign_list' %}" style="color: var(--text-secondary); font-size: 0.85rem;">
-        <i class="bi bi-arrow-left"></i> Back to Campaigns
-    </a>
-</div>
+{% block extra_css %}
+<style>
+/* Campaign Detail */
+.cd-back { color: var(--text-muted); font-size: 0.82rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 1rem; transition: color 0.15s; }
+.cd-back:hover { color: #0D9488; }
 
-<!-- Campaign Header -->
-<div class="glass-card-static campaign-detail-header animate-fade-in-up">
-    <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem;">
+.cd-header { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 24px; margin-bottom: 20px; position: relative; overflow: hidden; }
+.cd-header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.cd-header.active::before { background: linear-gradient(90deg, #059669, #34D399); }
+.cd-header.paused::before { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
+.cd-header.draft::before { background: linear-gradient(90deg, #94A3B8, #CBD5E1); }
+
+.cd-title-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.25rem; }
+.cd-title { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.4rem; margin: 0; }
+.cd-meta { color: var(--text-muted); font-size: 0.78rem; margin-top: 4px; }
+
+.cd-pill { padding: 4px 10px; border-radius: 6px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; }
+.cd-pill.active { background: #D1FAE5; color: #059669; }
+.cd-pill.paused { background: #FEF3C7; color: #92400E; }
+.cd-pill.draft { background: #F1F5F9; color: #64748B; }
+
+.cd-kpi { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0; border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden; }
+.cd-kpi-item { padding: 14px 12px; text-align: center; border-right: 1px solid var(--border-subtle); background: var(--bg-page); }
+.cd-kpi-item:last-child { border-right: none; }
+.cd-kpi-val { font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 700; }
+.cd-kpi-lbl { font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 3px; }
+
+/* Settings bar */
+.cd-settings { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px 20px; margin-bottom: 20px; }
+.cd-settings-row { display: flex; gap: 20px; font-size: 0.82rem; color: var(--text-secondary); flex-wrap: wrap; align-items: center; }
+.cd-settings-item { display: flex; align-items: center; gap: 5px; }
+.cd-settings-item i { font-size: 0.9rem; }
+
+/* Drip Sequence */
+.cd-drip { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+.cd-drip-title { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1rem; margin: 0 0 16px; display: flex; align-items: center; justify-content: space-between; }
+.cd-drip-grid { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 0; align-items: stretch; }
+.cd-drip-step { background: var(--bg-page); border-radius: 12px; padding: 16px 18px; position: relative; }
+.cd-drip-step::before { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 3px; border-radius: 12px 0 0 12px; }
+.cd-drip-step.step1::before { background: #0D9488; }
+.cd-drip-step.step2::before { background: #F59E0B; }
+.cd-drip-step.step3::before { background: #EF4444; }
+.cd-drip-num { font-size: 0.75rem; font-weight: 700; margin-bottom: 6px; }
+.cd-drip-val { font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 700; }
+.cd-drip-sub { font-size: 0.68rem; color: var(--text-muted); margin-top: 2px; }
+.cd-drip-arrow { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 12px; color: var(--text-muted); }
+.cd-drip-arrow i { font-size: 1rem; }
+.cd-drip-arrow span { font-size: 0.58rem; margin-top: 2px; }
+
+/* Progress bar */
+.cd-progress { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-subtle); }
+.cd-progress-header { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 6px; }
+.cd-progress-bar { height: 6px; background: var(--bg-page); border-radius: 3px; overflow: hidden; }
+.cd-progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #0D9488, #F59E0B, #EF4444); transition: width 0.3s; }
+.cd-progress-footer { display: flex; justify-content: space-between; font-size: 0.62rem; color: var(--text-muted); margin-top: 4px; }
+
+/* Prospect Section */
+.cd-prospect-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+.cd-prospect-title { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.05rem; margin: 0; display: flex; align-items: center; gap: 8px; }
+.cd-filters { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+.cd-filter { padding: 5px 12px; border-radius: 6px; font-size: 0.72rem; font-weight: 600; border: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-secondary); text-decoration: none; transition: all 0.15s; }
+.cd-filter:hover { border-color: #0D9488; color: #0D9488; }
+.cd-filter.active { background: #0D9488; color: white; border-color: #0D9488; }
+
+/* Prospect Table */
+.cd-table { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 12px; overflow: hidden; }
+.cd-row { display: grid; grid-template-columns: 10px 2fr 1.5fr 1fr 120px; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--border-subtle); cursor: pointer; transition: background 0.1s; }
+.cd-row:last-child { border-bottom: none; }
+.cd-row:hover { background: rgba(13,148,136,0.03); }
+.cd-row-dot { width: 8px; height: 8px; border-radius: 50%; }
+.cd-row-dot.new { background: #3B82F6; }
+.cd-row-dot.email1_sent, .cd-row-dot.email2_sent, .cd-row-dot.email3_sent { background: #0D9488; }
+.cd-row-dot.replied { background: #059669; }
+.cd-row-dot.bounced { background: #DC2626; }
+.cd-row-dot.interested { background: #10B981; }
+.cd-row-dot.not_interested { background: #94A3B8; }
+.cd-row-name { font-weight: 600; font-size: 0.88rem; }
+.cd-row-sub { font-size: 0.75rem; color: var(--text-muted); }
+.cd-row-drip { font-size: 0.72rem; color: var(--text-muted); }
+.cd-row-icons { display: flex; gap: 4px; }
+.cd-row-icons i { font-size: 0.75rem; }
+
+.cd-status-pill { padding: 3px 8px; border-radius: 5px; font-size: 0.62rem; font-weight: 700; text-transform: uppercase; }
+.cd-status-pill.new { background: #DBEAFE; color: #1D4ED8; }
+.cd-status-pill.email1_sent, .cd-status-pill.email2_sent, .cd-status-pill.email3_sent { background: #F0FDFA; color: #0D9488; }
+.cd-status-pill.replied { background: #D1FAE5; color: #059669; }
+.cd-status-pill.bounced { background: #FEE2E2; color: #DC2626; }
+.cd-status-pill.interested { background: #D1FAE5; color: #065F46; }
+.cd-status-pill.not_interested { background: #F1F5F9; color: #64748B; }
+
+@media (max-width: 768px) {
+    .cd-kpi { grid-template-columns: repeat(3, 1fr); }
+    .cd-kpi-item { border-bottom: 1px solid var(--border-subtle); }
+    .cd-drip-grid { grid-template-columns: 1fr; gap: 8px; }
+    .cd-drip-arrow { flex-direction: row; padding: 4px 0; }
+    .cd-row { grid-template-columns: 8px 1fr auto; }
+    .cd-row > *:nth-child(3), .cd-row > *:nth-child(4) { display: none; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'campaign_list' %}" class="cd-back"><i class="bi bi-arrow-left"></i> Campaigns</a>
+
+<!-- Header -->
+<div class="cd-header {{ campaign.status }}">
+    <div class="cd-title-row">
         <div>
-            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.35rem;">
-                <h2 style="font-size: 1.4rem; margin: 0;">{{ campaign.name }}</h2>
-                <span class="campaign-status-pill status-{{ campaign.status }}">{{ campaign.get_status_display }}</span>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                <h2 class="cd-title">{{ campaign.name }}</h2>
+                <span class="cd-pill {{ campaign.status }}">{{ campaign.get_status_display }}</span>
             </div>
-            <div style="color: var(--text-muted); font-size: 0.8rem;">
+            <div class="cd-meta">
                 Created {{ campaign.created_at|time_ago }}
-                {% if campaign.target_category %}
-                &middot; Target: {{ campaign.target_category }}
-                {% endif %}
-                {% if campaign.target_location %}
-                &middot; {{ campaign.target_location }}
-                {% endif %}
+                {% if campaign.target_category %}&middot; {{ campaign.target_category }}{% endif %}
+                {% if campaign.target_location %}&middot; {{ campaign.target_location }}{% endif %}
             </div>
         </div>
-        <div style="display: flex; gap: 0.5rem;">
+        <div style="display: flex; gap: 6px;">
             {% if campaign.status == 'active' %}
             <form method="post" action="{% url 'campaign_action' campaign.id %}" style="display:inline;">
                 {% csrf_token %}
@@ -53,121 +146,96 @@
     </div>
 
     <!-- KPI Row -->
-    <div class="competitor-detail-stats">
-        <div class="competitor-detail-stat">
-            <div class="competitor-detail-stat-label">Prospects</div>
-            <div class="competitor-detail-stat-value mono">{{ total_prospects }}</div>
+    <div class="cd-kpi">
+        <div class="cd-kpi-item">
+            <div class="cd-kpi-val">{{ total_prospects }}</div>
+            <div class="cd-kpi-lbl">Prospects</div>
         </div>
-        <div class="competitor-detail-stat">
-            <div class="competitor-detail-stat-label">Email 1 Sent</div>
-            <div class="competitor-detail-stat-value mono">{{ email1_sent }}</div>
+        <div class="cd-kpi-item">
+            <div class="cd-kpi-val" style="color:#0D9488;">{{ email1_sent }}</div>
+            <div class="cd-kpi-lbl">Email 1</div>
         </div>
-        <div class="competitor-detail-stat">
-            <div class="competitor-detail-stat-label">Email 2 Sent</div>
-            <div class="competitor-detail-stat-value mono">{{ email2_sent }}</div>
+        <div class="cd-kpi-item">
+            <div class="cd-kpi-val" style="color:#F59E0B;">{{ email2_sent }}</div>
+            <div class="cd-kpi-lbl">Email 2</div>
         </div>
-        <div class="competitor-detail-stat">
-            <div class="competitor-detail-stat-label">Open Rate</div>
-            <div class="competitor-detail-stat-value mono" style="color: var(--accent-blue);">{{ open_rate }}%</div>
+        <div class="cd-kpi-item">
+            <div class="cd-kpi-val" style="color:#3B82F6;">{{ open_rate }}%</div>
+            <div class="cd-kpi-lbl">Open Rate</div>
         </div>
-        <div class="competitor-detail-stat">
-            <div class="competitor-detail-stat-label">Replied</div>
-            <div class="competitor-detail-stat-value mono" style="color: var(--accent-emerald);">{{ replied_count }}</div>
+        <div class="cd-kpi-item">
+            <div class="cd-kpi-val" style="color:#059669;">{{ replied_count }}</div>
+            <div class="cd-kpi-lbl">Replied</div>
         </div>
-        <div class="competitor-detail-stat">
-            <div class="competitor-detail-stat-label">Reply Rate</div>
-            <div class="competitor-detail-stat-value mono" style="color: var(--accent-emerald);">{{ reply_rate }}%</div>
+        <div class="cd-kpi-item">
+            <div class="cd-kpi-val" style="color:#059669;">{{ reply_rate }}%</div>
+            <div class="cd-kpi-lbl">Reply Rate</div>
         </div>
     </div>
 </div>
 
 <!-- Settings Summary -->
-<div class="glass-card-static" style="padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;">
-    <div style="display: flex; gap: 2rem; font-size: 0.85rem; color: var(--text-secondary); flex-wrap: wrap;">
-        <span><i class="bi bi-envelope" style="color: var(--accent-blue);"></i> {{ campaign.daily_send_limit }}/day new</span>
-        <span><i class="bi bi-arrow-repeat" style="color: var(--accent-emerald);"></i> {{ campaign.email_sequence_count }}-email sequence</span>
-        <span><i class="bi bi-clock" style="color: var(--accent-amber);"></i> {{ campaign.followup_delay_days }}-day follow-up</span>
-        <span><i class="bi bi-palette" style="color: var(--accent-blue);"></i> {{ campaign.get_email_style_display }} tone</span>
-        <span>
-            <i class="bi bi-stars" style="color: var(--accent-blue);"></i>
+<div class="cd-settings">
+    <div class="cd-settings-row">
+        <div class="cd-settings-item"><i class="bi bi-envelope" style="color:#3B82F6;"></i> {{ campaign.daily_send_limit }}/day</div>
+        <div class="cd-settings-item"><i class="bi bi-arrow-repeat" style="color:#059669;"></i> {{ campaign.email_sequence_count }}-email sequence</div>
+        <div class="cd-settings-item"><i class="bi bi-clock" style="color:#F59E0B;"></i> {{ campaign.followup_delay_days }}d follow-up</div>
+        <div class="cd-settings-item"><i class="bi bi-palette" style="color:#8B5CF6;"></i> {{ campaign.get_email_style_display }} tone</div>
+        <div class="cd-settings-item">
+            <i class="bi bi-stars" style="color:#0D9488;"></i>
             AI: {% if campaign.use_ai_personalization %}On{% else %}Off{% endif %}
-        </span>
+        </div>
         {% if campaign.send_mode == 'gmail' %}
-        <span><i class="bi bi-google" style="color: var(--accent-coral);"></i> Gmail</span>
+        <div class="cd-settings-item"><i class="bi bi-google" style="color:#EA4335;"></i> Gmail</div>
         {% else %}
-        <span><i class="bi bi-shield-check" style="color: var(--accent-emerald);"></i> SalesSignal Email</span>
+        <div class="cd-settings-item"><i class="bi bi-shield-check" style="color:#059669;"></i> SalesSignal Email</div>
         {% endif %}
     </div>
     {% if campaign.customer_custom_instructions %}
-    <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--glass-border); font-size: 0.82rem; color: var(--text-muted);">
-        <i class="bi bi-chat-quote" style="color: var(--accent-amber);"></i>
-        <strong>Custom instructions:</strong> {{ campaign.customer_custom_instructions|truncatechars:200 }}
+    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-subtle); font-size: 0.8rem; color: var(--text-muted);">
+        <i class="bi bi-chat-quote" style="color:#F59E0B;"></i>
+        {{ campaign.customer_custom_instructions|truncatechars:200 }}
     </div>
     {% endif %}
 </div>
 
-<!-- Drip Sequence Status -->
-<div class="glass-card-static" style="padding: 1.5rem; margin-bottom: 1.5rem;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h3 style="font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1rem; margin: 0;">
-            <i class="bi bi-send-check" style="color: var(--accent-blue);"></i> Drip Sequence
-        </h3>
-        <span style="font-size: 0.75rem; color: var(--text-muted);">
-            Runs every 15 min &middot; {{ campaign.followup_delay_days }}-day delay between emails
+<!-- Drip Sequence -->
+<div class="cd-drip">
+    <div class="cd-drip-title">
+        <span><i class="bi bi-send-check" style="color:#0D9488;"></i> Drip Sequence</span>
+        <span style="font-size: 0.7rem; font-weight: 400; color: var(--text-muted);">
+            Runs every 15 min &middot; {{ campaign.followup_delay_days }}d delay
         </span>
     </div>
-    <div style="display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 0; align-items: center;">
-        <!-- Email 1 -->
-        <div style="background: var(--bg-page); border-radius: 12px; border-left: 4px solid #0D9488; padding: 14px 16px;">
-            <div style="font-weight: 700; font-size: 0.82rem; margin-bottom: 2px;">
-                <i class="bi bi-1-circle-fill" style="color: #0D9488;"></i> Initial Outreach
-            </div>
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 700; color: #0D9488;">{{ email1_sent }}</div>
-            <div style="font-size: 0.7rem; color: var(--text-muted);">
-                sent &middot; {{ campaign.emails_opened|default:0 }} opened
-                {% if email1_sent > 0 %}&middot; {{ email1_open_pct|default:"0" }}% open rate{% endif %}
-            </div>
+    <div class="cd-drip-grid">
+        <div class="cd-drip-step step1">
+            <div class="cd-drip-num" style="color:#0D9488;"><i class="bi bi-1-circle-fill"></i> Initial Outreach</div>
+            <div class="cd-drip-val" style="color:#0D9488;">{{ email1_sent }}</div>
+            <div class="cd-drip-sub">sent{% if email1_sent > 0 %} &middot; {{ email1_open_pct|default:"0" }}% opened{% endif %}</div>
         </div>
-        <!-- Arrow -->
-        <div style="text-align: center; padding: 0 10px; color: var(--text-muted);">
-            <i class="bi bi-arrow-right" style="font-size: 1.2rem;"></i>
-            <div style="font-size: 0.6rem; color: var(--text-muted);">{{ campaign.followup_delay_days }}d</div>
+        <div class="cd-drip-arrow"><i class="bi bi-arrow-right"></i><span>{{ campaign.followup_delay_days }}d</span></div>
+        <div class="cd-drip-step step2">
+            <div class="cd-drip-num" style="color:#F59E0B;"><i class="bi bi-2-circle-fill"></i> Follow-Up</div>
+            <div class="cd-drip-val" style="color:#F59E0B;">{{ email2_sent }}</div>
+            <div class="cd-drip-sub">sent</div>
         </div>
-        <!-- Email 2 -->
-        <div style="background: var(--bg-page); border-radius: 12px; border-left: 4px solid #F59E0B; padding: 14px 16px;">
-            <div style="font-weight: 700; font-size: 0.82rem; margin-bottom: 2px;">
-                <i class="bi bi-2-circle-fill" style="color: #F59E0B;"></i> Follow-Up
-            </div>
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 700; color: #F59E0B;">{{ email2_sent }}</div>
-            <div style="font-size: 0.7rem; color: var(--text-muted);">sent</div>
-        </div>
-        <!-- Arrow -->
-        <div style="text-align: center; padding: 0 10px; color: var(--text-muted);">
-            <i class="bi bi-arrow-right" style="font-size: 1.2rem;"></i>
-            <div style="font-size: 0.6rem; color: var(--text-muted);">{{ campaign.followup_delay_days }}d</div>
-        </div>
-        <!-- Email 3 -->
-        <div style="background: var(--bg-page); border-radius: 12px; border-left: 4px solid #EF4444; padding: 14px 16px; {% if campaign.email_sequence_count < 3 %}opacity: 0.4;{% endif %}">
-            <div style="font-weight: 700; font-size: 0.82rem; margin-bottom: 2px;">
-                <i class="bi bi-3-circle-fill" style="color: #EF4444;"></i> Final Touch
-            </div>
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 700; color: #EF4444;">{{ email3_sent }}</div>
-            <div style="font-size: 0.7rem; color: var(--text-muted);">
-                {% if campaign.email_sequence_count < 3 %}disabled{% else %}sent{% endif %}
-            </div>
+        <div class="cd-drip-arrow"><i class="bi bi-arrow-right"></i><span>{{ campaign.followup_delay_days }}d</span></div>
+        <div class="cd-drip-step step3" {% if campaign.email_sequence_count < 3 %}style="opacity: 0.4;"{% endif %}>
+            <div class="cd-drip-num" style="color:#EF4444;"><i class="bi bi-3-circle-fill"></i> Final Touch</div>
+            <div class="cd-drip-val" style="color:#EF4444;">{{ email3_sent }}</div>
+            <div class="cd-drip-sub">{% if campaign.email_sequence_count < 3 %}disabled{% else %}sent{% endif %}</div>
         </div>
     </div>
-    <!-- Progress bar -->
     {% if total_prospects > 0 %}
-    <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-subtle);">
-        <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 5px;">
+    <div class="cd-progress">
+        <div class="cd-progress-header">
             <span>Sequence completion</span>
-            <span>{{ completed_pct|default:"0" }}% completed full sequence</span>
+            <span>{{ completed_pct|default:"0" }}%</span>
         </div>
-        <div style="height: 6px; background: var(--bg-page); border-radius: 3px; overflow: hidden;">
-            <div style="height: 100%; border-radius: 3px; background: linear-gradient(90deg, #0D9488, #F59E0B, #EF4444); width: {{ completed_pct|default:"0" }}%; transition: width 0.3s;"></div>
+        <div class="cd-progress-bar">
+            <div class="cd-progress-fill" style="width: {{ completed_pct|default:"0" }}%;"></div>
         </div>
-        <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-muted); margin-top: 4px;">
+        <div class="cd-progress-footer">
             <span>{{ new_count|default:0 }} waiting</span>
             <span>{{ replied_count|default:0 }} replied</span>
             <span>{{ bounced_count|default:0 }} bounced</span>
@@ -176,60 +244,51 @@
     {% endif %}
 </div>
 
-<!-- Prospect Filters + Add -->
-<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
-    <h3 style="font-size: 1.15rem; margin: 0;">
-        <i class="bi bi-people" style="color: var(--accent-blue); margin-right: 0.35rem;"></i>
-        Prospects ({{ total_prospects }})
+<!-- Prospect Section -->
+<div class="cd-prospect-header">
+    <h3 class="cd-prospect-title">
+        <i class="bi bi-people" style="color:#0D9488;"></i>
+        Prospects <span style="font-weight:400;font-size:0.85rem;color:var(--text-muted);">({{ total_prospects }})</span>
     </h3>
-    <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
-        <a href="{% url 'campaign_detail' campaign.id %}" class="btn-secondary btn-sm {% if not current_status %}active{% endif %}">All</a>
+    <div class="cd-filters">
+        <a href="{% url 'campaign_detail' campaign.id %}" class="cd-filter {% if not current_status %}active{% endif %}">All</a>
         {% for val, label in prospect_statuses %}
-        <a href="{% url 'campaign_detail' campaign.id %}?status={{ val }}" class="btn-secondary btn-sm {% if current_status == val %}active{% endif %}">{{ label }}</a>
+        <a href="{% url 'campaign_detail' campaign.id %}?status={{ val }}" class="cd-filter {% if current_status == val %}active{% endif %}">{{ label }}</a>
         {% endfor %}
-        <button class="btn-primary-glow btn-sm" onclick="document.getElementById('add-prospect-modal').style.display='flex'">
+        <button class="btn-primary-glow btn-sm" onclick="document.getElementById('add-prospect-modal').style.display='flex'" style="margin-left: 4px;">
             <i class="bi bi-plus-lg"></i> Add
         </button>
     </div>
 </div>
 
 {% if prospects %}
-<div class="campaign-email-list">
+<div class="cd-table">
     {% for p in prospects %}
-    <div class="glass-card campaign-email-row animate-fade-in-up" style="animation-delay: {{ forloop.counter0 }}30ms; cursor: pointer;" onclick="showProspect({{ p.id }})">
-        <div class="email-row-left">
-            <div class="email-status-dot status-dot-{{ p.status }}"></div>
-            <div>
-                <div style="font-weight: 600; font-size: 0.9rem;">{{ p.business_name }}</div>
-                <div style="font-size: 0.8rem; color: var(--text-muted);">
-                    {{ p.contact_email }}
-                    {% if p.contact_name %}&middot; {{ p.contact_name }}{% endif %}
-                </div>
+    <div class="cd-row" onclick="showProspect({{ p.id }})">
+        <div class="cd-row-dot {{ p.status }}"></div>
+        <div>
+            <div class="cd-row-name">{{ p.business_name }}</div>
+            <div class="cd-row-sub">
+                {{ p.contact_email }}{% if p.contact_name %} &middot; {{ p.contact_name }}{% endif %}
             </div>
         </div>
-        <div class="email-row-middle">
-            <div style="font-size: 0.85rem;">
-                {% if p.website_url %}
-                <span style="color: var(--accent-blue); font-size: 0.75rem;"><i class="bi bi-globe2"></i></span>
-                {% endif %}
-                {% if p.enrichment_data %}
-                <span style="color: var(--accent-emerald); font-size: 0.75rem;" title="AI Enriched"><i class="bi bi-stars"></i></span>
-                {% endif %}
-                <span style="font-size: 0.75rem; color: var(--text-muted);">{{ p.get_source_display }}</span>
+        <div>
+            <div class="cd-row-icons">
+                {% if p.website_url %}<i class="bi bi-globe2" style="color:#3B82F6;" title="Has website"></i>{% endif %}
+                {% if p.enrichment_data %}<i class="bi bi-stars" style="color:#0D9488;" title="AI Enriched"></i>{% endif %}
+                <span style="font-size:0.7rem; color:var(--text-muted);">{{ p.get_source_display }}</span>
             </div>
             {% if p.email1_sent_at %}
-            <div style="font-size: 0.75rem; color: var(--text-muted);">
+            <div class="cd-row-drip">
                 E1: {{ p.email1_sent_at|time_ago }}
                 {% if p.email2_sent_at %}| E2: {{ p.email2_sent_at|time_ago }}{% endif %}
                 {% if p.email3_sent_at %}| E3: {{ p.email3_sent_at|time_ago }}{% endif %}
             </div>
             {% endif %}
         </div>
-        <div class="email-row-right">
-            <span class="email-status-pill email-status-{{ p.status }}">{{ p.get_status_display }}</span>
-            {% if p.replied_at %}
-            <span style="font-size: 0.7rem; color: var(--accent-emerald);">Replied {{ p.replied_at|time_ago }}</span>
-            {% endif %}
+        <div>
+            <span class="cd-status-pill {{ p.status }}">{{ p.get_status_display }}</span>
+            {% if p.replied_at %}<div style="font-size:0.65rem;color:#059669;margin-top:3px;">{{ p.replied_at|time_ago }}</div>{% endif %}
         </div>
     </div>
     {% endfor %}
@@ -245,10 +304,10 @@
 <!-- Add Prospect Modal -->
 <div class="modal-backdrop" id="add-prospect-modal" style="display:none;">
     <div class="modal-card">
-        <h3><i class="bi bi-person-plus" style="color: var(--accent-blue);"></i> Add Prospect</h3>
+        <h3 style="margin-top:0;"><i class="bi bi-person-plus" style="color:#0D9488;"></i> Add Prospect</h3>
         <form id="add-prospect-form">
             {% csrf_token %}
-            <div class="form-grid">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
                 <div class="form-group">
                     <label class="form-label">Business Name *</label>
                     <input type="text" name="business_name" class="form-input" required>
@@ -266,11 +325,11 @@
                     <input type="text" name="contact_phone" class="form-input">
                 </div>
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-top:10px;">
                 <label class="form-label">Website URL</label>
                 <input type="url" name="website_url" class="form-input" placeholder="https://">
             </div>
-            <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+            <div style="display:flex;gap:10px;margin-top:1.25rem;">
                 <button type="button" class="btn-secondary" onclick="document.getElementById('add-prospect-modal').style.display='none'">Cancel</button>
                 <button type="submit" class="btn-primary-glow" style="flex:1;">Add Prospect</button>
             </div>
@@ -317,19 +376,18 @@ function showProspect(prospectId) {
         .then(data => {
             let emailsHtml = '';
             if (data.emails && data.emails.length) {
-                emailsHtml = '<div style="margin-top:1.5rem;"><h4 style="font-size:0.95rem; margin-bottom:0.75rem;"><i class="bi bi-envelope" style="color:var(--accent-blue);"></i> Generated Emails</h4>';
+                emailsHtml = '<div style="margin-top:1.25rem;"><h4 style="font-size:0.9rem; margin-bottom:0.6rem;"><i class="bi bi-envelope" style="color:#3B82F6;"></i> Generated Emails</h4>';
                 data.emails.forEach(e => {
                     emailsHtml += `
-                    <div class="glass-card-static" style="padding:1rem; margin-bottom:0.75rem;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
-                            <strong>Email ${e.sequence}</strong>
-                            <span class="email-status-pill email-status-${e.status}">${e.status}</span>
+                    <div style="background:var(--bg-page);border:1px solid var(--border-subtle);border-radius:10px;padding:14px;margin-bottom:8px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                            <strong style="font-size:0.82rem;">Email ${e.sequence}</strong>
+                            <span class="cd-status-pill ${e.status}">${e.status}</span>
                         </div>
-                        <div style="font-size:0.85rem; font-weight:600; margin-bottom:0.25rem;">Subject: ${esc(e.subject)}</div>
-                        <div style="font-size:0.82rem; color:var(--text-secondary); white-space:pre-line; max-height:200px; overflow-y:auto;">${esc(e.body)}</div>
-                        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.5rem;">
-                            Model: ${e.model || 'N/A'}
-                            ${e.sent_at ? ' | Sent: ' + new Date(e.sent_at).toLocaleDateString() : ''}
+                        <div style="font-size:0.82rem; font-weight:600; margin-bottom:4px;">Subject: ${esc(e.subject)}</div>
+                        <div style="font-size:0.78rem; color:var(--text-secondary); white-space:pre-line; max-height:180px; overflow-y:auto;">${esc(e.body)}</div>
+                        <div style="font-size:0.65rem; color:var(--text-muted); margin-top:6px;">
+                            Model: ${e.model || 'N/A'}${e.sent_at ? ' | Sent: ' + new Date(e.sent_at).toLocaleDateString() : ''}
                         </div>
                     </div>`;
                 });
@@ -339,7 +397,7 @@ function showProspect(prospectId) {
             let enrichHtml = '';
             const en = data.enrichment;
             if (en && Object.keys(en).length > 1) {
-                enrichHtml = '<div style="margin-top:1rem;"><h4 style="font-size:0.95rem; margin-bottom:0.5rem;"><i class="bi bi-stars" style="color:var(--accent-emerald);"></i> AI Enrichment</h4><div style="font-size:0.82rem; color:var(--text-secondary);">';
+                enrichHtml = '<div style="margin-top:1rem;"><h4 style="font-size:0.9rem; margin-bottom:6px;"><i class="bi bi-stars" style="color:#0D9488;"></i> AI Enrichment</h4><div style="font-size:0.78rem; color:var(--text-secondary);">';
                 if (en.services) enrichHtml += `<div><strong>Services:</strong> ${en.services.join(', ')}</div>`;
                 if (en.owner_name) enrichHtml += `<div><strong>Owner:</strong> ${esc(en.owner_name)}</div>`;
                 if (en.years_in_business) enrichHtml += `<div><strong>Years:</strong> ${en.years_in_business}</div>`;
@@ -349,16 +407,16 @@ function showProspect(prospectId) {
 
             let replyHtml = '';
             if (data.reply_text) {
-                replyHtml = `<div style="margin-top:1rem; padding:1rem; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); border-radius:8px;">
-                    <h4 style="font-size:0.95rem; color:var(--accent-emerald);"><i class="bi bi-reply"></i> Reply</h4>
-                    <div style="font-size:0.85rem; white-space:pre-line; margin-top:0.5rem;">${esc(data.reply_text)}</div>
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.5rem;">Classification: <strong>${data.reply_classification || 'Pending'}</strong></div>
+                replyHtml = `<div style="margin-top:1rem; padding:12px; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.15); border-radius:10px;">
+                    <h4 style="font-size:0.9rem; color:#059669; margin:0 0 6px;"><i class="bi bi-reply"></i> Reply</h4>
+                    <div style="font-size:0.82rem; white-space:pre-line;">${esc(data.reply_text)}</div>
+                    <div style="font-size:0.7rem; color:var(--text-muted); margin-top:6px;">Classification: <strong>${data.reply_classification || 'Pending'}</strong></div>
                 </div>`;
             }
 
             let actionsHtml = '';
             if (['replied', 'email1_sent', 'email2_sent', 'email3_sent'].includes(data.status)) {
-                actionsHtml = `<div style="display:flex; gap:0.5rem; margin-top:1rem;">
+                actionsHtml = `<div style="display:flex; gap:6px; margin-top:1rem;">
                     <button class="btn-primary-glow btn-sm" onclick="markProspect(${data.id}, 'interested')"><i class="bi bi-hand-thumbs-up"></i> Interested</button>
                     <button class="btn-secondary btn-sm" onclick="markProspect(${data.id}, 'not_interested')"><i class="bi bi-hand-thumbs-down"></i> Not Interested</button>
                 </div>`;
@@ -367,16 +425,16 @@ function showProspect(prospectId) {
             content.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                     <div>
-                        <h3 style="margin:0;">${esc(data.business_name)}</h3>
-                        <div style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">
+                        <h3 style="margin:0; font-family:'Exo 2',sans-serif;">${esc(data.business_name)}</h3>
+                        <div style="font-size:0.82rem; color:var(--text-secondary); margin-top:4px;">
                             ${esc(data.contact_name || '')} &middot; ${esc(data.contact_email)}
                             ${data.contact_phone ? ' &middot; ' + esc(data.contact_phone) : ''}
                         </div>
                     </div>
-                    <span class="email-status-pill email-status-${data.status}">${data.status.replace(/_/g, ' ')}</span>
+                    <span class="cd-status-pill ${data.status}">${data.status.replace(/_/g, ' ')}</span>
                 </div>
-                <div style="font-size:0.82rem; color:var(--text-muted); margin-top:0.5rem;">
-                    ${data.website_url ? '<a href="' + data.website_url + '" target="_blank" style="color:var(--accent-blue);"><i class="bi bi-globe2"></i> Website</a> &middot;' : ''}
+                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:6px;">
+                    ${data.website_url ? '<a href="' + data.website_url + '" target="_blank" style="color:#3B82F6;"><i class="bi bi-globe2"></i> Website</a> &middot;' : ''}
                     Source: ${data.source}
                 </div>
                 ${actionsHtml}${replyHtml}${enrichHtml}${emailsHtml}`;
