@@ -39,10 +39,15 @@ GROUP_SLUG_MAP = {
 GROUP_SOURCE_TYPES = {
     'public_records': [
         ('violations', 'Violations'),
+        ('building_violations', 'Building Violations'),
+        ('hpd_violations', 'HPD Violations'),
+        ('ordinance_violations', 'Ordinance Violations'),
+        ('ecb_summonses', 'ECB Summonses'),
         ('permits', 'Permits (BIS)'),
         ('permits_now', 'Permits (NOW)'),
         ('property_sales', 'Property Sales'),
         ('health_inspections', 'Health Inspections'),
+        ('food_inspections', 'Food Inspections'),
         ('liquor_licenses', 'Liquor Licenses'),
         ('business_filings', 'Business Filings'),
     ],

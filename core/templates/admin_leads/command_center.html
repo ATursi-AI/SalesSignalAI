@@ -501,7 +501,7 @@
 <!-- Source Overview Cards -->
 <div class="source-overview">
     {% for src in source_overview %}
-    <div class="source-card" onclick="window.location.href='/admin-leads/{{ src.slug }}/'">
+    <div class="source-card" onclick="var s=document.getElementById('stateFilter').value; window.location.href='/admin-leads/{{ src.slug }}/'+(s?'?state='+s:'')">
         <div class="source-card-header">
             <i class="bi {{ src.icon }}"></i>
             <span class="sc-title">{{ src.label }}</span>
@@ -509,7 +509,7 @@
         </div>
         <div class="source-card-subs">
             {% for sub in src.sub_types %}
-            <a href="/admin-leads/{{ src.slug }}/?type={{ sub.key }}" class="source-card-sub" onclick="event.stopPropagation()">
+            <a href="/admin-leads/{{ src.slug }}/?type={{ sub.key }}" class="source-card-sub" onclick="event.stopPropagation(); var s=document.getElementById('stateFilter').value; if(s) this.href+='&state='+s;">
                 <span>{{ sub.label }}</span>
                 <span class="sub-count">{{ sub.count }}</span>
             </a>

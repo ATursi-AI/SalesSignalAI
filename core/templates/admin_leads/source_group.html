@@ -398,17 +398,28 @@
 {% block content %}
 <!-- Source Group Navigation Cards -->
 <div class="source-nav-row">
-    <a href="/admin-leads/" class="source-nav-card">
+    <a href="/admin-leads/{% if current_state %}?state={{ current_state }}{% endif %}" class="source-nav-card">
         <i class="bi bi-grid-1x2 nav-icon"></i>
         <span class="nav-title">Command Center</span>
     </a>
     {% for nav in source_nav %}
-    <a href="/admin-leads/{{ nav.slug }}/" class="source-nav-card {% if group_slug == nav.slug %}active{% endif %}">
+    <a href="/admin-leads/{{ nav.slug }}/{% if current_state %}?state={{ current_state }}{% endif %}" class="source-nav-card {% if group_slug == nav.slug %}active{% endif %}">
         <i class="bi {{ nav.icon }} nav-icon"></i>
         <span class="nav-title">{{ nav.label }}</span>
         <span class="nav-count">{{ nav.total }}</span>
     </a>
     {% endfor %}
+</div>
+
+<!-- State Filter -->
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+    <label style="font-size:0.82rem;font-weight:600;color:var(--text-muted);">State</label>
+    <select id="stateFilter" onchange="var v=this.value; var url='/admin-leads/{{ group_slug }}/'; window.location.href=v?url+'?state='+v:url;" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border-subtle);background:var(--bg-surface);font-size:0.82rem;min-width:140px;">
+        <option value="">All States</option>
+        {% for s in states %}
+        <option value="{{ s }}" {% if s == current_state %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+    </select>
 </div>
 
 <!-- Type Tabs -->
@@ -594,6 +605,9 @@ async function fetchLeads() {
     const location = document.getElementById('filterLocation').value;
     const search = document.getElementById('filterSearch').value;
 
+    const stateEl = document.getElementById('stateFilter');
+    const state = stateEl ? stateEl.value : '';
+    if (state) params.set('state', state);
     if (urgency) params.set('urgency', urgency);
     if (confidence) params.set('confidence', confidence);
     if (status) params.set('status', status);
