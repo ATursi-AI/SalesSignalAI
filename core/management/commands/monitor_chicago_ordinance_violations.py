@@ -282,6 +282,8 @@ class Command(BaseCommand):
                         region='Chicago',
                         source_group='public_records',
                         source_type='ordinance_violations',
+                        contact_name=respondent,
+                        contact_business=respondent,
                         contact_address=full_addr,
                     )
                     if created:

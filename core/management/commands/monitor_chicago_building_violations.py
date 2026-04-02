@@ -257,7 +257,9 @@ class Command(BaseCommand):
                         state='IL',
                         region='Chicago',
                         source_group='public_records',
-                        source_type='violations',
+                        source_type='building_violations',
+                        contact_name=address,
+                        contact_business=address,
                         contact_address=f'{address}, Chicago, IL',
                     )
                     if created:

@@ -279,6 +279,8 @@ class Command(BaseCommand):
                         region='Chicago',
                         source_group='health',
                         source_type='food_inspections',
+                        contact_name=display_name,
+                        contact_business=display_name,
                         contact_address=full_addr,
                     )
                     if created:

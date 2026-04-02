@@ -315,6 +315,8 @@ class Command(BaseCommand):
                         region=city,
                         source_group='public_records',
                         source_type='ecb_summonses',
+                        contact_name=address,
+                        contact_business=address,
                         contact_address=full_addr,
                     )
                     if created:

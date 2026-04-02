@@ -326,7 +326,9 @@ class Command(BaseCommand):
                         state='CA',
                         region='San Francisco',
                         source_group='public_records',
-                        source_type='violations',
+                        source_type='building_violations',
+                        contact_name=full_addr,
+                        contact_business=f'Complaint #{complaint_num}',
                         contact_address=full_addr,
                     )
                     if created:

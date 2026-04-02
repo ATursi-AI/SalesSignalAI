@@ -316,6 +316,8 @@ class Command(BaseCommand):
                         region=boro,
                         source_group='public_records',
                         source_type='hpd_violations',
+                        contact_name=full_addr,
+                        contact_business=full_addr,
                         contact_address=full_addr,
                     )
                     if created:
