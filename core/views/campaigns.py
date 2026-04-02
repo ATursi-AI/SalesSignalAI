@@ -209,8 +209,22 @@ def campaign_wizard(request):
 
     # GET: render wizard
     categories = ServiceCategory.objects.filter(is_active=True)
+
+    # Group categories by industry_group for organized display
+    from collections import OrderedDict
+    grouped_categories = OrderedDict()
+    group_labels = dict(ServiceCategory.INDUSTRY_GROUPS)
+    for group_key, group_label in ServiceCategory.INDUSTRY_GROUPS:
+        cats = [c for c in categories if c.industry_group == group_key]
+        if cats:
+            grouped_categories[group_key] = {
+                'label': group_label,
+                'categories': cats,
+            }
+
     context = {
         'categories': categories,
+        'grouped_categories': grouped_categories,
         'profile': profile,
     }
     return render(request, 'campaigns/wizard.html', context)
@@ -486,6 +500,53 @@ def _create_contact_from_prospect(prospect):
         activity_type='email_replied',
         description=f'Replied to outreach campaign "{campaign.name}" — marked as interested',
     )
+
+
+@login_required
+def quick_send_email(request):
+    """Send a quick one-off email via SendGrid (AJAX)."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    profile = _get_business(request)
+    if not profile:
+        return JsonResponse({'error': 'No business profile'}, status=403)
+
+    data = json.loads(request.body)
+    to_email = data.get('to', '').strip()
+    subject = data.get('subject', '').strip()
+    body = data.get('body', '').strip()
+    cc = data.get('cc', '').strip()
+
+    if not to_email or not subject or not body:
+        return JsonResponse({'error': 'To, subject, and body are required'}, status=400)
+
+    from core.utils.email_engine.backends import SendGridEmailSender
+    sender = SendGridEmailSender()
+
+    from_email = getattr(profile, 'sending_email', '') or f'support@salessignalai.com'
+    reply_to = profile.email or ''
+
+    result = sender.send_email(
+        to_email=to_email,
+        subject=subject,
+        body=body,
+        from_email=from_email,
+        reply_to=reply_to,
+        html_body=body.replace('\n', '<br>') if '<' not in body else body,
+    )
+
+    if result['success']:
+        return JsonResponse({
+            'ok': True,
+            'message_id': result['message_id'],
+            'message': f'Email sent to {to_email}',
+        })
+    else:
+        return JsonResponse({
+            'ok': False,
+            'error': result.get('error', 'Send failed'),
+        }, status=400)
 
 
 @login_required

@@ -104,6 +104,7 @@ urlpatterns = [
     path('campaigns/<int:campaign_id>/import-leads/', campaigns.campaign_import_leads, name='campaign_import_leads'),
     path('campaigns/<int:campaign_id>/import-contacts/', campaigns.campaign_import_contacts, name='campaign_import_contacts'),
     path('campaigns/<int:campaign_id>/import-csv/', campaigns.campaign_import_csv, name='campaign_import_csv'),
+    path('api/quick-send/', campaigns.quick_send_email, name='quick_send_email'),
     path('campaigns/leads-api/', campaigns.campaign_leads_api, name='campaign_leads_api'),
     path('campaigns/contacts-api/', campaigns.campaign_contacts_api, name='campaign_contacts_api'),
     path('campaigns/<int:campaign_id>/prospects/<int:prospect_id>/', campaigns.prospect_detail_api, name='prospect_detail_api'),

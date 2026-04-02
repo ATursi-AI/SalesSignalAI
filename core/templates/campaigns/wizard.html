@@ -6,14 +6,13 @@
 
 {% block extra_css %}
 <style>
-/* Prospect tabs */
+/* ── Wizard Chrome ── */
 .prospect-tab { padding: 8px 16px; border-radius: 8px; font-size: 0.78rem; font-weight: 600; border: 1px solid var(--border-subtle); background: var(--bg-surface); cursor: pointer; color: var(--text-secondary); display: flex; align-items: center; gap: 5px; transition: all 0.15s; }
 .prospect-tab:hover { border-color: #0D9488; color: #0D9488; }
 .prospect-tab.active { background: #0D9488; color: white; border-color: #0D9488; }
 .prospect-tab-panel { display: none; }
 .prospect-tab-panel.active { display: block; }
 
-/* Lead rows */
 .lead-row, .contact-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border-subtle); font-size: 0.82rem; cursor: pointer; transition: background 0.1s; }
 .lead-row:hover, .contact-row:hover { background: rgba(13,148,136,0.04); }
 .lead-row:last-child, .contact-row:last-child { border-bottom: none; }
@@ -28,36 +27,62 @@
 .lead-urgency-stale { background: #F1F5F9; color: #94A3B8; }
 .lead-source-pill { padding: 2px 7px; border-radius: 6px; font-size: 0.62rem; font-weight: 600; background: #F0FDFA; color: #0D9488; }
 
-/* Wizard card override */
 .wiz-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 28px; }
 .wiz-card h3 { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.1rem; margin: 0 0 4px; }
 .wiz-card h3 i { margin-right: 6px; }
 .wiz-desc { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem; }
 
-/* Send mode cards */
 .send-mode-card { background: var(--bg-page); border: 2px solid var(--border-subtle); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s; }
 .send-mode-card:hover { border-color: #99F6E4; }
 .send-mode-card.selected { border-color: #0D9488; background: rgba(13,148,136,0.04); }
 .send-mode-card input { display: none; }
 
-/* Info box */
 .wiz-info { padding: 14px 16px; background: rgba(13,148,136,0.05); border: 1px solid rgba(13,148,136,0.12); border-radius: 10px; font-size: 0.82rem; color: var(--text-secondary); }
-
-/* Review summary */
 .wiz-review { background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden; }
 .wiz-review-row { display: flex; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border-subtle); font-size: 0.85rem; }
 .wiz-review-row:last-child { border-bottom: none; }
 .wiz-review-row span:first-child { color: var(--text-muted); }
 .wiz-review-row strong { color: var(--text-primary); }
-
-/* Button row */
 .wiz-btn-row { display: flex; gap: 10px; margin-top: 1.5rem; }
+
+/* ── Category Groups (Step 1) ── */
+.cat-group { margin-bottom: 12px; border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden; }
+.cat-group-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-page); cursor: pointer; user-select: none; transition: background 0.15s; }
+.cat-group-header:hover { background: rgba(13,148,136,0.04); }
+.cat-group-header h5 { margin: 0; font-size: 0.82rem; font-weight: 700; font-family: 'Exo 2', sans-serif; display: flex; align-items: center; gap: 6px; }
+.cat-group-header .cat-count { font-size: 0.65rem; color: var(--text-muted); font-weight: 500; font-family: 'JetBrains Mono', monospace; }
+.cat-group-header .chevron { transition: transform 0.2s; font-size: 0.75rem; color: var(--text-muted); }
+.cat-group-header.collapsed .chevron { transform: rotate(-90deg); }
+.cat-group-body { padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+.cat-group-body.collapsed { display: none; }
+
+/* ── Quick-Send Composer (Step 2) ── */
+.composer { background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 12px; overflow: hidden; margin-top: 1.5rem; }
+.composer-header { padding: 12px 16px; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 8px; }
+.composer-header h4 { margin: 0; font-size: 0.88rem; font-weight: 700; font-family: 'Exo 2', sans-serif; }
+.composer-field { display: flex; align-items: center; border-bottom: 1px solid var(--border-subtle); }
+.composer-field label { padding: 0 14px; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); min-width: 58px; text-transform: uppercase; letter-spacing: 0.03em; }
+.composer-field input { flex: 1; border: none; background: transparent; padding: 10px 14px 10px 0; font-size: 0.85rem; outline: none; color: var(--text-primary); font-family: inherit; }
+.composer-field input::placeholder { color: var(--text-muted); }
+.composer-body { padding: 0; }
+.composer-body textarea { width: 100%; border: none; background: transparent; padding: 14px 16px; font-size: 0.85rem; outline: none; resize: vertical; min-height: 120px; color: var(--text-primary); font-family: inherit; line-height: 1.6; }
+.composer-body textarea::placeholder { color: var(--text-muted); }
+.composer-footer { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-top: 1px solid var(--border-subtle); background: var(--bg-surface); }
+.composer-footer .char-count { font-size: 0.68rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+.composer-send-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 20px; border-radius: 8px; border: none; background: #0D9488; color: white; font-weight: 700; font-size: 0.82rem; cursor: pointer; transition: all 0.15s; }
+.composer-send-btn:hover { background: #0F766E; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(13,148,136,0.3); }
+.composer-send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+.composer-status { padding: 10px 16px; font-size: 0.8rem; display: none; }
+.composer-status.success { display: block; color: #059669; background: #ECFDF5; }
+.composer-status.error { display: block; color: #DC2626; background: #FEF2F2; }
 
 @media (max-width: 480px) {
     .prospect-tab { padding: 6px 10px; font-size: 0.7rem; }
     .lead-row, .contact-row { padding: 8px 10px; font-size: 0.76rem; gap: 6px; }
     .lead-source-pill, .lead-urgency { font-size: 0.56rem; padding: 1px 5px; }
     .wiz-card { padding: 20px; }
+    .cat-group-body { gap: 4px; }
+    .composer-field label { min-width: 44px; font-size: 0.68rem; }
 }
 </style>
 {% endblock %}
@@ -78,7 +103,7 @@
         {% csrf_token %}
         <input type="hidden" name="campaign_id" id="campaign_id" value="">
 
-        <!-- Step 1: Name + Target -->
+        <!-- ════════════ Step 1: Name + Target ════════════ -->
         <div class="wizard-panel active" id="step-1">
             <div class="wiz-card">
                 <h3><i class="bi bi-1-circle" style="color:#0D9488;"></i> Campaign Setup</h3>
@@ -91,8 +116,17 @@
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
                     <div class="form-group">
-                        <label class="form-label">Target Category</label>
-                        <input type="text" name="target_category" class="form-input" placeholder="e.g. property manager, restaurant">
+                        <label class="form-label">Target Industry</label>
+                        <select name="target_category" class="form-input">
+                            <option value="">All Industries</option>
+                            {% for group_key, group_data in grouped_categories.items %}
+                            <optgroup label="{{ group_data.label }}">
+                                {% for cat in group_data.categories %}
+                                <option value="{{ cat.slug }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endfor %}
+                        </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Target Location</label>
@@ -101,15 +135,23 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Target Business Types</label>
-                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                        {% for cat in categories %}
-                        <label class="chip-select">
-                            <input type="checkbox" name="target_types" value="{{ cat.name }}">
-                            <span>{{ cat.name }}</span>
-                        </label>
-                        {% endfor %}
+                    <label class="form-label" style="margin-bottom: 10px;">Target Business Types</label>
+                    {% for group_key, group_data in grouped_categories.items %}
+                    <div class="cat-group">
+                        <div class="cat-group-header" onclick="toggleCatGroup('{{ group_key }}')">
+                            <h5>{{ group_data.label }} <span class="cat-count">({{ group_data.categories|length }})</span></h5>
+                            <i class="bi bi-chevron-down chevron" id="chevron-{{ group_key }}"></i>
+                        </div>
+                        <div class="cat-group-body" id="catbody-{{ group_key }}">
+                            {% for cat in group_data.categories %}
+                            <label class="chip-select">
+                                <input type="checkbox" name="target_types" value="{{ cat.name }}">
+                                <span>{% if cat.icon %}{{ cat.icon }} {% endif %}{{ cat.name }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
                     </div>
+                    {% endfor %}
                 </div>
 
                 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px;">
@@ -129,11 +171,11 @@
             </div>
         </div>
 
-        <!-- Step 2: Email Template + AI + Sending -->
+        <!-- ════════════ Step 2: Email Template + AI + Quick Send ════════════ -->
         <div class="wizard-panel" id="step-2">
             <div class="wiz-card">
                 <h3><i class="bi bi-2-circle" style="color:#0D9488;"></i> Email &amp; AI Settings</h3>
-                <p class="wiz-desc">Configure how emails are written and sent.</p>
+                <p class="wiz-desc">Configure how campaign emails are written, then optionally fire off a quick email below.</p>
 
                 <div class="form-group">
                     <label class="form-label">Email Tone</label>
@@ -178,6 +220,7 @@
                     <span><strong>AI Personalization</strong> — unique emails per prospect via Gemini + DeepSeek</span>
                 </label>
 
+                <!-- Send Mode -->
                 <div style="margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border-subtle);">
                     <label class="form-label">How to Send Emails</label>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
@@ -193,10 +236,10 @@
                         <label class="send-mode-card" id="mode-gmail" onclick="updateSendMode()">
                             <input type="radio" name="send_mode" value="gmail">
                             <div style="font-weight: 700; font-size: 0.88rem; margin-bottom: 4px;">
-                                <i class="bi bi-google" style="color:#EA4335;"></i> Connect Your Gmail
+                                <i class="bi bi-google" style="color:#EA4335;"></i> Gmail / External
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-muted);">
-                                Sent from your Gmail address. More personal. Requires OAuth setup.
+                                Connect your own email in <a href="{% url 'settings' %}" style="color:#0D9488; text-decoration:underline;">Settings</a>. More personal delivery.
                             </div>
                         </label>
                     </div>
@@ -205,6 +248,37 @@
                 <div class="form-group" style="margin-top: 14px;">
                     <label class="form-label">Reply-To Email</label>
                     <input type="email" name="reply_to_email" class="form-input" value="{{ profile.email }}" placeholder="Your email where replies go">
+                </div>
+
+                <!-- ── Quick-Send Composer ── -->
+                <div class="composer">
+                    <div class="composer-header">
+                        <i class="bi bi-send" style="color:#0D9488;"></i>
+                        <h4>Quick Send</h4>
+                        <span style="font-size: 0.72rem; color: var(--text-muted); margin-left: auto;">Send a one-off email via SalesSignal</span>
+                    </div>
+                    <div class="composer-field">
+                        <label>To</label>
+                        <input type="email" id="qs-to" placeholder="prospect@company.com">
+                    </div>
+                    <div class="composer-field">
+                        <label>CC</label>
+                        <input type="email" id="qs-cc" placeholder="Optional">
+                    </div>
+                    <div class="composer-field">
+                        <label>Subject</label>
+                        <input type="text" id="qs-subject" placeholder="Subject line...">
+                    </div>
+                    <div class="composer-body">
+                        <textarea id="qs-body" placeholder="Write your message..." oninput="updateCharCount()"></textarea>
+                    </div>
+                    <div class="composer-footer">
+                        <span class="char-count" id="qs-char-count">0 chars</span>
+                        <button type="button" class="composer-send-btn" id="qs-send-btn" onclick="quickSendEmail()">
+                            <i class="bi bi-send-fill"></i> Send
+                        </button>
+                    </div>
+                    <div class="composer-status" id="qs-status"></div>
                 </div>
 
                 <div class="wiz-btn-row">
@@ -216,7 +290,7 @@
             </div>
         </div>
 
-        <!-- Step 3: Sending Pace -->
+        <!-- ════════════ Step 3: Sending Pace ════════════ -->
         <div class="wizard-panel" id="step-3">
             <div class="wiz-card">
                 <h3><i class="bi bi-3-circle" style="color:#0D9488;"></i> Sending Schedule</h3>
@@ -256,7 +330,7 @@
             </div>
         </div>
 
-        <!-- Step 4: Prospect Search -->
+        <!-- ════════════ Step 4: Prospect Search ════════════ -->
         <div class="wizard-panel" id="step-4">
             <div class="wiz-card">
                 <h3><i class="bi bi-4-circle" style="color:#0D9488;"></i> Find Prospects</h3>
@@ -344,7 +418,7 @@
             </div>
         </div>
 
-        <!-- Step 5: Review & Launch -->
+        <!-- ════════════ Step 5: Review & Launch ════════════ -->
         <div class="wizard-panel" id="step-5">
             <div class="wiz-card">
                 <h3><i class="bi bi-5-circle" style="color:#059669;"></i> Review &amp; Launch</h3>
@@ -381,6 +455,16 @@
 let currentStep = 1;
 let campaignId = null;
 
+/* ── Category Group Toggle ── */
+function toggleCatGroup(key) {
+    const body = document.getElementById('catbody-' + key);
+    const header = body.previousElementSibling;
+    const chevron = document.getElementById('chevron-' + key);
+    body.classList.toggle('collapsed');
+    header.classList.toggle('collapsed');
+}
+
+/* ── Wizard Navigation ── */
 function goToWizardStep(step) {
     document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.wizard-step').forEach(d => {
@@ -426,6 +510,63 @@ function updateSendMode() {
     }, 10);
 }
 
+/* ── Quick-Send Composer ── */
+function updateCharCount() {
+    const body = document.getElementById('qs-body');
+    document.getElementById('qs-char-count').textContent = body.value.length + ' chars';
+}
+
+function quickSendEmail() {
+    const to = document.getElementById('qs-to').value.trim();
+    const cc = document.getElementById('qs-cc').value.trim();
+    const subject = document.getElementById('qs-subject').value.trim();
+    const body = document.getElementById('qs-body').value.trim();
+    const status = document.getElementById('qs-status');
+    const btn = document.getElementById('qs-send-btn');
+
+    if (!to || !subject || !body) {
+        status.className = 'composer-status error';
+        status.textContent = 'Please fill in To, Subject, and Message.';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Sending...';
+    status.className = 'composer-status';
+    status.style.display = 'none';
+
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch('/api/quick-send/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+        body: JSON.stringify({to: to, cc: cc, subject: subject, body: body})
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-send-fill"></i> Send';
+        if (data.ok) {
+            status.className = 'composer-status success';
+            status.innerHTML = '<i class="bi bi-check-circle-fill"></i> ' + data.message;
+            document.getElementById('qs-to').value = '';
+            document.getElementById('qs-cc').value = '';
+            document.getElementById('qs-subject').value = '';
+            document.getElementById('qs-body').value = '';
+            updateCharCount();
+        } else {
+            status.className = 'composer-status error';
+            status.innerHTML = '<i class="bi bi-exclamation-circle"></i> ' + (data.error || 'Send failed');
+        }
+    })
+    .catch(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-send-fill"></i> Send';
+        status.className = 'composer-status error';
+        status.textContent = 'Network error. Please try again.';
+    });
+}
+
+/* ── Prospect Scraping ── */
 function scrapeProspects() {
     const query = document.getElementById('prospect-query').value.trim();
     if (!query) return;
@@ -487,19 +628,14 @@ function loadProspectList() {
 function updateReviewSummary() {
     const name = document.querySelector('[name=name]');
     if (name) document.getElementById('review-name').textContent = name.value || '--';
-
     const style = document.querySelector('[name=email_style]:checked');
     document.getElementById('review-style').textContent = style ? style.value.charAt(0).toUpperCase() + style.value.slice(1) : 'Professional';
-
     const ai = document.querySelector('[name=use_ai]');
     document.getElementById('review-ai').textContent = (ai && ai.checked) ? 'Enabled (Gemini + DeepSeek)' : 'Disabled';
-
     const pace = document.querySelector('[name=daily_limit]');
     document.getElementById('review-pace').textContent = (pace ? pace.value : '15') + ' new/day';
-
     const seq = document.querySelector('[name=sequence_count]');
     document.getElementById('review-seq').textContent = (seq ? seq.value : '3') + ' emails';
-
     const mode = document.querySelector('[name=send_mode]:checked');
     document.getElementById('review-mode').textContent = mode && mode.value === 'gmail' ? 'Your Gmail' : 'SalesSignal Email';
 }
@@ -534,7 +670,6 @@ function switchProspectTab(tab, btn) {
     document.querySelectorAll('.prospect-tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('tab-' + tab).classList.add('active');
-
     if (tab === 'leads') loadLeadFeed();
     else if (tab === 'contacts') loadContacts();
 }
@@ -544,7 +679,6 @@ function loadLeadFeed() {
     const source = document.getElementById('lead-source-filter').value;
     const urgency = document.getElementById('lead-urgency-filter').value;
     const region = document.getElementById('lead-region-filter').value.trim();
-
     let url = '/campaigns/leads-api/?';
     if (source) url += 'source_type=' + source + '&';
     if (urgency) url += 'urgency=' + urgency + '&';
