@@ -3,13 +3,16 @@ Email sending backends for SalesSignal outreach campaigns.
 
 Architecture:
   - EmailSender: abstract base class with send_email() method
+  - SendGridEmailSender: SendGrid v3 API (current default)
   - SESEmailSender: Amazon SES via boto3
   - InstantlyEmailSender: Instantly.ai API (stub for future)
-  - get_email_sender(): factory function that reads EMAIL_BACKEND setting
+  - GmailAPISender: Gmail OAuth2 for customer-connected Gmail
+  - get_email_sender(): factory function that reads OUTREACH_EMAIL_BACKEND setting
 
 Configuration (.env):
-  EMAIL_BACKEND=ses (default) or EMAIL_BACKEND=instantly
-  AWS_SES_ACCESS_KEY, AWS_SES_SECRET_KEY, AWS_SES_REGION
+  OUTREACH_EMAIL_BACKEND=sendgrid (default), ses, or instantly
+  SENDGRID_API_KEY (for SendGrid)
+  AWS_SES_ACCESS_KEY, AWS_SES_SECRET_KEY, AWS_SES_REGION (for SES)
   INSTANTLY_API_KEY (future)
 """
 import logging
@@ -229,13 +232,79 @@ class GmailAPISender(EmailSender):
         return {'max_24hr': 500, 'sent_24hr': 0, 'remaining': 500}
 
 
+class SendGridEmailSender(EmailSender):
+    """
+    SendGrid email sender using the sendgrid Python package.
+    Routes through sender.py's send_email() which handles CAN-SPAM footer,
+    unsubscribe checks, and domain warming tracking.
+    """
+
+    def __init__(self):
+        self.api_key = getattr(settings, 'SENDGRID_API_KEY', '')
+
+    def send_email(self, to_email, subject, body, from_email=None,
+                   reply_to=None, html_body=None, headers=None):
+        if not self.api_key:
+            logger.warning('[SendGrid] SENDGRID_API_KEY not configured')
+            return {'success': False, 'message_id': '', 'error': 'sendgrid_not_configured'}
+
+        from_email = from_email or getattr(settings, 'ALERT_FROM_EMAIL', 'support@salessignalai.com')
+
+        try:
+            import sendgrid
+            from sendgrid.helpers.mail import Mail, Email, To, Content
+
+            sg = sendgrid.SendGridAPIClient(api_key=self.api_key)
+
+            message = Mail(
+                from_email=Email(from_email),
+                to_emails=To(to_email),
+                subject=subject,
+                plain_text_content=Content('text/plain', body),
+            )
+
+            if html_body:
+                from sendgrid.helpers.mail import Content as SGContent
+                message.add_content(SGContent('text/html', html_body))
+
+            if reply_to:
+                message.reply_to = Email(reply_to)
+
+            response = sg.send(message)
+
+            if response.status_code in (200, 201, 202):
+                message_id = response.headers.get('X-Message-Id', '')
+                logger.info(f'[SendGrid] Email sent to {to_email} (ID: {message_id})')
+
+                from .warming import record_send
+                record_send()
+
+                return {'success': True, 'message_id': message_id, 'error': ''}
+            else:
+                logger.error(f'[SendGrid] Error: {response.status_code} - {response.body}')
+                return {'success': False, 'message_id': '', 'error': f'status_{response.status_code}'}
+
+        except ImportError:
+            logger.warning('[SendGrid] sendgrid package not installed — pip install sendgrid')
+            return {'success': False, 'message_id': '', 'error': 'package_not_installed'}
+        except Exception as e:
+            logger.error(f'[SendGrid] Send failed for {to_email}: {e}')
+            return {'success': False, 'message_id': '', 'error': str(e)}
+
+    def check_quota(self):
+        # SendGrid trial: 100 emails/day. Paid plans vary.
+        # No simple API endpoint for quota — return conservative estimate.
+        return {'max_24hr': 100, 'sent_24hr': 0, 'remaining': 100}
+
+
 def get_email_sender(campaign=None):
     """
     Factory function to get the appropriate email sender backend.
 
     Priority:
-    1. If campaign uses Gmail (send_mode='gmail'), use GmailAPISender
-    2. Check EMAIL_BACKEND setting: 'ses' (default), 'instantly', 'sendgrid' (legacy)
+    1. If campaign has custom SMTP configured, use CustomSMTPSender (via sender.py)
+    2. If campaign uses Gmail (send_mode='gmail'), use GmailAPISender
+    3. Check OUTREACH_EMAIL_BACKEND setting: 'sendgrid' (default), 'ses', 'instantly'
     """
     # Check if campaign specifies Gmail
     if campaign and campaign.send_mode == 'gmail':
@@ -249,12 +318,14 @@ def get_email_sender(campaign=None):
         else:
             logger.warning(f'Campaign {campaign.name} set to Gmail but no token — falling back')
 
-    backend = getattr(settings, 'OUTREACH_EMAIL_BACKEND', 'ses')
+    backend = getattr(settings, 'OUTREACH_EMAIL_BACKEND', 'sendgrid')
 
-    if backend == 'ses':
+    if backend == 'sendgrid':
+        return SendGridEmailSender()
+    elif backend == 'ses':
         return SESEmailSender()
     elif backend == 'instantly':
         return InstantlyEmailSender()
     else:
-        # Fallback to SES
-        return SESEmailSender()
+        # Fallback to SendGrid
+        return SendGridEmailSender()
