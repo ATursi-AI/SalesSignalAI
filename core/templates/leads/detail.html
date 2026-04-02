@@ -251,6 +251,13 @@
                 </form>
                 {% endif %}
 
+                <!-- Send Email -->
+                {% if lead.contact_email %}
+                <a href="{% url 'compose_email' %}?to={{ lead.contact_email|urlencode }}&name={{ lead.contact_name|urlencode }}&lead_id={{ lead.id }}" class="btn-secondary btn-sm w-100" style="justify-content:center;color:#3B82F6;border-color:rgba(59,130,246,0.3);text-decoration:none;display:flex;align-items:center;gap:6px;">
+                    <i class="bi bi-envelope-fill"></i> Send Email
+                </a>
+                {% endif %}
+
                 <!-- Book Appointment -->
                 <a href="{% url 'crm_appointments' %}?contact_name={{ lead.contact_name|urlencode }}&phone={{ lead.contact_phone|urlencode }}&lead_id={{ lead.id }}" class="btn-secondary btn-sm w-100" style="justify-content:center;color:#0D9488;border-color:rgba(13,148,136,0.3);text-decoration:none;display:flex;align-items:center;gap:6px;">
                     <i class="bi bi-calendar-plus"></i> Book Appointment

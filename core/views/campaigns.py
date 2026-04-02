@@ -503,6 +503,52 @@ def _create_contact_from_prospect(prospect):
 
 
 @login_required
+def compose_email(request):
+    """Standalone email compose page with template support."""
+    from core.models.sales import EmailTemplate
+    templates = EmailTemplate.objects.all()
+    context = {
+        'templates': templates,
+        'to': request.GET.get('to', ''),
+        'name': request.GET.get('name', ''),
+        'subject': request.GET.get('subject', ''),
+        'lead_id': request.GET.get('lead_id', ''),
+        'contact_id': request.GET.get('contact_id', ''),
+    }
+    return render(request, 'email/compose.html', context)
+
+
+@login_required
+def email_templates_api(request):
+    """CRUD API for email templates."""
+    from core.models.sales import EmailTemplate
+
+    if request.method == 'GET':
+        templates = EmailTemplate.objects.all()
+        data = [{'id': t.id, 'name': t.name, 'category': t.category,
+                 'subject': t.subject, 'body': t.body} for t in templates]
+        return JsonResponse({'templates': data})
+
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        t = EmailTemplate.objects.create(
+            name=data['name'],
+            category=data.get('category', 'custom'),
+            subject=data.get('subject', ''),
+            body=data.get('body', ''),
+            created_by=request.user,
+        )
+        return JsonResponse({'ok': True, 'id': t.id, 'name': t.name})
+
+    if request.method == 'DELETE':
+        data = json.loads(request.body)
+        EmailTemplate.objects.filter(id=data.get('id')).delete()
+        return JsonResponse({'ok': True})
+
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@login_required
 def quick_send_email(request):
     """Send a quick one-off email via SendGrid (AJAX)."""
     if request.method != 'POST':

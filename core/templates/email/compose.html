@@ -1,0 +1,431 @@
+{% extends "base.html" %}
+
+{% block title %}Compose Email{% endblock %}
+{% block page_title %}Compose Email{% endblock %}
+
+{% block extra_css %}
+<style>
+.compose-container {
+    max-width: 780px;
+    margin: 0 auto;
+}
+.compose-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+.compose-header {
+    padding: 1.25rem 1.75rem;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.compose-header h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+.compose-body {
+    padding: 0;
+}
+.compose-field {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 0;
+}
+.compose-field label {
+    width: 70px;
+    padding: 0.75rem 0 0.75rem 1.75rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+.compose-field input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 0.75rem 1.75rem 0.75rem 0;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    outline: none;
+    font-family: inherit;
+}
+.compose-field input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+.compose-toolbar {
+    display: flex;
+    gap: 2px;
+    padding: 0.5rem 1.75rem;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+}
+.toolbar-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    padding: 0.35rem 0.55rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.15s;
+}
+.toolbar-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+.toolbar-btn.active {
+    background: rgba(13, 148, 136, 0.15);
+    color: #0D9488;
+}
+.compose-editor {
+    min-height: 320px;
+    padding: 1.25rem 1.75rem;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--text-primary);
+    outline: none;
+    overflow-y: auto;
+}
+.compose-editor:empty::before {
+    content: 'Write your message...';
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+.compose-footer {
+    padding: 1rem 1.75rem;
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+.send-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.6rem 1.5rem;
+    background: linear-gradient(135deg, #0D9488, #065F46);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+.send-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.send-btn.sending { pointer-events: none; }
+
+.template-select {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.8rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+    max-width: 220px;
+}
+
+.footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-msg {
+    font-size: 0.82rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    display: none;
+    align-items: center;
+    gap: 6px;
+}
+.status-msg.success {
+    display: flex;
+    background: rgba(16, 185, 129, 0.12);
+    color: #10B981;
+}
+.status-msg.error {
+    display: flex;
+    background: rgba(239, 68, 68, 0.12);
+    color: #EF4444;
+}
+
+/* Save Template Modal */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+.modal-backdrop.open { display: flex; }
+.modal-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    width: 400px;
+    max-width: 90vw;
+}
+.modal-box h3 {
+    font-size: 1rem;
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+}
+.modal-box .form-group {
+    margin-bottom: 0.75rem;
+}
+.modal-box label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+.modal-box input, .modal-box select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-family: inherit;
+}
+.modal-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="compose-container">
+    <div class="compose-card">
+        <div class="compose-header">
+            <h2><i class="bi bi-pencil-square" style="color:#0D9488;margin-right:8px;"></i>New Message</h2>
+            <span style="font-size:0.75rem;color:var(--text-muted);">via support@salessignalai.com</span>
+        </div>
+
+        <div class="compose-body">
+            <div class="compose-field">
+                <label>To</label>
+                <input type="email" id="to-field" placeholder="recipient@example.com" value="{{ to }}">
+            </div>
+            <div class="compose-field" id="cc-row" style="display:none;">
+                <label>Cc</label>
+                <input type="text" id="cc-field" placeholder="cc@example.com">
+            </div>
+            <div class="compose-field">
+                <label>Subject</label>
+                <input type="text" id="subject-field" placeholder="Subject" value="{{ subject }}">
+            </div>
+
+            <!-- Formatting Toolbar -->
+            <div class="compose-toolbar">
+                <button class="toolbar-btn" onclick="execFmt('bold')" title="Bold"><i class="bi bi-type-bold"></i></button>
+                <button class="toolbar-btn" onclick="execFmt('italic')" title="Italic"><i class="bi bi-type-italic"></i></button>
+                <button class="toolbar-btn" onclick="execFmt('underline')" title="Underline"><i class="bi bi-type-underline"></i></button>
+                <span style="width:1px;background:var(--border-subtle);margin:0 6px;"></span>
+                <button class="toolbar-btn" onclick="execFmt('insertUnorderedList')" title="Bullet list"><i class="bi bi-list-ul"></i></button>
+                <button class="toolbar-btn" onclick="execFmt('insertOrderedList')" title="Numbered list"><i class="bi bi-list-ol"></i></button>
+                <span style="width:1px;background:var(--border-subtle);margin:0 6px;"></span>
+                <button class="toolbar-btn" onclick="insertLink()" title="Insert link"><i class="bi bi-link-45deg"></i></button>
+                <button class="toolbar-btn" onclick="toggleCc()" title="Show Cc" id="cc-toggle"><i class="bi bi-people"></i> Cc</button>
+            </div>
+
+            <!-- Editor -->
+            <div class="compose-editor" id="email-body" contenteditable="true">{% if name %}Hi {{ name }},
+
+{% endif %}</div>
+        </div>
+
+        <div class="compose-footer">
+            <div class="footer-actions">
+                <button class="send-btn" id="send-btn" onclick="sendEmail()">
+                    <i class="bi bi-send-fill"></i> Send
+                </button>
+                <select class="template-select" id="template-select" onchange="loadTemplate(this.value)">
+                    <option value="">Load template...</option>
+                    {% for t in templates %}
+                    <option value="{{ t.id }}" data-subject="{{ t.subject }}" data-body="{{ t.body|escapejs }}">{{ t.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="footer-actions">
+                <button class="toolbar-btn" onclick="openSaveModal()" title="Save as template"><i class="bi bi-bookmark-plus"></i> Save Template</button>
+                <button class="toolbar-btn" onclick="discardEmail()" title="Discard"><i class="bi bi-trash3"></i></button>
+            </div>
+        </div>
+
+        <div class="status-msg" id="status-msg"></div>
+    </div>
+</div>
+
+<!-- Save Template Modal -->
+<div class="modal-backdrop" id="save-modal">
+    <div class="modal-box">
+        <h3>Save as Template</h3>
+        <div class="form-group">
+            <label>Template Name</label>
+            <input type="text" id="tpl-name" placeholder="e.g. Introduction Email">
+        </div>
+        <div class="form-group">
+            <label>Category</label>
+            <select id="tpl-category">
+                <option value="introduction">Introduction</option>
+                <option value="followup">Follow-up</option>
+                <option value="quote">Quote/Proposal</option>
+                <option value="appointment">Appointment</option>
+                <option value="thankyou">Thank You</option>
+                <option value="custom">Custom</option>
+            </select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary btn-sm" onclick="closeSaveModal()">Cancel</button>
+            <button class="btn-primary-glow btn-sm" onclick="saveTemplate()">Save</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const csrfToken = '{{ csrf_token }}';
+
+function execFmt(cmd) {
+    document.execCommand(cmd, false, null);
+    document.getElementById('email-body').focus();
+}
+
+function insertLink() {
+    const url = prompt('Enter URL:');
+    if (url) document.execCommand('createLink', false, url);
+}
+
+function toggleCc() {
+    const row = document.getElementById('cc-row');
+    row.style.display = row.style.display === 'none' ? 'flex' : 'none';
+}
+
+function loadTemplate(id) {
+    if (!id) return;
+    const opt = document.querySelector(`#template-select option[value="${id}"]`);
+    if (!opt) return;
+    const subject = opt.dataset.subject;
+    const body = opt.dataset.body;
+    if (subject) document.getElementById('subject-field').value = subject;
+    if (body) document.getElementById('email-body').innerHTML = body.replace(/\n/g, '<br>');
+    document.getElementById('template-select').value = '';
+}
+
+function showStatus(msg, type) {
+    const el = document.getElementById('status-msg');
+    el.className = 'status-msg ' + type;
+    el.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${msg}`;
+    if (type === 'success') setTimeout(() => { el.className = 'status-msg'; }, 4000);
+}
+
+async function sendEmail() {
+    const btn = document.getElementById('send-btn');
+    const to = document.getElementById('to-field').value.trim();
+    const subject = document.getElementById('subject-field').value.trim();
+    const body = document.getElementById('email-body').innerHTML.trim();
+    const cc = document.getElementById('cc-field')?.value.trim() || '';
+
+    if (!to || !subject || !body || body === '<br>') {
+        showStatus('Please fill in To, Subject, and Body', 'error');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Sending...';
+    btn.classList.add('sending');
+
+    try {
+        const resp = await fetch('{% url "quick_send_email" %}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+            body: JSON.stringify({to, subject, body, cc}),
+        });
+        const data = await resp.json();
+        if (data.ok) {
+            showStatus('Email sent successfully!', 'success');
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Sent!';
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-send-fill"></i> Send';
+                btn.classList.remove('sending');
+            }, 3000);
+        } else {
+            showStatus(data.error || 'Failed to send', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-send-fill"></i> Send';
+            btn.classList.remove('sending');
+        }
+    } catch(e) {
+        showStatus('Network error', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-send-fill"></i> Send';
+        btn.classList.remove('sending');
+    }
+}
+
+function discardEmail() {
+    if (confirm('Discard this email?')) {
+        document.getElementById('to-field').value = '';
+        document.getElementById('subject-field').value = '';
+        document.getElementById('email-body').innerHTML = '';
+        document.getElementById('cc-field').value = '';
+        document.getElementById('status-msg').className = 'status-msg';
+    }
+}
+
+function openSaveModal() { document.getElementById('save-modal').classList.add('open'); }
+function closeSaveModal() { document.getElementById('save-modal').classList.remove('open'); }
+
+async function saveTemplate() {
+    const name = document.getElementById('tpl-name').value.trim();
+    const category = document.getElementById('tpl-category').value;
+    const subject = document.getElementById('subject-field').value.trim();
+    const body = document.getElementById('email-body').innerText.trim();
+
+    if (!name) { alert('Template name is required'); return; }
+
+    const resp = await fetch('{% url "email_templates_api" %}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+        body: JSON.stringify({name, category, subject, body}),
+    });
+    const data = await resp.json();
+    if (data.ok) {
+        closeSaveModal();
+        showStatus(`Template "${name}" saved!`, 'success');
+        // Add to dropdown
+        const sel = document.getElementById('template-select');
+        const opt = document.createElement('option');
+        opt.value = data.id;
+        opt.textContent = name;
+        opt.dataset.subject = subject;
+        opt.dataset.body = body;
+        sel.appendChild(opt);
+    }
+}
+</script>
+{% endblock %}

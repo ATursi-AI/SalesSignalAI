@@ -52,6 +52,11 @@
                     </div>
                 </div>
 
+                {% if contact.email %}
+                <a href="{% url 'compose_email' %}?to={{ contact.email|urlencode }}&name={{ contact.name|urlencode }}&contact_id={{ contact.id }}" class="btn-primary-glow btn-sm btn-block" style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:0.5rem;">
+                    <i class="bi bi-envelope-fill"></i> Send Email
+                </a>
+                {% endif %}
                 <button class="btn-secondary btn-sm btn-block" onclick="showEditModal()">
                     <i class="bi bi-pencil"></i> Edit Contact
                 </button>
