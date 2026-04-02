@@ -128,16 +128,18 @@ class Command(BaseCommand):
         where_clause = f"inspectiondate >= '{since}' AND violationstatus = 'Open'"
         if borough:
             boro_upper = borough.upper().replace('_', ' ')
-            where_clause += f" AND upper(boroname) = '{boro_upper}'"
+            where_clause += f" AND upper(boro) = '{boro_upper}'"
 
         params = {
             '$where': where_clause,
             '$select': (
-                'violationid,inspectiondate,approveddate,currentstatusdate,'
+                'violationid,buildingid,registrationid,'
+                'inspectiondate,approveddate,currentstatusdate,'
                 'currentstatus,violationstatus,class,'
-                'ordernumber,novdescription,novissueddate,'
-                'boroid,boroname,block,lot,streetaddress,apartment,zip,'
-                'story'
+                'ordernumber,novid,novdescription,novissueddate,novtype,'
+                'boroid,boro,housenumber,lowhousenumber,highhousenumber,'
+                'streetname,streetcode,block,lot,zip,apartment,story,'
+                'rentimpairing'
             ),
             '$limit': limit,
             '$order': 'inspectiondate DESC',
@@ -161,7 +163,9 @@ class Command(BaseCommand):
             # Group by building (block + lot + boroid)
             buildings = {}
             for rec in records:
-                address = (rec.get('streetaddress', '') or '').strip()
+                housenumber = (rec.get('housenumber', '') or '').strip()
+                streetname = (rec.get('streetname', '') or '').strip()
+                address = f"{housenumber} {streetname}".strip()
                 boroid = rec.get('boroid', '')
                 block = rec.get('block', '')
                 lot = rec.get('lot', '')
@@ -171,7 +175,7 @@ class Command(BaseCommand):
                 key = f"{boroid}-{block}-{lot}"
                 if key not in buildings:
                     boro_name = BOROUGH_MAP.get(
-                        rec.get('boroname', '').upper(),
+                        (rec.get('boro', '') or '').upper(),
                         BOROUGH_MAP.get(str(boroid), 'NYC')
                     )
                     buildings[key] = {

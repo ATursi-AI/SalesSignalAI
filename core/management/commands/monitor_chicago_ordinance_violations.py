@@ -113,12 +113,11 @@ class Command(BaseCommand):
                 f"case_disposition IS NOT NULL"
             ),
             '$select': (
-                'case_id,violation_date,violation_location,'
-                'violation_code,violation_description,'
-                'respondents,case_disposition,imposed_fine,current_amount_due,'
-                'hearing_date,hearing_status,'
-                'issuing_department,violation_type,'
-                'address,latitude,longitude'
+                'id,docket_number,nov_number,'
+                'violation_date,violation_code,violation_description,'
+                'respondents,case_disposition,imposed_fine,admin_costs,'
+                'hearing_date,issuing_department,'
+                'address,ward,latitude,longitude'
             ),
             '$limit': limit,
             '$order': 'violation_date DESC',
@@ -157,17 +156,16 @@ class Command(BaseCommand):
                     }
 
                 case = {
-                    'case_id': rec.get('case_id', ''),
+                    'id': rec.get('id', ''),
+                    'docket': rec.get('docket_number', ''),
                     'date': rec.get('violation_date', ''),
                     'code': rec.get('violation_code', ''),
                     'description': (rec.get('violation_description', '') or '').strip(),
-                    'location': (rec.get('violation_location', '') or '').strip(),
                     'disposition': (rec.get('case_disposition', '') or '').strip(),
                     'imposed_fine': rec.get('imposed_fine', ''),
-                    'amount_due': rec.get('current_amount_due', ''),
+                    'admin_costs': rec.get('admin_costs', ''),
                     'department': (rec.get('issuing_department', '') or '').strip(),
-                    'violation_type': (rec.get('violation_type', '') or '').strip(),
-                    'hearing_status': (rec.get('hearing_status', '') or '').strip(),
+                    'ward': rec.get('ward', ''),
                 }
                 properties[key]['cases'].append(case)
 
@@ -188,24 +186,25 @@ class Command(BaseCommand):
 
                 # Calculate total fines
                 total_fine = 0
-                total_due = 0
+                total_admin = 0
                 for c in cases:
                     try:
                         total_fine += float(c['imposed_fine'] or 0)
                     except (ValueError, TypeError):
                         pass
                     try:
-                        total_due += float(c['amount_due'] or 0)
+                        total_admin += float(c['admin_costs'] or 0)
                     except (ValueError, TypeError):
                         pass
 
                 # Urgency: high fines or multiple cases
-                if total_due >= 5000 or len(cases) >= 5:
+                total_cost = total_fine + total_admin
+                if total_cost >= 5000 or len(cases) >= 5:
                     urgency = 'hot'
-                    urgency_note = f'${total_due:,.0f} outstanding — {len(cases)} violations'
-                elif total_due >= 1000 or len(cases) >= 3:
+                    urgency_note = f'${total_cost:,.0f} in fines — {len(cases)} violations'
+                elif total_cost >= 1000 or len(cases) >= 3:
                     urgency = 'warm'
-                    urgency_note = f'${total_due:,.0f} in fines — {len(cases)} violations'
+                    urgency_note = f'${total_cost:,.0f} in fines — {len(cases)} violations'
                 else:
                     urgency = 'new'
                     urgency_note = 'Ordinance violation filed'
@@ -229,8 +228,8 @@ class Command(BaseCommand):
                 content_parts.append(f'Cases: {len(cases)}')
                 if total_fine > 0:
                     content_parts.append(f'Total Fines Imposed: ${total_fine:,.0f}')
-                if total_due > 0:
-                    content_parts.append(f'Amount Due: ${total_due:,.0f}')
+                if total_admin > 0:
+                    content_parts.append(f'Admin Costs: ${total_admin:,.0f}')
                 if posted_at:
                     days_ago = (timezone.now() - posted_at).days
                     content_parts.append(f'Most recent: {days_ago} days ago')
@@ -256,7 +255,7 @@ class Command(BaseCommand):
                 content = '\n'.join(content_parts)
 
                 if dry_run:
-                    self.stdout.write(f"  [DRY] {respondent or address} — {len(cases)} cases — ${total_due:,.0f} due — {urgency.upper()}")
+                    self.stdout.write(f"  [DRY] {respondent or address} — {len(cases)} cases — ${total_cost:,.0f} fines — {urgency.upper()}")
                     for c in cases[:2]:
                         self.stdout.write(f"         - {c['description'][:80]}")
                     stats['created'] += 1
@@ -275,7 +274,7 @@ class Command(BaseCommand):
                             'address': full_addr,
                             'case_count': len(cases),
                             'total_fine': total_fine,
-                            'amount_due': total_due,
+                            'admin_costs': total_admin,
                             'urgency': urgency,
                             'services_mapped': services,
                         },
