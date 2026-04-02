@@ -46,8 +46,23 @@ MONITOR_SCHEDULE = [
     ('monitor_sf_building_violations', {'days': 7}, 24, 'SF Building Violations', 'public_records'),
     ('monitor_sf_permits', {'days': 7}, 24, 'SF Building Permits', 'public_records'),
 
+    # Chicago — Building Violations, Ordinance Violations
+    ('monitor_chicago_building_violations', {'days': 7}, 24, 'Chicago Building Violations', 'public_records'),
+    ('monitor_chicago_ordinance_violations', {'days': 14}, 24, 'Chicago Ordinance Violations', 'public_records'),
+
+    # NYC — HPD Housing Violations (by borough)
+    ('monitor_nyc_hpd_violations', {'borough': 'queens', 'days': 7}, 12, 'NYC HPD Violations — Queens', 'public_records'),
+    ('monitor_nyc_hpd_violations', {'borough': 'brooklyn', 'days': 7}, 12, 'NYC HPD Violations — Brooklyn', 'public_records'),
+    ('monitor_nyc_hpd_violations', {'borough': 'manhattan', 'days': 7}, 12, 'NYC HPD Violations — Manhattan', 'public_records'),
+    ('monitor_nyc_hpd_violations', {'borough': 'bronx', 'days': 7}, 12, 'NYC HPD Violations — Bronx', 'public_records'),
+    ('monitor_nyc_hpd_violations', {'borough': 'staten_island', 'days': 7}, 12, 'NYC HPD Violations — Staten Island', 'public_records'),
+
+    # NYC — OATH/ECB Administrative Summonses
+    ('monitor_nyc_ecb_summonses', {'days': 14}, 24, 'NYC ECB Summonses', 'public_records'),
+
     # ── HEALTH INSPECTIONS ────────────────────────────────────────
     ('monitor_health_inspections', {'days': 7}, 24, 'NYC Health Inspections', 'health'),
+    ('monitor_chicago_food_inspections', {'days': 7}, 24, 'Chicago Food Inspections', 'health'),
     ('monitor_vegas_health', {'days': 7}, 24, 'Las Vegas Health (SNHD)', 'health'),
     ('monitor_maricopa_health', {'days': 7}, 24, 'Phoenix/Maricopa Health', 'health'),
     ('monitor_pima_health', {'days': 7}, 24, 'Tucson/Pima Health', 'health'),
@@ -55,10 +70,6 @@ MONITOR_SCHEDULE = [
     ('monitor_ca_health', {'county': 'san_diego', 'days': 7}, 24, 'San Diego Health', 'health'),
     ('monitor_ca_health', {'county': 'santa_clara', 'days': 7}, 24, 'Santa Clara Health', 'health'),
     ('monitor_ca_health', {'county': 'la', 'days': 120}, 168, 'LA County Health (weekly)', 'health'),
-    ('monitor_myhealthdept', {'jurisdiction': 'denver', 'days': 7}, 24, 'Denver Health', 'health'),
-    ('monitor_myhealthdept', {'jurisdiction': 'portland', 'days': 14}, 24, 'Portland Health', 'health'),
-    ('monitor_myhealthdept', {'jurisdiction': 'colorado_springs', 'days': 7}, 24, 'Colorado Springs Health', 'health'),
-    ('monitor_myhealthdept', {'jurisdiction': 'honolulu', 'days': 7}, 24, 'Honolulu Health', 'health'),
 
     # ── SOCIAL MEDIA ──────────────────────────────────────────────
     ('monitor_reddit', {'days': 3}, 12, 'Reddit — Local Subs', 'social_media'),
