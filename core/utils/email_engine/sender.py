@@ -149,7 +149,7 @@ def send_email(to_email, subject, body, from_email=None, reply_to=None,
         if reply_to:
             message.reply_to = Email(reply_to)
 
-        response = sg.client.mail.send.post(request_body=message.get())
+        response = sg.send(message)
 
         if response.status_code in (200, 201, 202):
             message_id = response.headers.get('X-Message-Id', '')
