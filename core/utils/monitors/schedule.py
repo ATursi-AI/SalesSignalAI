@@ -112,7 +112,13 @@ MONITOR_SCHEDULE = [
     ('monitor_ca_health', {'county': 'la', 'days': 120}, 168, 'LA County Health (weekly)', 'health'),
 
     # ── SOCIAL MEDIA ──────────────────────────────────────────────
-    ('monitor_reddit', {'days': 3}, 12, 'Reddit — Local Subs', 'social_media'),
+    ('monitor_reddit', {'state': 'NY', 'max_age_hours': 48}, 12, 'Reddit — NY', 'social_media'),
+    ('monitor_reddit', {'state': 'CA', 'max_age_hours': 48}, 12, 'Reddit — CA', 'social_media'),
+    ('monitor_reddit', {'state': 'TX', 'max_age_hours': 48}, 12, 'Reddit — TX', 'social_media'),
+    ('monitor_reddit', {'state': 'IL', 'max_age_hours': 48}, 12, 'Reddit — IL', 'social_media'),
+    ('monitor_reddit', {'state': 'WA', 'max_age_hours': 48}, 12, 'Reddit — WA', 'social_media'),
+    ('monitor_reddit', {'state': 'MD', 'max_age_hours': 48}, 12, 'Reddit — MD', 'social_media'),
+    ('monitor_reddit', {'state': 'CT', 'max_age_hours': 48}, 12, 'Reddit — CT', 'social_media'),
     ('monitor_nextdoor_search', {'days': 3}, 12, 'Nextdoor Search', 'social_media'),
     ('monitor_facebook_apify', {'days': 3}, 24, 'Facebook Groups (Apify)', 'social_media'),
     ('monitor_twitter_apify', {'days': 3}, 24, 'Twitter/X (Apify)', 'social_media'),

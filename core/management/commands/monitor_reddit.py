@@ -22,8 +22,10 @@ class Command(BaseCommand):
                             help=f'Subreddits to scan (default: auto based on --state)')
         parser.add_argument('--max-age-hours', type=int, default=48, help='Max post age in hours (default: 48)')
         parser.add_argument('--remote', action='store_true', help='POST leads to REMOTE_INGEST_URL')
-        parser.add_argument('--state', type=str, choices=['NY', 'CA', 'ALL'], default='ALL',
-                            help='Filter by state: NY, CA, or ALL (default: ALL)')
+        parser.add_argument('--state', type=str,
+                            choices=['NY', 'CA', 'TX', 'IL', 'WA', 'MD', 'CT', 'ALL'],
+                            default='ALL',
+                            help='Filter by state: NY, CA, TX, IL, WA, MD, CT, or ALL (default: ALL)')
         parser.add_argument('--use-apify', action='store_true', help='Use Apify as fallback when Reddit rate limits')
 
     def handle(self, *args, **options):

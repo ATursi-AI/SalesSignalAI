@@ -6,8 +6,8 @@ Fetches /r/{subreddit}/new.json for each configured subreddit,
 matches posts against service keywords, extracts location, and
 creates Lead records via the standard process_lead() pipeline.
 
-Supports NY + CA local subreddits, trade-specific national subs,
-and state-based geo filtering.
+Supports NY, CA, TX, IL, WA, MD, CT local subreddits, trade-specific
+national subs, and state-based geo filtering.
 """
 import json
 import logging
@@ -42,6 +42,38 @@ CA_LOCAL_SUBREDDITS = [
     'Sacramento',
 ]
 
+TX_LOCAL_SUBREDDITS = [
+    # Austin
+    'Austin', 'austinjobs',
+    # Dallas / Fort Worth
+    'Dallas', 'FortWorth', 'askdfw', 'plano', 'frisco',
+    # Houston
+    'houston',
+    # San Antonio
+    'sanantonio',
+    # General Texas
+    'texas',
+]
+
+IL_LOCAL_SUBREDDITS = [
+    'chicago', 'ChicagoSuburbs', 'chicagoapartments',
+]
+
+WA_LOCAL_SUBREDDITS = [
+    'Seattle', 'seattlehomes', 'Tacoma', 'Bellevue', 'everett',
+    'olympia', 'washington',
+]
+
+MD_LOCAL_SUBREDDITS = [
+    'MontgomeryCountyMD', 'maryland', 'bethesda', 'rockville',
+    'SilverSpring', 'FrederickMD', 'baltimore',
+]
+
+CT_LOCAL_SUBREDDITS = [
+    'Connecticut', 'stamford', 'newhaven', 'Hartford',
+    'Fairfield', 'Bridgeport',
+]
+
 NATIONAL_SUBREDDITS = [
     'HomeImprovement', 'personalfinance', 'firsttimehomebuyer',
     'insurance', 'RealEstate', 'Moving', 'legaladvice', 'smallbusiness',
@@ -51,6 +83,23 @@ TRADE_SUBREDDITS = [
     'HVAC', 'Plumbing', 'Electricians', 'Roofing', 'Carpentry',
     'fixit', 'HomeRepair', 'Appliances', 'Landlord', 'homeowners', 'Home',
 ]
+
+# State -> subreddits map for easy lookup
+STATE_SUBREDDITS = {
+    'NY': NY_LOCAL_SUBREDDITS,
+    'CA': CA_LOCAL_SUBREDDITS,
+    'TX': TX_LOCAL_SUBREDDITS,
+    'IL': IL_LOCAL_SUBREDDITS,
+    'WA': WA_LOCAL_SUBREDDITS,
+    'MD': MD_LOCAL_SUBREDDITS,
+    'CT': CT_LOCAL_SUBREDDITS,
+}
+
+ALL_LOCAL_SUBREDDITS = (
+    NY_LOCAL_SUBREDDITS + CA_LOCAL_SUBREDDITS + TX_LOCAL_SUBREDDITS +
+    IL_LOCAL_SUBREDDITS + WA_LOCAL_SUBREDDITS + MD_LOCAL_SUBREDDITS +
+    CT_LOCAL_SUBREDDITS
+)
 
 # Keep backward compat
 LOCAL_SUBREDDITS = NY_LOCAL_SUBREDDITS
@@ -153,6 +202,147 @@ def _has_ca_area_reference(text):
 
 
 # ─────────────────────────────────────────────────────────────
+# Texas geo terms
+# ─────────────────────────────────────────────────────────────
+_TX_AREA_TERMS = [
+    # Austin
+    'austin', 'round rock', 'cedar park', 'pflugerville', 'georgetown',
+    'leander', 'lakeway', 'bee cave', 'dripping springs', 'kyle',
+    'buda', 'manor', 'bastrop', 'travis county', 'williamson county',
+    # Dallas / Fort Worth
+    'dallas', 'fort worth', 'arlington', 'plano', 'irving', 'garland',
+    'frisco', 'mckinney', 'denton', 'richardson', 'mesquite', 'carrollton',
+    'lewisville', 'allen', 'flower mound', 'rowlett', 'rockwall',
+    'dallas county', 'tarrant county', 'collin county', 'denton county',
+    'dfw', 'north texas',
+    # Houston
+    'houston', 'sugar land', 'katy', 'the woodlands', 'pearland',
+    'pasadena', 'baytown', 'league city', 'missouri city', 'cypress',
+    'spring', 'humble', 'conroe', 'tomball', 'harris county',
+    'fort bend county', 'montgomery county tx',
+    # San Antonio
+    'san antonio', 'new braunfels', 'schertz', 'boerne', 'bexar county',
+    # General
+    'texas', 'tx',
+]
+
+_tx_area_re = re.compile(
+    r'\b(?:' + '|'.join(re.escape(t) for t in _TX_AREA_TERMS) + r')\b',
+    re.IGNORECASE,
+)
+
+
+def _has_tx_area_reference(text):
+    return bool(_tx_area_re.search(text))
+
+
+# ─────────────────────────────────────────────────────────────
+# Illinois geo terms
+# ─────────────────────────────────────────────────────────────
+_IL_AREA_TERMS = [
+    'chicago', 'evanston', 'oak park', 'naperville', 'aurora', 'joliet',
+    'schaumburg', 'skokie', 'des plaines', 'arlington heights',
+    'palatine', 'mount prospect', 'waukegan', 'elgin', 'cicero',
+    'berwyn', 'oak lawn', 'tinley park', 'orland park', 'bolingbrook',
+    'wheaton', 'downers grove', 'lombard', 'elmhurst', 'glen ellyn',
+    'cook county', 'dupage county', 'lake county il', 'will county',
+    'kane county', 'chicagoland', 'illinois', 'il',
+]
+
+_il_area_re = re.compile(
+    r'\b(?:' + '|'.join(re.escape(t) for t in _IL_AREA_TERMS) + r')\b',
+    re.IGNORECASE,
+)
+
+
+def _has_il_area_reference(text):
+    return bool(_il_area_re.search(text))
+
+
+# ─────────────────────────────────────────────────────────────
+# Washington geo terms
+# ─────────────────────────────────────────────────────────────
+_WA_AREA_TERMS = [
+    'seattle', 'bellevue', 'tacoma', 'everett', 'redmond', 'kirkland',
+    'renton', 'kent', 'federal way', 'auburn', 'burien', 'tukwila',
+    'shoreline', 'lynnwood', 'edmonds', 'bothell', 'woodinville',
+    'issaquah', 'sammamish', 'mercer island', 'bainbridge island',
+    'olympia', 'lacey', 'tumwater', 'spokane', 'vancouver wa',
+    'king county', 'pierce county', 'snohomish county', 'thurston county',
+    'puget sound', 'pacific northwest', 'pnw', 'washington state',
+]
+
+_wa_area_re = re.compile(
+    r'\b(?:' + '|'.join(re.escape(t) for t in _WA_AREA_TERMS) + r')\b',
+    re.IGNORECASE,
+)
+
+
+def _has_wa_area_reference(text):
+    return bool(_wa_area_re.search(text))
+
+
+# ─────────────────────────────────────────────────────────────
+# Maryland geo terms
+# ─────────────────────────────────────────────────────────────
+_MD_AREA_TERMS = [
+    'montgomery county', 'bethesda', 'silver spring', 'rockville',
+    'germantown', 'gaithersburg', 'chevy chase', 'potomac', 'olney',
+    'wheaton', 'takoma park', 'kensington', 'columbia', 'ellicott city',
+    'laurel', 'bowie', 'annapolis', 'frederick', 'hagerstown',
+    'baltimore', 'towson', 'college park', 'hyattsville', 'greenbelt',
+    'prince george', 'howard county', 'anne arundel', 'baltimore county',
+    'maryland', 'md', 'dmv area',
+]
+
+_md_area_re = re.compile(
+    r'\b(?:' + '|'.join(re.escape(t) for t in _MD_AREA_TERMS) + r')\b',
+    re.IGNORECASE,
+)
+
+
+def _has_md_area_reference(text):
+    return bool(_md_area_re.search(text))
+
+
+# ─────────────────────────────────────────────────────────────
+# Connecticut geo terms
+# ─────────────────────────────────────────────────────────────
+_CT_AREA_TERMS = [
+    'connecticut', 'stamford', 'bridgeport', 'new haven', 'hartford',
+    'waterbury', 'norwalk', 'danbury', 'greenwich', 'fairfield',
+    'west hartford', 'milford', 'stratford', 'shelton', 'trumbull',
+    'darien', 'westport', 'new canaan', 'ridgefield', 'newtown',
+    'glastonbury', 'simsbury', 'avon', 'farmington', 'manchester',
+    'enfield', 'east hartford', 'middletown', 'meriden', 'wallingford',
+    'hamden', 'guilford', 'madison', 'branford', 'cheshire',
+    'fairfield county', 'hartford county', 'new haven county',
+    'ct',
+]
+
+_ct_area_re = re.compile(
+    r'\b(?:' + '|'.join(re.escape(t) for t in _CT_AREA_TERMS) + r')\b',
+    re.IGNORECASE,
+)
+
+
+def _has_ct_area_reference(text):
+    return bool(_ct_area_re.search(text))
+
+
+# Combined geo-detection map for all states
+_STATE_GEO_DETECTORS = {
+    'NY': _has_nyc_area_reference,
+    'CA': _has_ca_area_reference,
+    'TX': _has_tx_area_reference,
+    'IL': _has_il_area_reference,
+    'WA': _has_wa_area_reference,
+    'MD': _has_md_area_reference,
+    'CT': _has_ct_area_reference,
+}
+
+
+# ─────────────────────────────────────────────────────────────
 # Urgency detection
 # ─────────────────────────────────────────────────────────────
 URGENCY_KEYWORDS = [
@@ -205,21 +395,21 @@ def _is_provider_not_consumer(text):
 
 
 def _is_local_subreddit(subreddit):
-    all_local = [s.lower() for s in NY_LOCAL_SUBREDDITS + CA_LOCAL_SUBREDDITS]
+    all_local = [s.lower() for s in ALL_LOCAL_SUBREDDITS]
     return subreddit.lower() in all_local
 
 
 def _detect_state(subreddit, content):
     """Detect which state a post belongs to based on subreddit + content."""
     sub_lower = subreddit.lower()
-    if sub_lower in [s.lower() for s in NY_LOCAL_SUBREDDITS]:
-        return 'NY'
-    if sub_lower in [s.lower() for s in CA_LOCAL_SUBREDDITS]:
-        return 'CA'
-    if _has_nyc_area_reference(content):
-        return 'NY'
-    if _has_ca_area_reference(content):
-        return 'CA'
+    # Check subreddit membership first (fast)
+    for state_code, subs in STATE_SUBREDDITS.items():
+        if sub_lower in [s.lower() for s in subs]:
+            return state_code
+    # Fall back to content geo-matching
+    for state_code, detector in _STATE_GEO_DETECTORS.items():
+        if detector(content):
+            return state_code
     return ''
 
 
@@ -308,17 +498,14 @@ def monitor_reddit(subreddits=None, max_age_hours=48, dry_run=False, remote=Fals
     Main monitoring function. Scans subreddits for service-related posts.
 
     Args:
-        state: 'NY', 'CA', or 'ALL' — controls which subs to scan and geo filter
+        state: 'NY', 'CA', 'TX', 'IL', 'WA', 'MD', 'CT', or 'ALL'
         use_apify: if True, try Apify when direct fetch fails
     """
     if subreddits is None:
-        if state == 'NY':
-            subreddits = NY_LOCAL_SUBREDDITS + NATIONAL_SUBREDDITS + TRADE_SUBREDDITS
-        elif state == 'CA':
-            subreddits = CA_LOCAL_SUBREDDITS + NATIONAL_SUBREDDITS + TRADE_SUBREDDITS
+        if state in STATE_SUBREDDITS:
+            subreddits = STATE_SUBREDDITS[state] + NATIONAL_SUBREDDITS + TRADE_SUBREDDITS
         else:
-            subreddits = (NY_LOCAL_SUBREDDITS + CA_LOCAL_SUBREDDITS +
-                          NATIONAL_SUBREDDITS + TRADE_SUBREDDITS)
+            subreddits = ALL_LOCAL_SUBREDDITS + NATIONAL_SUBREDDITS + TRADE_SUBREDDITS
 
     # Remote config
     ingest_url = ''
@@ -386,17 +573,20 @@ def monitor_reddit(subreddits=None, max_age_hours=48, dry_run=False, remote=Fals
 
                 # Geo filter for non-local subs
                 if not is_local:
-                    has_ny = _has_nyc_area_reference(content)
-                    has_ca = _has_ca_area_reference(content)
-                    if state == 'NY' and not has_ny:
-                        stats['geo_filtered'] += 1
-                        continue
-                    elif state == 'CA' and not has_ca:
-                        stats['geo_filtered'] += 1
-                        continue
-                    elif state == 'ALL' and not (has_ny or has_ca):
-                        stats['geo_filtered'] += 1
-                        continue
+                    if state in STATE_SUBREDDITS:
+                        # Single-state mode: must match that state
+                        detector = _STATE_GEO_DETECTORS.get(state)
+                        if detector and not detector(content):
+                            stats['geo_filtered'] += 1
+                            continue
+                    else:
+                        # ALL mode: must match at least one served state
+                        has_any = any(
+                            det(content) for det in _STATE_GEO_DETECTORS.values()
+                        )
+                        if not has_any:
+                            stats['geo_filtered'] += 1
+                            continue
 
                 # Intent filter
                 if _is_provider_not_consumer(content):
