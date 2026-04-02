@@ -60,6 +60,46 @@ MONITOR_SCHEDULE = [
     # NYC — OATH/ECB Administrative Summonses
     ('monitor_nyc_ecb_summonses', {'days': 14}, 24, 'NYC ECB Summonses', 'public_records'),
 
+    # ── LOS ANGELES ──────────────────────────────────────────────
+    ('monitor_la_code_enforcement', {'days': 14}, 24, 'LA Code Enforcement Cases', 'public_records'),
+    ('monitor_la_certificate_occupancy', {'days': 14}, 24, 'LA Certificate of Occupancy', 'public_records'),
+    ('monitor_la_building_permits', {'days': 7}, 24, 'LA Building Permits', 'public_records'),
+
+    # ── SAN FRANCISCO ────────────────────────────────────────────
+    ('monitor_sf_fire_violations', {'days': 7}, 24, 'SF Fire Violations', 'public_records'),
+    ('monitor_sf_health_inspections', {'days': 7}, 24, 'SF Health Inspections', 'health'),
+    ('monitor_sf_boiler_permits', {'days': 14}, 24, 'SF Boiler Permits', 'public_records'),
+    ('monitor_sf_permit_contacts', {'days': 7}, 24, 'SF Permit Contacts (Plumbing/Electrical/Building)', 'public_records'),
+
+    # ── AUSTIN ───────────────────────────────────────────────────
+    ('monitor_austin_construction_permits', {'days': 7}, 24, 'Austin Construction Permits', 'public_records'),
+    ('monitor_austin_food_inspections', {'days': 7}, 24, 'Austin Food Inspections', 'health'),
+    ('monitor_austin_pool_inspections', {'days': 14}, 24, 'Austin Pool Inspections', 'health'),
+    ('monitor_austin_repeat_offender', {'days': 30}, 24, 'Austin Repeat Offender Properties', 'public_records'),
+
+    # ── DALLAS ───────────────────────────────────────────────────
+    ('monitor_dallas_code_violations', {'days': 14}, 24, 'Dallas Code Violations', 'public_records'),
+
+    # ── SEATTLE ──────────────────────────────────────────────────
+    ('monitor_seattle_code_complaints', {'days': 14}, 24, 'Seattle Code Complaints', 'public_records'),
+    ('monitor_seattle_building_permits', {'days': 7}, 24, 'Seattle Building Permits', 'public_records'),
+    ('monitor_seattle_electrical_permits', {'days': 7}, 24, 'Seattle Electrical Permits', 'public_records'),
+    ('monitor_seattle_trade_permits', {'days': 7}, 24, 'Seattle Trade Permits', 'public_records'),
+
+    # ── TEXAS STATEWIDE ──────────────────────────────────────────
+    ('monitor_tceq_violations', {'days': 30}, 24, 'TCEQ Environmental Violations', 'public_records'),
+    ('monitor_tceq_remediation', {'days': 30}, 24, 'TCEQ Remediation Sites', 'public_records'),
+
+    # ── MONTGOMERY COUNTY MD ─────────────────────────────────────
+    ('monitor_mc_housing_violations', {'days': 14}, 24, 'MC Housing Violations', 'public_records'),
+    ('monitor_mc_permits', {'days': 7}, 24, 'MC Permits (7 types)', 'public_records'),
+    ('monitor_mc_alcohol_violations', {'days': 30}, 24, 'MC Alcohol Violations', 'public_records'),
+
+    # ── CONNECTICUT ──────────────────────────────────────────────
+    ('monitor_ct_contaminated_sites', {'days': 30}, 24, 'CT Contaminated Sites', 'public_records'),
+    ('monitor_ct_liquor_suspensions', {'days': 30}, 24, 'CT Liquor Suspensions', 'public_records'),
+    ('monitor_ct_storage_tanks', {'days': 30}, 24, 'CT Storage Tanks', 'public_records'),
+
     # ── HEALTH INSPECTIONS ────────────────────────────────────────
     ('monitor_health_inspections', {'days': 7}, 24, 'NYC Health Inspections', 'health'),
     ('monitor_chicago_food_inspections', {'days': 7}, 24, 'Chicago Food Inspections', 'health'),
