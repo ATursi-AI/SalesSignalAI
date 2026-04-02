@@ -47,8 +47,9 @@ TX_LOCAL_SUBREDDITS = [
     'Austin', 'austinjobs',
     # Dallas / Fort Worth
     'Dallas', 'FortWorth', 'askdfw', 'plano', 'frisco',
+    'mckinney', 'denton', 'Arlington',
     # Houston
-    'houston',
+    'houston', 'HoustonClassifieds',
     # San Antonio
     'sanantonio',
     # General Texas
@@ -57,21 +58,23 @@ TX_LOCAL_SUBREDDITS = [
 
 IL_LOCAL_SUBREDDITS = [
     'chicago', 'ChicagoSuburbs', 'chicagoapartments',
+    'chicagofood', 'Naperville', 'evanston',
 ]
 
 WA_LOCAL_SUBREDDITS = [
-    'Seattle', 'seattlehomes', 'Tacoma', 'Bellevue', 'everett',
-    'olympia', 'washington',
+    'Seattle', 'SeattleWA', 'seattlehomes', 'Tacoma', 'Bellevue',
+    'everett', 'olympia', 'Kirkland', 'Redmond', 'burien',
 ]
 
 MD_LOCAL_SUBREDDITS = [
     'MontgomeryCountyMD', 'maryland', 'bethesda', 'rockville',
-    'SilverSpring', 'FrederickMD', 'baltimore',
+    'SilverSpring', 'FrederickMD', 'frederick', 'baltimore',
+    'Columbia', 'AnneArundelCounty', 'HowardCounty',
 ]
 
 CT_LOCAL_SUBREDDITS = [
     'Connecticut', 'stamford', 'newhaven', 'Hartford',
-    'Fairfield', 'Bridgeport',
+    'Fairfield', 'Bridgeport', 'norwalk',
 ]
 
 NATIONAL_SUBREDDITS = [
