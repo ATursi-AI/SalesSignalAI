@@ -453,6 +453,10 @@ def process_lead(platform, source_url, content, author='', posted_at=None,
         if k in valid_extra and v:
             lead_kwargs[k] = v
 
+    # Auto-set event_date from posted_at if not explicitly provided
+    if 'event_date' not in lead_kwargs and posted_at:
+        lead_kwargs['event_date'] = posted_at
+
     # Create Lead
     lead = Lead.objects.create(
         platform=platform,

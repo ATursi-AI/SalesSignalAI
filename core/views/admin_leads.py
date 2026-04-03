@@ -6,6 +6,7 @@ import json
 from functools import wraps
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
@@ -406,7 +407,8 @@ def lead_repository_api(request):
 
     qs = _apply_filters(qs, request)
 
-    # Sorting — default to event_date DESC with discovered_at fallback
+    # Sorting — default to event_date DESC, falling back to discovered_at
+    # for leads where event_date is NULL
     sort = request.GET.get('sort', '-event_date')
     allowed_sorts = {
         'event_date', '-event_date',
@@ -417,9 +419,16 @@ def lead_repository_api(request):
     }
     if sort not in allowed_sorts:
         sort = '-event_date'
-    # Always add discovered_at as secondary sort for consistent ordering
     if 'event_date' in sort:
-        qs = qs.order_by(sort, '-discovered_at')
+        # Use Coalesce so NULL event_dates fall back to discovered_at
+        # instead of sorting to the end unpredictably
+        qs = qs.annotate(
+            effective_date=Coalesce('event_date', 'discovered_at')
+        )
+        if sort.startswith('-'):
+            qs = qs.order_by('-effective_date')
+        else:
+            qs = qs.order_by('effective_date')
     else:
         qs = qs.order_by(sort)
 
