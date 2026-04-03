@@ -62,6 +62,9 @@ class Command(BaseCommand):
     help = 'Monitor Connecticut Contaminated Sites (Socrata)'
 
     def add_arguments(self, parser):
+        parser.add_argument('--days', type=int, default=None,
+                            help='Not used for date filtering (dataset has no date field). '
+                                 'Accepted for CLI consistency with other monitors.')
         parser.add_argument('--limit', type=int, default=2000)
         parser.add_argument('--dry-run', action='store_true')
 

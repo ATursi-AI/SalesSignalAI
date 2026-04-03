@@ -58,6 +58,9 @@ def ingest_lead(request):
         confidence      (optional) — 'high', 'medium', 'low'
         author          (optional) — source author name
         urgency         (optional) — 'hot', 'warm', 'new'
+        state           (optional) — two-letter state code (e.g. 'NY', 'CA')
+        source_group    (optional) — 'social_media' or 'public_records'
+        source_type     (optional) — e.g. 'reddit', 'housing_violations'
         raw_data        (optional) — arbitrary JSON metadata
 
     Returns:
@@ -132,6 +135,29 @@ def ingest_lead(request):
         raw_data = {}
     raw_data['ingested_via'] = 'api'
 
+    # Pass through optional fields that monitors send
+    extra_fields = {}
+    state = data.get('state', '')
+    if state:
+        extra_fields['state'] = state
+
+    # Determine source_group and source_type from the platform
+    # Reddit leads → social_media group; public_records stays as-is
+    source_group = data.get('source_group', '')
+    source_type = data.get('source_type', '')
+    if not source_group:
+        # Infer from platform if not explicitly sent
+        SOCIAL_PLATFORMS = {'reddit', 'twitter', 'facebook', 'tiktok', 'threads', 'instagram', 'nextdoor'}
+        if platform in SOCIAL_PLATFORMS:
+            source_group = 'social_media'
+            source_type = source_type or platform
+        elif platform == 'public_records':
+            source_group = 'public_records'
+    if source_group:
+        extra_fields['source_group'] = source_group
+    if source_type:
+        extra_fields['source_type'] = source_type
+
     try:
         lead, created, num_assigned = process_lead(
             platform=platform,
@@ -140,6 +166,7 @@ def ingest_lead(request):
             author=author,
             posted_at=None,
             raw_data=raw_data,
+            **extra_fields,
         )
     except Exception as e:
         logger.error(f'[IngestAPI] process_lead failed: {e}')
