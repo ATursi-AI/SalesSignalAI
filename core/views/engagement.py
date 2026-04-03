@@ -182,13 +182,20 @@ def voicemail_drop_delete(request, vm_id):
 # ═══════════════════════════════════════════════════════════════════
 
 @login_required
+@login_required
 def booking_page_list(request):
     """List booking pages for the business."""
     business = getattr(request.user, 'business_profile', None)
-    pages = BookingPage.objects.filter(business=business)
-    submissions = BookingSubmission.objects.filter(
-        booking_page__business=business
-    ).select_related('booking_page')[:30]
+
+    # Admin/staff users see all booking pages
+    if request.user.is_staff and not business:
+        pages = BookingPage.objects.all()
+        submissions = BookingSubmission.objects.select_related('booking_page')[:30]
+    else:
+        pages = BookingPage.objects.filter(business=business)
+        submissions = BookingSubmission.objects.filter(
+            booking_page__business=business
+        ).select_related('booking_page')[:30]
 
     return render(request, 'engagement/booking_pages.html', {
         'pages': pages,

@@ -33,20 +33,43 @@ def _get_business(request):
 def campaign_list(request):
     profile = _get_business(request)
     if not profile:
-        return redirect('onboarding')
-
-    campaigns = OutreachCampaign.objects.filter(business=profile).order_by('-created_at')
+        if request.user.is_staff:
+            # Admin sees all campaigns
+            campaigns = OutreachCampaign.objects.all().order_by('-created_at')
+        else:
+            return redirect('onboarding')
+    else:
+        campaigns = OutreachCampaign.objects.filter(business=profile).order_by('-created_at')
 
     # Annotate with prospect/email counts from new models
     for c in campaigns:
         c.prospect_count = c.prospects.count()
         c.new_prospect_count = c.prospects.filter(status='new').count()
         c.replied_count = c.prospects.filter(status__in=['replied', 'interested']).count()
+        # Metrics used by list template
+        sent_qs = GeneratedEmail.objects.filter(
+            prospect__campaign=c, status__in=['sent', 'opened', 'replied']
+        )
+        c.emails_sent = sent_qs.count()
+        c.emails_opened = GeneratedEmail.objects.filter(
+            prospect__campaign=c, status__in=['opened', 'replied']
+        ).count()
+        c.emails_replied = GeneratedEmail.objects.filter(
+            prospect__campaign=c, status='replied'
+        ).count()
+        c.open_rate_pct = round((c.emails_opened / c.emails_sent * 100) if c.emails_sent > 0 else 0)
+        c.reply_rate_pct = round((c.emails_replied / c.emails_sent * 100) if c.emails_sent > 0 else 0)
+
+    # Aggregate totals for summary cards
+    total_sent = sum(c.emails_sent for c in campaigns)
+    total_replied = sum(c.emails_replied for c in campaigns)
 
     context = {
         'campaigns': campaigns,
         'active_count': campaigns.filter(status='active').count(),
         'draft_count': campaigns.filter(status='draft').count(),
+        'total_sent': total_sent,
+        'total_replied': total_replied,
     }
     return render(request, 'campaigns/list.html', context)
 
@@ -234,9 +257,12 @@ def campaign_wizard(request):
 def campaign_detail(request, campaign_id):
     profile = _get_business(request)
     if not profile:
-        return redirect('onboarding')
-
-    campaign = get_object_or_404(OutreachCampaign, id=campaign_id, business=profile)
+        if request.user.is_staff:
+            campaign = get_object_or_404(OutreachCampaign, id=campaign_id)
+        else:
+            return redirect('onboarding')
+    else:
+        campaign = get_object_or_404(OutreachCampaign, id=campaign_id, business=profile)
 
     # Get prospects with their emails
     prospects = campaign.prospects.all().order_by('-updated_at')

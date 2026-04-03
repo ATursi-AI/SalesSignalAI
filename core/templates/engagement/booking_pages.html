@@ -134,8 +134,6 @@
             <div class="form-group">
                 <label>Available Days</label>
                 <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
-                    {% for day_num, day_name in "0:Mon,1:Tue,2:Wed,3:Thu,4:Fri,5:Sat,6:Sun"|make_list_pairs %}
-                    {% endfor %}
                     <label style="display:flex;align-items:center;gap:.3rem;font-size:.9rem;">
                         <input type="checkbox" name="available_days" value="0" checked> Mon
                     </label>

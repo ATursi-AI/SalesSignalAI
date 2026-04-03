@@ -6,50 +6,138 @@
 
 {% block extra_css %}
 <style>
+/* ─── Hero Summary ─────────────────────────────────── */
+.camp-summary {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 1.75rem;
+}
+.camp-summary-card {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 14px;
+    padding: 18px 20px; position: relative; overflow: hidden;
+}
+.camp-summary-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.camp-summary-card.s-active::before { background: linear-gradient(90deg, #059669, #34D399); }
+.camp-summary-card.s-draft::before { background: linear-gradient(90deg, #94A3B8, #CBD5E1); }
+.camp-summary-card.s-sent::before { background: linear-gradient(90deg, #3B82F6, #60A5FA); }
+.camp-summary-card.s-replied::before { background: linear-gradient(90deg, #8B5CF6, #A78BFA); }
+.camp-summary-val {
+    font-family: 'JetBrains Mono', monospace; font-size: 1.75rem; font-weight: 700; line-height: 1;
+}
+.camp-summary-lbl { font-size: 0.72rem; color: var(--text-muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+.camp-summary-icon { position: absolute; top: 16px; right: 18px; font-size: 1.3rem; opacity: 0.15; }
+
+/* ─── Page Header ──────────────────────────────────── */
 .camp-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
-.camp-header-meta { font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; }
-.camp-header-meta span { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.camp-header-title { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+.camp-header-meta { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
 
-.camp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; }
+/* ─── Campaign Cards ───────────────────────────────── */
+.camp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; }
 
-.camp-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 0; overflow: hidden; text-decoration: none; color: inherit; transition: all 0.2s; display: flex; flex-direction: column; }
-.camp-card:hover { border-color: #0D9488; box-shadow: 0 4px 20px rgba(13,148,136,0.1); transform: translateY(-2px); }
+.camp-card {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 16px;
+    padding: 0; overflow: hidden; text-decoration: none; color: inherit;
+    transition: all 0.25s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column;
+}
+.camp-card:hover { border-color: #0D9488; box-shadow: 0 8px 32px rgba(13,148,136,0.12); transform: translateY(-3px); }
 
-.camp-card-status { height: 3px; }
-.camp-card-status.active { background: linear-gradient(90deg, #059669, #34D399); }
-.camp-card-status.paused { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
-.camp-card-status.draft { background: linear-gradient(90deg, #94A3B8, #CBD5E1); }
+.camp-card-accent { height: 3px; }
+.camp-card-accent.active { background: linear-gradient(90deg, #059669, #34D399); }
+.camp-card-accent.paused { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
+.camp-card-accent.draft { background: linear-gradient(90deg, #94A3B8, #CBD5E1); }
+.camp-card-accent.completed { background: linear-gradient(90deg, #8B5CF6, #A78BFA); }
 
-.camp-card-body { padding: 18px 20px; flex: 1; }
+.camp-card-body { padding: 20px 22px 16px; flex: 1; }
 
-.camp-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
-.camp-card-name { font-family: 'Exo 2', sans-serif; font-weight: 700; font-size: 1rem; margin: 0; line-height: 1.3; }
-.camp-card-tags { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.camp-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
+.camp-card-name {
+    font-family: 'Exo 2', sans-serif; font-weight: 700; font-size: 1.05rem;
+    margin: 0; line-height: 1.3; max-width: 280px;
+}
+.camp-card-arrow { color: var(--text-muted); font-size: 1rem; transition: all 0.2s; flex-shrink: 0; margin-top: 2px; }
+.camp-card:hover .camp-card-arrow { transform: translateX(4px); color: #0D9488; }
 
-.camp-pill { padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+.camp-card-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
+
+.camp-pill {
+    padding: 3px 10px; border-radius: 20px; font-size: 0.62rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em;
+}
 .camp-pill.active { background: #D1FAE5; color: #059669; }
 .camp-pill.paused { background: #FEF3C7; color: #92400E; }
 .camp-pill.draft { background: #F1F5F9; color: #64748B; }
+.camp-pill.completed { background: #EDE9FE; color: #7C3AED; }
 
-.camp-card-arrow { color: var(--text-muted); font-size: 1.1rem; transition: transform 0.2s; flex-shrink: 0; margin-top: 2px; }
-.camp-card:hover .camp-card-arrow { transform: translateX(3px); color: #0D9488; }
+.camp-card-target {
+    font-size: 0.72rem; color: var(--text-muted); padding: 2px 0;
+    max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 
-.camp-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-top: 1px solid var(--border-subtle); }
-.camp-metric { padding: 12px 0; text-align: center; border-right: 1px solid var(--border-subtle); }
+/* Drip sequence visualization */
+.camp-drip { display: flex; align-items: center; gap: 3px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-subtle); }
+.camp-drip-dot {
+    width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 0.55rem; font-weight: 800; color: white;
+    transition: transform 0.2s;
+}
+.camp-card:hover .camp-drip-dot { transform: scale(1.1); }
+.camp-drip-line { width: 14px; height: 2px; background: var(--border-subtle); border-radius: 1px; }
+.camp-drip-meta { margin-left: 8px; font-size: 0.7rem; color: var(--text-muted); }
+
+/* Metrics row */
+.camp-metrics {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+    border-top: 1px solid var(--border-subtle); background: var(--bg-page);
+}
+.camp-metric {
+    padding: 14px 0; text-align: center; border-right: 1px solid var(--border-subtle);
+    transition: background 0.15s;
+}
 .camp-metric:last-child { border-right: none; }
-.camp-metric-val { font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; font-weight: 700; }
-.camp-metric-lbl { font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+.camp-card:hover .camp-metric { background: rgba(13,148,136,0.02); }
+.camp-metric-val {
+    font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 700;
+}
+.camp-metric-lbl {
+    font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.05em; margin-top: 3px;
+}
+.camp-metric-sub { font-size: 0.58rem; color: var(--text-muted); margin-top: 1px; }
 
-.camp-drip { display: flex; align-items: center; gap: 4px; font-size: 0.7rem; color: var(--text-muted); margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-subtle); }
-.camp-drip-dot { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.55rem; font-weight: 800; color: white; }
-.camp-drip-line { width: 16px; height: 1px; background: var(--border-subtle); }
+/* Footer */
+.camp-card-foot {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.7rem; color: var(--text-muted); padding: 10px 22px 14px;
+}
+.camp-card-foot .running { color: #059669; display: flex; align-items: center; gap: 4px; }
+.camp-card-foot .running .pulse { width: 6px; height: 6px; background: #059669; border-radius: 50%; animation: pulse-glow 2s infinite; }
+.camp-card-foot .paused-tag { color: #F59E0B; }
 
-.camp-card-foot { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); padding: 0 20px 14px; }
-.camp-card-foot .running { color: #059669; }
-.camp-card-foot .paused { color: #F59E0B; }
+@keyframes pulse-glow {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(5,150,105,0.4); }
+    50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(5,150,105,0); }
+}
 
-@media (max-width: 768px) {
+/* ─── Import Actions ───────────────────────────────── */
+.camp-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.camp-actions .btn-secondary { font-size: 0.78rem; padding: 8px 14px; }
+
+/* ─── Empty State ──────────────────────────────────── */
+.camp-empty {
+    text-align: center; padding: 4rem 2rem; background: var(--bg-surface);
+    border: 2px dashed var(--border-subtle); border-radius: 20px; margin-top: 1rem;
+}
+.camp-empty-icon { font-size: 3rem; color: #0D9488; opacity: 0.3; margin-bottom: 1rem; }
+.camp-empty h3 { font-family: 'Exo 2', sans-serif; font-weight: 800; margin-bottom: 8px; }
+.camp-empty p { color: var(--text-muted); font-size: 0.9rem; max-width: 400px; margin: 0 auto 1.5rem; }
+
+@media (max-width: 900px) {
+    .camp-summary { grid-template-columns: repeat(2, 1fr); }
     .camp-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+    .camp-summary { grid-template-columns: 1fr 1fr; }
     .camp-metrics { grid-template-columns: repeat(2, 1fr); }
     .camp-metric { border-bottom: 1px solid var(--border-subtle); }
 }
@@ -57,11 +145,38 @@
 {% endblock %}
 
 {% block content %}
+<!-- Summary Cards -->
+<div class="camp-summary">
+    <div class="camp-summary-card s-active">
+        <div class="camp-summary-val" style="color:#059669;">{{ active_count }}</div>
+        <div class="camp-summary-lbl">Active Campaigns</div>
+        <i class="bi bi-broadcast camp-summary-icon" style="color:#059669;"></i>
+    </div>
+    <div class="camp-summary-card s-draft">
+        <div class="camp-summary-val">{{ draft_count }}</div>
+        <div class="camp-summary-lbl">Drafts</div>
+        <i class="bi bi-pencil-square camp-summary-icon"></i>
+    </div>
+    <div class="camp-summary-card s-sent">
+        <div class="camp-summary-val" style="color:#3B82F6;">{{ total_sent }}</div>
+        <div class="camp-summary-lbl">Emails Sent</div>
+        <i class="bi bi-send camp-summary-icon" style="color:#3B82F6;"></i>
+    </div>
+    <div class="camp-summary-card s-replied">
+        <div class="camp-summary-val" style="color:#8B5CF6;">{{ total_replied }}</div>
+        <div class="camp-summary-lbl">Total Replies</div>
+        <i class="bi bi-reply camp-summary-icon" style="color:#8B5CF6;"></i>
+    </div>
+</div>
+
+<!-- Header -->
 <div class="camp-header">
     <div>
+        <div class="camp-header-title">
+            <i class="bi bi-megaphone" style="color:#0D9488;"></i> Campaigns
+        </div>
         <div class="camp-header-meta">
-            <span style="color:#059669;">{{ active_count }}</span> active &middot;
-            <span>{{ draft_count }}</span> draft
+            {{ campaigns|length }} total &middot; {{ active_count }} running
         </div>
     </div>
     <a href="{% url 'campaign_wizard' %}" class="btn-primary-glow">
@@ -73,32 +188,35 @@
 <div class="camp-grid">
     {% for c in campaigns %}
     <a href="{% url 'campaign_detail' c.id %}" class="camp-card animate-fade-in-up" style="animation-delay: {{ forloop.counter0 }}50ms;">
-        <div class="camp-card-status {{ c.status }}"></div>
+        <div class="camp-card-accent {{ c.status }}"></div>
         <div class="camp-card-body">
             <div class="camp-card-top">
                 <div>
                     <h4 class="camp-card-name">{{ c.name }}</h4>
                     <div class="camp-card-tags">
                         <span class="camp-pill {{ c.status }}">{{ c.get_status_display }}</span>
-                        {% if c.target_business_types %}
-                        <span style="font-size: 0.68rem; color: var(--text-muted); padding-top: 3px;">
-                            {{ c.target_business_types|join:", " }}
-                        </span>
-                        {% endif %}
+                        {% if c.use_ai_personalization %}<span class="camp-pill" style="background:#F0FDFA;color:#0D9488;"><i class="bi bi-stars"></i> AI</span>{% endif %}
                     </div>
                 </div>
                 <span class="camp-card-arrow"><i class="bi bi-chevron-right"></i></span>
             </div>
 
-            <!-- Drip visual -->
+            {% if c.target_business_types %}
+            <div class="camp-card-target">
+                <i class="bi bi-geo-alt" style="font-size:0.65rem;"></i> {{ c.target_business_types|join:", " }}
+                {% if c.target_location %}&middot; {{ c.target_location }}{% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Drip Visual -->
             {% if c.total_prospects > 0 %}
             <div class="camp-drip">
                 <div class="camp-drip-dot" style="background:#0D9488;">1</div>
                 <div class="camp-drip-line"></div>
-                <div class="camp-drip-dot" style="background:#F59E0B;">2</div>
+                <div class="camp-drip-dot" style="background:{% if c.email_sequence_count >= 2 %}#F59E0B{% else %}#CBD5E1{% endif %};">2</div>
                 <div class="camp-drip-line"></div>
                 <div class="camp-drip-dot" style="background:{% if c.email_sequence_count >= 3 %}#EF4444{% else %}#CBD5E1{% endif %};">3</div>
-                <span style="margin-left: 8px;">{{ c.email_sequence_count }}-step &middot; {{ c.followup_delay_days }}d delay</span>
+                <span class="camp-drip-meta">{{ c.email_sequence_count }}-step &middot; {{ c.followup_delay_days }}d delay</span>
             </div>
             {% endif %}
         </div>
@@ -109,24 +227,28 @@
                 <div class="camp-metric-lbl">Prospects</div>
             </div>
             <div class="camp-metric">
-                <div class="camp-metric-val">{{ c.emails_sent }}</div>
+                <div class="camp-metric-val" style="color:#3B82F6;">{{ c.emails_sent }}</div>
                 <div class="camp-metric-lbl">Sent</div>
+                {% if c.open_rate_pct %}<div class="camp-metric-sub">{{ c.open_rate_pct }}% opened</div>{% endif %}
             </div>
             <div class="camp-metric">
-                <div class="camp-metric-val">{{ c.emails_opened }}</div>
+                <div class="camp-metric-val" style="color:#F59E0B;">{{ c.emails_opened }}</div>
                 <div class="camp-metric-lbl">Opened</div>
             </div>
             <div class="camp-metric">
                 <div class="camp-metric-val" style="color:#059669;">{{ c.emails_replied }}</div>
                 <div class="camp-metric-lbl">Replied</div>
+                {% if c.reply_rate_pct %}<div class="camp-metric-sub">{{ c.reply_rate_pct }}% rate</div>{% endif %}
             </div>
         </div>
 
         <div class="camp-card-foot">
             <span>Created {{ c.created_at|time_ago }}</span>
-            <span>{{ c.daily_send_limit }}/day &middot;
-                {% if c.status == 'active' %}<span class="running"><i class="bi bi-circle-fill" style="font-size:0.35rem;vertical-align:middle;"></i> Running</span>
-                {% elif c.status == 'paused' %}<span class="paused"><i class="bi bi-pause-fill"></i> Paused</span>
+            <span>
+                {{ c.daily_send_limit }}/day &middot;
+                {% if c.status == 'active' %}<span class="running"><span class="pulse"></span> Running</span>
+                {% elif c.status == 'paused' %}<span class="paused-tag"><i class="bi bi-pause-fill"></i> Paused</span>
+                {% elif c.status == 'completed' %}<span style="color:#8B5CF6;"><i class="bi bi-check-circle-fill"></i> Done</span>
                 {% else %}<i class="bi bi-pencil-square"></i> Draft{% endif %}
             </span>
         </div>
@@ -134,12 +256,12 @@
     {% endfor %}
 </div>
 {% else %}
-<div class="glass-card-static empty-state" style="margin-top: 2rem;">
-    <div class="empty-state-icon"><i class="bi bi-megaphone"></i></div>
-    <h3>No Campaigns Yet</h3>
-    <p>Create your first outreach campaign to start connecting with prospects via AI-personalized emails.</p>
-    <a href="{% url 'campaign_wizard' %}" class="btn-primary-glow" style="margin-top: 1rem;">
-        <i class="bi bi-plus-lg"></i> Create Your First Campaign
+<div class="camp-empty">
+    <div class="camp-empty-icon"><i class="bi bi-megaphone"></i></div>
+    <h3>Launch Your First Campaign</h3>
+    <p>Create an AI-powered outreach campaign to connect with prospects through personalized email sequences.</p>
+    <a href="{% url 'campaign_wizard' %}" class="btn-primary-glow" style="padding: 14px 28px;">
+        <i class="bi bi-rocket-takeoff"></i> Create Campaign
     </a>
 </div>
 {% endif %}
