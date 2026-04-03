@@ -7,9 +7,21 @@
 {% block extra_css %}
 <style>
 /* ── Wizard Chrome ── */
-.prospect-tab { padding: 8px 16px; border-radius: 8px; font-size: 0.78rem; font-weight: 600; border: 1px solid var(--border-subtle); background: var(--bg-surface); cursor: pointer; color: var(--text-secondary); display: flex; align-items: center; gap: 5px; transition: all 0.15s; }
-.prospect-tab:hover { border-color: #0D9488; color: #0D9488; }
-.prospect-tab.active { background: #0D9488; color: white; border-color: #0D9488; }
+.prospect-tab {
+    padding: 8px 18px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+    border: 1.5px solid var(--border-subtle); background: var(--bg-surface);
+    cursor: pointer; color: var(--text-secondary); display: inline-flex;
+    align-items: center; gap: 6px; transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.prospect-tab:hover {
+    border-color: #99F6E4; color: #0D9488;
+    box-shadow: 0 2px 6px rgba(13,148,136,0.1);
+}
+.prospect-tab.active {
+    background: linear-gradient(135deg, #0D9488, #065F46);
+    color: white; border-color: #0D9488;
+    box-shadow: 0 3px 12px rgba(13,148,136,0.25);
+}
 .prospect-tab-panel { display: none; }
 .prospect-tab-panel.active { display: block; }
 
@@ -20,12 +32,35 @@
 .lead-row .lead-meta { flex: 1; min-width: 0; }
 .lead-row .lead-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lead-row .lead-detail { font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lead-urgency { padding: 2px 7px; border-radius: 6px; font-size: 0.62rem; font-weight: 700; text-transform: uppercase; }
-.lead-urgency-hot { background: #FEE2E2; color: #DC2626; }
-.lead-urgency-warm { background: #FEF3C7; color: #92400E; }
-.lead-urgency-new { background: #DBEAFE; color: #1D4ED8; }
-.lead-urgency-stale { background: #F1F5F9; color: #94A3B8; }
-.lead-source-pill { padding: 2px 7px; border-radius: 6px; font-size: 0.62rem; font-weight: 600; background: #F0FDFA; color: #0D9488; }
+.lead-urgency {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 3px 9px; border-radius: 20px; font-size: 0.58rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    border: 1px solid transparent;
+}
+.lead-urgency-hot {
+    background: linear-gradient(135deg, #FEF2F2, #FEE2E2);
+    color: #DC2626; border-color: rgba(220,38,38,0.15);
+}
+.lead-urgency-warm {
+    background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
+    color: #92400E; border-color: rgba(245,158,11,0.12);
+}
+.lead-urgency-new {
+    background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
+    color: #1D4ED8; border-color: rgba(29,78,216,0.12);
+}
+.lead-urgency-stale {
+    background: linear-gradient(135deg, #F8FAFC, #F1F5F9);
+    color: #94A3B8; border-color: rgba(148,163,184,0.12);
+}
+.lead-source-pill {
+    display: inline-flex; align-items: center;
+    padding: 3px 9px; border-radius: 20px; font-size: 0.58rem; font-weight: 700;
+    background: linear-gradient(135deg, #F0FDFA, #CCFBF1);
+    color: #0D9488; border: 1px solid rgba(13,148,136,0.12);
+    letter-spacing: 0.03em; text-transform: capitalize;
+}
 
 .wiz-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 28px; }
 .wiz-card h3 { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 1.1rem; margin: 0 0 4px; }
@@ -146,7 +181,7 @@
                             {% for cat in group_data.categories %}
                             <label class="chip-select">
                                 <input type="checkbox" name="target_types" value="{{ cat.name }}">
-                                <span>{% if cat.icon %}{{ cat.icon }} {% endif %}{{ cat.name }}</span>
+                                <span>{% if cat.icon %}<i class="bi {{ cat.icon }}"></i> {% endif %}{{ cat.name }}</span>
                             </label>
                             {% endfor %}
                         </div>

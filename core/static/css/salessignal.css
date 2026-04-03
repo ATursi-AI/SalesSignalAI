@@ -3545,15 +3545,20 @@ textarea.form-control-dark {
     font-weight: 700;
 }
 .wizard-step.active {
-    color: var(--accent-blue);
+    color: #0D9488;
 }
 .wizard-step.active span {
-    background: var(--accent-blue);
+    background: linear-gradient(135deg, #0D9488, #065F46);
     color: white;
+    box-shadow: 0 2px 8px rgba(13,148,136,0.3);
 }
 .wizard-step.completed span {
-    background: var(--accent-emerald);
+    background: linear-gradient(135deg, #059669, #10B981);
     color: white;
+    box-shadow: 0 1px 4px rgba(5,150,105,0.2);
+}
+.wizard-step.completed {
+    color: #059669;
 }
 
 .wizard-panel {
@@ -3565,25 +3570,46 @@ textarea.form-control-dark {
 
 /* Chip select (for multi-select buttons) */
 .chip-select {
-    display: inline-flex;
+    display: inline-flex !important;
     cursor: pointer;
+    margin: 0;
 }
 .chip-select input { display: none; }
 .chip-select span {
-    padding: 0.35rem 0.85rem;
-    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.78rem;
     font-weight: 600;
-    border-radius: var(--radius-full);
+    border-radius: 20px;
     background: var(--bg-surface);
-    border: 1px solid var(--border-light);
+    border: 1.5px solid var(--border-subtle);
     color: var(--text-secondary);
-    transition: all var(--transition-fast);
+    transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+    white-space: nowrap;
+    letter-spacing: 0.01em;
 }
+.chip-select span i {
+    font-size: 0.82rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+.chip-select:hover span {
+    border-color: #99F6E4;
+    color: var(--text-primary);
+    background: rgba(13,148,136,0.04);
+    box-shadow: 0 1px 4px rgba(13,148,136,0.08);
+}
+.chip-select:hover span i { opacity: 1; }
 .chip-select input:checked + span {
-    background: rgba(59,130,246,0.15);
-    border-color: var(--accent-blue);
-    color: var(--accent-blue);
+    background: linear-gradient(135deg, rgba(13,148,136,0.12), rgba(6,95,70,0.08));
+    border-color: #0D9488;
+    color: #0D9488;
+    box-shadow: 0 2px 8px rgba(13,148,136,0.15), inset 0 1px 0 rgba(255,255,255,0.1);
+    font-weight: 700;
 }
+.chip-select input:checked + span i { opacity: 1; color: #0D9488; }
 
 /* Toggle switch */
 .toggle-row {
@@ -4667,7 +4693,14 @@ textarea.form-control-dark {
 .form-group {
     margin-bottom: 0.75rem;
 }
-.form-group label {
+.form-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.35rem;
+}
+.form-group > label:not(.chip-select):not(.toggle-row):not(.send-mode-card) {
     display: block;
     font-size: 0.75rem;
     font-weight: 600;
@@ -4684,10 +4717,35 @@ textarea.form-control-dark {
     font-size: 0.85rem;
     font-family: inherit;
     box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+    z-index: 1;
+}
+.form-input:hover {
+    border-color: #99F6E4;
 }
 .form-input:focus {
     outline: none;
-    border-color: var(--accent-blue);
+    border-color: #0D9488;
+    box-shadow: 0 0 0 3px rgba(13,148,136,0.12);
+    z-index: 2;
+}
+.form-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+select.form-input {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+}
+textarea.form-input {
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.6;
 }
 .form-textarea {
     min-height: 80px;

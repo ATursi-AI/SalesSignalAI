@@ -61,13 +61,32 @@
 .camp-card-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
 
 .camp-pill {
-    padding: 3px 10px; border-radius: 20px; font-size: 0.62rem; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.04em;
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 12px; border-radius: 20px; font-size: 0.6rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    border: 1px solid transparent;
+    transition: all 0.2s;
 }
-.camp-pill.active { background: #D1FAE5; color: #059669; }
-.camp-pill.paused { background: #FEF3C7; color: #92400E; }
-.camp-pill.draft { background: #F1F5F9; color: #64748B; }
-.camp-pill.completed { background: #EDE9FE; color: #7C3AED; }
+.camp-pill.active {
+    background: linear-gradient(135deg, #ECFDF5, #D1FAE5);
+    color: #059669; border-color: rgba(5,150,105,0.15);
+    box-shadow: 0 1px 3px rgba(5,150,105,0.08);
+}
+.camp-pill.paused {
+    background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
+    color: #92400E; border-color: rgba(245,158,11,0.15);
+    box-shadow: 0 1px 3px rgba(245,158,11,0.08);
+}
+.camp-pill.draft {
+    background: linear-gradient(135deg, #F8FAFC, #F1F5F9);
+    color: #64748B; border-color: rgba(100,116,139,0.12);
+    box-shadow: 0 1px 3px rgba(100,116,139,0.05);
+}
+.camp-pill.completed {
+    background: linear-gradient(135deg, #F5F3FF, #EDE9FE);
+    color: #7C3AED; border-color: rgba(124,58,237,0.12);
+    box-shadow: 0 1px 3px rgba(124,58,237,0.06);
+}
 
 .camp-card-target {
     font-size: 0.72rem; color: var(--text-muted); padding: 2px 0;
