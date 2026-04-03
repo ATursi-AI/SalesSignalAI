@@ -100,8 +100,13 @@
             </div>
             {% endif %}
 
-            <form method="POST" id="signup-form">
+            <form method="POST" id="signup-form" autocomplete="off">
                 {% csrf_token %}
+                <!-- Honeypot — invisible to humans, bots auto-fill it -->
+                <div style="position:absolute;left:-9999px;top:-9999px;" aria-hidden="true" tabindex="-1">
+                    <label for="company_url">Company URL</label>
+                    <input type="text" name="company_url" id="company_url" value="" autocomplete="off" tabindex="-1">
+                </div>
                 <div class="form-group">
                     <label>Business Name *</label>
                     <input type="text" name="business_name" required value="{{ form_data.business_name|default:'' }}" placeholder="Your Business Name">

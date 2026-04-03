@@ -37,6 +37,13 @@ def signup_view(request):
     pre_plan = request.GET.get('plan', '')
 
     if request.method == 'POST':
+        # Honeypot check — real users never see/fill this field
+        if request.POST.get('company_url', ''):
+            # Bot detected — silently show the "check your email" page
+            # so the bot thinks it succeeded (no retry)
+            fake_email = request.POST.get('email', 'user@example.com')
+            return render(request, 'registration/signup_verify.html', {'email': fake_email})
+
         business_name = request.POST.get('business_name', '').strip()
         owner_name = request.POST.get('owner_name', '').strip()
         email = request.POST.get('email', '').strip().lower()
