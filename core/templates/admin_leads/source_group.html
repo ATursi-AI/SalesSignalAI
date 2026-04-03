@@ -757,9 +757,15 @@ function buildDetailPanel(lead) {
                 <div class="detail-meta-item"><div class="meta-label">Email</div><div class="meta-value" id="contact-email-${lead.id}">${lead.contact_email?'<a href="mailto:'+escHtml(lead.contact_email)+'" style="color:var(--accent-blue)">'+escHtml(lead.contact_email)+'</a>':'<span style="color:var(--text-muted)">—</span>'}</div></div>
                 <div class="detail-meta-item"><div class="meta-label">Business</div><div class="meta-value" id="contact-biz-${lead.id}">${escHtml(lead.contact_business)||'<span style="color:var(--text-muted)">—</span>'}</div></div>
             </div>
+            <h4 style="margin-top:14px">Quick Search</h4>
+            <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px;">
+                ${buildSearchButtons(lead)}
+            </div>
+            <div id="places-result-${lead.id}" style="display:none;margin-top:8px;padding:10px 12px;border-radius:8px;background:rgba(13,148,136,0.04);border:1px solid rgba(13,148,136,0.12);font-size:0.8rem;"></div>
             <h4 style="margin-top:14px">Actions</h4>
             <div class="action-buttons">
-                <button class="btn-enrich" id="enrich-btn-${lead.id}" onclick="enrichLead(${lead.id})" ${lead.enrichment_status==='enriched'?'disabled style="background:#D1FAE5;color:#065F46;border-color:#6EE7B7;"':''}>${lead.enrichment_status==='enriched'?'<i class="bi bi-check-lg"></i> Enriched':'<i class="bi bi-magic"></i> Enrich'}</button>
+                <button class="btn-enrich" style="background:rgba(13,148,136,0.15);color:#0D9488;border:1px solid rgba(13,148,136,0.3);" id="places-btn-${lead.id}" onclick="enrichViaPlaces(${lead.id})" title="Free — uses Google Places API"><i class="bi bi-google"></i> Google Enrich</button>
+                <button class="btn-enrich" id="enrich-btn-${lead.id}" onclick="enrichLead(${lead.id})" ${lead.enrichment_status==='enriched'?'disabled style="background:#D1FAE5;color:#065F46;border-color:#6EE7B7;"':''}>${lead.enrichment_status==='enriched'?'<i class="bi bi-check-lg"></i> Enriched':'<i class="bi bi-magic"></i> AI Enrich'}</button>
                 <button class="btn-delete-detail" onclick="deleteLead(${lead.id})"><i class="bi bi-trash3"></i> Delete</button>
             </div>
             <h4 style="margin-top:14px">Send to Customer</h4>
@@ -777,6 +783,87 @@ function buildDetailPanel(lead) {
             <a href="${escHtml(lead.source_url)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;font-size:0.78rem;color:var(--accent-blue)"><i class="bi bi-box-arrow-up-right"></i> Source</a>
         </div>
     </div>`;
+}
+
+/* ── Quick Search Buttons ── */
+function buildSearchButtons(lead) {
+    const raw = lead.raw_data || {};
+    const biz = lead.contact_business || raw.business_name || raw.respondent_name || raw.entity_name || lead.source_author || '';
+    const addr = lead.contact_address || ((raw.house_number||'') + ' ' + (raw.street_name||'')).trim() || raw.address || lead.detected_location || '';
+    const city = lead.region || raw.borough || raw.city || '';
+    const st = lead.state || 'NY';
+    const zip = lead.detected_zip || raw.zip || '';
+    const fullAddr = [addr, city, st, zip].filter(Boolean).join(', ');
+    const searchQuery = [biz, fullAddr].filter(Boolean).join(' ');
+    const mapsQuery = biz ? [biz, city, st].filter(Boolean).join(' ') : fullAddr;
+
+    if (!searchQuery) return '<span style="color:var(--text-muted);font-size:0.78rem;">No name or address to search</span>';
+
+    const btnStyle = 'display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:16px;font-size:0.68rem;font-weight:600;text-decoration:none;border:1px solid;cursor:pointer;transition:all 0.15s;';
+
+    let html = '';
+    // Google Search
+    html += `<a href="https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' phone')}" target="_blank" rel="noopener" style="${btnStyle}background:rgba(66,133,244,0.08);color:#4285F4;border-color:rgba(66,133,244,0.2);" onclick="event.stopPropagation()"><i class="bi bi-google"></i> Google</a>`;
+    // Google Maps
+    html += `<a href="https://www.google.com/maps/search/${encodeURIComponent(mapsQuery)}" target="_blank" rel="noopener" style="${btnStyle}background:rgba(52,168,83,0.08);color:#34A853;border-color:rgba(52,168,83,0.2);" onclick="event.stopPropagation()"><i class="bi bi-geo-alt-fill"></i> Maps</a>`;
+    // Yelp
+    if (biz) {
+        html += `<a href="https://www.yelp.com/search?find_desc=${encodeURIComponent(biz)}&find_loc=${encodeURIComponent([city,st].filter(Boolean).join(', '))}" target="_blank" rel="noopener" style="${btnStyle}background:rgba(211,35,35,0.08);color:#D32323;border-color:rgba(211,35,35,0.2);" onclick="event.stopPropagation()"><i class="bi bi-star-fill"></i> Yelp</a>`;
+    }
+    // BBB
+    html += `<a href="https://www.bbb.org/search?find_text=${encodeURIComponent(biz||addr)}&find_loc=${encodeURIComponent([city,st,zip].filter(Boolean).join(' '))}" target="_blank" rel="noopener" style="${btnStyle}background:rgba(0,81,158,0.08);color:#00519E;border-color:rgba(0,81,158,0.2);" onclick="event.stopPropagation()"><i class="bi bi-shield-check"></i> BBB</a>`;
+    // LinkedIn (business search)
+    if (biz) {
+        html += `<a href="https://www.linkedin.com/search/results/companies/?keywords=${encodeURIComponent(biz)}" target="_blank" rel="noopener" style="${btnStyle}background:rgba(10,102,194,0.08);color:#0A66C2;border-color:rgba(10,102,194,0.2);" onclick="event.stopPropagation()"><i class="bi bi-linkedin"></i> LinkedIn</a>`;
+    }
+    // Whitepages (address lookup)
+    if (addr) {
+        html += `<a href="https://www.whitepages.com/address/${encodeURIComponent(fullAddr.replace(/,/g,'').replace(/\s+/g,'-'))}" target="_blank" rel="noopener" style="${btnStyle}background:rgba(100,116,139,0.08);color:#64748B;border-color:rgba(100,116,139,0.2);" onclick="event.stopPropagation()"><i class="bi bi-person-vcard"></i> Whitepages</a>`;
+    }
+    return html;
+}
+
+/* ── Google Places Enrichment (Free Tier) ── */
+async function enrichViaPlaces(id) {
+    const btn = document.getElementById('places-btn-'+id);
+    const resultDiv = document.getElementById('places-result-'+id);
+    if(btn){btn.disabled=true;btn.innerHTML='<i class="bi bi-hourglass-split"></i> Searching...';}
+    try {
+        const r = await fetch(`/admin-leads/detail/${id}/action/`, {
+            method:'POST',
+            headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},
+            body:JSON.stringify({action:'enrich_places'})
+        });
+        const d = await r.json();
+        if(d.ok && d.result) {
+            const res = d.result;
+            if(res.found) {
+                // Update contact fields in the UI
+                if(res.phone){const pe=document.getElementById('contact-phone-'+id);if(pe)pe.innerHTML='<a href="tel:'+escHtml(res.phone)+'" style="color:var(--accent-emerald);text-decoration:none;" onclick="event.stopPropagation()"><i class="bi bi-telephone-fill"></i> '+escHtml(res.phone)+'</a>';}
+                if(res.email){const ee=document.getElementById('contact-email-'+id);if(ee)ee.innerHTML='<a href="mailto:'+escHtml(res.email)+'" style="color:var(--accent-blue)">'+escHtml(res.email)+'</a>';}
+                if(res.website){const be=document.getElementById('contact-biz-'+id);if(be&&!be.textContent.trim()||be.textContent.trim()==='—')be.innerHTML='<a href="'+escHtml(res.website)+'" target="_blank" style="color:var(--accent-blue);font-size:0.78rem;">'+escHtml(res.website)+'</a>';}
+                // Show result summary
+                let info = '<div style="font-weight:600;color:#059669;margin-bottom:4px;"><i class="bi bi-check-circle-fill"></i> Found via Google Places</div>';
+                if(res.name) info += '<div><strong>Name:</strong> '+escHtml(res.name)+'</div>';
+                if(res.phone) info += '<div><strong>Phone:</strong> '+escHtml(res.phone)+'</div>';
+                if(res.website) info += '<div><strong>Website:</strong> <a href="'+escHtml(res.website)+'" target="_blank" style="color:var(--accent-blue)">'+escHtml(res.website)+'</a></div>';
+                if(res.rating) info += '<div><strong>Rating:</strong> '+res.rating+' ★ ('+res.total_ratings+' reviews)</div>';
+                if(resultDiv){resultDiv.innerHTML=info;resultDiv.style.display='block';}
+                showToast('Google Places: Found ' + (res.phone||'no phone') + (res.website?' + website':''), 'success');
+                if(btn){btn.disabled=true;btn.innerHTML='<i class="bi bi-check-lg"></i> Found';btn.style.background='#D1FAE5';btn.style.color='#065F46';btn.style.borderColor='#6EE7B7';}
+            } else {
+                showToast('Google Places: ' + (res.reason||'No results found'), 'warning');
+                if(btn){btn.disabled=false;btn.innerHTML='<i class="bi bi-google"></i> Google Enrich';}
+            }
+        } else {
+            showToast(d.error||'Google Places lookup failed', 'warning');
+            if(btn){btn.disabled=false;btn.innerHTML='<i class="bi bi-google"></i> Google Enrich';}
+        }
+    } catch(e){
+        console.error(e);
+        showToast('Network error during Places lookup','warning');
+        if(btn){btn.disabled=false;btn.innerHTML='<i class="bi bi-google"></i> Google Enrich';}
+    }
 }
 
 /* Actions */

@@ -1,13 +1,26 @@
-"""Lead enrichment via Gemini API."""
+"""Lead enrichment via Gemini API with caching to avoid duplicate API calls."""
+import hashlib
 import json
 import logging
 import re
 
 import requests
 from django.conf import settings
+from django.core.cache import cache
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
+
+# Cache TTL: 30 days for found results, 7 days for not-found
+CACHE_TTL_FOUND = 60 * 60 * 24 * 30
+CACHE_TTL_NOT_FOUND = 60 * 60 * 24 * 7
+
+
+def _enrichment_cache_key(respondent, address, city, state, zip_code):
+    """Generate a stable cache key from enrichment query params."""
+    raw_str = f'{respondent}|{address}|{city}|{state}|{zip_code}'.lower().strip()
+    h = hashlib.md5(raw_str.encode()).hexdigest()
+    return f'gemini_enrich:{h}'
 
 
 def enrich_lead(lead):
@@ -16,6 +29,7 @@ def enrich_lead(lead):
 
     Returns dict: {phone, email, website, owner_name, source, confidence, found: bool}
     Updates the lead's contact fields and enrichment status in-place.
+    Uses caching to avoid duplicate API calls for the same entity.
     """
     # Skip if already has phone
     if lead.contact_phone:
@@ -53,6 +67,34 @@ def enrich_lead(lead):
         lead.save(update_fields=['enrichment_status', 'enrichment_date'])
         return {'found': False, 'reason': 'No entity name or address to search'}
 
+    # Check cache first to avoid duplicate API calls
+    ck = _enrichment_cache_key(respondent, address, city, state, zip_code)
+    cached = cache.get(ck)
+    if cached is not None:
+        logger.info(f'[Enrichment] Cache hit for: {respondent or address}')
+        # Apply cached result to this lead
+        if cached.get('phone'):
+            lead.contact_phone = cached['phone']
+        if cached.get('email'):
+            lead.contact_email = cached['email']
+        if cached.get('website') and not lead.contact_business:
+            lead.contact_business = cached['website']
+        if cached.get('owner_name') and not lead.contact_name:
+            lead.contact_name = cached['owner_name']
+        found = bool(cached.get('phone') or cached.get('email'))
+        lead.enrichment_status = 'enriched' if found else 'enrichment_failed'
+        lead.enrichment_date = timezone.now()
+        raw['enrichment'] = cached
+        raw['enrichment_source'] = 'cache'
+        lead.raw_data = raw
+        lead.save(update_fields=[
+            'contact_phone', 'contact_email', 'contact_business',
+            'contact_name', 'raw_data', 'enrichment_status', 'enrichment_date',
+        ])
+        cached['found'] = found
+        cached['from_cache'] = True
+        return cached
+
     # Call Gemini
     result = _call_gemini_enrichment(respondent, address, city, state, zip_code)
 
@@ -60,6 +102,8 @@ def enrich_lead(lead):
         lead.enrichment_status = 'enrichment_failed'
         lead.enrichment_date = timezone.now()
         lead.save(update_fields=['enrichment_status', 'enrichment_date'])
+        # Cache the failure so we don't retry the same query
+        cache.set(ck, {'found': False, 'reason': 'Gemini API error'}, CACHE_TTL_NOT_FOUND)
         return {'found': False, 'reason': 'Gemini API error'}
 
     # Update lead fields
@@ -87,6 +131,11 @@ def enrich_lead(lead):
         'contact_phone', 'contact_email', 'contact_business',
         'contact_name', 'raw_data', 'enrichment_status', 'enrichment_date',
     ])
+
+    # Cache the result to avoid duplicate API calls
+    ttl = CACHE_TTL_FOUND if found else CACHE_TTL_NOT_FOUND
+    cache.set(ck, result, ttl)
+    logger.info(f'[Enrichment] Cached result for: {respondent or address} (found={found})')
 
     result['found'] = found
     return result

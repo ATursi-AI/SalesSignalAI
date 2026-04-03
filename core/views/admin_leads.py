@@ -627,6 +627,20 @@ def lead_action(request, lead_id):
             'enrichment_status': lead.enrichment_status,
         })
 
+    elif action == 'enrich_places':
+        from core.services.google_places_enrichment import enrich_lead_via_places
+        result = enrich_lead_via_places(lead)
+        lead.refresh_from_db()
+        return JsonResponse({
+            'ok': True,
+            'result': result,
+            'contact_phone': lead.contact_phone,
+            'contact_email': lead.contact_email,
+            'contact_name': lead.contact_name,
+            'contact_business': lead.contact_business,
+            'enrichment_status': lead.enrichment_status,
+        })
+
     elif action == 'delete':
         lead_id = lead.id
         lead.delete()
