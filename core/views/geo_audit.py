@@ -418,6 +418,142 @@ def _run_full_audit(base_url):
     key_pages['score'] = min(key_pages['max_score'], key_pages['score'])
     audit['categories']['key_pages'] = key_pages
 
+    # ── 6. Traditional SEO ──
+    # Re-use the homepage body we already fetched
+    trad_seo = {
+        'score': 0,
+        'max_score': 25,
+        'findings': [],
+        'issues': [],
+    }
+
+    if status == 200 and body:
+        hp = body  # homepage body already fetched above
+
+        # Image alt tags
+        imgs = re.findall(r'<img\s[^>]*>', hp, re.IGNORECASE)
+        imgs_with_alt = [i for i in imgs if re.search(r'alt=["\'][^"\']+["\']', i, re.IGNORECASE)]
+        if imgs:
+            alt_pct = round((len(imgs_with_alt) / len(imgs)) * 100)
+            if alt_pct >= 80:
+                trad_seo['score'] += 3
+                trad_seo['findings'].append(f'Image alt tags: {alt_pct}% of {len(imgs)} images have alt text')
+            elif alt_pct >= 50:
+                trad_seo['score'] += 1.5
+                trad_seo['issues'].append(f'Only {alt_pct}% of images have alt text ({len(imgs_with_alt)}/{len(imgs)})')
+            else:
+                trad_seo['issues'].append(f'Poor alt text coverage: {alt_pct}% ({len(imgs_with_alt)}/{len(imgs)} images)')
+        else:
+            trad_seo['findings'].append('No images on homepage (not necessarily bad)')
+            trad_seo['score'] += 1
+
+        # Internal links
+        internal_links = re.findall(r'<a\s[^>]*href=["\'](?:/[^"\']*|' + re.escape(base_url) + r'[^"\']*)["\']', hp, re.IGNORECASE)
+        ext_links = re.findall(r'<a\s[^>]*href=["\']https?://(?!' + re.escape(base_url.replace('https://', '').replace('http://', '')) + r')[^"\']*["\']', hp, re.IGNORECASE)
+        if len(internal_links) >= 5:
+            trad_seo['score'] += 2
+            trad_seo['findings'].append(f'{len(internal_links)} internal links (good site structure)')
+        elif len(internal_links) >= 1:
+            trad_seo['score'] += 1
+            trad_seo['issues'].append(f'Only {len(internal_links)} internal links — more helps SEO')
+        else:
+            trad_seo['issues'].append('No internal links found — critical for SEO crawlability')
+        if ext_links:
+            trad_seo['findings'].append(f'{len(ext_links)} external links (authority signals)')
+
+        # Page size / load weight
+        page_kb = round(len(hp) / 1024, 1)
+        if page_kb < 200:
+            trad_seo['score'] += 2
+            trad_seo['findings'].append(f'Page size: {page_kb}KB (lightweight)')
+        elif page_kb < 500:
+            trad_seo['score'] += 1
+            trad_seo['findings'].append(f'Page size: {page_kb}KB (acceptable)')
+        else:
+            trad_seo['issues'].append(f'Page size: {page_kb}KB — heavy page may load slowly')
+
+        # Check for lazy loading
+        if 'loading="lazy"' in hp.lower() or 'data-src' in hp.lower():
+            trad_seo['score'] += 1
+            trad_seo['findings'].append('Lazy loading detected (good for performance)')
+
+        # CSS/JS optimization signals
+        inline_styles = len(re.findall(r'<style[^>]*>', hp, re.IGNORECASE))
+        inline_scripts = len(re.findall(r'<script(?![^>]*type=["\']application/ld\+json)[^>]*>', hp, re.IGNORECASE))
+        if inline_styles > 5:
+            trad_seo['issues'].append(f'{inline_styles} inline style blocks — consider consolidating CSS')
+        if inline_scripts > 10:
+            trad_seo['issues'].append(f'{inline_scripts} script tags — may slow page load')
+
+        # Twitter Card
+        twitter_tags = len(re.findall(r'name=["\']twitter:', hp, re.IGNORECASE))
+        if twitter_tags >= 2:
+            trad_seo['score'] += 1
+            trad_seo['findings'].append(f'Twitter Card tags present ({twitter_tags} tags)')
+        else:
+            trad_seo['issues'].append('Missing Twitter Card tags')
+
+        # Robots meta tag check
+        robots_meta = re.search(r'name=["\']robots["\'][^>]*content=["\']([^"\']*)["\']', hp, re.IGNORECASE)
+        if robots_meta:
+            content = robots_meta.group(1).lower()
+            if 'noindex' in content:
+                trad_seo['issues'].append('WARNING: Page has noindex — Google will NOT index this page')
+                trad_seo['score'] -= 3
+            elif 'nofollow' in content:
+                trad_seo['issues'].append('Page has nofollow — links on this page pass no SEO value')
+            else:
+                trad_seo['score'] += 1
+                trad_seo['findings'].append('Robots meta allows indexing')
+
+        # Language attribute
+        if re.search(r'<html[^>]*lang=', hp, re.IGNORECASE):
+            trad_seo['score'] += 1
+            trad_seo['findings'].append('HTML lang attribute set (internationalization signal)')
+        else:
+            trad_seo['issues'].append('Missing HTML lang attribute')
+
+        # Charset
+        if re.search(r'charset=', hp, re.IGNORECASE):
+            trad_seo['score'] += 1
+            trad_seo['findings'].append('Character encoding declared')
+
+        # Check for minification signals
+        if len(hp) > 1000:
+            newline_ratio = hp.count('\n') / len(hp) * 1000
+            if newline_ratio < 2:
+                trad_seo['score'] += 1
+                trad_seo['findings'].append('HTML appears minified (good for performance)')
+
+        # Favicon
+        if re.search(r'rel=["\'](?:shortcut )?icon["\']', hp, re.IGNORECASE):
+            trad_seo['score'] += 1
+            trad_seo['findings'].append('Favicon detected')
+        else:
+            trad_seo['issues'].append('No favicon link tag — minor but affects professionalism')
+
+        # Check for Google Analytics / Tag Manager
+        if 'google-analytics' in hp.lower() or 'gtag' in hp.lower() or 'googletagmanager' in hp.lower():
+            trad_seo['score'] += 1
+            trad_seo['findings'].append('Google Analytics/Tag Manager detected')
+
+        # Check for hreflang (international SEO)
+        if 'hreflang' in hp.lower():
+            trad_seo['score'] += 1
+            trad_seo['findings'].append('hreflang tags detected (international SEO)')
+
+        # Noopener/noreferrer on external links
+        ext_with_rel = len(re.findall(r'rel=["\'][^"\']*noopener', hp, re.IGNORECASE))
+        if ext_links and ext_with_rel:
+            trad_seo['score'] += 1
+            trad_seo['findings'].append('External links use rel="noopener" (security best practice)')
+
+    else:
+        trad_seo['issues'].append('Could not analyze homepage for traditional SEO')
+
+    trad_seo['score'] = min(trad_seo['max_score'], max(0, round(trad_seo['score'])))
+    audit['categories']['traditional_seo'] = trad_seo
+
     # ── Calculate Overall Score ──
     total_score = sum(cat['score'] for cat in audit['categories'].values())
     total_max = sum(cat['max_score'] for cat in audit['categories'].values())
@@ -490,6 +626,35 @@ def _run_full_audit(base_url):
             'detail': 'AI search engines use About pages to verify business legitimacy and understand the team\'s expertise. This is a key E-E-A-T signal.',
             'effort': 'Medium (1 hour)',
         })
+
+    # Traditional SEO recommendations
+    trad = audit['categories'].get('traditional_seo', {})
+    trad_issues = trad.get('issues', [])
+    if any('alt text' in i.lower() for i in trad_issues):
+        recs.append({
+            'priority': 'MEDIUM',
+            'title': 'Add alt text to images',
+            'detail': 'Image alt text helps Google image search AND helps AI understand your visual content. Every image should have descriptive alt text.',
+            'effort': 'Low (30 minutes)',
+        })
+        quick.append('Add descriptive alt text to all homepage images')
+    if any('internal link' in i.lower() for i in trad_issues):
+        recs.append({
+            'priority': 'MEDIUM',
+            'title': 'Improve internal linking',
+            'detail': 'Internal links help search engines discover all your pages and understand site structure. Link from your homepage to key service and content pages.',
+            'effort': 'Low (30 minutes)',
+        })
+    if any('noindex' in i.lower() for i in trad_issues):
+        recs.append({
+            'priority': 'HIGH',
+            'title': 'Remove noindex directive',
+            'detail': 'Your homepage has a noindex tag which tells Google NOT to include it in search results. This is almost certainly a mistake and must be fixed immediately.',
+            'effort': 'Low (5 minutes)',
+        })
+        quick.append('URGENT: Remove noindex from homepage meta robots tag')
+    if any('lang attribute' in i.lower() for i in trad_issues):
+        quick.append('Add lang="en" to your <html> tag')
 
     if not quick:
         if audit['overall_score'] >= 60:
@@ -592,7 +757,7 @@ def geo_audit_pdf(request):
 
     # ── Title Page ──
     story.append(Spacer(1, 1.5 * inch))
-    story.append(Paragraph('GEO/AEO Audit Report', styles['ReportTitle']))
+    story.append(Paragraph('SEO + GEO/AEO Audit Report', styles['ReportTitle']))
     story.append(Paragraph(
         f'{audit.get("url", "Unknown")}',
         styles['ReportSubtitle']
@@ -654,6 +819,7 @@ def geo_audit_pdf(request):
         'sitemap': 'Sitemap',
         'homepage': 'Homepage Analysis',
         'key_pages': 'Key Pages',
+        'traditional_seo': 'Traditional SEO',
     }
 
     breakdown_data = [['Category', 'Score', 'Status']]

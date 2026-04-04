@@ -287,8 +287,8 @@
 {% block content %}
 <div class="geo-container">
     <div class="geo-hero">
-        <h2><i class="bi bi-robot" style="color:#7C3AED;margin-right:6px;"></i> AI Search Readiness Audit</h2>
-        <p>Enter any website URL to get a comprehensive GEO/AEO audit. See how visible this business is to AI search engines like ChatGPT, Perplexity, Claude, and Google AI Overviews. Generate a professional PDF report to share with clients.</p>
+        <h2><i class="bi bi-robot" style="color:#7C3AED;margin-right:6px;"></i> SEO + AI Search Readiness Audit</h2>
+        <p>Enter any website URL to get a comprehensive SEO and GEO/AEO audit. Checks traditional SEO fundamentals (meta tags, alt text, internal links, page speed) PLUS AI search readiness (robots.txt AI permissions, llms.txt, schema markup). Generate a professional PDF report to text or email to clients.</p>
         <div class="geo-input-row">
             <input type="text" class="geo-url-input" id="geoUrl" placeholder="https://example.com" autocomplete="url" spellcheck="false">
             <button class="geo-run-btn" id="geoRunBtn" onclick="runAudit()">
@@ -441,6 +441,7 @@ function renderResults(audit) {
         sitemap: {name: 'Sitemap', icon: 'bi-diagram-3'},
         homepage: {name: 'Homepage Analysis', icon: 'bi-house'},
         key_pages: {name: 'Key Pages', icon: 'bi-collection'},
+        traditional_seo: {name: 'Traditional SEO', icon: 'bi-search'},
     };
 
     let catHtml = '';
