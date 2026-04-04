@@ -674,8 +674,6 @@ def _run_full_audit(base_url):
 # PDF generation endpoint
 # ---------------------------------------------------------------------------
 
-@login_required
-@require_POST
 def _generate_audit_pdf(audit):
     """
     Generate a professional branded PDF from audit results.
