@@ -8,3 +8,4 @@ pillow>=10.0
 apify-client>=1.6
 playwright>=1.40
 signalwire>=2.0
+reportlab>=4.0

@@ -3,6 +3,7 @@ from core.views import landing, auth, onboarding, dashboard, leads, competitors,
 from core.views import monitor_health, webhooks, user_settings, admin_leads, ingest_api, crm
 from core.views import sales_admin, sales, industries, prospect_videos, static_pages, seo, call_center
 from core.views import service_pages, signup, blog, workflows, conversations, telegram_bot, engagement
+from core.views import geo_audit
 
 urlpatterns = [
     path('', landing.landing_page, name='landing'),
@@ -188,6 +189,11 @@ urlpatterns = [
     path('admin/prospect-videos/<int:video_id>/stats/', prospect_videos.prospect_video_stats, name='prospect_video_stats'),
     path('api/prospect-video-track/', prospect_videos.prospect_video_track, name='prospect_video_track'),
     path('api/prospect-video-intake/', prospect_videos.prospect_video_intake, name='prospect_video_intake'),
+
+    # GEO Audit Tool
+    path('tools/geo-audit/', geo_audit.geo_audit_tool, name='geo_audit_tool'),
+    path('tools/geo-audit/api/', geo_audit.geo_audit_api, name='geo_audit_api'),
+    path('tools/geo-audit/pdf/', geo_audit.geo_audit_pdf, name='geo_audit_pdf'),
 
     # SignalWire Webhooks (called by SignalWire — no auth)
     path('api/signalwire/sms-webhook/', call_center.sms_webhook, name='signalwire_sms_webhook'),

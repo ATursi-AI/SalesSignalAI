@@ -1,0 +1,565 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}GEO Audit Tool{% endblock %}
+{% block page_title %}<i class="bi bi-robot"></i> GEO/AEO Audit Tool{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Layout ── */
+.geo-container { max-width: 900px; }
+.geo-hero {
+    background: linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(13,148,136,0.08) 100%);
+    border: 1px solid rgba(139,92,246,0.15);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+}
+.geo-hero h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 6px;
+}
+.geo-hero p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* ── Input Bar ── */
+.geo-input-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+}
+.geo-url-input {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+    font-size: 0.92rem;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    transition: all 0.2s;
+}
+.geo-url-input:focus {
+    outline: none;
+    border-color: #7C3AED;
+    box-shadow: 0 0 0 3px rgba(124,58,237,0.12);
+}
+.geo-url-input::placeholder { color: var(--text-muted); }
+.geo-run-btn {
+    padding: 12px 28px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #7C3AED, #6D28D9);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.geo-run-btn:hover { background: linear-gradient(135deg, #6D28D9, #5B21B6); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(124,58,237,0.3); }
+.geo-run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ── Progress ── */
+.geo-progress {
+    display: none;
+    margin-top: 20px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+}
+.geo-progress-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(124,58,237,0.1);
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+.geo-progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #7C3AED, #0D9488);
+    width: 0%;
+    transition: width 0.4s ease;
+}
+.geo-progress-text {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* ── Results ── */
+.geo-results { display: none; margin-top: 24px; }
+
+/* Score Card */
+.geo-score-card {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 24px 28px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+}
+.geo-score-circle {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.geo-score-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+}
+.geo-score-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+.geo-score-info h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0 0 4px;
+}
+.geo-score-info p {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Category Cards */
+.geo-categories {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+.geo-cat-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 16px 18px;
+    transition: all 0.2s;
+}
+.geo-cat-card:hover { border-color: rgba(124,58,237,0.3); }
+.geo-cat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.geo-cat-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.geo-cat-score {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 12px;
+}
+.geo-cat-bar {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(124,58,237,0.08);
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+.geo-cat-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+}
+.geo-finding {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 0.75rem;
+    padding: 3px 0;
+    line-height: 1.4;
+}
+.geo-finding.good { color: #059669; }
+.geo-finding.bad { color: #EF4444; }
+.geo-finding i { flex-shrink: 0; margin-top: 2px; }
+
+/* Recommendations */
+.geo-recs {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 20px 22px;
+    margin-bottom: 14px;
+}
+.geo-recs h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 14px;
+}
+.geo-rec-item {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.geo-rec-item:last-child { border-bottom: none; }
+.geo-rec-priority {
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 8px;
+    display: inline-block;
+    margin-bottom: 4px;
+}
+.geo-rec-priority.high { background: rgba(239,68,68,0.1); color: #EF4444; }
+.geo-rec-priority.medium { background: rgba(245,158,11,0.1); color: #F59E0B; }
+.geo-rec-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+}
+.geo-rec-detail {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+.geo-rec-effort {
+    font-size: 0.72rem;
+    color: #7C3AED;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+/* Actions Bar */
+.geo-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-subtle);
+}
+.geo-action-btn {
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 1px solid;
+    font-weight: 600;
+    font-size: 0.82rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+}
+.geo-action-btn.primary {
+    background: linear-gradient(135deg, #7C3AED, #6D28D9);
+    color: #fff;
+    border-color: transparent;
+}
+.geo-action-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(124,58,237,0.3); }
+.geo-action-btn.secondary {
+    background: transparent;
+    color: var(--text-secondary);
+    border-color: var(--border-subtle);
+}
+.geo-action-btn.secondary:hover { border-color: #7C3AED; color: #7C3AED; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="geo-container">
+    <div class="geo-hero">
+        <h2><i class="bi bi-robot" style="color:#7C3AED;margin-right:6px;"></i> AI Search Readiness Audit</h2>
+        <p>Enter any website URL to get a comprehensive GEO/AEO audit. See how visible this business is to AI search engines like ChatGPT, Perplexity, Claude, and Google AI Overviews. Generate a professional PDF report to share with clients.</p>
+        <div class="geo-input-row">
+            <input type="text" class="geo-url-input" id="geoUrl" placeholder="https://example.com" autocomplete="url" spellcheck="false">
+            <button class="geo-run-btn" id="geoRunBtn" onclick="runAudit()">
+                <i class="bi bi-play-fill"></i> Run Audit
+            </button>
+        </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="geo-progress" id="geoProgress">
+        <div class="geo-progress-bar">
+            <div class="geo-progress-fill" id="geoProgressFill"></div>
+        </div>
+        <div class="geo-progress-text" id="geoProgressText">Starting audit...</div>
+    </div>
+
+    <!-- Results -->
+    <div class="geo-results" id="geoResults">
+        <!-- Score card -->
+        <div class="geo-score-card" id="geoScoreCard"></div>
+
+        <!-- Category breakdown -->
+        <div class="geo-categories" id="geoCategories"></div>
+
+        <!-- Recommendations -->
+        <div class="geo-recs" id="geoRecs"></div>
+
+        <!-- Quick Wins -->
+        <div class="geo-recs" id="geoQuickWins"></div>
+
+        <!-- Action buttons -->
+        <div class="geo-actions">
+            <button class="geo-action-btn primary" onclick="downloadPdf()">
+                <i class="bi bi-file-earmark-pdf"></i> Download PDF Report
+            </button>
+            <button class="geo-action-btn secondary" onclick="copyResults()">
+                <i class="bi bi-clipboard"></i> Copy Summary
+            </button>
+            <button class="geo-action-btn secondary" onclick="runAudit()">
+                <i class="bi bi-arrow-clockwise"></i> Re-run Audit
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let lastAuditResult = null;
+
+function getCsrf() {
+    return document.cookie.split('; ').find(r=>r.startsWith('csrftoken='))?.split('=')[1] || '';
+}
+
+async function runAudit() {
+    const url = document.getElementById('geoUrl').value.trim();
+    if (!url) { document.getElementById('geoUrl').focus(); return; }
+
+    const btn = document.getElementById('geoRunBtn');
+    const progress = document.getElementById('geoProgress');
+    const results = document.getElementById('geoResults');
+    const fill = document.getElementById('geoProgressFill');
+    const ptext = document.getElementById('geoProgressText');
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Auditing...';
+    results.style.display = 'none';
+    progress.style.display = 'block';
+
+    // Animated progress
+    const steps = [
+        {pct: 15, text: 'Checking robots.txt for AI bot permissions...'},
+        {pct: 30, text: 'Scanning for llms.txt...'},
+        {pct: 45, text: 'Analyzing sitemap.xml...'},
+        {pct: 60, text: 'Parsing homepage: meta tags, schema, headings...'},
+        {pct: 75, text: 'Checking key pages (About, FAQ, Contact, Blog)...'},
+        {pct: 90, text: 'Calculating scores and generating recommendations...'},
+    ];
+
+    let stepIdx = 0;
+    const progressInterval = setInterval(() => {
+        if (stepIdx < steps.length) {
+            fill.style.width = steps[stepIdx].pct + '%';
+            ptext.textContent = steps[stepIdx].text;
+            stepIdx++;
+        }
+    }, 800);
+
+    try {
+        const r = await fetch('/tools/geo-audit/api/', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json', 'X-CSRFToken': getCsrf()},
+            body: JSON.stringify({url})
+        });
+        const d = await r.json();
+
+        clearInterval(progressInterval);
+        fill.style.width = '100%';
+        ptext.textContent = 'Audit complete!';
+
+        if (d.ok && d.result) {
+            lastAuditResult = d.result;
+            setTimeout(() => {
+                progress.style.display = 'none';
+                renderResults(d.result);
+            }, 600);
+        } else {
+            ptext.textContent = 'Error: ' + (d.error || 'Audit failed');
+            ptext.style.color = '#EF4444';
+        }
+    } catch(e) {
+        clearInterval(progressInterval);
+        ptext.textContent = 'Network error — check the URL and try again';
+        ptext.style.color = '#EF4444';
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-play-fill"></i> Run Audit';
+}
+
+function renderResults(audit) {
+    const results = document.getElementById('geoResults');
+    results.style.display = 'block';
+
+    const score = audit.overall_score || 0;
+    const grade = audit.grade || '?';
+
+    // Colors
+    const gc = score >= 80 ? '#059669' : score >= 60 ? '#0D9488' : score >= 40 ? '#F59E0B' : '#EF4444';
+    const interp = score >= 80 ? 'AI-Optimized' : score >= 60 ? 'Partially Optimized' : score >= 40 ? 'Needs Work' : 'Not AI-Ready';
+
+    // Score card
+    document.getElementById('geoScoreCard').innerHTML = `
+        <div class="geo-score-circle" style="background:${gc}12;border:3px solid ${gc};">
+            <div class="geo-score-number" style="color:${gc};">${score}</div>
+            <div class="geo-score-label" style="color:${gc};">/100</div>
+        </div>
+        <div class="geo-score-info">
+            <h3 style="color:${gc};">Grade ${grade} — ${interp}</h3>
+            <p>${audit.url}<br>Audited: ${audit.audit_date}</p>
+        </div>
+    `;
+    document.getElementById('geoScoreCard').style.background = `${gc}08`;
+    document.getElementById('geoScoreCard').style.border = `1px solid ${gc}25`;
+
+    // Categories
+    const catLabels = {
+        robots_txt: {name: 'AI Crawlability', icon: 'bi-shield-check'},
+        llms_txt: {name: 'LLM Manifest', icon: 'bi-file-text'},
+        sitemap: {name: 'Sitemap', icon: 'bi-diagram-3'},
+        homepage: {name: 'Homepage Analysis', icon: 'bi-house'},
+        key_pages: {name: 'Key Pages', icon: 'bi-collection'},
+    };
+
+    let catHtml = '';
+    for (const [key, info] of Object.entries(catLabels)) {
+        const cat = (audit.categories || {})[key] || {};
+        const s = cat.score || 0;
+        const mx = cat.max_score || 10;
+        const pct = Math.round((s / mx) * 100);
+        const cc = pct >= 70 ? '#059669' : pct >= 40 ? '#F59E0B' : '#EF4444';
+
+        let items = '';
+        (cat.findings || []).forEach(f => {
+            items += `<div class="geo-finding good"><i class="bi bi-check-circle-fill"></i> ${escHtml(f)}</div>`;
+        });
+        (cat.issues || []).forEach(i => {
+            items += `<div class="geo-finding bad"><i class="bi bi-exclamation-circle-fill"></i> ${escHtml(i)}</div>`;
+        });
+
+        catHtml += `
+            <div class="geo-cat-card">
+                <div class="geo-cat-header">
+                    <span class="geo-cat-name"><i class="bi ${info.icon}" style="color:#7C3AED;margin-right:4px;"></i> ${info.name}</span>
+                    <span class="geo-cat-score" style="color:${cc};background:${cc}12;">${s}/${mx}</span>
+                </div>
+                <div class="geo-cat-bar"><div class="geo-cat-bar-fill" style="width:${pct}%;background:${cc};"></div></div>
+                ${items}
+            </div>
+        `;
+    }
+    document.getElementById('geoCategories').innerHTML = catHtml;
+
+    // Recommendations
+    let recHtml = '<h3><i class="bi bi-lightbulb" style="color:#F59E0B;margin-right:6px;"></i> Priority Recommendations</h3>';
+    (audit.recommendations || []).forEach(rec => {
+        const pclass = (rec.priority || '').toLowerCase();
+        recHtml += `
+            <div class="geo-rec-item">
+                <span class="geo-rec-priority ${pclass}">${rec.priority}</span>
+                <div class="geo-rec-title">${escHtml(rec.title)}</div>
+                <div class="geo-rec-detail">${escHtml(rec.detail)}</div>
+                <div class="geo-rec-effort">Effort: ${escHtml(rec.effort)}</div>
+            </div>
+        `;
+    });
+    if (!(audit.recommendations || []).length) {
+        recHtml += '<p style="color:var(--text-muted);font-size:0.82rem;">No major issues found — nice work!</p>';
+    }
+    document.getElementById('geoRecs').innerHTML = recHtml;
+
+    // Quick Wins
+    let qwHtml = '<h3><i class="bi bi-lightning-charge" style="color:#7C3AED;margin-right:6px;"></i> Quick Wins (Do This Week)</h3>';
+    (audit.quick_wins || []).forEach(w => {
+        qwHtml += `<div style="padding:6px 0;font-size:0.82rem;color:var(--text-primary);"><i class="bi bi-arrow-right-circle" style="color:#0D9488;margin-right:6px;"></i>${escHtml(w)}</div>`;
+    });
+    document.getElementById('geoQuickWins').innerHTML = qwHtml;
+}
+
+async function downloadPdf() {
+    if (!lastAuditResult) return;
+    try {
+        const r = await fetch('/tools/geo-audit/pdf/', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json', 'X-CSRFToken': getCsrf()},
+            body: JSON.stringify({audit: lastAuditResult})
+        });
+        if (r.ok) {
+            const blob = await r.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const cd = r.headers.get('Content-Disposition') || '';
+            const match = cd.match(/filename="(.+)"/);
+            a.download = match ? match[1] : 'GEO_Audit_Report.pdf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } else {
+            const d = await r.json();
+            alert(d.error || 'PDF generation failed');
+        }
+    } catch(e) {
+        console.error(e);
+        alert('Failed to generate PDF');
+    }
+}
+
+function copyResults() {
+    if (!lastAuditResult) return;
+    const a = lastAuditResult;
+    let text = `GEO/AEO Audit — ${a.url}\n`;
+    text += `Score: ${a.overall_score}/100 (Grade ${a.grade})\n`;
+    text += `Date: ${a.audit_date}\n\n`;
+    for (const [key, cat] of Object.entries(a.categories || {})) {
+        text += `${key}: ${cat.score}/${cat.max_score}\n`;
+        (cat.findings || []).forEach(f => text += `  + ${f}\n`);
+        (cat.issues || []).forEach(i => text += `  - ${i}\n`);
+        text += '\n';
+    }
+    text += 'Recommendations:\n';
+    (a.recommendations || []).forEach((r,i) => {
+        text += `${i+1}. [${r.priority}] ${r.title}\n   ${r.detail}\n`;
+    });
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target.closest('button');
+        if(btn) { const orig = btn.innerHTML; btn.innerHTML = '<i class="bi bi-check-lg"></i> Copied!'; setTimeout(()=>btn.innerHTML=orig, 1500); }
+    });
+}
+
+function escHtml(s) {
+    if (!s) return '';
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Allow Enter key to trigger audit
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('geoUrl').addEventListener('keydown', e => {
+        if (e.key === 'Enter') runAudit();
+    });
+});
+</script>
+{% endblock %}

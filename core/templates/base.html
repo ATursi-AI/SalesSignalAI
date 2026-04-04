@@ -259,6 +259,10 @@
                     <i class="bi bi-camera-video-fill"></i>
                     <span>Video Pages</span>
                 </a>
+                <a href="{% url 'geo_audit_tool' %}" class="sidebar-link {% if request.resolver_match.url_name == 'geo_audit_tool' %}active{% endif %}">
+                    <i class="bi bi-robot"></i>
+                    <span>GEO Audit</span>
+                </a>
                 {% endif %}
 
                 {% if user.business_profile %}
