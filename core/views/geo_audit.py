@@ -676,248 +676,479 @@ def _run_full_audit(base_url):
 
 @login_required
 @require_POST
+def _generate_audit_pdf(audit):
+    """
+    Generate a professional branded PDF from audit results.
+    Returns (pdf_bytes, filename).
+    """
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.units import inch
+    from reportlab.lib.colors import HexColor, white
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+    from reportlab.platypus import (
+        SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
+        PageBreak, HRFlowable, KeepTogether,
+    )
+    from reportlab.pdfgen import canvas as pdfcanvas
+
+    import io
+
+    # Brand colors
+    TEAL = HexColor('#0D9488')
+    TEAL_DARK = HexColor('#0F766E')
+    DARK = HexColor('#0F172A')
+    SLATE = HexColor('#1E293B')
+    MUTED = HexColor('#64748B')
+    GREEN = HexColor('#059669')
+    AMBER = HexColor('#D97706')
+    RED = HexColor('#DC2626')
+    PURPLE = HexColor('#7C3AED')
+    LIGHT_BG = HexColor('#F1F5F9')
+    CARD_BG = HexColor('#F8FAFC')
+    WHITE = HexColor('#FFFFFF')
+
+    buffer = io.BytesIO()
+    page_w, page_h = letter
+
+    # Custom page template with branded header/footer
+    def _header_footer(canvas, doc):
+        canvas.saveState()
+        # ── Header bar ──
+        canvas.setFillColor(SLATE)
+        canvas.rect(0, page_h - 42, page_w, 42, fill=1, stroke=0)
+        # Teal accent line under header
+        canvas.setFillColor(TEAL)
+        canvas.rect(0, page_h - 45, page_w, 3, fill=1, stroke=0)
+        # Brand text
+        canvas.setFillColor(WHITE)
+        canvas.setFont('Helvetica-Bold', 11)
+        canvas.drawString(54, page_h - 28, 'SALESSIGNAL')
+        canvas.setFillColor(TEAL)
+        canvas.drawString(54 + canvas.stringWidth('SALESSIGNAL', 'Helvetica-Bold', 11), page_h - 28, 'AI')
+        # Right side — report type
+        canvas.setFillColor(HexColor('#94A3B8'))
+        canvas.setFont('Helvetica', 8)
+        canvas.drawRightString(page_w - 54, page_h - 28, 'SEO + AI READINESS AUDIT')
+
+        # ── Footer ──
+        canvas.setFillColor(SLATE)
+        canvas.rect(0, 0, page_w, 36, fill=1, stroke=0)
+        canvas.setFillColor(TEAL)
+        canvas.rect(0, 36, page_w, 2, fill=1, stroke=0)
+        # Footer text
+        canvas.setFillColor(HexColor('#94A3B8'))
+        canvas.setFont('Helvetica', 7.5)
+        canvas.drawString(54, 14, 'salessignalai.com  |  support@salessignalai.com')
+        canvas.drawRightString(page_w - 54, 14, f'Page {doc.page}')
+        canvas.setFillColor(TEAL)
+        canvas.setFont('Helvetica-Bold', 7.5)
+        canvas.drawCentredString(page_w / 2, 14, 'Confidential — Prepared exclusively for the recipient')
+
+        canvas.restoreState()
+
+    doc = SimpleDocTemplate(
+        buffer, pagesize=letter,
+        topMargin=60, bottomMargin=52,
+        leftMargin=54, rightMargin=54,
+    )
+
+    styles = getSampleStyleSheet()
+    # Custom styles
+    styles.add(ParagraphStyle('CoverTitle', fontName='Helvetica-Bold', fontSize=32, textColor=DARK, spaceAfter=4, leading=38))
+    styles.add(ParagraphStyle('CoverSub', fontName='Helvetica', fontSize=13, textColor=MUTED, spaceAfter=6))
+    styles.add(ParagraphStyle('CoverURL', fontName='Courier', fontSize=12, textColor=TEAL, spaceAfter=24))
+    styles.add(ParagraphStyle('SectionHead', fontName='Helvetica-Bold', fontSize=15, textColor=TEAL_DARK, spaceBefore=18, spaceAfter=6))
+    styles.add(ParagraphStyle('SubHead', fontName='Helvetica-Bold', fontSize=11, textColor=SLATE, spaceBefore=10, spaceAfter=3))
+    styles.add(ParagraphStyle('Body10', fontName='Helvetica', fontSize=9.5, textColor=SLATE, spaceAfter=4, leading=14))
+    styles.add(ParagraphStyle('FindingGood', fontName='Helvetica', fontSize=9, textColor=GREEN, leftIndent=12, spaceAfter=2, leading=13))
+    styles.add(ParagraphStyle('FindingBad', fontName='Helvetica', fontSize=9, textColor=RED, leftIndent=12, spaceAfter=2, leading=13))
+    styles.add(ParagraphStyle('RecTitle', fontName='Helvetica-Bold', fontSize=10, textColor=SLATE, spaceAfter=1))
+    styles.add(ParagraphStyle('RecBody', fontName='Helvetica', fontSize=9, textColor=MUTED, leftIndent=12, spaceAfter=6, leading=13))
+    styles.add(ParagraphStyle('FooterLine', fontName='Helvetica', fontSize=8, textColor=MUTED, alignment=TA_CENTER))
+    styles.add(ParagraphStyle('CenterBig', fontName='Helvetica-Bold', fontSize=48, textColor=DARK, alignment=TA_CENTER))
+
+    story = []
+    score = audit.get('overall_score', 0)
+    grade = audit.get('grade', '?')
+    gc = GREEN if score >= 60 else AMBER if score >= 40 else RED
+
+    # ════════════════════════════════════════
+    # PAGE 1 — COVER
+    # ════════════════════════════════════════
+    story.append(Spacer(1, 1.2 * inch))
+    story.append(Paragraph('Digital Presence<br/>Audit Report', styles['CoverTitle']))
+    story.append(Spacer(1, 6))
+    story.append(HRFlowable(width='40%', color=TEAL, thickness=3, hAlign='LEFT'))
+    story.append(Spacer(1, 14))
+    story.append(Paragraph(audit.get('url', 'Unknown'), styles['CoverURL']))
+    story.append(Paragraph(f'Prepared: {audit.get("audit_date", "N/A")}', styles['CoverSub']))
+    story.append(Spacer(1, 40))
+
+    # Big score display
+    interp_map = {
+        'A': 'AI-Optimized', 'B': 'Partially Optimized',
+        'C': 'Needs Work', 'D': 'Not AI-Ready', 'F': 'Not AI-Ready',
+    }
+    interp = interp_map.get(grade, 'Unknown')
+
+    score_box = Table(
+        [[
+            Paragraph(f'<font size="52" color="{gc.hexval()}">{score}</font><font size="16" color="{MUTED.hexval()}">/100</font>', ParagraphStyle('x', alignment=TA_CENTER)),
+            Paragraph(f'<font size="28" color="{gc.hexval()}">Grade {grade}</font><br/><font size="11" color="{MUTED.hexval()}">{interp}</font>', ParagraphStyle('x', alignment=TA_CENTER, leading=20)),
+        ]],
+        colWidths=[2.8 * inch, 3.5 * inch],
+        rowHeights=[1.1 * inch],
+    )
+    score_box.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('BACKGROUND', (0, 0), (0, 0), HexColor(f'{gc.hexval()}08')),
+        ('ROUNDEDCORNERS', [10, 10, 10, 10]),
+        ('BOX', (0, 0), (-1, -1), 1.5, HexColor('#E2E8F0')),
+        ('LINEAFTER', (0, 0), (0, -1), 1, HexColor('#E2E8F0')),
+    ]))
+    story.append(score_box)
+
+    story.append(Spacer(1, 40))
+    story.append(Paragraph(
+        'This report analyzes your website across traditional SEO fundamentals and '
+        'AI search readiness (GEO/AEO). It identifies what search engines and AI assistants '
+        'like ChatGPT, Perplexity, and Google AI Overviews can see about your business.',
+        styles['Body10']
+    ))
+
+    story.append(Spacer(1, 0.6 * inch))
+    story.append(HRFlowable(width='100%', color=TEAL, thickness=1.5))
+    story.append(Spacer(1, 6))
+    story.append(Paragraph(
+        'Courtesy of <b>SalesSignalAI</b>  |  salessignalai.com  |  support@salessignalai.com',
+        styles['FooterLine']
+    ))
+
+    story.append(PageBreak())
+
+    # ════════════════════════════════════════
+    # PAGE 2 — SCORE BREAKDOWN
+    # ════════════════════════════════════════
+    story.append(Paragraph('Score Breakdown', styles['SectionHead']))
+    story.append(HRFlowable(width='100%', color=TEAL, thickness=1.5))
+    story.append(Spacer(1, 10))
+
+    cat_labels = {
+        'robots_txt': ('AI Crawlability', 'Can AI crawlers access your site?'),
+        'llms_txt': ('LLM Manifest', 'Do you have a guide for AI models?'),
+        'sitemap': ('Sitemap', 'Can search engines discover all your pages?'),
+        'homepage': ('Homepage Quality', 'Meta tags, schema, content structure'),
+        'key_pages': ('Key Pages', 'About, FAQ, Contact, Blog, Pricing'),
+        'traditional_seo': ('Traditional SEO', 'Alt tags, links, performance, meta'),
+    }
+
+    # Build table rows
+    bd_data = [[
+        Paragraph('<b>Category</b>', ParagraphStyle('th', fontName='Helvetica-Bold', fontSize=9, textColor=WHITE)),
+        Paragraph('<b>Score</b>', ParagraphStyle('th', fontName='Helvetica-Bold', fontSize=9, textColor=WHITE, alignment=TA_CENTER)),
+        Paragraph('<b>Status</b>', ParagraphStyle('th', fontName='Helvetica-Bold', fontSize=9, textColor=WHITE, alignment=TA_CENTER)),
+        Paragraph('<b>What It Checks</b>', ParagraphStyle('th', fontName='Helvetica-Bold', fontSize=9, textColor=WHITE)),
+    ]]
+    for key, (label, desc) in cat_labels.items():
+        cat = audit.get('categories', {}).get(key, {})
+        s = cat.get('score', 0)
+        mx = cat.get('max_score', 10)
+        pct = round((s / mx) * 100) if mx > 0 else 0
+        st = 'PASS' if pct >= 70 else 'FAIR' if pct >= 40 else 'FAIL'
+        sc = GREEN if pct >= 70 else AMBER if pct >= 40 else RED
+        bd_data.append([
+            Paragraph(f'<b>{label}</b>', ParagraphStyle('td', fontName='Helvetica-Bold', fontSize=9, textColor=SLATE)),
+            Paragraph(f'<b>{s}/{mx}</b>', ParagraphStyle('td', fontName='Courier-Bold', fontSize=9.5, textColor=sc, alignment=TA_CENTER)),
+            Paragraph(f'<b>{st}</b>', ParagraphStyle('td', fontName='Helvetica-Bold', fontSize=8, textColor=sc, alignment=TA_CENTER)),
+            Paragraph(desc, ParagraphStyle('td', fontName='Helvetica', fontSize=8, textColor=MUTED)),
+        ])
+
+    bd_table = Table(bd_data, colWidths=[1.6 * inch, 0.8 * inch, 0.7 * inch, 3.1 * inch])
+    bd_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), TEAL_DARK),
+        ('TEXTCOLOR', (0, 0), (-1, 0), WHITE),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [WHITE, CARD_BG]),
+        ('GRID', (0, 0), (-1, -1), 0.5, HexColor('#E2E8F0')),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    story.append(bd_table)
+
+    # ════════════════════════════════════════
+    # DETAILED FINDINGS
+    # ════════════════════════════════════════
+    story.append(Spacer(1, 16))
+    story.append(Paragraph('Detailed Findings', styles['SectionHead']))
+    story.append(HRFlowable(width='100%', color=TEAL, thickness=1.5))
+    story.append(Spacer(1, 6))
+
+    for key, (label, _) in cat_labels.items():
+        cat = audit.get('categories', {}).get(key, {})
+        s = cat.get('score', 0)
+        mx = cat.get('max_score', 10)
+        pct = round((s / mx) * 100) if mx > 0 else 0
+        sc = GREEN if pct >= 70 else AMBER if pct >= 40 else RED
+
+        items = []
+        items.append(Paragraph(
+            f'<font color="{sc.hexval()}">{s}/{mx}</font>  {label}',
+            styles['SubHead']
+        ))
+        for f in cat.get('findings', []):
+            items.append(Paragraph(f'+ {f}', styles['FindingGood']))
+        for i in cat.get('issues', []):
+            items.append(Paragraph(f'- {i}', styles['FindingBad']))
+        items.append(Spacer(1, 6))
+        story.append(KeepTogether(items))
+
+    story.append(PageBreak())
+
+    # ════════════════════════════════════════
+    # RECOMMENDATIONS
+    # ════════════════════════════════════════
+    story.append(Paragraph('Priority Recommendations', styles['SectionHead']))
+    story.append(HRFlowable(width='100%', color=TEAL, thickness=1.5))
+    story.append(Spacer(1, 8))
+
+    for idx, rec in enumerate(audit.get('recommendations', []), 1):
+        priority = rec.get('priority', 'MEDIUM')
+        pc = RED.hexval() if priority == 'HIGH' else AMBER.hexval()
+        story.append(KeepTogether([
+            Paragraph(
+                f'{idx}. <font color="{pc}"><b>[{priority}]</b></font>  {rec.get("title", "")}',
+                styles['RecTitle']
+            ),
+            Paragraph(rec.get('detail', ''), styles['RecBody']),
+            Paragraph(
+                f'<font color="{PURPLE.hexval()}">Estimated effort: {rec.get("effort", "Unknown")}</font>',
+                ParagraphStyle('eff', fontName='Helvetica', fontSize=8, leftIndent=12, spaceAfter=10, textColor=PURPLE)
+            ),
+        ]))
+
+    # ── Quick Wins ──
+    story.append(Spacer(1, 10))
+    story.append(Paragraph('Quick Wins (Do This Week)', styles['SectionHead']))
+    story.append(HRFlowable(width='100%', color=TEAL, thickness=1.5))
+    story.append(Spacer(1, 6))
+    for win in audit.get('quick_wins', []):
+        story.append(Paragraph(f'>> {win}', styles['Body10']))
+
+    # ── CTA Footer ──
+    story.append(Spacer(1, 30))
+    cta_data = [[Paragraph(
+        '<b>Ready to improve your score?</b><br/>'
+        '<font size="9" color="#64748B">Our team can implement every recommendation in this report. '
+        'Contact us to get started.</font><br/><br/>'
+        '<font size="10" color="#0D9488"><b>salessignalai.com</b>  |  support@salessignalai.com</font>',
+        ParagraphStyle('cta', fontName='Helvetica', fontSize=11, textColor=SLATE, alignment=TA_CENTER, leading=16),
+    )]]
+    cta_table = Table(cta_data, colWidths=[6.2 * inch])
+    cta_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), CARD_BG),
+        ('BOX', (0, 0), (-1, -1), 1.5, TEAL),
+        ('TOPPADDING', (0, 0), (-1, -1), 18),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 18),
+        ('LEFTPADDING', (0, 0), (-1, -1), 20),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 20),
+    ]))
+    story.append(cta_table)
+
+    doc.build(story, onFirstPage=_header_footer, onLaterPages=_header_footer)
+    buffer.seek(0)
+
+    domain = audit.get('url', 'unknown').replace('https://', '').replace('http://', '').replace('/', '_').rstrip('_')
+    filename = f'Digital_Presence_Audit_{domain}_{datetime.now().strftime("%Y%m%d")}.pdf'
+
+    return buffer.getvalue(), filename
+
+
+@login_required
+@require_POST
 def geo_audit_pdf(request):
-    """Generate a professional PDF from audit results."""
+    """Generate and download a professional PDF from audit results."""
     if not (request.user.is_staff or request.user.is_superuser):
         return JsonResponse({'error': 'Admin access required'}, status=403)
 
     data = json.loads(request.body)
     audit = data.get('audit', {})
-
     if not audit:
         return JsonResponse({'error': 'No audit data provided'}, status=400)
 
     try:
-        from reportlab.lib.pagesizes import letter
-        from reportlab.lib.units import inch
-        from reportlab.lib.colors import HexColor
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.platypus import (
-            SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-            PageBreak, HRFlowable,
-        )
-        from reportlab.lib.enums import TA_CENTER, TA_LEFT
+        pdf_bytes, filename = _generate_audit_pdf(audit)
     except ImportError:
         return JsonResponse({'error': 'reportlab not installed on server'}, status=500)
 
-    import io
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
-        buffer, pagesize=letter,
-        topMargin=0.75 * inch, bottomMargin=0.75 * inch,
-        leftMargin=0.75 * inch, rightMargin=0.75 * inch,
-    )
-
-    # Colors
-    TEAL = HexColor('#0D9488')
-    DARK = HexColor('#1E293B')
-    MUTED = HexColor('#64748B')
-    GREEN = HexColor('#059669')
-    AMBER = HexColor('#F59E0B')
-    RED = HexColor('#EF4444')
-    PURPLE = HexColor('#7C3AED')
-    LIGHT_BG = HexColor('#F8FAFC')
-
-    # Styles
-    styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle(
-        'ReportTitle', parent=styles['Title'],
-        fontSize=28, textColor=DARK, spaceAfter=6,
-        fontName='Helvetica-Bold',
-    ))
-    styles.add(ParagraphStyle(
-        'ReportSubtitle', parent=styles['Normal'],
-        fontSize=12, textColor=MUTED, spaceAfter=20,
-    ))
-    styles.add(ParagraphStyle(
-        'SectionHead', parent=styles['Heading2'],
-        fontSize=16, textColor=TEAL, spaceBefore=20, spaceAfter=8,
-        fontName='Helvetica-Bold',
-    ))
-    styles.add(ParagraphStyle(
-        'Finding', parent=styles['Normal'],
-        fontSize=10, textColor=GREEN, leftIndent=15, spaceAfter=3,
-    ))
-    styles.add(ParagraphStyle(
-        'Issue', parent=styles['Normal'],
-        fontSize=10, textColor=RED, leftIndent=15, spaceAfter=3,
-    ))
-    styles.add(ParagraphStyle(
-        'RecTitle', parent=styles['Normal'],
-        fontSize=11, textColor=DARK, fontName='Helvetica-Bold', spaceAfter=2,
-    ))
-    styles.add(ParagraphStyle(
-        'RecDetail', parent=styles['Normal'],
-        fontSize=10, textColor=MUTED, leftIndent=15, spaceAfter=8,
-    ))
-    styles.add(ParagraphStyle(
-        'BodyText10', parent=styles['Normal'],
-        fontSize=10, textColor=DARK, spaceAfter=6,
-    ))
-
-    story = []
-
-    # ── Title Page ──
-    story.append(Spacer(1, 1.5 * inch))
-    story.append(Paragraph('SEO + GEO/AEO Audit Report', styles['ReportTitle']))
-    story.append(Paragraph(
-        f'{audit.get("url", "Unknown")}',
-        styles['ReportSubtitle']
-    ))
-    story.append(Spacer(1, 10))
-    story.append(Paragraph(
-        f'Audit Date: {audit.get("audit_date", "N/A")}',
-        styles['ReportSubtitle']
-    ))
-    story.append(Spacer(1, 30))
-
-    # Score display
-    score = audit.get('overall_score', 0)
-    grade = audit.get('grade', '?')
-    grade_color = GREEN if score >= 60 else AMBER if score >= 40 else RED
-
-    score_data = [[
-        Paragraph(f'<font size="36" color="{grade_color.hexval()}">{score}</font><font size="14" color="{MUTED.hexval()}">/100</font>', styles['Normal']),
-        Paragraph(f'<font size="36" color="{grade_color.hexval()}">Grade {grade}</font>', styles['Normal']),
-    ]]
-    score_table = Table(score_data, colWidths=[3 * inch, 3 * inch])
-    score_table.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 20),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 20),
-    ]))
-    story.append(score_table)
-
-    story.append(Spacer(1, 20))
-    story.append(HRFlowable(width='100%', color=TEAL, thickness=2))
-    story.append(Spacer(1, 10))
-
-    # Score interpretation
-    if score >= 80:
-        interp = 'AI-Optimized — This site is well-positioned for AI search visibility.'
-    elif score >= 60:
-        interp = 'Partially Optimized — Good foundation but significant gaps remain.'
-    elif score >= 40:
-        interp = 'Needs Work — Missing key elements for AI search discoverability.'
-    else:
-        interp = 'Not AI-Ready — Major improvements needed to be visible in AI search.'
-    story.append(Paragraph(interp, styles['BodyText10']))
-
-    story.append(Spacer(1, 15))
-    story.append(Paragraph(
-        'Powered by SalesSignalAI — salessignalai.com',
-        ParagraphStyle('Footer', parent=styles['Normal'], fontSize=9, textColor=MUTED, alignment=TA_CENTER)
-    ))
-
-    story.append(PageBreak())
-
-    # ── Score Breakdown Table ──
-    story.append(Paragraph('Score Breakdown', styles['SectionHead']))
-
-    cat_labels = {
-        'robots_txt': 'AI Crawlability (robots.txt)',
-        'llms_txt': 'LLM Manifest (llms.txt)',
-        'sitemap': 'Sitemap',
-        'homepage': 'Homepage Analysis',
-        'key_pages': 'Key Pages',
-        'traditional_seo': 'Traditional SEO',
-    }
-
-    breakdown_data = [['Category', 'Score', 'Status']]
-    for key, label in cat_labels.items():
-        cat = audit.get('categories', {}).get(key, {})
-        s = cat.get('score', 0)
-        mx = cat.get('max_score', 10)
-        pct = round((s / mx) * 100) if mx > 0 else 0
-        status_text = 'Good' if pct >= 70 else 'Fair' if pct >= 40 else 'Poor'
-        status_color = GREEN.hexval() if pct >= 70 else AMBER.hexval() if pct >= 40 else RED.hexval()
-        breakdown_data.append([
-            label,
-            f'{s}/{mx}',
-            Paragraph(f'<font color="{status_color}">{status_text}</font>', styles['Normal']),
-        ])
-
-    breakdown_table = Table(breakdown_data, colWidths=[3.5 * inch, 1.2 * inch, 1.5 * inch])
-    breakdown_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), TEAL),
-        ('TEXTCOLOR', (0, 0), (-1, 0), HexColor('#FFFFFF')),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('ALIGN', (1, 0), (2, -1), 'CENTER'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('GRID', (0, 0), (-1, -1), 0.5, HexColor('#E2E8F0')),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [HexColor('#FFFFFF'), LIGHT_BG]),
-        ('TOPPADDING', (0, 0), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-        ('LEFTPADDING', (0, 0), (-1, -1), 10),
-    ]))
-    story.append(breakdown_table)
-    story.append(Spacer(1, 20))
-
-    # ── Detailed Findings ──
-    story.append(Paragraph('Detailed Findings', styles['SectionHead']))
-    story.append(HRFlowable(width='100%', color=HexColor('#E2E8F0'), thickness=1))
-    story.append(Spacer(1, 8))
-
-    for key, label in cat_labels.items():
-        cat = audit.get('categories', {}).get(key, {})
-        s = cat.get('score', 0)
-        mx = cat.get('max_score', 10)
-        story.append(Paragraph(f'{label} ({s}/{mx})', styles['RecTitle']))
-
-        for finding in cat.get('findings', []):
-            story.append(Paragraph(f'+ {finding}', styles['Finding']))
-        for issue in cat.get('issues', []):
-            story.append(Paragraph(f'- {issue}', styles['Issue']))
-        story.append(Spacer(1, 10))
-
-    story.append(PageBreak())
-
-    # ── Recommendations ──
-    story.append(Paragraph('Priority Recommendations', styles['SectionHead']))
-    story.append(HRFlowable(width='100%', color=HexColor('#E2E8F0'), thickness=1))
-    story.append(Spacer(1, 8))
-
-    for i, rec in enumerate(audit.get('recommendations', []), 1):
-        priority = rec.get('priority', 'MEDIUM')
-        pcolor = RED.hexval() if priority == 'HIGH' else AMBER.hexval()
-        story.append(Paragraph(
-            f'{i}. <font color="{pcolor}">[{priority}]</font> {rec.get("title", "")}',
-            styles['RecTitle']
-        ))
-        story.append(Paragraph(rec.get('detail', ''), styles['RecDetail']))
-        story.append(Paragraph(
-            f'Estimated effort: {rec.get("effort", "Unknown")}',
-            ParagraphStyle('Effort', parent=styles['Normal'], fontSize=9, textColor=PURPLE, leftIndent=15, spaceAfter=12)
-        ))
-
-    # ── Quick Wins ──
-    story.append(Spacer(1, 15))
-    story.append(Paragraph('Quick Wins (Do This Week)', styles['SectionHead']))
-    story.append(HRFlowable(width='100%', color=HexColor('#E2E8F0'), thickness=1))
-    story.append(Spacer(1, 8))
-
-    for win in audit.get('quick_wins', []):
-        story.append(Paragraph(f'>> {win}', styles['BodyText10']))
-
-    # ── Footer ──
-    story.append(Spacer(1, 40))
-    story.append(HRFlowable(width='100%', color=TEAL, thickness=2))
-    story.append(Spacer(1, 10))
-    story.append(Paragraph(
-        'This report was generated by SalesSignalAI\'s GEO Audit Tool. '
-        'For implementation help, contact us at salessignalai.com',
-        ParagraphStyle('FooterNote', parent=styles['Normal'], fontSize=9, textColor=MUTED, alignment=TA_CENTER)
-    ))
-
-    doc.build(story)
-    buffer.seek(0)
-
-    # Generate filename
-    domain = audit.get('url', 'unknown').replace('https://', '').replace('http://', '').replace('/', '_')
-    filename = f'GEO_Audit_{domain}_{datetime.now().strftime("%Y%m%d")}.pdf'
-
-    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+# ---------------------------------------------------------------------------
+# Email report endpoint
+# ---------------------------------------------------------------------------
+
+@login_required
+@require_POST
+def geo_audit_email(request):
+    """Generate PDF and email it with a branded HTML template."""
+    if not (request.user.is_staff or request.user.is_superuser):
+        return JsonResponse({'error': 'Admin access required'}, status=403)
+
+    data = json.loads(request.body)
+    audit = data.get('audit', {})
+    to_email = (data.get('to_email') or '').strip()
+    recipient_name = (data.get('recipient_name') or '').strip()
+
+    if not audit:
+        return JsonResponse({'error': 'No audit data provided'}, status=400)
+    if not to_email or '@' not in to_email:
+        return JsonResponse({'error': 'Valid email address required'}, status=400)
+
+    # Generate PDF
+    try:
+        pdf_bytes, filename = _generate_audit_pdf(audit)
+    except ImportError:
+        return JsonResponse({'error': 'reportlab not installed on server'}, status=500)
+
+    score = audit.get('overall_score', 0)
+    grade = audit.get('grade', '?')
+    url = audit.get('url', 'your website')
+    grade_color = '#059669' if score >= 60 else '#D97706' if score >= 40 else '#DC2626'
+
+    # Recommendations summary for email body
+    rec_html = ''
+    for rec in audit.get('recommendations', [])[:3]:
+        rec_html += f'<li style="margin-bottom:8px;color:#334155;font-size:14px;">{rec.get("title", "")}</li>'
+
+    greeting = f'Hi {recipient_name},' if recipient_name else 'Hi there,'
+
+    # ── Branded HTML email ──
+    html_body = f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#F1F5F9;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F1F5F9;padding:24px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#FFFFFF;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+<!-- Header -->
+<tr><td style="background:#0F172A;padding:20px 32px;">
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr>
+<td><span style="font-size:18px;font-weight:700;color:#FFFFFF;letter-spacing:0.5px;">SALESSIGNAL</span><span style="font-size:18px;font-weight:700;color:#0D9488;">AI</span></td>
+<td align="right"><span style="font-size:11px;color:#94A3B8;letter-spacing:1px;">DIGITAL PRESENCE AUDIT</span></td>
+</tr>
+</table>
+</td></tr>
+
+<!-- Teal accent -->
+<tr><td style="background:linear-gradient(90deg,#0D9488,#0F766E);height:4px;font-size:0;line-height:0;">&nbsp;</td></tr>
+
+<!-- Score Banner -->
+<tr><td style="padding:32px 32px 24px;text-align:center;">
+<table width="100%" cellpadding="0" cellspacing="0"><tr>
+<td align="center">
+<div style="display:inline-block;background:{grade_color}10;border:3px solid {grade_color};border-radius:50%;width:90px;height:90px;line-height:90px;text-align:center;">
+<span style="font-size:36px;font-weight:800;color:{grade_color};font-family:'Courier New',monospace;">{score}</span>
+</div>
+<div style="margin-top:8px;font-size:20px;font-weight:700;color:{grade_color};">Grade {grade}</div>
+<div style="margin-top:4px;font-size:13px;color:#64748B;">{url}</div>
+</td>
+</tr></table>
+</td></tr>
+
+<!-- Divider -->
+<tr><td style="padding:0 32px;"><div style="border-top:1px solid #E2E8F0;"></div></td></tr>
+
+<!-- Body -->
+<tr><td style="padding:24px 32px;">
+<p style="font-size:15px;color:#1E293B;line-height:1.6;margin:0 0 16px;">{greeting}</p>
+<p style="font-size:14px;color:#334155;line-height:1.6;margin:0 0 16px;">
+We ran a comprehensive audit on <strong>{url}</strong> covering traditional SEO, AI search readiness, and digital presence signals. Your overall score is <strong style="color:{grade_color};">{score}/100</strong>.
+</p>
+<p style="font-size:14px;color:#334155;line-height:1.6;margin:0 0 8px;"><strong>Top priorities:</strong></p>
+<ul style="padding-left:20px;margin:0 0 20px;">{rec_html if rec_html else '<li style="color:#059669;font-size:14px;">Looking good! No critical issues found.</li>'}</ul>
+<p style="font-size:14px;color:#334155;line-height:1.6;margin:0 0 24px;">
+The full report is attached as a PDF with detailed findings and implementation recommendations.
+</p>
+
+<!-- CTA Button -->
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+<a href="https://salessignalai.com" style="display:inline-block;background:#0D9488;color:#FFFFFF;font-size:14px;font-weight:700;padding:14px 36px;border-radius:8px;text-decoration:none;letter-spacing:0.3px;">Learn How We Can Help</a>
+</td></tr></table>
+</td></tr>
+
+<!-- Footer -->
+<tr><td style="background:#F8FAFC;padding:20px 32px;border-top:1px solid #E2E8F0;">
+<table width="100%" cellpadding="0" cellspacing="0"><tr>
+<td>
+<span style="font-size:12px;font-weight:700;color:#0F172A;">SALESSIGNAL</span><span style="font-size:12px;font-weight:700;color:#0D9488;">AI</span>
+<div style="font-size:11px;color:#94A3B8;margin-top:4px;">Multi-State Lead Intelligence</div>
+</td>
+<td align="right" style="font-size:11px;color:#64748B;line-height:1.6;">
+salessignalai.com<br/>
+support@salessignalai.com
+</td>
+</tr></table>
+</td></tr>
+
+</table>
+</td></tr></table>
+</body></html>"""
+
+    # Send via SendGrid with attachment
+    from django.conf import settings as djsettings
+    api_key = getattr(djsettings, 'SENDGRID_API_KEY', '')
+    if not api_key:
+        return JsonResponse({'error': 'SendGrid API key not configured'}, status=500)
+
+    try:
+        import sendgrid
+        from sendgrid.helpers.mail import (
+            Mail, Email, To, Content, Attachment,
+            FileContent, FileName, FileType, Disposition,
+        )
+        import base64
+
+        sg = sendgrid.SendGridAPIClient(api_key)
+
+        from_email = getattr(djsettings, 'ALERT_FROM_EMAIL', 'reports@salessignal.ai')
+        domain = url.replace('https://', '').replace('http://', '').rstrip('/')
+
+        message = Mail(
+            from_email=Email(from_email, 'SalesSignalAI'),
+            to_emails=To(to_email),
+            subject=f'Your Digital Presence Audit — {domain} ({score}/100)',
+        )
+        message.add_content(Content('text/html', html_body))
+
+        # Attach PDF
+        encoded_pdf = base64.b64encode(pdf_bytes).decode('ascii')
+        attachment = Attachment(
+            FileContent(encoded_pdf),
+            FileName(filename),
+            FileType('application/pdf'),
+            Disposition('attachment'),
+        )
+        message.add_attachment(attachment)
+
+        response = sg.send(message)
+
+        if response.status_code in (200, 201, 202):
+            return JsonResponse({
+                'ok': True,
+                'message': f'Report emailed to {to_email}',
+                'message_id': response.headers.get('X-Message-Id', ''),
+            })
+        else:
+            return JsonResponse({'error': f'SendGrid error: status {response.status_code}'}, status=500)
+
+    except ImportError:
+        return JsonResponse({'error': 'sendgrid package not installed'}, status=500)
+    except Exception as e:
+        return JsonResponse({'error': f'Email failed: {str(e)}'}, status=500)
