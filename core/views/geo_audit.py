@@ -734,13 +734,13 @@ def _generate_audit_pdf(audit):
         canvas.rect(0, 0, page_w, 36, fill=1, stroke=0)
         canvas.setFillColor(TEAL)
         canvas.rect(0, 36, page_w, 2, fill=1, stroke=0)
-        # Footer text
+        # Footer text — left: brand, center: confidential, right: page number
         canvas.setFillColor(HexColor('#94A3B8'))
-        canvas.setFont('Helvetica', 7.5)
-        canvas.drawString(54, 14, 'salessignalai.com  |  support@salessignalai.com')
+        canvas.setFont('Helvetica', 6.5)
+        canvas.drawString(54, 14, 'salessignalai.com')
         canvas.drawRightString(page_w - 54, 14, f'Page {doc.page}')
         canvas.setFillColor(TEAL)
-        canvas.setFont('Helvetica-Bold', 7.5)
+        canvas.setFont('Helvetica', 6.5)
         canvas.drawCentredString(page_w / 2, 14, 'Confidential — Prepared exclusively for the recipient')
 
         canvas.restoreState()
@@ -903,10 +903,10 @@ def _generate_audit_pdf(audit):
         items.append(Spacer(1, 6))
         story.append(KeepTogether(items))
 
-    story.append(PageBreak())
+    story.append(Spacer(1, 12))
 
     # ════════════════════════════════════════
-    # RECOMMENDATIONS
+    # RECOMMENDATIONS (flows naturally, no forced page break)
     # ════════════════════════════════════════
     story.append(Paragraph('Priority Recommendations', styles['SectionHead']))
     story.append(HRFlowable(width='100%', color=TEAL, thickness=1.5))
