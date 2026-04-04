@@ -194,6 +194,7 @@ urlpatterns = [
     path('tools/geo-audit/', geo_audit.geo_audit_tool, name='geo_audit_tool'),
     path('tools/geo-audit/api/', geo_audit.geo_audit_api, name='geo_audit_api'),
     path('tools/geo-audit/pdf/', geo_audit.geo_audit_pdf, name='geo_audit_pdf'),
+    path('tools/geo-audit/email/', geo_audit.geo_audit_email, name='geo_audit_email'),
 
     # SignalWire Webhooks (called by SignalWire — no auth)
     path('api/signalwire/sms-webhook/', call_center.sms_webhook, name='signalwire_sms_webhook'),

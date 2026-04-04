@@ -281,6 +281,45 @@
     border-color: var(--border-subtle);
 }
 .geo-action-btn.secondary:hover { border-color: #7C3AED; color: #7C3AED; }
+
+/* ── Email Modal ── */
+.geo-email-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+    justify-content: center;
+    align-items: center;
+}
+.geo-email-overlay.active { display: flex; }
+.geo-email-modal {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 28px 32px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.geo-email-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.geo-email-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+.geo-email-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
 </style>
 {% endblock %}
 
@@ -324,12 +363,41 @@
             <button class="geo-action-btn primary" onclick="downloadPdf()">
                 <i class="bi bi-file-earmark-pdf"></i> Download PDF Report
             </button>
+            <button class="geo-action-btn primary" onclick="openEmailModal()" style="background:linear-gradient(135deg,#0D9488,#0F766E);">
+                <i class="bi bi-envelope-paper"></i> Email Report
+            </button>
             <button class="geo-action-btn secondary" onclick="copyResults()">
                 <i class="bi bi-clipboard"></i> Copy Summary
             </button>
             <button class="geo-action-btn secondary" onclick="runAudit()">
                 <i class="bi bi-arrow-clockwise"></i> Re-run Audit
             </button>
+        </div>
+
+        <!-- Email Modal -->
+        <div class="geo-email-overlay" id="geoEmailOverlay" onclick="if(event.target===this)closeEmailModal()">
+            <div class="geo-email-modal">
+                <div class="geo-email-header">
+                    <h3><i class="bi bi-envelope-paper" style="color:#0D9488;margin-right:8px;"></i> Email Audit Report</h3>
+                    <button onclick="closeEmailModal()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:1.2rem;"><i class="bi bi-x-lg"></i></button>
+                </div>
+                <p style="font-size:0.82rem;color:var(--text-secondary);margin:0 0 16px;">Send a branded PDF report with scoring breakdown directly to your client's inbox.</p>
+                <div style="margin-bottom:14px;">
+                    <label style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">Recipient Email</label>
+                    <input type="email" id="geoEmailTo" class="geo-url-input" placeholder="client@example.com" style="width:100%;box-sizing:border-box;">
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">Your Name (optional — appears in the email)</label>
+                    <input type="text" id="geoEmailSender" class="geo-url-input" placeholder="Your name" style="width:100%;box-sizing:border-box;">
+                </div>
+                <div class="geo-email-actions">
+                    <button class="geo-action-btn secondary" onclick="closeEmailModal()">Cancel</button>
+                    <button class="geo-action-btn primary" id="geoSendBtn" onclick="sendEmailReport()" style="background:linear-gradient(135deg,#0D9488,#0F766E);">
+                        <i class="bi bi-send"></i> Send Report
+                    </button>
+                </div>
+                <div id="geoEmailStatus" style="margin-top:12px;display:none;"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -556,10 +624,66 @@ function escHtml(s) {
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── Email Modal ──
+function openEmailModal() {
+    if (!lastAuditResult) return;
+    document.getElementById('geoEmailOverlay').classList.add('active');
+    document.getElementById('geoEmailStatus').style.display = 'none';
+    document.getElementById('geoEmailTo').focus();
+}
+
+function closeEmailModal() {
+    document.getElementById('geoEmailOverlay').classList.remove('active');
+}
+
+async function sendEmailReport() {
+    const to = document.getElementById('geoEmailTo').value.trim();
+    if (!to) { document.getElementById('geoEmailTo').focus(); return; }
+
+    const senderName = document.getElementById('geoEmailSender').value.trim();
+    const btn = document.getElementById('geoSendBtn');
+    const status = document.getElementById('geoEmailStatus');
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Sending...';
+    status.style.display = 'none';
+
+    try {
+        const r = await fetch('/tools/geo-audit/email/', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json', 'X-CSRFToken': getCsrf()},
+            body: JSON.stringify({
+                audit: lastAuditResult,
+                to_email: to,
+                sender_name: senderName || undefined
+            })
+        });
+        const d = await r.json();
+
+        status.style.display = 'block';
+        if (d.ok) {
+            status.innerHTML = '<div style="padding:10px 14px;border-radius:10px;background:rgba(5,150,105,0.1);color:#059669;font-size:0.82rem;font-weight:600;"><i class="bi bi-check-circle-fill" style="margin-right:6px;"></i> Report sent to ' + escHtml(to) + '</div>';
+            setTimeout(() => closeEmailModal(), 2000);
+        } else {
+            status.innerHTML = '<div style="padding:10px 14px;border-radius:10px;background:rgba(239,68,68,0.1);color:#EF4444;font-size:0.82rem;font-weight:600;"><i class="bi bi-exclamation-circle-fill" style="margin-right:6px;"></i> ' + escHtml(d.error || 'Failed to send') + '</div>';
+        }
+    } catch(e) {
+        status.style.display = 'block';
+        status.innerHTML = '<div style="padding:10px 14px;border-radius:10px;background:rgba(239,68,68,0.1);color:#EF4444;font-size:0.82rem;">Network error — try again</div>';
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-send"></i> Send Report';
+}
+
 // Allow Enter key to trigger audit
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('geoUrl').addEventListener('keydown', e => {
         if (e.key === 'Enter') runAudit();
+    });
+    // Enter in email field sends report
+    document.getElementById('geoEmailTo').addEventListener('keydown', e => {
+        if (e.key === 'Enter') sendEmailReport();
     });
 });
 </script>
