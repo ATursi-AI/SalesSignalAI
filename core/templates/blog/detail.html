@@ -29,11 +29,27 @@
       "@type": "Article",
       "headline": "{{ post.title }}",
       "description": "{{ post.meta_description|default:post.excerpt }}",
-      "author": {"@type": "Person", "name": "{{ post.author }}"},
-      "publisher": {"@type": "Organization", "name": "SalesSignal AI"},
+      "author": {
+        "@type": "Person",
+        "name": "{{ post.author }}",
+        "url": "https://salessignalai.com/about/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "SalesSignal AI",
+        "url": "https://salessignalai.com",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://salessignalai.com/static/images/logo.png"
+        }
+      },
       "datePublished": "{{ post.published_at|date:'c' }}",
       "dateModified": "{{ post.updated_at|date:'c' }}",
-      "url": "https://salessignalai.com{% url 'blog_detail' post.slug %}"
+      "url": "https://salessignalai.com{% url 'blog_detail' post.slug %}",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://salessignalai.com{% url 'blog_detail' post.slug %}"
+      }
     }
     </script>
     <style>

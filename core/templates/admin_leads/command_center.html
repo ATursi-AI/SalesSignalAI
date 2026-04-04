@@ -852,8 +852,10 @@ function buildDetailPanel(lead) {
             <div class="action-buttons">
                 <button class="btn-enrich" style="background:rgba(13,148,136,0.15);color:#0D9488;border:1px solid rgba(13,148,136,0.3);" id="places-btn-${lead.id}" onclick="enrichViaPlaces(${lead.id})" title="Free — uses Google Places API"><i class="bi bi-google"></i> Google Enrich</button>
                 <button class="btn-enrich" id="enrich-btn-${lead.id}" onclick="enrichLead(${lead.id})" ${lead.enrichment_status==='enriched'?'disabled style="background:#D1FAE5;color:#065F46;border-color:#6EE7B7;"':''}>${lead.enrichment_status==='enriched'?'<i class="bi bi-check-lg"></i> Enriched':'<i class="bi bi-magic"></i> AI Enrich'}</button>
+                <button class="btn-enrich" id="geo-btn-${lead.id}" onclick="checkGeoScore(${lead.id})" style="background:rgba(139,92,246,0.12);color:#7C3AED;border:1px solid rgba(139,92,246,0.25);" title="Check AI search readiness (free — no AI tokens)"><i class="bi bi-robot"></i> GEO Score</button>
                 <button class="btn-delete-detail" onclick="deleteLead(${lead.id})"><i class="bi bi-trash3"></i> Delete</button>
             </div>
+            <div id="geo-result-${lead.id}" style="display:none;margin-top:8px;padding:10px 12px;border-radius:8px;font-size:0.8rem;"></div>
             <h4 style="margin-top:14px">Send to Customer</h4>
             <div class="assign-row">
                 <select id="assignSelect-${lead.id}"><option value="">Select business...</option>${bizOpts}</select>
@@ -925,6 +927,68 @@ async function enrichViaPlaces(id) {
             if(btn){btn.disabled=false;btn.innerHTML='<i class="bi bi-google"></i> Google Enrich';}
         }
     } catch(e){console.error(e);showToast('Network error','warning');if(btn){btn.disabled=false;btn.innerHTML='<i class="bi bi-google"></i> Google Enrich';}}
+}
+
+/* ── GEO Score Check (Free — no AI tokens) ── */
+async function checkGeoScore(id) {
+    const btn = document.getElementById('geo-btn-'+id);
+    const resultDiv = document.getElementById('geo-result-'+id);
+    if(btn){btn.disabled=true;btn.innerHTML='<i class="bi bi-hourglass-split"></i> Checking...';}
+    try {
+        let website = '';
+        const placesDiv = document.getElementById('places-result-'+id);
+        if(placesDiv && placesDiv.style.display !== 'none') {
+            const link = placesDiv.querySelector('a[href*="http"]');
+            if(link) website = link.href;
+        }
+        const r = await fetch(`/admin-leads/detail/${id}/action/`, {
+            method:'POST',
+            headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},
+            body:JSON.stringify({action:'geo_score', website: website})
+        });
+        const d = await r.json();
+        if(d.ok && d.result) {
+            const res = d.result;
+            if(res.error) {
+                if(resultDiv){
+                    resultDiv.innerHTML='<div style="color:#94A3B8;"><i class="bi bi-info-circle"></i> '+escHtml(res.error)+' — Run Google Enrich first to find their website.</div>';
+                    resultDiv.style.display='block';
+                    resultDiv.style.background='rgba(148,163,184,0.06)';
+                    resultDiv.style.border='1px solid rgba(148,163,184,0.15)';
+                }
+                if(btn){btn.disabled=false;btn.innerHTML='<i class="bi bi-robot"></i> GEO Score';}
+                return;
+            }
+            const gradeColors = {A:'#059669',B:'#0D9488',C:'#F59E0B',D:'#F97316',F:'#EF4444','?':'#94A3B8'};
+            const gc = gradeColors[res.grade] || '#94A3B8';
+            let html = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">`;
+            html += `<div style="width:44px;height:44px;border-radius:10px;background:${gc}15;border:2px solid ${gc};display:flex;align-items:center;justify-content:center;">`;
+            html += `<span style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:800;color:${gc};">${res.score}</span>`;
+            html += `</div>`;
+            html += `<div><div style="font-weight:700;color:${gc};font-size:0.85rem;">GEO Grade: ${res.grade}</div>`;
+            html += `<div style="color:var(--text-muted);font-size:0.72rem;">${res.website}</div></div></div>`;
+            const bd = res.breakdown || {};
+            if(bd.robots_txt) html += `<div style="display:flex;justify-content:space-between;font-size:0.75rem;padding:2px 0;"><span>robots.txt (AI bots)</span><span style="font-weight:600;">${bd.robots_txt.score}/${bd.robots_txt.max}</span></div>`;
+            if(bd.llms_txt) html += `<div style="display:flex;justify-content:space-between;font-size:0.75rem;padding:2px 0;"><span>llms.txt</span><span style="font-weight:600;">${bd.llms_txt.score}/${bd.llms_txt.max}</span></div>`;
+            if(bd.schema) html += `<div style="display:flex;justify-content:space-between;font-size:0.75rem;padding:2px 0;"><span>Schema markup</span><span style="font-weight:600;">${bd.schema.score}/${bd.schema.max}</span></div>`;
+            if(bd.schema && bd.schema.types_found && bd.schema.types_found.length) html += `<div style="font-size:0.7rem;color:var(--text-muted);margin-top:2px;">Types: ${bd.schema.types_found.join(', ')}</div>`;
+            if(resultDiv){
+                resultDiv.innerHTML=html;
+                resultDiv.style.display='block';
+                resultDiv.style.background=`${gc}08`;
+                resultDiv.style.border=`1px solid ${gc}20`;
+            }
+            if(btn){btn.disabled=false;btn.innerHTML=`<i class="bi bi-robot"></i> ${res.score}/100`;btn.style.background=`${gc}15`;btn.style.color=gc;btn.style.borderColor=`${gc}40`;}
+            showToast(`GEO Score: ${res.score}/100 (Grade ${res.grade})`, res.score >= 40 ? 'success' : 'warning');
+        } else {
+            showToast(d.error||'GEO check failed', 'warning');
+            if(btn){btn.disabled=false;btn.innerHTML='<i class="bi bi-robot"></i> GEO Score';}
+        }
+    } catch(e){
+        console.error(e);
+        showToast('Network error during GEO check','warning');
+        if(btn){btn.disabled=false;btn.innerHTML='<i class="bi bi-robot"></i> GEO Score';}
+    }
 }
 
 /* Actions */

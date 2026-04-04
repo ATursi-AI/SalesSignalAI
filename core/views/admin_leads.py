@@ -641,6 +641,17 @@ def lead_action(request, lead_id):
             'enrichment_status': lead.enrichment_status,
         })
 
+    elif action == 'geo_score':
+        # Lightweight GEO Score — no AI tokens, just HTTP checks
+        # Needs a website URL — check lead fields
+        raw = lead.raw_data if isinstance(lead.raw_data, dict) else {}
+        website = raw.get('website', '') or raw.get('websiteUri', '') or raw.get('places_website', '') or data.get('website', '')
+        if not website:
+            return JsonResponse({'ok': True, 'result': {'score': 0, 'grade': '?', 'error': 'No website found for this lead'}})
+        from core.services.geo_score import quick_geo_score
+        result = quick_geo_score(website)
+        return JsonResponse({'ok': True, 'result': result})
+
     elif action == 'delete':
         lead_id = lead.id
         lead.delete()
