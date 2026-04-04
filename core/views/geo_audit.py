@@ -970,10 +970,17 @@ def _generate_audit_pdf(audit):
 @require_POST
 def geo_audit_pdf(request):
     """Generate and download a professional PDF from audit results."""
+    import logging
+    logger = logging.getLogger(__name__)
+
     if not (request.user.is_staff or request.user.is_superuser):
         return JsonResponse({'error': 'Admin access required'}, status=403)
 
-    data = json.loads(request.body)
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError) as e:
+        return JsonResponse({'error': f'Invalid JSON: {str(e)}'}, status=400)
+
     audit = data.get('audit', {})
     if not audit:
         return JsonResponse({'error': 'No audit data provided'}, status=400)
@@ -982,6 +989,9 @@ def geo_audit_pdf(request):
         pdf_bytes, filename = _generate_audit_pdf(audit)
     except ImportError:
         return JsonResponse({'error': 'reportlab not installed on server'}, status=500)
+    except Exception as e:
+        logger.exception('PDF generation failed')
+        return JsonResponse({'error': f'PDF generation failed: {str(e)}'}, status=500)
 
     response = HttpResponse(pdf_bytes, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -996,13 +1006,20 @@ def geo_audit_pdf(request):
 @require_POST
 def geo_audit_email(request):
     """Generate PDF and email it with a branded HTML template."""
+    import logging
+    logger = logging.getLogger(__name__)
+
     if not (request.user.is_staff or request.user.is_superuser):
         return JsonResponse({'error': 'Admin access required'}, status=403)
 
-    data = json.loads(request.body)
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError) as e:
+        return JsonResponse({'error': f'Invalid JSON: {str(e)}'}, status=400)
+
     audit = data.get('audit', {})
     to_email = (data.get('to_email') or '').strip()
-    recipient_name = (data.get('recipient_name') or '').strip()
+    recipient_name = (data.get('recipient_name') or data.get('sender_name') or '').strip()
 
     if not audit:
         return JsonResponse({'error': 'No audit data provided'}, status=400)
@@ -1014,6 +1031,9 @@ def geo_audit_email(request):
         pdf_bytes, filename = _generate_audit_pdf(audit)
     except ImportError:
         return JsonResponse({'error': 'reportlab not installed on server'}, status=500)
+    except Exception as e:
+        logger.exception('PDF generation failed for email')
+        return JsonResponse({'error': f'PDF generation failed: {str(e)}'}, status=500)
 
     score = audit.get('overall_score', 0)
     grade = audit.get('grade', '?')
