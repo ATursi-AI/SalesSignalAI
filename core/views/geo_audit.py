@@ -97,6 +97,7 @@ def _run_full_audit(base_url):
     audit = {
         'url': base_url,
         'audit_date': datetime.now().strftime('%B %d, %Y'),
+        'site_name': '',
         'categories': {},
         'overall_score': 0,
         'grade': 'F',
@@ -285,6 +286,18 @@ def _run_full_audit(base_url):
         if re.search(r'rel=["\']canonical["\']', body, re.IGNORECASE):
             homepage['score'] += 1
             homepage['findings'].append('Canonical URL set')
+
+        # Extract site name from og:site_name or title tag
+        og_site = re.search(r'property=["\']og:site_name["\'][^>]*content=["\']([^"\']*)["\']', body, re.IGNORECASE)
+        if not og_site:
+            og_site = re.search(r'content=["\']([^"\']*)["\'][^>]*property=["\']og:site_name["\']', body, re.IGNORECASE)
+        if og_site:
+            audit['site_name'] = og_site.group(1).strip()
+        elif title:
+            # Try to extract company name from title (often "Company Name | Tagline" or "Company Name - Tagline")
+            name_part = re.split(r'\s*[|–—-]\s*', title)[0].strip()
+            if len(name_part) < 60:
+                audit['site_name'] = name_part
 
         # Open Graph
         og_count = len(re.findall(r'property=["\']og:', body, re.IGNORECASE))
@@ -737,7 +750,7 @@ def _generate_audit_pdf(audit):
         # Footer text — left: brand, center: confidential, right: page number
         canvas.setFillColor(HexColor('#94A3B8'))
         canvas.setFont('Helvetica', 6.5)
-        canvas.drawString(54, 14, 'salessignalai.com')
+        canvas.drawString(54, 14, 'salessignalai.com  |  (959) 247-2537')
         canvas.drawRightString(page_w - 54, 14, f'Page {doc.page}')
         canvas.setFillColor(TEAL)
         canvas.setFont('Helvetica', 6.5)
@@ -755,7 +768,8 @@ def _generate_audit_pdf(audit):
     # Custom styles
     styles.add(ParagraphStyle('CoverTitle', fontName='Helvetica-Bold', fontSize=32, textColor=DARK, spaceAfter=4, leading=38))
     styles.add(ParagraphStyle('CoverSub', fontName='Helvetica', fontSize=13, textColor=MUTED, spaceAfter=6))
-    styles.add(ParagraphStyle('CoverURL', fontName='Courier', fontSize=12, textColor=TEAL, spaceAfter=24))
+    styles.add(ParagraphStyle('CoverURL', fontName='Courier', fontSize=12, textColor=TEAL_DARK, spaceAfter=8))
+    styles.add(ParagraphStyle('CoverCompany', fontName='Helvetica-Bold', fontSize=18, textColor=DARK, spaceAfter=6))
     styles.add(ParagraphStyle('SectionHead', fontName='Helvetica-Bold', fontSize=15, textColor=TEAL_DARK, spaceBefore=18, spaceAfter=6))
     styles.add(ParagraphStyle('SubHead', fontName='Helvetica-Bold', fontSize=11, textColor=SLATE, spaceBefore=10, spaceAfter=3))
     styles.add(ParagraphStyle('Body10', fontName='Helvetica', fontSize=9.5, textColor=SLATE, spaceAfter=4, leading=14))
@@ -779,9 +793,14 @@ def _generate_audit_pdf(audit):
     story.append(Spacer(1, 6))
     story.append(HRFlowable(width='40%', color=TEAL, thickness=3, hAlign='LEFT'))
     story.append(Spacer(1, 14))
+
+    # Company name (if detected) + URL
+    site_name = audit.get('site_name', '')
+    if site_name:
+        story.append(Paragraph(f'Prepared for {site_name}', styles['CoverCompany']))
     story.append(Paragraph(audit.get('url', 'Unknown'), styles['CoverURL']))
     story.append(Paragraph(f'Prepared: {audit.get("audit_date", "N/A")}', styles['CoverSub']))
-    story.append(Spacer(1, 30))
+    story.append(Spacer(1, 24))
 
     # Big score display
     interp_map = {
@@ -832,7 +851,7 @@ def _generate_audit_pdf(audit):
     story.append(HRFlowable(width='100%', color=TEAL, thickness=1.5))
     story.append(Spacer(1, 6))
     story.append(Paragraph(
-        'Courtesy of <b>SalesSignalAI</b>  |  salessignalai.com  |  support@salessignalai.com',
+        'Courtesy of <b>SalesSignalAI</b>  |  salessignalai.com  |  (959) AI-SALES  |  (959) 247-2537',
         styles['FooterLine']
     ))
 
@@ -954,7 +973,8 @@ def _generate_audit_pdf(audit):
         '<b>Ready to improve your score?</b><br/>'
         '<font size="9" color="#64748B">Our team can implement every recommendation in this report. '
         'Contact us to get started.</font><br/><br/>'
-        '<font size="10" color="#0D9488"><b>salessignalai.com</b>  |  support@salessignalai.com</font>',
+        '<font size="10" color="#0D9488"><b>salessignalai.com</b>  |  (959) AI-SALES  |  (959) 247-2537</font><br/>'
+        '<font size="8" color="#64748B">support@salessignalai.com</font>',
         ParagraphStyle('cta', fontName='Helvetica', fontSize=11, textColor=SLATE, alignment=TA_CENTER, leading=16),
     )]]
     cta_table = Table(cta_data, colWidths=[6.2 * inch])
