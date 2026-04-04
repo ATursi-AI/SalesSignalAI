@@ -727,40 +727,42 @@ def _generate_audit_pdf(audit):
         canvas.saveState()
         # ── Header bar ──
         canvas.setFillColor(SLATE)
-        canvas.rect(0, page_h - 42, page_w, 42, fill=1, stroke=0)
+        canvas.rect(0, page_h - 50, page_w, 50, fill=1, stroke=0)
         # Teal accent line under header
         canvas.setFillColor(TEAL)
-        canvas.rect(0, page_h - 45, page_w, 3, fill=1, stroke=0)
-        # Brand text
+        canvas.rect(0, page_h - 54, page_w, 4, fill=1, stroke=0)
+        # Brand text — large and readable
         canvas.setFillColor(WHITE)
-        canvas.setFont('Helvetica-Bold', 11)
-        canvas.drawString(54, page_h - 28, 'SALESSIGNAL')
+        canvas.setFont('Helvetica-Bold', 16)
+        canvas.drawString(54, page_h - 34, 'SALESSIGNAL')
         canvas.setFillColor(TEAL)
-        canvas.drawString(54 + canvas.stringWidth('SALESSIGNAL', 'Helvetica-Bold', 11), page_h - 28, 'AI')
+        canvas.setFont('Helvetica-Bold', 16)
+        canvas.drawString(54 + canvas.stringWidth('SALESSIGNAL', 'Helvetica-Bold', 16), page_h - 34, 'AI')
         # Right side — report type
         canvas.setFillColor(HexColor('#94A3B8'))
-        canvas.setFont('Helvetica', 8)
-        canvas.drawRightString(page_w - 54, page_h - 28, 'SEO + AI READINESS AUDIT')
+        canvas.setFont('Helvetica', 10)
+        canvas.drawRightString(page_w - 54, page_h - 34, 'SEO + AI READINESS AUDIT')
 
         # ── Footer ──
         canvas.setFillColor(SLATE)
-        canvas.rect(0, 0, page_w, 36, fill=1, stroke=0)
+        canvas.rect(0, 0, page_w, 44, fill=1, stroke=0)
         canvas.setFillColor(TEAL)
-        canvas.rect(0, 36, page_w, 2, fill=1, stroke=0)
-        # Footer text — left: brand, center: confidential, right: page number
-        canvas.setFillColor(HexColor('#94A3B8'))
-        canvas.setFont('Helvetica', 6.5)
-        canvas.drawString(54, 14, 'salessignalai.com  |  (959) 247-2537')
-        canvas.drawRightString(page_w - 54, 14, f'Page {doc.page}')
+        canvas.rect(0, 44, page_w, 3, fill=1, stroke=0)
+        # Footer text — left: brand + phone, center: confidential, right: page
+        canvas.setFillColor(HexColor('#CBD5E1'))
+        canvas.setFont('Helvetica-Bold', 9)
+        canvas.drawString(54, 18, 'salessignalai.com  |  (959) 247-2537')
+        canvas.setFont('Helvetica-Bold', 9)
+        canvas.drawRightString(page_w - 54, 18, f'Page {doc.page}')
         canvas.setFillColor(TEAL)
-        canvas.setFont('Helvetica', 6.5)
-        canvas.drawCentredString(page_w / 2, 14, 'Confidential — Prepared exclusively for the recipient')
+        canvas.setFont('Helvetica', 8)
+        canvas.drawCentredString(page_w / 2, 18, 'Confidential — Prepared exclusively for the recipient')
 
         canvas.restoreState()
 
     doc = SimpleDocTemplate(
         buffer, pagesize=letter,
-        topMargin=72, bottomMargin=52,
+        topMargin=80, bottomMargin=60,
         leftMargin=54, rightMargin=54,
     )
 

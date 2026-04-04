@@ -3,7 +3,7 @@ from core.views import landing, auth, onboarding, dashboard, leads, competitors,
 from core.views import monitor_health, webhooks, user_settings, admin_leads, ingest_api, crm
 from core.views import sales_admin, sales, industries, prospect_videos, static_pages, seo, call_center
 from core.views import service_pages, signup, blog, workflows, conversations, telegram_bot, engagement
-from core.views import geo_audit
+from core.views import geo_audit, agent_rep
 
 urlpatterns = [
     path('', landing.landing_page, name='landing'),
@@ -195,6 +195,12 @@ urlpatterns = [
     path('tools/geo-audit/api/', geo_audit.geo_audit_api, name='geo_audit_api'),
     path('tools/geo-audit/pdf/', geo_audit.geo_audit_pdf, name='geo_audit_pdf'),
     path('tools/geo-audit/email/', geo_audit.geo_audit_email, name='geo_audit_email'),
+
+    # Agent REP — Reputation Intelligence
+    path('tools/agent-rep/', agent_rep.agent_rep_tool, name='agent_rep_tool'),
+    path('tools/agent-rep/api/', agent_rep.agent_rep_api, name='agent_rep_api'),
+    path('tools/agent-rep/pdf/', agent_rep.agent_rep_pdf, name='agent_rep_pdf'),
+    path('tools/agent-rep/email/', agent_rep.agent_rep_email, name='agent_rep_email'),
 
     # SignalWire Webhooks (called by SignalWire — no auth)
     path('api/signalwire/sms-webhook/', call_center.sms_webhook, name='signalwire_sms_webhook'),

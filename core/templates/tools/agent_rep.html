@@ -1,0 +1,817 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Agent REP — Reputation Intelligence{% endblock %}
+{% block page_title %}<i class="bi bi-shield-exclamation"></i> Agent REP — Reputation Intelligence{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Layout ── */
+.rep-container { max-width: 900px; }
+.rep-hero {
+    background: linear-gradient(135deg, rgba(234,88,12,0.08) 0%, rgba(220,38,38,0.08) 100%);
+    border: 1px solid rgba(234,88,12,0.2);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+}
+.rep-hero h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 6px;
+}
+.rep-hero p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+.rep-agent-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(234,88,12,0.12);
+    color: #EA580C;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+}
+
+/* ── Input ── */
+.rep-input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 10px;
+    margin-top: 18px;
+}
+.rep-input {
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+    font-size: 0.92rem;
+    color: var(--text-primary);
+    transition: all 0.2s;
+}
+.rep-input:focus {
+    outline: none;
+    border-color: #EA580C;
+    box-shadow: 0 0 0 3px rgba(234,88,12,0.12);
+}
+.rep-input::placeholder { color: var(--text-muted); }
+.rep-run-btn {
+    padding: 12px 28px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #EA580C, #DC2626);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.rep-run-btn:hover { background: linear-gradient(135deg, #DC2626, #B91C1C); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(234,88,12,0.3); }
+.rep-run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ── Progress ── */
+.rep-progress {
+    display: none;
+    margin-top: 20px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+}
+.rep-progress-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(234,88,12,0.1);
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+.rep-progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #EA580C, #DC2626);
+    width: 0%;
+    transition: width 0.4s ease;
+}
+.rep-progress-text {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* ── Results ── */
+.rep-results { display: none; margin-top: 24px; }
+
+/* Score Card */
+.rep-score-card {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 24px 28px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+}
+.rep-score-circle {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.rep-score-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+}
+.rep-score-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+.rep-score-info h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0 0 4px;
+}
+.rep-score-info p {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Stats Row */
+.rep-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+}
+.rep-stat-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 18px;
+    text-align: center;
+}
+.rep-stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1;
+}
+.rep-stat-label {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Platform Cards */
+.rep-platforms {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+.rep-platform-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 16px 18px;
+    transition: all 0.2s;
+}
+.rep-platform-card:hover { border-color: rgba(234,88,12,0.3); }
+.rep-platform-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.rep-platform-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.rep-platform-rating {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 12px;
+}
+.rep-platform-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+.rep-platform-bar {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(234,88,12,0.08);
+    overflow: hidden;
+}
+.rep-platform-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+}
+
+/* Sentiment */
+.rep-sentiment {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+}
+.rep-sentiment-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+}
+.rep-sentiment-pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.3rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+.rep-sentiment-label {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Recommendations */
+.rep-recs {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 20px 22px;
+    margin-bottom: 14px;
+}
+.rep-recs h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 14px;
+}
+.rep-rec-item {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.rep-rec-item:last-child { border-bottom: none; }
+.rep-rec-priority {
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 8px;
+    display: inline-block;
+    margin-bottom: 4px;
+}
+.rep-rec-priority.high { background: rgba(239,68,68,0.1); color: #EF4444; }
+.rep-rec-priority.medium { background: rgba(245,158,11,0.1); color: #F59E0B; }
+.rep-rec-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+}
+.rep-rec-detail {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+.rep-rec-effort {
+    font-size: 0.72rem;
+    color: #EA580C;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+/* Actions */
+.rep-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-subtle);
+    flex-wrap: wrap;
+}
+.rep-action-btn {
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 1px solid;
+    font-weight: 600;
+    font-size: 0.82rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+}
+.rep-action-btn.primary {
+    background: linear-gradient(135deg, #EA580C, #DC2626);
+    color: #fff;
+    border-color: transparent;
+}
+.rep-action-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(234,88,12,0.3); }
+.rep-action-btn.secondary {
+    background: transparent;
+    color: var(--text-secondary);
+    border-color: var(--border-subtle);
+}
+.rep-action-btn.secondary:hover { border-color: #EA580C; color: #EA580C; }
+
+/* Email Modal */
+.rep-email-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+    justify-content: center;
+    align-items: center;
+}
+.rep-email-overlay.active { display: flex; }
+.rep-email-modal {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 28px 32px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.rep-email-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.rep-email-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+.rep-email-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+    .rep-input-grid { grid-template-columns: 1fr; }
+    .rep-stats, .rep-sentiment { grid-template-columns: 1fr; }
+    .rep-actions { flex-direction: column; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="rep-container">
+    <div class="rep-hero">
+        <div class="rep-agent-badge">
+            <i class="bi bi-shield-exclamation"></i> Agent REP
+        </div>
+        <h2><i class="bi bi-star-half" style="color:#EA580C;margin-right:6px;"></i> Reputation Intelligence Scanner</h2>
+        <p>Enter a business name and location to scan their reputation across Google, Yelp, BBB, and Trustpilot. Agent REP aggregates public review data and generates a comprehensive reputation report you can text or email to prospects.</p>
+        <div class="rep-input-grid">
+            <input type="text" class="rep-input" id="repBizName" placeholder="Business name (e.g. Joe's Plumbing)" autocomplete="off" spellcheck="false">
+            <input type="text" class="rep-input" id="repLocation" placeholder="City, State (e.g. Sacramento, CA)" autocomplete="off" spellcheck="false">
+            <button class="rep-run-btn" id="repRunBtn" onclick="runRepScan()">
+                <i class="bi bi-search"></i> Scan Reputation
+            </button>
+        </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="rep-progress" id="repProgress">
+        <div class="rep-progress-bar">
+            <div class="rep-progress-fill" id="repProgressFill"></div>
+        </div>
+        <div class="rep-progress-text" id="repProgressText">Starting reputation scan...</div>
+    </div>
+
+    <!-- Results -->
+    <div class="rep-results" id="repResults">
+        <!-- Score card -->
+        <div class="rep-score-card" id="repScoreCard"></div>
+
+        <!-- Stats row -->
+        <div class="rep-stats" id="repStats"></div>
+
+        <!-- Platform breakdown -->
+        <div class="rep-platforms" id="repPlatforms"></div>
+
+        <!-- Sentiment -->
+        <h3 style="font-size:0.95rem;font-weight:700;color:var(--text-primary);margin:0 0 10px;">
+            <i class="bi bi-emoji-smile" style="color:#EA580C;margin-right:6px;"></i> Sentiment Estimate
+        </h3>
+        <div class="rep-sentiment" id="repSentiment"></div>
+
+        <!-- Recommendations -->
+        <div class="rep-recs" id="repRecs"></div>
+        <div class="rep-recs" id="repQuickWins"></div>
+
+        <!-- Actions -->
+        <div class="rep-actions">
+            <button class="rep-action-btn primary" onclick="downloadRepPdf()">
+                <i class="bi bi-file-earmark-pdf"></i> Download PDF Report
+            </button>
+            <button class="rep-action-btn primary" onclick="openRepEmailModal()" style="background:linear-gradient(135deg,#0D9488,#0F766E);">
+                <i class="bi bi-envelope-paper"></i> Email Report
+            </button>
+            <button class="rep-action-btn secondary" onclick="copyRepResults()">
+                <i class="bi bi-clipboard"></i> Copy Summary
+            </button>
+            <button class="rep-action-btn secondary" onclick="runRepScan()">
+                <i class="bi bi-arrow-clockwise"></i> Re-scan
+            </button>
+        </div>
+
+        <!-- Email Modal -->
+        <div class="rep-email-overlay" id="repEmailOverlay" onclick="if(event.target===this)closeRepEmailModal()">
+            <div class="rep-email-modal">
+                <div class="rep-email-header">
+                    <h3><i class="bi bi-envelope-paper" style="color:#EA580C;margin-right:8px;"></i> Email Reputation Report</h3>
+                    <button onclick="closeRepEmailModal()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:1.2rem;"><i class="bi bi-x-lg"></i></button>
+                </div>
+                <p style="font-size:0.82rem;color:var(--text-secondary);margin:0 0 16px;">Send a branded PDF report with reputation analysis directly to your prospect.</p>
+                <div style="margin-bottom:14px;">
+                    <label style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">Recipient Email</label>
+                    <input type="email" id="repEmailTo" class="rep-input" placeholder="prospect@example.com" style="width:100%;box-sizing:border-box;">
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">Recipient Name (optional)</label>
+                    <input type="text" id="repEmailName" class="rep-input" placeholder="Business owner name" style="width:100%;box-sizing:border-box;">
+                </div>
+                <div class="rep-email-actions">
+                    <button class="rep-action-btn secondary" onclick="closeRepEmailModal()">Cancel</button>
+                    <button class="rep-action-btn primary" id="repSendBtn" onclick="sendRepEmail()">
+                        <i class="bi bi-send"></i> Send Report
+                    </button>
+                </div>
+                <div id="repEmailStatus" style="margin-top:12px;display:none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let lastRepResult = null;
+
+function getCsrf() {
+    return document.cookie.split('; ').find(r=>r.startsWith('csrftoken='))?.split('=')[1] || '';
+}
+
+function escHtml(s) {
+    if (!s) return '';
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function runRepScan() {
+    const bizName = document.getElementById('repBizName').value.trim();
+    const location = document.getElementById('repLocation').value.trim();
+    if (!bizName) { document.getElementById('repBizName').focus(); return; }
+
+    const btn = document.getElementById('repRunBtn');
+    const progress = document.getElementById('repProgress');
+    const results = document.getElementById('repResults');
+    const fill = document.getElementById('repProgressFill');
+    const ptext = document.getElementById('repProgressText');
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Scanning...';
+    results.style.display = 'none';
+    progress.style.display = 'block';
+
+    const steps = [
+        {pct: 15, text: 'Searching Google for reviews and ratings...'},
+        {pct: 35, text: 'Scanning Yelp for business profile...'},
+        {pct: 55, text: 'Checking Better Business Bureau...'},
+        {pct: 70, text: 'Querying Trustpilot database...'},
+        {pct: 85, text: 'Analyzing sentiment and calculating reputation score...'},
+        {pct: 95, text: 'Generating recommendations...'},
+    ];
+
+    let stepIdx = 0;
+    const interval = setInterval(() => {
+        if (stepIdx < steps.length) {
+            fill.style.width = steps[stepIdx].pct + '%';
+            ptext.textContent = steps[stepIdx].text;
+            stepIdx++;
+        }
+    }, 1200);
+
+    try {
+        const r = await fetch('/tools/agent-rep/api/', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json', 'X-CSRFToken': getCsrf()},
+            body: JSON.stringify({business_name: bizName, location: location})
+        });
+        const d = await r.json();
+
+        clearInterval(interval);
+        fill.style.width = '100%';
+        ptext.textContent = 'Scan complete!';
+
+        if (d.ok && d.result) {
+            lastRepResult = d.result;
+            setTimeout(() => {
+                progress.style.display = 'none';
+                renderRepResults(d.result);
+            }, 600);
+        } else {
+            ptext.textContent = 'Error: ' + (d.error || 'Scan failed');
+            ptext.style.color = '#EF4444';
+        }
+    } catch(e) {
+        clearInterval(interval);
+        ptext.textContent = 'Network error — try again';
+        ptext.style.color = '#EF4444';
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-search"></i> Scan Reputation';
+}
+
+function renderRepResults(rep) {
+    const results = document.getElementById('repResults');
+    results.style.display = 'block';
+
+    const score = rep.reputation_score || 0;
+    const grade = rep.grade || '?';
+    const gc = score >= 80 ? '#059669' : score >= 60 ? '#0D9488' : score >= 40 ? '#F59E0B' : '#EF4444';
+    const interp = score >= 80 ? 'Excellent Reputation' : score >= 60 ? 'Strong Reputation' : score >= 40 ? 'Needs Improvement' : 'Reputation At Risk';
+
+    // Score card
+    document.getElementById('repScoreCard').innerHTML = `
+        <div class="rep-score-circle" style="background:${gc}12;border:3px solid ${gc};">
+            <div class="rep-score-number" style="color:${gc};">${score}</div>
+            <div class="rep-score-label" style="color:${gc};">/100</div>
+        </div>
+        <div class="rep-score-info">
+            <h3 style="color:${gc};">Grade ${grade} — ${interp}</h3>
+            <p>${escHtml(rep.business_name)}${rep.location ? ' — ' + escHtml(rep.location) : ''}<br>Scanned: ${rep.scan_date}</p>
+        </div>
+    `;
+    document.getElementById('repScoreCard').style.background = `${gc}08`;
+    document.getElementById('repScoreCard').style.border = `1px solid ${gc}25`;
+
+    // Stats
+    const rating = rep.overall_rating || 0;
+    const total = rep.total_reviews || 0;
+    const platCount = Object.keys(rep.platforms || {}).length;
+    const rc = rating >= 4.0 ? '#059669' : rating >= 3.0 ? '#F59E0B' : '#EF4444';
+
+    document.getElementById('repStats').innerHTML = `
+        <div class="rep-stat-card">
+            <div class="rep-stat-value" style="color:${rc};">${rating}</div>
+            <div class="rep-stat-label">Avg Rating (out of 5)</div>
+        </div>
+        <div class="rep-stat-card">
+            <div class="rep-stat-value" style="color:#0D9488;">${total.toLocaleString()}</div>
+            <div class="rep-stat-label">Total Reviews</div>
+        </div>
+        <div class="rep-stat-card">
+            <div class="rep-stat-value" style="color:#7C3AED;">${platCount}</div>
+            <div class="rep-stat-label">Platforms Found</div>
+        </div>
+    `;
+
+    // Platform cards
+    const platformInfo = {
+        google: {name: 'Google Reviews', icon: 'bi-google', color: '#4285F4'},
+        yelp: {name: 'Yelp', icon: 'bi-star-fill', color: '#FF1A1A'},
+        bbb: {name: 'Better Business Bureau', icon: 'bi-patch-check', color: '#005A82'},
+        trustpilot: {name: 'Trustpilot', icon: 'bi-trophy', color: '#00B67A'},
+    };
+
+    let platHtml = '';
+    const allPlatforms = ['google', 'yelp', 'bbb', 'trustpilot'];
+    for (const key of allPlatforms) {
+        const info = platformInfo[key];
+        const plat = (rep.platforms || {})[key];
+        if (plat) {
+            const r = plat.rating || 0;
+            const rc2 = r >= 4.0 ? '#059669' : r >= 3.0 ? '#F59E0B' : '#EF4444';
+            const pct = Math.round((r / 5) * 100);
+            platHtml += `
+                <div class="rep-platform-card">
+                    <div class="rep-platform-header">
+                        <span class="rep-platform-name"><i class="bi ${info.icon}" style="color:${info.color};margin-right:4px;"></i> ${info.name}</span>
+                        <span class="rep-platform-rating" style="color:${rc2};background:${rc2}12;">${r > 0 ? r + '/5' : 'N/A'}</span>
+                    </div>
+                    <div class="rep-platform-meta">${plat.review_count ? plat.review_count.toLocaleString() + ' reviews' : 'Reviews found'}
+                    ${plat.bbb_rating ? ' — BBB Rating: ' + plat.bbb_rating : ''}
+                    ${plat.accredited ? ' — <span style="color:#059669;">Accredited</span>' : ''}
+                    </div>
+                    <div class="rep-platform-bar"><div class="rep-platform-bar-fill" style="width:${pct}%;background:${rc2};"></div></div>
+                </div>
+            `;
+        } else {
+            platHtml += `
+                <div class="rep-platform-card" style="opacity:0.6;">
+                    <div class="rep-platform-header">
+                        <span class="rep-platform-name"><i class="bi ${info.icon}" style="color:${info.color};margin-right:4px;"></i> ${info.name}</span>
+                        <span class="rep-platform-rating" style="color:#EF4444;background:rgba(239,68,68,0.1);">NOT FOUND</span>
+                    </div>
+                    <div class="rep-platform-meta" style="color:#EF4444;">No listing found — opportunity to claim</div>
+                    <div class="rep-platform-bar"></div>
+                </div>
+            `;
+        }
+    }
+    document.getElementById('repPlatforms').innerHTML = platHtml;
+
+    // Sentiment
+    const sent = rep.sentiment || {};
+    const pos = sent.positive || 0;
+    const neu = sent.neutral || 0;
+    const neg = sent.negative || 0;
+    const sentTotal = pos + neu + neg || 1;
+    document.getElementById('repSentiment').innerHTML = `
+        <div class="rep-sentiment-card">
+            <div class="rep-sentiment-pct" style="color:#059669;">${Math.round(pos/sentTotal*100)}%</div>
+            <div class="rep-sentiment-label">Positive (${pos.toLocaleString()})</div>
+        </div>
+        <div class="rep-sentiment-card">
+            <div class="rep-sentiment-pct" style="color:#F59E0B;">${Math.round(neu/sentTotal*100)}%</div>
+            <div class="rep-sentiment-label">Neutral (${neu.toLocaleString()})</div>
+        </div>
+        <div class="rep-sentiment-card">
+            <div class="rep-sentiment-pct" style="color:#EF4444;">${Math.round(neg/sentTotal*100)}%</div>
+            <div class="rep-sentiment-label">Negative (${neg.toLocaleString()})</div>
+        </div>
+    `;
+
+    // Recommendations
+    let recHtml = '<h3><i class="bi bi-lightbulb" style="color:#F59E0B;margin-right:6px;"></i> Priority Recommendations</h3>';
+    (rep.recommendations || []).forEach(rec => {
+        const pclass = (rec.priority || '').toLowerCase();
+        recHtml += `
+            <div class="rep-rec-item">
+                <span class="rep-rec-priority ${pclass}">${rec.priority}</span>
+                <div class="rep-rec-title">${escHtml(rec.title)}</div>
+                <div class="rep-rec-detail">${escHtml(rec.detail)}</div>
+                <div class="rep-rec-effort">Effort: ${escHtml(rec.effort)}</div>
+            </div>
+        `;
+    });
+    if (!(rep.recommendations || []).length) {
+        recHtml += '<p style="color:var(--text-muted);font-size:0.82rem;">No major issues found — great reputation!</p>';
+    }
+    document.getElementById('repRecs').innerHTML = recHtml;
+
+    // Quick wins
+    let qwHtml = '<h3><i class="bi bi-lightning-charge" style="color:#EA580C;margin-right:6px;"></i> Quick Wins (Do This Week)</h3>';
+    (rep.quick_wins || []).forEach(w => {
+        qwHtml += `<div style="padding:6px 0;font-size:0.82rem;color:var(--text-primary);"><i class="bi bi-arrow-right-circle" style="color:#EA580C;margin-right:6px;"></i>${escHtml(w)}</div>`;
+    });
+    document.getElementById('repQuickWins').innerHTML = qwHtml;
+}
+
+// ── PDF Download ──
+async function downloadRepPdf() {
+    if (!lastRepResult) return;
+    try {
+        const r = await fetch('/tools/agent-rep/pdf/', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json', 'X-CSRFToken': getCsrf()},
+            body: JSON.stringify({report: lastRepResult})
+        });
+        if (r.ok) {
+            const blob = await r.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const cd = r.headers.get('Content-Disposition') || '';
+            const match = cd.match(/filename="(.+)"/);
+            a.download = match ? match[1] : 'Reputation_Report.pdf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } else {
+            const d = await r.json();
+            alert(d.error || 'PDF generation failed');
+        }
+    } catch(e) {
+        console.error(e);
+        alert('Failed to generate PDF');
+    }
+}
+
+// ── Copy ──
+function copyRepResults() {
+    if (!lastRepResult) return;
+    const r = lastRepResult;
+    let text = `Reputation Intelligence Report — ${r.business_name}\n`;
+    text += `Location: ${r.location}\n`;
+    text += `Score: ${r.reputation_score}/100 (Grade ${r.grade})\n`;
+    text += `Average Rating: ${r.overall_rating}/5 across ${r.total_reviews} reviews\n\n`;
+    for (const [key, plat] of Object.entries(r.platforms || {})) {
+        text += `${plat.platform}: ${plat.rating}/5 (${plat.review_count} reviews)\n`;
+    }
+    text += '\nRecommendations:\n';
+    (r.recommendations || []).forEach((rec,i) => {
+        text += `${i+1}. [${rec.priority}] ${rec.title}\n   ${rec.detail}\n`;
+    });
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target.closest('button');
+        if(btn) { const orig = btn.innerHTML; btn.innerHTML = '<i class="bi bi-check-lg"></i> Copied!'; setTimeout(()=>btn.innerHTML=orig, 1500); }
+    });
+}
+
+// ── Email Modal ──
+function openRepEmailModal() {
+    if (!lastRepResult) return;
+    document.getElementById('repEmailOverlay').classList.add('active');
+    document.getElementById('repEmailStatus').style.display = 'none';
+    document.getElementById('repEmailTo').focus();
+}
+
+function closeRepEmailModal() {
+    document.getElementById('repEmailOverlay').classList.remove('active');
+}
+
+async function sendRepEmail() {
+    const to = document.getElementById('repEmailTo').value.trim();
+    if (!to) { document.getElementById('repEmailTo').focus(); return; }
+
+    const recipientName = document.getElementById('repEmailName').value.trim();
+    const btn = document.getElementById('repSendBtn');
+    const status = document.getElementById('repEmailStatus');
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Sending...';
+    status.style.display = 'none';
+
+    try {
+        const r = await fetch('/tools/agent-rep/email/', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json', 'X-CSRFToken': getCsrf()},
+            body: JSON.stringify({
+                report: lastRepResult,
+                to_email: to,
+                recipient_name: recipientName || undefined
+            })
+        });
+        const d = await r.json();
+
+        status.style.display = 'block';
+        if (d.ok) {
+            status.innerHTML = '<div style="padding:10px 14px;border-radius:10px;background:rgba(5,150,105,0.1);color:#059669;font-size:0.82rem;font-weight:600;"><i class="bi bi-check-circle-fill" style="margin-right:6px;"></i> Report sent to ' + escHtml(to) + '</div>';
+            setTimeout(() => closeRepEmailModal(), 2000);
+        } else {
+            status.innerHTML = '<div style="padding:10px 14px;border-radius:10px;background:rgba(239,68,68,0.1);color:#EF4444;font-size:0.82rem;font-weight:600;"><i class="bi bi-exclamation-circle-fill" style="margin-right:6px;"></i> ' + escHtml(d.error || 'Failed to send') + '</div>';
+        }
+    } catch(e) {
+        status.style.display = 'block';
+        status.innerHTML = '<div style="padding:10px 14px;border-radius:10px;background:rgba(239,68,68,0.1);color:#EF4444;font-size:0.82rem;">Network error — try again</div>';
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-send"></i> Send Report';
+}
+
+// Enter key triggers
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('repBizName').addEventListener('keydown', e => {
+        if (e.key === 'Enter') runRepScan();
+    });
+    document.getElementById('repLocation').addEventListener('keydown', e => {
+        if (e.key === 'Enter') runRepScan();
+    });
+    document.getElementById('repEmailTo').addEventListener('keydown', e => {
+        if (e.key === 'Enter') sendRepEmail();
+    });
+});
+</script>
+{% endblock %}
