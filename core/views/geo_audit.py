@@ -803,8 +803,7 @@ def _generate_audit_pdf(audit):
     score_box.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('BACKGROUND', (0, 0), (0, 0), HexColor(f'{gc.hexval()}08')),
-        ('ROUNDEDCORNERS', [10, 10, 10, 10]),
+        ('BACKGROUND', (0, 0), (0, 0), LIGHT_BG),
         ('BOX', (0, 0), (-1, -1), 1.5, HexColor('#E2E8F0')),
         ('LINEAFTER', (0, 0), (0, -1), 1, HexColor('#E2E8F0')),
     ]))
