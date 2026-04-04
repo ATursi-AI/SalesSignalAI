@@ -76,53 +76,26 @@ Score each category on a 0-10 scale:
 - 40-59: Needs Work — Missing key elements for AI discoverability
 - 0-39: Not AI-Ready — Major overhaul needed
 
-### Step 5: Generate the Report
+### Step 5: Generate the PDF Report
 
-Create a professional report (either .docx or .md based on user preference). Use this structure:
+Generate a branded, client-ready PDF report using the bundled PDF generator script:
 
 ```
-# GEO/AEO Audit Report
-## [Business Name] — [URL]
-## Audit Date: [Date]
-
-### Executive Summary
-[2-3 sentences: overall score, biggest strength, biggest gap]
-
-### Overall GEO Score: [X]/100
-[Visual score breakdown by category]
-
-### Detailed Findings
-
-#### 1. AI Crawlability ([X]/10)
-[What was found, what's missing, why it matters]
-
-#### 2. Schema & Structured Data ([X]/10)
-[Schema types found, what's missing, recommendations]
-
-#### 3. Content Structure ([X]/10)
-[Heading analysis, FAQ presence, readability notes]
-
-#### 4. Entity Clarity ([X]/10)
-[How quickly AI can identify the business, gaps]
-
-#### 5. Quotability & Citation Potential ([X]/10)
-[Original content assessment, quotable statements found]
-
-#### 6. E-E-A-T Signals ([X]/10)
-[Trust markers found and missing]
-
-#### 7. Technical Foundation ([X]/10)
-[HTTPS, mobile, speed, meta tags assessment]
-
-### Priority Recommendations
-[Numbered list, highest-impact first, with estimated difficulty]
-
-### Quick Wins (Do This Week)
-[3-5 things they can implement immediately]
-
-### Competitive Context
-[How this score compares to typical sites in their industry]
+python /path/to/geo-audit/scripts/generate_report_pdf.py results.json --output report.pdf --business "Business Name"
 ```
+
+This produces a professional 4-5 page PDF with:
+- **Branded cover page** — Company header with email, phone, website on every page
+- **Score gauge** — Large circular 0-100 score with color-coded interpretation
+- **Category score bars** — Visual horizontal bars for all 7 audit categories
+- **Detailed findings** — Per-category breakdown with PASS/FAIL indicators
+- **Priority recommendations** — Color-coded HIGH/MED/LOW with descriptions
+- **Quick wins** — Numbered list of things they can do this week
+- **CTA contact card** — Your company info and call-to-action
+
+**Branding**: Edit `brand_config.json` (next to the scripts folder) to customize company name, email, phone, website, and colors.
+
+If the user specifically requests .docx or .md format instead, create the report in that format using the structure below. Otherwise, always default to PDF.
 
 ### Step 6: Offer Next Steps
 
