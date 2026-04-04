@@ -747,7 +747,7 @@ def _generate_audit_pdf(audit):
 
     doc = SimpleDocTemplate(
         buffer, pagesize=letter,
-        topMargin=60, bottomMargin=52,
+        topMargin=72, bottomMargin=52,
         leftMargin=54, rightMargin=54,
     )
 
@@ -774,14 +774,14 @@ def _generate_audit_pdf(audit):
     # ════════════════════════════════════════
     # PAGE 1 — COVER
     # ════════════════════════════════════════
-    story.append(Spacer(1, 1.2 * inch))
+    story.append(Spacer(1, 0.5 * inch))
     story.append(Paragraph('Digital Presence<br/>Audit Report', styles['CoverTitle']))
     story.append(Spacer(1, 6))
     story.append(HRFlowable(width='40%', color=TEAL, thickness=3, hAlign='LEFT'))
     story.append(Spacer(1, 14))
     story.append(Paragraph(audit.get('url', 'Unknown'), styles['CoverURL']))
     story.append(Paragraph(f'Prepared: {audit.get("audit_date", "N/A")}', styles['CoverSub']))
-    story.append(Spacer(1, 40))
+    story.append(Spacer(1, 30))
 
     # Big score display
     interp_map = {
@@ -790,24 +790,37 @@ def _generate_audit_pdf(audit):
     }
     interp = interp_map.get(grade, 'Unknown')
 
+    # Score number cell
+    score_cell = Paragraph(
+        f'<font size="56" color="{gc.hexval()}"><b>{score}</b></font>'
+        f'<font size="18" color="{MUTED.hexval()}"> /100</font>',
+        ParagraphStyle('sc', alignment=TA_CENTER, leading=60),
+    )
+    # Grade + interpretation cell
+    grade_cell = Paragraph(
+        f'<font size="30" color="{gc.hexval()}"><b>Grade {grade}</b></font><br/>'
+        f'<font size="12" color="{MUTED.hexval()}">{interp}</font>',
+        ParagraphStyle('gr', alignment=TA_CENTER, leading=24),
+    )
+
     score_box = Table(
-        [[
-            Paragraph(f'<font size="52" color="{gc.hexval()}">{score}</font><font size="16" color="{MUTED.hexval()}">/100</font>', ParagraphStyle('x', alignment=TA_CENTER)),
-            Paragraph(f'<font size="28" color="{gc.hexval()}">Grade {grade}</font><br/><font size="11" color="{MUTED.hexval()}">{interp}</font>', ParagraphStyle('x', alignment=TA_CENTER, leading=20)),
-        ]],
+        [[score_cell, grade_cell]],
         colWidths=[2.8 * inch, 3.5 * inch],
-        rowHeights=[1.1 * inch],
+        rowHeights=[1.3 * inch],
     )
     score_box.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('BACKGROUND', (0, 0), (0, 0), LIGHT_BG),
-        ('BOX', (0, 0), (-1, -1), 1.5, HexColor('#E2E8F0')),
+        ('BACKGROUND', (1, 0), (1, 0), HexColor('#FAFAFA')),
+        ('BOX', (0, 0), (-1, -1), 2, HexColor('#E2E8F0')),
         ('LINEAFTER', (0, 0), (0, -1), 1, HexColor('#E2E8F0')),
+        ('TOPPADDING', (0, 0), (-1, -1), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
     ]))
     story.append(score_box)
 
-    story.append(Spacer(1, 40))
+    story.append(Spacer(1, 30))
     story.append(Paragraph(
         'This report analyzes your website across traditional SEO fundamentals and '
         'AI search readiness (GEO/AEO). It identifies what search engines and AI assistants '
@@ -815,7 +828,7 @@ def _generate_audit_pdf(audit):
         styles['Body10']
     ))
 
-    story.append(Spacer(1, 0.6 * inch))
+    story.append(Spacer(1, 0.4 * inch))
     story.append(HRFlowable(width='100%', color=TEAL, thickness=1.5))
     story.append(Spacer(1, 6))
     story.append(Paragraph(
@@ -903,10 +916,10 @@ def _generate_audit_pdf(audit):
         items.append(Spacer(1, 6))
         story.append(KeepTogether(items))
 
-    story.append(Spacer(1, 12))
+    story.append(PageBreak())
 
     # ════════════════════════════════════════
-    # RECOMMENDATIONS (flows naturally, no forced page break)
+    # RECOMMENDATIONS (own page for clean presentation)
     # ════════════════════════════════════════
     story.append(Paragraph('Priority Recommendations', styles['SectionHead']))
     story.append(HRFlowable(width='100%', color=TEAL, thickness=1.5))
