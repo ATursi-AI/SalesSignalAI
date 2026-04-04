@@ -395,23 +395,25 @@ def _run_full_audit(base_url):
         'pages_found': {},
     }
     page_checks = {
-        'About': ['/about', '/about/', '/about-us'],
-        'FAQ': ['/faq', '/faq/', '/faqs', '/frequently-asked-questions'],
-        'Contact': ['/contact', '/contact/', '/contact-us'],
-        'Blog': ['/blog', '/blog/', '/articles', '/news'],
-        'Pricing': ['/pricing', '/pricing/', '/plans'],
+        'About': ['/about', '/about/', '/about-us', '/about-us/', '/who-we-are', '/our-story'],
+        'FAQ': ['/faq', '/faq/', '/faqs', '/faqs/', '/frequently-asked-questions', '/frequently-asked-questions/', '/help', '/help/', '/knowledge-base'],
+        'Contact': ['/contact', '/contact/', '/contact-us', '/contact-us/', '/support', '/support/', '/get-in-touch', '/reach-us', '/help-center'],
+        'Blog': ['/blog', '/blog/', '/articles', '/articles/', '/news', '/news/', '/insights', '/resources', '/learn'],
+        'Pricing': ['/pricing', '/pricing/', '/plans', '/plans/', '/packages', '/services', '/services/', '/courses', '/products'],
     }
     for page_name, paths in page_checks.items():
         found = False
+        found_path = ''
         for path in paths:
             s, _ = _fetch(f'{base_url}{path}', timeout=6)
             if s == 200:
                 found = True
+                found_path = path
                 break
         key_pages['pages_found'][page_name] = found
         if found:
             key_pages['score'] += 3
-            key_pages['findings'].append(f'{page_name} page found')
+            key_pages['findings'].append(f'{page_name} page found ({found_path})')
         else:
             key_pages['issues'].append(f'No {page_name} page detected')
 

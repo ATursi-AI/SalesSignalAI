@@ -356,11 +356,11 @@ def check_homepage(base_url):
 def check_key_pages(base_url):
     """Check for common important pages."""
     pages = {
-        'about': ['/about', '/about/', '/about-us', '/about-us/'],
-        'faq': ['/faq', '/faq/', '/faqs', '/frequently-asked-questions'],
-        'contact': ['/contact', '/contact/', '/contact-us'],
-        'pricing': ['/pricing', '/pricing/', '/plans'],
-        'blog': ['/blog', '/blog/', '/articles', '/news'],
+        'about': ['/about', '/about/', '/about-us', '/about-us/', '/who-we-are', '/our-story'],
+        'faq': ['/faq', '/faq/', '/faqs', '/faqs/', '/frequently-asked-questions', '/frequently-asked-questions/', '/help', '/help/', '/knowledge-base'],
+        'contact': ['/contact', '/contact/', '/contact-us', '/contact-us/', '/support', '/support/', '/get-in-touch', '/reach-us', '/help-center'],
+        'pricing': ['/pricing', '/pricing/', '/plans', '/plans/', '/packages', '/services', '/services/', '/courses', '/products'],
+        'blog': ['/blog', '/blog/', '/articles', '/articles/', '/news', '/news/', '/insights', '/resources', '/learn'],
     }
 
     results = {}
