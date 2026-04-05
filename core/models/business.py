@@ -29,6 +29,15 @@ class ServiceCategory(models.Model):
     default_keywords = models.JSONField(default=list)
     craigslist_section = models.CharField(max_length=50, blank=True)
     google_maps_terms = models.JSONField(default=list)
+    avg_deal_value = models.IntegerField(
+        default=0,
+        help_text='Average deal value in dollars for REACH scoring (e.g. 8000 for roofing)',
+    )
+    deal_value_tier = models.CharField(
+        max_length=10, default='medium',
+        choices=[('low', 'Low ($0-500)'), ('medium', 'Medium ($500-5K)'), ('high', 'High ($5K+)')],
+        help_text='Used by REACH to prioritize high-value leads',
+    )
     is_active = models.BooleanField(default=True)
     sort_order = models.IntegerField(default=0)
 

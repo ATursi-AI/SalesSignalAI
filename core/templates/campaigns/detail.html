@@ -179,6 +179,7 @@
                 {% if campaign.target_location %}&middot; {{ campaign.target_location }}{% endif %}
             </div>
         </div>
+        {% if is_staff %}
         <div style="display: flex; gap: 6px;">
             {% if campaign.status == 'active' %}
             <form method="post" action="{% url 'campaign_action' campaign.id %}" style="display:inline;">
@@ -200,6 +201,7 @@
             </form>
             {% endif %}
         </div>
+        {% endif %}
     </div>
 
     <!-- KPI Row -->
@@ -232,6 +234,7 @@
 </div>
 
 <!-- Settings Summary -->
+{% if is_staff %}
 <div class="cd-settings">
     <div class="cd-settings-row">
         <div class="cd-settings-item"><i class="bi bi-envelope" style="color:#3B82F6;"></i> {{ campaign.daily_send_limit }}/day</div>
@@ -255,6 +258,15 @@
     </div>
     {% endif %}
 </div>
+{% else %}
+<div class="cd-settings">
+    <div class="cd-settings-row">
+        <div class="cd-settings-item"><i class="bi bi-arrow-repeat" style="color:#059669;"></i> {{ campaign.email_sequence_count }}-email sequence</div>
+        <div class="cd-settings-item"><i class="bi bi-shield-check" style="color:#0D9488;"></i> Managed by SalesSignalAI</div>
+        <div class="cd-settings-item"><i class="bi bi-stars" style="color:#0D9488;"></i> AI-Personalized</div>
+    </div>
+</div>
+{% endif %}
 
 <!-- Drip Sequence -->
 <div class="cd-drip">
@@ -312,9 +324,11 @@
         {% for val, label in prospect_statuses %}
         <a href="{% url 'campaign_detail' campaign.id %}?status={{ val }}" class="cd-filter {% if current_status == val %}active{% endif %}">{{ label }}</a>
         {% endfor %}
+        {% if is_staff %}
         <button class="btn-primary-glow btn-sm" onclick="document.getElementById('add-prospect-modal').style.display='flex'" style="margin-left: 4px;">
             <i class="bi bi-plus-lg"></i> Add
         </button>
+        {% endif %}
     </div>
 </div>
 
@@ -358,6 +372,7 @@
 </div>
 {% endif %}
 
+{% if is_staff %}
 <!-- Add Prospect Modal -->
 <div class="modal-backdrop" id="add-prospect-modal" style="display:none;">
     <div class="modal-card">
@@ -393,6 +408,7 @@
         </form>
     </div>
 </div>
+{% endif %}
 
 <!-- Prospect Detail Modal -->
 <div class="modal-backdrop" id="prospect-modal" style="display:none;">

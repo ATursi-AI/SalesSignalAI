@@ -106,18 +106,22 @@
                 </a>
 
                 <div class="sidebar-section-label">Outreach</div>
+                {% if user.is_staff or user.is_superuser %}
                 <a href="{% url 'compose_email' %}" class="sidebar-link {% if request.resolver_match.url_name == 'compose_email' %}active{% endif %}">
                     <i class="bi bi-pencil-square"></i>
                     <span>Compose Email</span>
                 </a>
+                {% endif %}
                 <a href="{% url 'campaign_list' %}" class="sidebar-link {% if 'campaign' in request.resolver_match.url_name and 'review' not in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-megaphone-fill"></i>
-                    <span>Campaigns</span>
+                    <span>{% if user.is_staff or user.is_superuser %}Campaigns{% else %}Your Outreach{% endif %}</span>
                 </a>
+                {% if user.is_staff or user.is_superuser %}
                 <a href="{% url 'workflow_list' %}" class="sidebar-link {% if 'workflow' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-diagram-3"></i>
                     <span>Workflows</span>
                 </a>
+                {% endif %}
                 {% endif %}
 
                 {% if user.salesperson_profile or user.is_superuser %}

@@ -70,13 +70,18 @@ def campaign_list(request):
         'draft_count': campaigns.filter(status='draft').count(),
         'total_sent': total_sent,
         'total_replied': total_replied,
+        'is_staff': request.user.is_staff or request.user.is_superuser,
     }
     return render(request, 'campaigns/list.html', context)
 
 
 @login_required
 def campaign_wizard(request):
-    """Multi-step campaign creation wizard with enhanced fields."""
+    """Multi-step campaign creation wizard — staff/admin only."""
+    if not (request.user.is_staff or request.user.is_superuser):
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden('Campaign creation is managed by the SalesSignalAI team.')
+
     profile = _get_business(request)
     if not profile:
         return redirect('onboarding')
@@ -340,15 +345,19 @@ def campaign_detail(request, campaign_id):
         'completed_pct': completed_pct,
         'current_status': status_filter,
         'prospect_statuses': OutreachProspect.STATUS_CHOICES,
+        'is_staff': request.user.is_staff or request.user.is_superuser,
     }
     return render(request, 'campaigns/detail.html', context)
 
 
 @login_required
 def campaign_action(request, campaign_id):
-    """Pause, resume, complete, or send queue for a campaign."""
+    """Pause, resume, complete, or send queue for a campaign — staff only."""
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
+
+    if not (request.user.is_staff or request.user.is_superuser):
+        return JsonResponse({'error': 'Campaign actions are managed by the SalesSignalAI team.'}, status=403)
 
     profile = _get_business(request)
     if not profile:

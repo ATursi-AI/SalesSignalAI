@@ -5,6 +5,9 @@ lead creation with deduplication, and assignment to matching businesses.
 
 Uses each business's personalized UserKeyword list (active only) for matching.
 Falls back to ServiceCategory defaults if no UserKeywords are configured.
+
+Social media leads are AI-classified for intent before assignment.
+Only real leads get auto-assigned; false positives are filtered.
 """
 import hashlib
 import logging
@@ -16,6 +19,9 @@ from django.utils import timezone
 from core.models.business import ServiceCategory, BusinessProfile, UserKeyword
 from core.models.leads import Lead, LeadAssignment
 from core.utils.location import extract_location, is_in_service_area
+from core.utils.reach.intent_classifier import (
+    classify_lead, needs_classification, SOCIAL_PLATFORMS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -478,7 +484,25 @@ def process_lead(platform, source_url, content, author='', posted_at=None,
 
     logger.info(f"Created lead #{lead.id}: [{urgency_level.upper()}] {platform} - {content[:60]}")
 
-    # Assign to matching businesses
+    # ── AI intent classification for social media leads ──
+    # Classify before assignment so false positives never reach customer feeds
+    if needs_classification(platform):
+        try:
+            result = classify_lead(lead)
+            if result:
+                classification = result.get('classification', 'not_classified')
+                # Only auto-assign REAL leads to business feeds
+                if classification != 'real_lead':
+                    logger.info(
+                        f"Lead #{lead.id} classified as {classification} — "
+                        f"skipping auto-assignment"
+                    )
+                    return lead, True, 0
+        except Exception as e:
+            # Classification failure should not block lead creation
+            logger.warning(f"Intent classification failed for lead #{lead.id}: {e}")
+
+    # Assign to matching businesses (only real leads or non-social sources)
     num_assignments = assign_lead_to_businesses(lead, location, best_category)
 
     return lead, True, num_assignments
@@ -550,7 +574,7 @@ def assign_lead_to_businesses(lead, location, service_category):
         assignment, created = LeadAssignment.objects.get_or_create(
             lead=lead,
             business=bp,
-            defaults={'status': 'new'},
+            defaults={'status': 'new', 'assignment_type': 'auto'},
         )
         if created:
             assignments_created += 1

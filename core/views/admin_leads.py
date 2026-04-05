@@ -161,6 +161,14 @@ def _serialize_lead(lead, now, platform_display):
         'contact_email': lead.contact_email,
         'contact_business': lead.contact_business,
         'enrichment_status': lead.enrichment_status,
+        # Intent classification
+        'intent_classification': lead.intent_classification,
+        'intent_confidence': lead.intent_confidence,
+        'intent_service_detected': lead.intent_service_detected,
+        'intent_classified_by': lead.intent_classified_by,
+        # Curation
+        'is_curated': lead.is_curated,
+        'reach_score': lead.reach_score,
     }
 
 
@@ -502,6 +510,15 @@ def lead_detail_api(request, lead_id):
         'contact_email': lead.contact_email,
         'contact_business': lead.contact_business,
         'contact_address': lead.contact_address,
+        # Intent classification
+        'intent_classification': lead.intent_classification,
+        'intent_confidence': lead.intent_confidence,
+        'intent_service_detected': lead.intent_service_detected,
+        'intent_classified_at': lead.intent_classified_at.isoformat() if lead.intent_classified_at else None,
+        'intent_classified_by': lead.intent_classified_by,
+        # Curation
+        'is_curated': lead.is_curated,
+        'reach_score': lead.reach_score,
     })
 
 
@@ -652,6 +669,82 @@ def lead_action(request, lead_id):
         result = quick_geo_score(website)
         return JsonResponse({'ok': True, 'result': result})
 
+    elif action == 'classify':
+        # AI-classify a single lead's intent
+        from core.utils.reach.intent_classifier import classify_lead as ai_classify
+        result = ai_classify(lead)
+        if result:
+            return JsonResponse({
+                'ok': True,
+                'intent_classification': result['classification'],
+                'intent_confidence': result['confidence'],
+                'intent_service_detected': result.get('service_type', ''),
+                'reasoning': result.get('reasoning', ''),
+            })
+        return JsonResponse({'ok': False, 'error': 'Classification failed'}, status=500)
+
+    elif action == 'set_classification':
+        # Manual override of intent classification by staff
+        new_class = data.get('classification', '')
+        valid = dict(Lead.INTENT_CHOICES)
+        if new_class not in valid:
+            return JsonResponse({'error': f'Invalid classification: {new_class}'}, status=400)
+        lead.intent_classification = new_class
+        lead.intent_confidence = 1.0  # Human = full confidence
+        lead.intent_classified_at = timezone.now()
+        lead.intent_classified_by = request.user.username
+        lead.save(update_fields=[
+            'intent_classification', 'intent_confidence',
+            'intent_classified_at', 'intent_classified_by',
+        ])
+        return JsonResponse({
+            'ok': True,
+            'intent_classification': new_class,
+            'intent_classified_by': request.user.username,
+        })
+
+    elif action == 'curate':
+        # Staff manually places a lead into a specific customer's feed
+        business_id = data.get('business_id')
+        service_tier = data.get('service_tier', 'unset')
+        if not business_id:
+            return JsonResponse({'error': 'business_id required'}, status=400)
+        business = get_object_or_404(BusinessProfile, id=business_id)
+
+        assignment, created = LeadAssignment.objects.get_or_create(
+            lead=lead, business=business,
+            defaults={
+                'status': 'new',
+                'assignment_type': 'curated',
+                'service_tier': service_tier,
+            },
+        )
+        if not created:
+            # Update existing assignment to curated
+            assignment.assignment_type = 'curated'
+            if service_tier != 'unset':
+                assignment.service_tier = service_tier
+            assignment.save(update_fields=['assignment_type', 'service_tier'])
+
+        lead.is_curated = True
+        lead.curated_by = request.user
+        lead.curated_at = timezone.now()
+        lead.review_status = 'assigned'
+        lead.save(update_fields=['is_curated', 'curated_by', 'curated_at', 'review_status'])
+
+        return JsonResponse({
+            'ok': True,
+            'review_status': 'assigned',
+            'assignment': {
+                'id': assignment.id,
+                'business_name': business.business_name,
+                'business_id': business.id,
+                'status': assignment.status,
+                'assignment_type': 'curated',
+                'service_tier': service_tier,
+            },
+        })
+
     elif action == 'delete':
         lead_id = lead.id
         lead.delete()
@@ -717,6 +810,26 @@ def lead_bulk_action(request):
             'ok': True, 'count': count,
             'found': found, 'not_found': not_found, 'skipped': skipped,
         })
+
+    elif action == 'classify':
+        # Bulk AI classification
+        from core.utils.reach.intent_classifier import classify_leads_bulk
+        stats = classify_leads_bulk(queryset=leads, limit=len(lead_ids))
+        return JsonResponse({'ok': True, 'count': count, 'stats': stats})
+
+    elif action == 'set_classification':
+        # Bulk manual classification override
+        new_class = data.get('classification', '')
+        valid = dict(Lead.INTENT_CHOICES)
+        if new_class not in valid:
+            return JsonResponse({'error': f'Invalid classification: {new_class}'}, status=400)
+        leads.update(
+            intent_classification=new_class,
+            intent_confidence=1.0,
+            intent_classified_at=timezone.now(),
+            intent_classified_by=request.user.username,
+        )
+        return JsonResponse({'ok': True, 'count': count, 'classification': new_class})
 
     elif action == 'delete':
         deleted_count, _ = leads.delete()

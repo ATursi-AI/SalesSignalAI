@@ -156,6 +156,49 @@ class Lead(models.Model):
     )
     enrichment_date = models.DateTimeField(null=True, blank=True)
 
+    # ── Intent classification (AI + manual override) ──
+    INTENT_CHOICES = [
+        ('not_classified', 'Not Classified'),
+        ('real_lead', 'Real Lead'),
+        ('mention_only', 'Mention Only'),
+        ('false_positive', 'False Positive'),
+        ('job_posting', 'Job Posting'),
+        ('advice_giving', 'Advice/Discussion'),
+    ]
+    intent_classification = models.CharField(
+        max_length=20, choices=INTENT_CHOICES,
+        default='not_classified', db_index=True,
+    )
+    intent_confidence = models.FloatField(
+        default=0.0,
+        help_text='AI confidence in intent classification (0.0-1.0)',
+    )
+    intent_service_detected = models.CharField(
+        max_length=100, blank=True,
+        help_text='Service type detected by AI classifier',
+    )
+    intent_classified_at = models.DateTimeField(null=True, blank=True)
+    intent_classified_by = models.CharField(
+        max_length=20, blank=True, default='',
+        help_text='ai or staff username who classified',
+    )
+
+    # ── Curation & REACH scoring ──
+    is_curated = models.BooleanField(
+        default=False,
+        help_text='Manually placed into a customer feed by staff',
+    )
+    curated_by = models.ForeignKey(
+        'auth.User', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='curated_leads',
+    )
+    curated_at = models.DateTimeField(null=True, blank=True)
+    reach_score = models.IntegerField(
+        default=0, db_index=True,
+        help_text='REACH priority score (0-100)',
+    )
+    reach_scored_at = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         ordering = ['-event_date', '-discovered_at']
 
@@ -176,9 +219,26 @@ class LeadAssignment(models.Model):
         ('dismissed', 'Dismissed'),
     ]
 
+    ASSIGNMENT_TYPE_CHOICES = [
+        ('auto', 'Auto-Assigned'),
+        ('curated', 'Staff Curated'),
+    ]
+    SERVICE_TIER_CHOICES = [
+        ('self_service', 'Self-Service (Customer contacts lead)'),
+        ('managed', 'Managed (SalesSignalAI contacts lead)'),
+        ('unset', 'Not Selected'),
+    ]
+
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='assignments')
     business = models.ForeignKey(BusinessProfile, on_delete=models.CASCADE, related_name='lead_assignments')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
+    assignment_type = models.CharField(
+        max_length=10, choices=ASSIGNMENT_TYPE_CHOICES, default='auto',
+    )
+    service_tier = models.CharField(
+        max_length=15, choices=SERVICE_TIER_CHOICES, default='unset',
+        help_text='How this lead will be worked: customer contacts or we contact for them',
+    )
     alert_sent_at = models.DateTimeField(null=True, blank=True)
     alert_method = models.CharField(max_length=10, blank=True)
     viewed_at = models.DateTimeField(null=True, blank=True)

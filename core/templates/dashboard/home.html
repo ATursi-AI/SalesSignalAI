@@ -277,6 +277,59 @@
             {% endif %}
         </div>
 
+        <!-- Outreach Activity (Managed by SalesSignalAI Team) -->
+        <div class="glass-card-static animate-fade-in-up animate-delay-5" style="padding: 1.5rem; margin-bottom: 1.25rem;">
+            <div class="section-label" style="margin-bottom: 1rem;">
+                <i class="bi bi-send-check" style="margin-right: 0.35rem; color: #0D9488;"></i>Outreach Activity
+            </div>
+            {% if outreach_total_sent %}
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-secondary); font-size: 0.85rem;"><i class="bi bi-envelope" style="margin-right: 0.35rem;"></i>Emails Sent</span>
+                    <span class="stat-number-sm text-blue">{{ outreach_total_sent }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-secondary); font-size: 0.85rem;"><i class="bi bi-eye" style="margin-right: 0.35rem;"></i>Opened</span>
+                    <span class="stat-number-sm text-amber">{{ outreach_total_opened }} <span style="font-size: 0.7rem; color: var(--text-muted);">({{ outreach_open_rate }}%)</span></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-secondary); font-size: 0.85rem;"><i class="bi bi-reply" style="margin-right: 0.35rem;"></i>Replied</span>
+                    <span class="stat-number-sm text-emerald">{{ outreach_total_replied }} <span style="font-size: 0.7rem; color: var(--text-muted);">({{ outreach_reply_rate }}%)</span></span>
+                </div>
+                {% if outreach_active_campaigns %}
+                <div style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: rgba(5,150,105,0.06); border-radius: 8px; margin-top: 4px;">
+                    <span style="width: 6px; height: 6px; background: #059669; border-radius: 50; animation: pulse-glow 2s infinite;"></span>
+                    <span style="font-size: 0.78rem; color: #059669; font-weight: 600;">{{ outreach_active_campaigns }} campaign{{ outreach_active_campaigns|pluralize }} running</span>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if recent_replies %}
+            <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-subtle);">
+                <div style="font-size: 0.72rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.5rem;">
+                    <i class="bi bi-bell" style="margin-right: 0.25rem; color: #F59E0B;"></i> Recent Replies
+                </div>
+                {% for reply in recent_replies %}
+                <div style="padding: 8px 0; border-bottom: 1px solid var(--border-subtle); font-size: 0.82rem;">
+                    <div style="font-weight: 600; color: var(--text-primary);">{{ reply.prospect.business_name }}</div>
+                    <div style="font-size: 0.72rem; color: var(--text-muted); display: flex; justify-content: space-between; margin-top: 2px;">
+                        <span>{{ reply.prospect.contact_email }}</span>
+                        <span>{{ reply.replied_at|timesince }} ago</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div style="text-align: center; padding: 1rem 0; color: var(--text-muted); font-size: 0.85rem;">
+                <i class="bi bi-send" style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem; opacity: 0.4;"></i>
+                No outreach activity yet.<br>
+                <span style="font-size: 0.75rem;">Our team is setting up your campaigns. Activity will appear here once emails start going out.</span>
+            </div>
+            {% endif %}
+        </div>
+
         <!-- Revenue Tracker -->
         <div class="glass-card-static animate-fade-in-up animate-delay-5" style="padding: 1.5rem; margin-bottom: 1.25rem;">
             <div class="section-label" style="margin-bottom: 1rem;">

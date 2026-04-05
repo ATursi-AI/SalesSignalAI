@@ -192,15 +192,17 @@
 <div class="camp-header">
     <div>
         <div class="camp-header-title">
-            <i class="bi bi-megaphone" style="color:#0D9488;"></i> Campaigns
+            <i class="bi bi-megaphone" style="color:#0D9488;"></i> {% if is_staff %}Campaigns{% else %}Your Outreach{% endif %}
         </div>
         <div class="camp-header-meta">
-            {{ campaigns|length }} total &middot; {{ active_count }} running
+            {% if is_staff %}{{ campaigns|length }} total &middot; {{ active_count }} running{% else %}Managed by the SalesSignalAI team on your behalf{% endif %}
         </div>
     </div>
+    {% if is_staff %}
     <a href="{% url 'campaign_wizard' %}" class="btn-primary-glow">
         <i class="bi bi-plus-lg"></i> New Campaign
     </a>
+    {% endif %}
 </div>
 
 {% if campaigns %}
@@ -275,6 +277,7 @@
     {% endfor %}
 </div>
 {% else %}
+{% if is_staff %}
 <div class="camp-empty">
     <div class="camp-empty-icon"><i class="bi bi-megaphone"></i></div>
     <h3>Launch Your First Campaign</h3>
@@ -283,5 +286,16 @@
         <i class="bi bi-rocket-takeoff"></i> Create Campaign
     </a>
 </div>
+{% else %}
+<div class="camp-empty">
+    <div class="camp-empty-icon"><i class="bi bi-send-check"></i></div>
+    <h3>Your Outreach Is Being Set Up</h3>
+    <p>Our team is preparing your personalized outreach campaigns. Once live, you'll see email activity, opens, and replies right here.</p>
+    <div style="display: flex; align-items: center; gap: 8px; justify-content: center; font-size: 0.85rem; color: var(--text-secondary);">
+        <i class="bi bi-headset" style="color: #0D9488;"></i>
+        <span>Questions? Contact your account manager or call <strong>(959) 247-2537</strong></span>
+    </div>
+</div>
+{% endif %}
 {% endif %}
 {% endblock %}

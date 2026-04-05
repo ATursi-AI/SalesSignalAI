@@ -226,6 +226,44 @@ def lead_dismiss(request, assignment_id):
 
 
 @login_required
+@require_POST
+def lead_set_service_tier(request, assignment_id):
+    """
+    Customer chooses how to work a lead:
+      - self_service: "I'll contact them myself" (included in plan)
+      - managed: "Have SalesSignalAI reach out for me" (premium add-on)
+    """
+    profile = request.user.business_profile
+    assignment = get_object_or_404(LeadAssignment, id=assignment_id, business=profile)
+
+    tier = request.POST.get('service_tier', '')
+    if tier not in ('self_service', 'managed'):
+        return JsonResponse({'error': 'Invalid service_tier'}, status=400)
+
+    assignment.service_tier = tier
+    assignment.save(update_fields=['service_tier', 'updated_at'])
+
+    if tier == 'self_service':
+        # Customer will contact — reveal full contact info
+        # Mark as contacted if they haven't already
+        if assignment.status in ('new', 'alerted', 'viewed'):
+            assignment.status = 'contacted'
+            assignment.contacted_at = timezone.now()
+            assignment.save(update_fields=['status', 'contacted_at'])
+
+    elif tier == 'managed':
+        # SalesSignalAI will reach out on their behalf
+        # This creates a task for the sales team
+        pass  # TODO: Create managed outreach task / notification
+
+    return JsonResponse({
+        'ok': True,
+        'service_tier': tier,
+        'status': assignment.status,
+    })
+
+
+@login_required
 def lead_bulk_action(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)

@@ -1,9 +1,10 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from django.db.models import Avg, Count, F, Sum
+from django.db.models import Avg, Count, F, Sum, Q
 from django.utils import timezone
 from datetime import timedelta
 from core.models import LeadAssignment, Lead, TrackedCompetitor, CompetitorReview
+from core.models.outreach import OutreachCampaign, OutreachProspect, GeneratedEmail
 
 
 @login_required
@@ -120,6 +121,45 @@ def dashboard_home(request):
     monthly_cost = tier_prices.get(profile.subscription_tier, 0)
     roi_multiple = round(float(total_revenue) / monthly_cost, 1) if monthly_cost and total_revenue else 0
 
+    # ── Outreach Activity (managed campaigns run by SalesSignalAI team) ──
+    customer_campaigns = OutreachCampaign.objects.filter(business=profile)
+    outreach_total_sent = 0
+    outreach_total_opened = 0
+    outreach_total_replied = 0
+    outreach_active_campaigns = 0
+    recent_replies = []
+
+    if customer_campaigns.exists():
+        outreach_active_campaigns = customer_campaigns.filter(status='active').count()
+        # Aggregate across all campaigns for this customer
+        for camp in customer_campaigns:
+            sent = GeneratedEmail.objects.filter(
+                prospect__campaign=camp, status__in=['sent', 'opened', 'replied']
+            ).count()
+            opened = GeneratedEmail.objects.filter(
+                prospect__campaign=camp, status__in=['opened', 'replied']
+            ).count()
+            replied = GeneratedEmail.objects.filter(
+                prospect__campaign=camp, status='replied'
+            ).count()
+            outreach_total_sent += sent
+            outreach_total_opened += opened
+            outreach_total_replied += replied
+
+        # Recent replies the customer should see (last 30 days)
+        recent_replies = list(
+            GeneratedEmail.objects.filter(
+                prospect__campaign__business=profile,
+                status='replied',
+                replied_at__isnull=False,
+            )
+            .select_related('prospect')
+            .order_by('-replied_at')[:10]
+        )
+
+    outreach_open_rate = round(outreach_total_opened / outreach_total_sent * 100) if outreach_total_sent else 0
+    outreach_reply_rate = round(outreach_total_replied / outreach_total_sent * 100) if outreach_total_sent else 0
+
     context = {
         'profile': profile,
         'hot_leads': hot_leads,
@@ -148,5 +188,13 @@ def dashboard_home(request):
         'total_revenue': total_revenue,
         'monthly_cost': monthly_cost,
         'roi_multiple': roi_multiple,
+        # Outreach activity (managed-service view)
+        'outreach_total_sent': outreach_total_sent,
+        'outreach_total_opened': outreach_total_opened,
+        'outreach_total_replied': outreach_total_replied,
+        'outreach_open_rate': outreach_open_rate,
+        'outreach_reply_rate': outreach_reply_rate,
+        'outreach_active_campaigns': outreach_active_campaigns,
+        'recent_replies': recent_replies,
     }
     return render(request, 'dashboard/home.html', context)
