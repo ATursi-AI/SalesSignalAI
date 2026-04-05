@@ -187,6 +187,13 @@ class Command(BaseCommand):
                         'violations': [],
                     }
 
+                # Parse penalty amount (API field has typo: 'penalityamount')
+                raw_penalty = rec.get('penalityamount', '') or '0'
+                try:
+                    penalty_amount = float(str(raw_penalty).replace(',', '').replace('$', ''))
+                except (ValueError, TypeError):
+                    penalty_amount = 0
+
                 violation = {
                     'id': rec.get('violationid', ''),
                     'date': rec.get('inspectiondate', ''),
@@ -196,6 +203,7 @@ class Command(BaseCommand):
                     'story': (rec.get('story', '') or '').strip(),
                     'apartment': (rec.get('apartment', '') or '').strip(),
                     'status': (rec.get('currentstatus', '') or '').strip(),
+                    'penalty_amount': penalty_amount,
                 }
                 buildings[key]['violations'].append(violation)
 
@@ -309,6 +317,7 @@ class Command(BaseCommand):
                             'class_a': class_counts['A'],
                             'class_b': class_counts['B'],
                             'class_c': class_counts['C'],
+                            'total_penalty': sum(v.get('penalty_amount', 0) for v in violations),
                             'urgency': urgency,
                             'services_mapped': services,
                         },
