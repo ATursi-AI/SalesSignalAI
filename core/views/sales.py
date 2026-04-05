@@ -16,6 +16,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 
 from core.models.sales import SalesPerson, SalesProspect, SalesActivity, EmailTemplate, CallScript
+from core.models.sales_sequences import SalesSequence, SequenceEnrollment
 from core.models.business import BusinessProfile
 
 
@@ -578,6 +579,37 @@ def sales_dashboard(request):
         if key not in ('closed_won', 'closed_lost')
     ]
 
+    # ── Sequence data ──────────────────────────────────────────
+    # Active sequences with enrollment counts
+    active_sequences = SalesSequence.objects.filter(status='active').annotate(
+        active_count=Count('enrollments', filter=Q(enrollments__status='active')),
+        replied_count=Count('enrollments', filter=Q(enrollments__status='replied')),
+    )
+
+    # Sequence call tasks due today (created by sequence runner)
+    sequence_call_tasks = activities.filter(
+        is_task=True, task_completed=False,
+        task_due_date__lte=today,
+        sequence_step_logs__isnull=False,
+    ).select_related('prospect').distinct()[:20]
+
+    # Enrollments with actions due today
+    if request.is_sales_admin:
+        due_enrollments = SequenceEnrollment.objects.filter(
+            status='active', next_action_date__lte=today,
+        )
+    else:
+        due_enrollments = SequenceEnrollment.objects.filter(
+            status='active', next_action_date__lte=today,
+            prospect__salesperson=sp,
+        )
+    due_enrollment_count = due_enrollments.count()
+
+    # Recent sequence replies
+    recent_replies = SequenceEnrollment.objects.filter(
+        status='replied',
+    ).select_related('prospect', 'sequence').order_by('-replied_at')[:5]
+
     context = {
         'calls_today': calls_today,
         'call_goal': call_goal,
@@ -591,6 +623,11 @@ def sales_dashboard(request):
         'overdue_tasks': overdue_tasks,
         'recent_activities': recent_activities,
         'pipeline_summary': pipeline_summary,
+        # Sequence data
+        'active_sequences': active_sequences,
+        'sequence_call_tasks': sequence_call_tasks,
+        'due_enrollment_count': due_enrollment_count,
+        'recent_replies': recent_replies,
     }
     return render(request, 'sales/dashboard.html', context)
 

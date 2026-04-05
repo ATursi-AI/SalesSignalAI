@@ -14,6 +14,7 @@ from .monitoring import (
     TrackedGoogleBusiness,
 )
 from .prospect_videos import ProspectVideo
+from .sales_sequences import SalesSequence, SequenceStep, SequenceEnrollment, SequenceStepLog
 from .call_center import CallLog, SMSMessage, SMSOptOut
 from .service_pages import TradeCategory, ServiceArea, ServiceLandingPage, ServicePageSubmission
 from .blog import BlogPost
@@ -39,6 +40,7 @@ __all__ = [
     'LicensingBoardSource', 'CourtRecordSource',
     'TrackedGoogleBusiness',
     'ProspectVideo',
+    'SalesSequence', 'SequenceStep', 'SequenceEnrollment', 'SequenceStepLog',
     'CallLog', 'SMSMessage', 'SMSOptOut',
     'TradeCategory', 'ServiceArea', 'ServiceLandingPage', 'ServicePageSubmission',
     'BlogPost',
