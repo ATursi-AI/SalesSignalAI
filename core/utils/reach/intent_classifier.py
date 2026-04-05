@@ -45,9 +45,12 @@ TARGET_TRADES = [
     'insulation', 'solar', 'fire restoration', 'demolition',
 ]
 
-CLASSIFIER_PROMPT = """You are a lead quality classifier for SalesSignalAI, a company that sells marketing services to local blue-collar trade businesses (plumbers, electricians, HVAC techs, roofers, painters, cleaners, pest control, landscapers, contractors, etc.).
+CLASSIFIER_PROMPT = """You are a lead quality classifier for SalesSignalAI, a company that sells marketing services to local blue-collar trade businesses.
 
-Analyze this social media post and classify it. Your job is to determine if the poster is ACTIVELY LOOKING TO HIRE a local service provider.
+OUR TARGET SERVICES (these are the trades our customers operate in):
+{service_list}
+
+Analyze this social media post and classify it. Your job is to determine if the poster is ACTIVELY LOOKING TO HIRE a local service provider in one of the trades listed above.
 
 POST TITLE: {title}
 POST CONTENT: {content}
@@ -55,11 +58,23 @@ PLATFORM: {platform}
 SUBREDDIT/GROUP: {source}
 
 Classify as exactly ONE of:
-- REAL_LEAD: Person is actively seeking to hire a service provider, asking for recommendations, requesting quotes, or describing a problem that needs professional help
+- REAL_LEAD: Person is actively seeking to hire a service provider, asking for recommendations, requesting quotes, or describing a problem that needs professional help from one of our target trades
 - MENTION_ONLY: Post mentions a trade/service but the person is NOT looking to hire (e.g., sharing an experience, asking a general question, discussing costs hypothetically)
-- FALSE_POSITIVE: Post has nothing to do with hiring a service provider (legal questions, personal problems, news, community events, unrelated discussions)
-- JOB_POSTING: Someone is offering employment or looking to hire employees (not hire a service)
-- ADVICE_GIVING: A professional giving tips or advice, not someone seeking a service
+- FALSE_POSITIVE: Post has nothing to do with hiring a service provider, OR the service needed is NOT in our target trades list above (legal questions, personal problems, news, community events, unrelated discussions)
+- JOB_POSTING: Someone is offering employment or looking to hire employees in a trade (not hiring a service provider)
+- ADVICE_GIVING: A professional giving tips or advice, or someone answering questions about a trade — not someone seeking to hire a service
+
+KEY SIGNALS for REAL_LEAD:
+- "looking for a [trade]", "need a [trade]", "anyone know a good [trade]"
+- Describing a specific problem: leaking roof, broken AC, pest infestation, clogged drain
+- Asking for quotes, estimates, or recommendations
+- Mentioning a specific location + service need
+
+KEY SIGNALS for NOT a real lead:
+- "I work as a [trade]" or "I'm a [trade] apprentice" = ADVICE_GIVING or JOB_POSTING
+- Licensing questions, career advice, industry discussion = ADVICE_GIVING
+- Legal disputes, custody, insurance claims = FALSE_POSITIVE
+- "We're hiring" or salary/wage discussions = JOB_POSTING
 
 Respond in this exact JSON format (no markdown, no code fences):
 {{"classification": "REAL_LEAD|MENTION_ONLY|FALSE_POSITIVE|JOB_POSTING|ADVICE_GIVING", "confidence": 0.0-1.0, "service_type": "the specific trade/service if REAL_LEAD else empty string", "reasoning": "one sentence explanation"}}"""
@@ -113,6 +128,40 @@ def _call_gemini_classifier(prompt):
         return None
 
 
+def _get_service_list():
+    """
+    Build a service list from the database ServiceCategories + default keywords.
+    Falls back to TARGET_TRADES if DB is unavailable.
+    """
+    try:
+        from core.models.business import ServiceCategory
+        categories = ServiceCategory.objects.filter(is_active=True).values_list(
+            'name', 'default_keywords'
+        )
+        if not categories:
+            return ', '.join(TARGET_TRADES)
+
+        services = []
+        for name, keywords in categories:
+            services.append(name)
+            if keywords and isinstance(keywords, list):
+                services.extend(keywords[:5])  # Top 5 keywords per category
+
+        # Deduplicate while preserving order
+        seen = set()
+        unique = []
+        for s in services:
+            s_lower = s.lower().strip()
+            if s_lower and s_lower not in seen:
+                seen.add(s_lower)
+                unique.append(s)
+        return ', '.join(unique)
+
+    except Exception as e:
+        logger.warning(f'[IntentClassifier] Could not load ServiceCategories: {e}')
+        return ', '.join(TARGET_TRADES)
+
+
 def classify_lead_intent(title, content, platform, source=''):
     """
     Classify a social media post's intent.
@@ -131,11 +180,14 @@ def classify_lead_intent(title, content, platform, source=''):
     display_content = content[:800] if content else ''
     display_title = title[:200] if title else ''
 
+    service_list = _get_service_list()
+
     prompt = CLASSIFIER_PROMPT.format(
         title=display_title,
         content=display_content,
         platform=platform,
         source=source or 'unknown',
+        service_list=service_list,
     )
 
     result = _call_gemini_classifier(prompt)
