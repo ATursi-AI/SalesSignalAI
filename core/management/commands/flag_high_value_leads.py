@@ -65,7 +65,7 @@ class Command(BaseCommand):
         self.stdout.write(f'{"-" * 12}  {"-" * 20}  {"-" * 25}  {"-" * 50}')
 
         for lead, value in results:
-            location = f'{lead.source_region or ""}, {lead.source_state or ""}'.strip(', ')
+            location = f'{lead.region or ""}, {lead.state or ""}'.strip(', ')
             content_preview = (lead.source_content or '')[:50].replace('\n', ' ')
             self.stdout.write(
                 f'${value:>11,.0f}  {lead.source_type or "unknown":<20}  {location:<25}  {content_preview}'
