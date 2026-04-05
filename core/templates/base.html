@@ -130,6 +130,10 @@
                     <i class="bi bi-house-fill"></i>
                     <span>Dashboard</span>
                 </a>
+                <a href="{% url 'sales_high_value_leads' %}" class="sidebar-link {% if request.resolver_match.url_name == 'sales_high_value_leads' %}active{% endif %}" style="color: #10b981;">
+                    <i class="bi bi-currency-dollar"></i>
+                    <span>High-Value Leads</span>
+                </a>
                 <a href="{% url 'sales_pipeline' %}" class="sidebar-link {% if request.resolver_match.url_name == 'sales_pipeline' %}active{% endif %}">
                     <i class="bi bi-kanban-fill"></i>
                     <span>{% if user.is_superuser %}All Pipelines{% else %}My Pipeline{% endif %}</span>

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}High-Value Leads{% endblock %}
+{% block page_title %}High-Value Leads{% endblock %}
+
+{% block content %}
+<style>
+    .hv-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+    .hv-stats { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    .hv-stat { text-align: center; }
+    .hv-stat-value { font-size: 1.8rem; font-weight: 700; color: #10b981; }
+    .hv-stat-label { font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.05em; }
+    .hv-filters { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+    .hv-filters select, .hv-filters input { background: rgba(30,41,59,0.8); border: 1px solid rgba(148,163,184,0.2); color: #e2e8f0; padding: 0.4rem 0.75rem; border-radius: 6px; font-size: 0.85rem; }
+    .hv-table-wrap { overflow-x: auto; }
+    .hv-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .hv-table th { text-align: left; padding: 0.75rem 1rem; color: #94a3b8; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(148,163,184,0.15); }
+    .hv-table td { padding: 0.75rem 1rem; border-bottom: 1px solid rgba(148,163,184,0.08); vertical-align: middle; }
+    .hv-table tr:hover { background: rgba(16,185,129,0.05); }
+    .hv-value { font-weight: 700; color: #10b981; font-size: 1rem; white-space: nowrap; }
+    .hv-source-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .hv-source-badge.permit { background: rgba(16,185,129,0.15); color: #34d399; }
+    .hv-source-badge.violation { background: rgba(239,68,68,0.15); color: #f87171; }
+    .hv-location { color: #94a3b8; font-size: 0.85rem; }
+    .hv-preview { color: #cbd5e1; max-width: 350px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hv-link { color: #60a5fa; text-decoration: none; font-weight: 500; }
+    .hv-link:hover { text-decoration: underline; }
+    .hv-empty { text-align: center; padding: 3rem; color: #64748b; }
+    .hv-rank { color: #64748b; font-weight: 600; font-size: 0.85rem; }
+</style>
+
+<div class="sales-page">
+    <!-- Header with stats and filters -->
+    <div class="hv-header">
+        <div class="hv-stats">
+            <div class="hv-stat">
+                <div class="hv-stat-value">{{ lead_count }}</div>
+                <div class="hv-stat-label">Leads Found</div>
+            </div>
+            <div class="hv-stat">
+                <div class="hv-stat-value">${{ total_value|floatformat:0|intcomma }}</div>
+                <div class="hv-stat-label">Total Pipeline</div>
+            </div>
+            <div class="hv-stat">
+                <div class="hv-stat-value">${{ avg_value|floatformat:0|intcomma }}</div>
+                <div class="hv-stat-label">Avg Value</div>
+            </div>
+        </div>
+        <form method="get" class="hv-filters">
+            <select name="source_type">
+                <option value="">All Sources</option>
+                {% for st in source_types %}
+                <option value="{{ st }}" {% if st == source_type %}selected{% endif %}>{{ st|title }}</option>
+                {% endfor %}
+            </select>
+            <select name="threshold">
+                <option value="5000" {% if threshold == 5000 %}selected{% endif %}>$5,000+</option>
+                <option value="10000" {% if threshold == 10000 %}selected{% endif %}>$10,000+</option>
+                <option value="25000" {% if threshold == 25000 %}selected{% endif %}>$25,000+</option>
+                <option value="50000" {% if threshold == 50000 %}selected{% endif %}>$50,000+</option>
+                <option value="100000" {% if threshold == 100000 %}selected{% endif %}>$100,000+</option>
+            </select>
+            <select name="days">
+                <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 days</option>
+                <option value="60" {% if days == 60 %}selected{% endif %}>Last 60 days</option>
+                <option value="90" {% if days == 90 %}selected{% endif %}>Last 90 days</option>
+                <option value="180" {% if days == 180 %}selected{% endif %}>Last 180 days</option>
+                <option value="365" {% if days == 365 %}selected{% endif %}>Last year</option>
+            </select>
+            <button type="submit" class="btn btn-sm" style="background: #10b981; color: #fff; border: none; padding: 0.4rem 1rem; border-radius: 6px; cursor: pointer;">Filter</button>
+        </form>
+    </div>
+
+    <!-- Leads table -->
+    <div class="glass-card" style="padding: 0;">
+        {% if leads_data %}
+        <div class="hv-table-wrap">
+            <table class="hv-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Value</th>
+                        <th>Source</th>
+                        <th>Location</th>
+                        <th>Lead</th>
+                        <th>Date</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in leads_data %}
+                    <tr>
+                        <td class="hv-rank">{{ forloop.counter }}</td>
+                        <td class="hv-value">${{ item.value|floatformat:0|intcomma }}</td>
+                        <td>
+                            <span class="hv-source-badge {% if 'permit' in item.lead.source_type %}permit{% elif 'violation' in item.lead.source_type %}violation{% endif %}">
+                                {{ item.lead.source_type|default:"unknown" }}
+                            </span>
+                        </td>
+                        <td class="hv-location">{{ item.location }}</td>
+                        <td class="hv-preview">{{ item.preview }}</td>
+                        <td class="hv-location">{{ item.lead.discovered_at|date:"M j" }}</td>
+                        <td>
+                            <a href="{% url 'admin_lead_repository' %}?lead_id={{ item.lead.id }}" class="hv-link" target="_blank">
+                                <i class="bi bi-box-arrow-up-right"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="hv-empty">
+            <i class="bi bi-search" style="font-size: 2rem;"></i>
+            <p>No leads found above ${{ threshold|intcomma }} threshold in the last {{ days }} days.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

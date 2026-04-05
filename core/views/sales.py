@@ -18,6 +18,7 @@ from django.utils import timezone
 from core.models.sales import SalesPerson, SalesProspect, SalesActivity, EmailTemplate, CallScript
 from core.models.sales_sequences import SalesSequence, SequenceEnrollment
 from core.models.business import BusinessProfile
+from core.models.leads import Lead
 
 
 def _get_sp(request):
@@ -818,4 +819,63 @@ def get_prospect_script(request, prospect_id):
         'qualification_questions': script.qualification_questions or [],
         'objection_handlers': {k: rep(v) for k, v in (script.objection_handlers or {}).items()},
         'closing': rep(script.closing),
+    })
+
+
+# ─── High-Value Leads ─────────────────────────────────────────────
+
+@sales_access_required
+def high_value_leads(request):
+    """High-value leads ($5K+) flagged for immediate sales review."""
+    from core.utils.reach.lead_value import flag_high_value_leads, extract_lead_value
+
+    threshold = int(request.GET.get('threshold', 5000))
+    source_type = request.GET.get('source_type', '')
+    days = int(request.GET.get('days', 90))
+
+    cutoff = timezone.now() - timedelta(days=days)
+    qs = Lead.objects.filter(
+        raw_data__isnull=False,
+        discovered_at__gte=cutoff,
+    ).exclude(raw_data={}).order_by('-discovered_at')
+
+    if source_type:
+        qs = qs.filter(source_type=source_type)
+
+    results = flag_high_value_leads(queryset=qs[:1000], threshold=threshold)
+
+    # Build display-ready list
+    leads_data = []
+    for lead, value in results:
+        location = f'{lead.region or ""}, {lead.state or ""}'.strip(', ')
+        leads_data.append({
+            'lead': lead,
+            'value': value,
+            'location': location or 'Unknown',
+            'preview': (lead.source_content or '')[:80].replace('\n', ' '),
+        })
+
+    total_value = sum(v for _, v in results)
+    avg_value = total_value / len(results) if results else 0
+
+    # Get distinct source types for filter dropdown
+    source_types = (
+        Lead.objects.filter(raw_data__isnull=False)
+        .exclude(raw_data={})
+        .values_list('source_type', flat=True)
+        .distinct()
+        .order_by('source_type')
+    )
+
+    return render(request, 'sales/high_value_leads.html', {
+        'leads_data': leads_data,
+        'total_value': total_value,
+        'avg_value': avg_value,
+        'lead_count': len(results),
+        'threshold': threshold,
+        'source_type': source_type,
+        'days': days,
+        'source_types': [s for s in source_types if s],
+        'sp': request.salesperson,
+        'is_sales_admin': request.is_sales_admin,
     })
