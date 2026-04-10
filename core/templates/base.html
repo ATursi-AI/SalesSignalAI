@@ -275,6 +275,10 @@
                     <i class="bi bi-shield-exclamation" style="color:#EA580C;"></i>
                     <span>Agent REP</span>
                 </a>
+                <a href="{% url 'agent_scout_tool' %}" class="sidebar-link {% if request.resolver_match.url_name == 'agent_scout_tool' %}active{% endif %}">
+                    <i class="bi bi-binoculars" style="color:#0EA5E9;"></i>
+                    <span>Agent SCOUT</span>
+                </a>
                 {% endif %}
 
                 {% if user.business_profile %}
