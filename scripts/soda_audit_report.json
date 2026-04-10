@@ -1,0 +1,2466 @@
+{
+  "audit_date": "2026-04-10T03:46:37.201652+00:00",
+  "datasets": [
+    {
+      "portal": "data.cityofnewyork.us",
+      "dataset_id": "43nn-pn8j",
+      "name": "DOHMH New York City Restaurant Inspection Results",
+      "total_columns": 27,
+      "contact_fields": [
+        {
+          "field": "dba",
+          "name": "DBA",
+          "type": "text",
+          "description": "This field represents the name (doing business as) of the entity (restaurant); Public business name,",
+          "sample_values": [
+            "NOLITA",
+            "MUSHA SUSHI INC.",
+            "jkennedys"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "phone",
+          "name": "PHONE",
+          "type": "text",
+          "description": "Phone Number; Phone number provided by restaurant owner/manager",
+          "sample_values": [
+            "2159970667",
+            "6467260102",
+            "3477766000"
+          ],
+          "populated_pct": 100
+        }
+      ],
+      "all_fields": [
+        "camis",
+        "dba",
+        "boro",
+        "building",
+        "street",
+        "zipcode",
+        "phone",
+        "cuisine_description",
+        "inspection_date",
+        "action",
+        "violation_code",
+        "violation_description",
+        "critical_flag",
+        "score",
+        "grade",
+        "grade_date",
+        "record_date",
+        "inspection_type",
+        "latitude",
+        "longitude",
+        "community_board",
+        "council_district",
+        "census_tract",
+        "bin",
+        "bbl",
+        "nta",
+        "location"
+      ],
+      "sample_records": [
+        {
+          "camis": "50182401",
+          "dba": "NOLITA",
+          "boro": "Queens",
+          "street": "JFK AIRPORT",
+          "zipcode": "11430",
+          "phone": "2159970667",
+          "inspection_date": "1900-01-01T00:00:00.000",
+          "critical_flag": "Not Applicable",
+          "record_date": "2026-04-09T06:00:19.000"
+        },
+        {
+          "camis": "50179705",
+          "dba": "MUSHA SUSHI INC.",
+          "boro": "Brooklyn",
+          "building": "863",
+          "street": "STERLING PLACE",
+          "zipcode": "11216",
+          "phone": "6467260102",
+          "inspection_date": "1900-01-01T00:00:00.000",
+          "critical_flag": "Not Applicable",
+          "record_date": "2026-04-09T06:00:19.000",
+          "latitude": "40.672497738455",
+          "longitude": "-73.949649435684",
+          "community_board": "308",
+          "council_district": "36",
+          "census_tract": "031701",
+          "bin": "3031587",
+          "bbl": "3012410077",
+          "nta": "BK61",
+          "location": {
+            "type": "Point",
+            "coordinates": [
+              -73.949649435684,
+              40.672497738455
+            ]
+          },
+          ":@computed_region_f5dn_yrer": "16",
+          ":@computed_region_yeji_bk3q": "2",
+          ":@computed_region_sbqj_enih": "49",
+          ":@computed_region_92fq_4b7q": "49"
+        },
+        {
+          "camis": "50183365",
+          "dba": "jkennedys",
+          "boro": "Manhattan",
+          "building": "8",
+          "street": "WEST   38 STREET",
+          "zipcode": "10018",
+          "phone": "3477766000",
+          "inspection_date": "1900-01-01T00:00:00.000",
+          "critical_flag": "Not Applicable",
+          "record_date": "2026-04-09T06:00:19.000",
+          "latitude": "40.751208353675",
+          "longitude": "-73.983354175874",
+          "community_board": "105",
+          "council_district": "04",
+          "census_tract": "008400",
+          "bin": "1075696",
+          "bbl": "1008390055",
+          "nta": "MN17",
+          "location": {
+            "type": "Point",
+            "coordinates": [
+              -73.983354175874,
+              40.751208353675
+            ]
+          },
+          ":@computed_region_f5dn_yrer": "11",
+          ":@computed_region_yeji_bk3q": "4",
+          ":@computed_region_sbqj_enih": "8",
+          ":@computed_region_92fq_4b7q": "51"
+        }
+      ]
+    },
+    {
+      "portal": "data.cityofnewyork.us",
+      "dataset_id": "ipu4-2q9a",
+      "name": "DOB Permit Issuance",
+      "total_columns": 60,
+      "contact_fields": [
+        {
+          "field": "street_name",
+          "name": "Street Name",
+          "type": "text",
+          "description": "Street Name where Property is located",
+          "sample_values": [
+            "MADISON AVE",
+            "BOYLAN STREET",
+            "LAFAYETTE AVENUE"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "permittee_s_first_name",
+          "name": "Permittee's First Name",
+          "type": "text",
+          "description": "Permittee's First Name",
+          "sample_values": [
+            "FRANKIE",
+            "PAUL",
+            "PAUL"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "permittee_s_last_name",
+          "name": "Permittee's Last Name",
+          "type": "text",
+          "description": "Permittee's Last Name",
+          "sample_values": [
+            "COLLETTA",
+            "JOYCE",
+            "JOYCE"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "permittee_s_business_name",
+          "name": "Permittee's Business Name",
+          "type": "text",
+          "description": "Permittee's Business Name",
+          "sample_values": [
+            "FORCE INSTALLATIONS, LLC",
+            "SUNRUN INSTALLATION SVC",
+            "SUNRUN INSTALLATION SVC"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "permittee_s_phone__",
+          "name": "Permittee's Phone #",
+          "type": "text",
+          "description": "Permittee's Phone #",
+          "sample_values": [
+            "2122441050",
+            "8055407643",
+            "8055407643"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "site_safety_mgr_s_first_name",
+          "name": "Site Safety Mgr's First Name",
+          "type": "text",
+          "description": "Site Safety Mgr's First Name",
+          "sample_values": [
+            null,
+            null,
+            null
+          ],
+          "populated_pct": 0
+        },
+        {
+          "field": "site_safety_mgr_s_last_name",
+          "name": "Site Safety Mgr's Last Name",
+          "type": "text",
+          "description": "Site Safety Mgr's Last Name",
+          "sample_values": [
+            null,
+            null,
+            null
+          ],
+          "populated_pct": 0
+        },
+        {
+          "field": "site_safety_mgr_business_name",
+          "name": "Site Safety Mgr Business Name",
+          "type": "text",
+          "description": "Site Safety Mgr Business Name",
+          "sample_values": [
+            null,
+            null,
+            null
+          ],
+          "populated_pct": 0
+        },
+        {
+          "field": "superintendent_first___last_name",
+          "name": "Superintendent First & Last Name",
+          "type": "text",
+          "description": "Superintendent First & Last Name",
+          "sample_values": [
+            null,
+            null,
+            null
+          ],
+          "populated_pct": 0
+        },
+        {
+          "field": "superintendent_business_name",
+          "name": "Superintendent Business Name",
+          "type": "text",
+          "description": "Superintendent Business Name",
+          "sample_values": [
+            null,
+            null,
+            null
+          ],
+          "populated_pct": 0
+        },
+        {
+          "field": "owner_s_business_type",
+          "name": "Owner's Business Type",
+          "type": "text",
+          "description": "Owner's Business Type",
+          "sample_values": [
+            "CORPORATION",
+            "INDIVIDUAL",
+            "INDIVIDUAL"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "owner_s_business_name",
+          "name": "Owner's Business Name",
+          "type": "text",
+          "description": "Business Name of Property Owner",
+          "sample_values": [
+            "SL GREEN REALTY CORP.",
+            "N/A",
+            "N/A"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "owner_s_first_name",
+          "name": "Owner's First Name",
+          "type": "text",
+          "description": "First Name of property owner",
+          "sample_values": [
+            "JOHN",
+            "STEVEN",
+            "SANTO"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "owner_s_last_name",
+          "name": "Owner's Last Name",
+          "type": "text",
+          "description": "Last Name of property owner",
+          "sample_values": [
+            "KRUSH",
+            "MONTANA",
+            "CEBALLOS"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "owner_s_house__",
+          "name": "Owner's House #",
+          "type": "text",
+          "description": "Owner's House #",
+          "sample_values": [
+            null,
+            null,
+            null
+          ],
+          "populated_pct": 0
+        },
+        {
+          "field": "owner_s_house_street_name",
+          "name": "Owner's House Street Name",
+          "type": "text",
+          "description": "Owner's House Street Name",
+          "sample_values": [
+            null,
+            null,
+            null
+          ],
+          "populated_pct": 0
+        },
+        {
+          "field": "owner_s_zip_code",
+          "name": "Owner\u2019s House Zip Code",
+          "type": "text",
+          "description": "Owner\u2019s House Zip Code",
+          "sample_values": [
+            null,
+            null,
+            null
+          ],
+          "populated_pct": 0
+        },
+        {
+          "field": "owner_s_phone__",
+          "name": "Owner's Phone #",
+          "type": "text",
+          "description": "Owner's Phone #",
+          "sample_values": [
+            "2125942700",
+            "9174201655",
+            "7188125847"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "gis_nta_name",
+          "name": "NTA_NAME",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "Hudson Yards-Chelsea-Flatiron-Union Square",
+            "Arden Heights",
+            "West New Brighton-New Brighton-St. George"
+          ],
+          "populated_pct": 100
+        }
+      ],
+      "all_fields": [
+        "borough",
+        "bin__",
+        "house__",
+        "street_name",
+        "job__",
+        "job_doc___",
+        "job_type",
+        "self_cert",
+        "block",
+        "lot",
+        "community_board",
+        "zip_code",
+        "bldg_type",
+        "residential",
+        "special_district_1",
+        "special_district_2",
+        "work_type",
+        "permit_status",
+        "filing_status",
+        "permit_type",
+        "permit_sequence__",
+        "permit_subtype",
+        "oil_gas",
+        "site_fill",
+        "filing_date",
+        "issuance_date",
+        "expiration_date",
+        "job_start_date",
+        "permittee_s_first_name",
+        "permittee_s_last_name",
+        "permittee_s_business_name",
+        "permittee_s_phone__",
+        "permittee_s_license_type",
+        "permittee_s_license__",
+        "act_as_superintendent",
+        "permittee_s_other_title",
+        "hic_license",
+        "site_safety_mgr_s_first_name",
+        "site_safety_mgr_s_last_name",
+        "site_safety_mgr_business_name",
+        "superintendent_first___last_name",
+        "superintendent_business_name",
+        "owner_s_business_type",
+        "non_profit",
+        "owner_s_business_name",
+        "owner_s_first_name",
+        "owner_s_last_name",
+        "owner_s_house__",
+        "owner_s_house_street_name",
+        "city",
+        "state",
+        "owner_s_zip_code",
+        "owner_s_phone__",
+        "dobrundate",
+        "permit_si_no",
+        "gis_latitude",
+        "gis_longitude",
+        "gis_council_district",
+        "gis_census_tract",
+        "gis_nta_name"
+      ],
+      "sample_records": [
+        {
+          "borough": "MANHATTAN",
+          "bin__": "1088749",
+          "house__": "1",
+          "street_name": "MADISON AVE",
+          "job__": "141008987",
+          "job_doc___": "01",
+          "job_type": "A3",
+          "self_cert": "Y",
+          "block": "00853",
+          "lot": "00002",
+          "community_board": "105",
+          "zip_code": "10010",
+          "bldg_type": "2",
+          "work_type": "EQ",
+          "permit_status": "ISSUED",
+          "filing_status": "INITIAL",
+          "permit_type": "EQ",
+          "permit_sequence__": "01",
+          "permit_subtype": "OT",
+          "filing_date": "05/10/2022",
+          "issuance_date": "05/10/2022",
+          "expiration_date": "05/10/2023",
+          "job_start_date": "05/10/2022",
+          "permittee_s_first_name": "FRANKIE",
+          "permittee_s_last_name": "COLLETTA",
+          "permittee_s_business_name": "FORCE INSTALLATIONS, LLC",
+          "permittee_s_phone__": "2122441050",
+          "permittee_s_license_type": "GC",
+          "permittee_s_license__": "0621634",
+          "owner_s_business_type": "CORPORATION",
+          "non_profit": "N",
+          "owner_s_business_name": "SL GREEN REALTY CORP.",
+          "owner_s_first_name": "JOHN",
+          "owner_s_last_name": "KRUSH",
+          "owner_s_phone__": "2125942700",
+          "dobrundate": "05/11/2022 00:00:00",
+          "permit_si_no": "3905851",
+          "gis_latitude": "40.740909",
+          "gis_longitude": "-73.987947",
+          "gis_council_district": "2",
+          "gis_census_tract": "56",
+          "gis_nta_name": "Hudson Yards-Chelsea-Flatiron-Union Square"
+        },
+        {
+          "borough": "STATEN ISLAND",
+          "bin__": "5076937",
+          "house__": "87",
+          "street_name": "BOYLAN STREET",
+          "job__": "540218539",
+          "job_doc___": "01",
+          "job_type": "A2",
+          "self_cert": "Y",
+          "block": "05687",
+          "lot": "00066",
+          "community_board": "503",
+          "zip_code": "10312",
+          "bldg_type": "1",
+          "residential": "YES",
+          "special_district_1": "SRD",
+          "work_type": "OT",
+          "permit_status": "ISSUED",
+          "filing_status": "INITIAL",
+          "permit_type": "EW",
+          "permit_sequence__": "01",
+          "permit_subtype": "OT",
+          "site_fill": "NOT APPLICABLE",
+          "filing_date": "05/10/2022",
+          "issuance_date": "05/10/2022",
+          "expiration_date": "10/01/2022",
+          "job_start_date": "05/12/2022",
+          "permittee_s_first_name": "PAUL",
+          "permittee_s_last_name": "JOYCE",
+          "permittee_s_business_name": "SUNRUN INSTALLATION SVC",
+          "permittee_s_phone__": "8055407643",
+          "permittee_s_license_type": "GC",
+          "permittee_s_license__": "0613329",
+          "owner_s_business_type": "INDIVIDUAL",
+          "non_profit": "N",
+          "owner_s_business_name": "N/A",
+          "owner_s_first_name": "STEVEN",
+          "owner_s_last_name": "MONTANA",
+          "owner_s_phone__": "9174201655",
+          "dobrundate": "05/11/2022 00:00:00",
+          "permit_si_no": "3905852",
+          "gis_latitude": "40.563654",
+          "gis_longitude": "-74.179584",
+          "gis_council_district": "51",
+          "gis_census_tract": "17008",
+          "gis_nta_name": "Arden Heights"
+        },
+        {
+          "borough": "STATEN ISLAND",
+          "bin__": "5001506",
+          "house__": "217",
+          "street_name": "LAFAYETTE AVENUE",
+          "job__": "540218575",
+          "job_doc___": "01",
+          "job_type": "A2",
+          "self_cert": "Y",
+          "block": "00064",
+          "lot": "00022",
+          "community_board": "501",
+          "zip_code": "10301",
+          "bldg_type": "1",
+          "residential": "YES",
+          "special_district_1": "HS",
+          "work_type": "OT",
+          "permit_status": "ISSUED",
+          "filing_status": "INITIAL",
+          "permit_type": "EW",
+          "permit_sequence__": "01",
+          "permit_subtype": "OT",
+          "site_fill": "NOT APPLICABLE",
+          "filing_date": "05/10/2022",
+          "issuance_date": "05/10/2022",
+          "expiration_date": "10/01/2022",
+          "job_start_date": "05/15/2022",
+          "permittee_s_first_name": "PAUL",
+          "permittee_s_last_name": "JOYCE",
+          "permittee_s_business_name": "SUNRUN INSTALLATION SVC",
+          "permittee_s_phone__": "8055407643",
+          "permittee_s_license_type": "GC",
+          "permittee_s_license__": "0613329",
+          "owner_s_business_type": "INDIVIDUAL",
+          "non_profit": "N",
+          "owner_s_business_name": "N/A",
+          "owner_s_first_name": "SANTO",
+          "owner_s_last_name": "CEBALLOS",
+          "owner_s_phone__": "7188125847",
+          "dobrundate": "05/11/2022 00:00:00",
+          "permit_si_no": "3905853",
+          "gis_latitude": "40.639633",
+          "gis_longitude": "-74.094169",
+          "gis_council_district": "49",
+          "gis_census_tract": "81",
+          "gis_nta_name": "West New Brighton-New Brighton-St. George"
+        }
+      ]
+    },
+    {
+      "portal": "data.cityofnewyork.us",
+      "dataset_id": "6bgk-3dad",
+      "name": "DOB ECB Violations",
+      "total_columns": 46,
+      "contact_fields": [
+        {
+          "field": "respondent_name",
+          "name": "RESPONDENT_NAME",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "HAROLD,POMERANZ",
+            "WORLD TOWER PARK GARAGE",
+            "921 BROADWAY REALTY L"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "respondent_house_number",
+          "name": "RESPONDENT_HOUSE_NUMBER",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "236",
+            "200",
+            "921"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "respondent_street",
+          "name": "RESPONDENT_STREET",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "EAST    5 STREET",
+            "EAST   69 STREET",
+            "BROADWAY"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "respondent_city",
+          "name": "RESPONDENT_CITY",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "MANH",
+            "MANHATTAN",
+            "BK"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "respondent_zip",
+          "name": "RESPONDENT_ZIP",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "10003",
+            "10021",
+            "11206"
+          ],
+          "populated_pct": 100
+        }
+      ],
+      "all_fields": [
+        "isn_dob_bis_extract",
+        "ecb_violation_number",
+        "ecb_violation_status",
+        "dob_violation_number",
+        "bin",
+        "boro",
+        "block",
+        "lot",
+        "hearing_date",
+        "hearing_time",
+        "served_date",
+        "issue_date",
+        "severity",
+        "violation_type",
+        "respondent_name",
+        "respondent_house_number",
+        "respondent_street",
+        "respondent_city",
+        "respondent_zip",
+        "violation_description",
+        "penality_imposed",
+        "amount_paid",
+        "balance_due",
+        "infraction_code1",
+        "section_law_description1",
+        "infraction_code2",
+        "section_law_description2",
+        "infraction_code3",
+        "section_law_description3",
+        "infraction_code4",
+        "section_law_description4",
+        "infraction_code5",
+        "section_law_description5",
+        "infraction_code6",
+        "section_law_description6",
+        "infraction_code7",
+        "section_law_description7",
+        "infraction_code8",
+        "section_law_description8",
+        "infraction_code9",
+        "section_law_description9",
+        "infraction_code10",
+        "section_law_description10",
+        "aggravated_level",
+        "hearing_status",
+        "certification_status"
+      ],
+      "sample_records": [
+        {
+          "isn_dob_bis_extract": "1075005",
+          "ecb_violation_number": "34044233R",
+          "ecb_violation_status": "RESOLVE",
+          "dob_violation_number": "112790CA4PR04",
+          "bin": "1006588",
+          "boro": "1",
+          "block": "00460",
+          "lot": "0029",
+          "hearing_date": "19910509",
+          "hearing_time": "830",
+          "served_date": "19910129",
+          "issue_date": "19901127",
+          "severity": "Hazardous",
+          "violation_type": "Construction",
+          "respondent_name": "HAROLD,POMERANZ",
+          "respondent_house_number": "236",
+          "respondent_street": "EAST    5 STREET",
+          "respondent_city": "MANH",
+          "respondent_zip": "10003",
+          "violation_description": "OCCUPANCY CONTRARY TO BUILDING DEPARTMENT RECORDS NOTED:A CLASS A APARTMENT HAS BEEN CREATED IN THE BASEMENT AREA LOCATION:CENTER STORAGE AREA SUPERS APARTMENT REMEDY:OBTAIN A VALID CERTIFICATE OF OCCUPANCY OR",
+          "penality_imposed": "285",
+          "amount_paid": "285",
+          "balance_due": "0",
+          "infraction_code1": "B03",
+          "section_law_description1": "27-217                                                                      OCCUPANCY CONTRARY TO THAT ALLOWED BY THE C OF O BLDG DEPT RECORDS",
+          "hearing_status": "IN VIOLATION",
+          "certification_status": "CERTIFICATE ACCEPTED"
+        },
+        {
+          "isn_dob_bis_extract": "1082681",
+          "ecb_violation_number": "34833639Z",
+          "ecb_violation_status": "RESOLVE",
+          "dob_violation_number": "012810CJG03",
+          "bin": "1060779",
+          "boro": "1",
+          "block": "02044",
+          "lot": "0020",
+          "hearing_date": "20100325",
+          "hearing_time": "1030",
+          "served_date": "20100128",
+          "issue_date": "20100128",
+          "severity": "CLASS - 2",
+          "violation_type": "Construction",
+          "respondent_name": "WORLD TOWER PARK GARAGE",
+          "respondent_house_number": "200",
+          "respondent_street": "EAST   69 STREET",
+          "respondent_city": "MANHATTAN",
+          "respondent_zip": "10021",
+          "violation_description": "FAILURE TO PROVIDE APPROVED/ACCEPTED PLANS AT JOB SITE AT TIME OF INSPECTIONS.1-ARCHITECTURAL APPROVED PLANS (INCLUDE HDWR)2 PLUMBING APPROVED PLANS 3ELECTRICAL PLAN INCLUDING EGUSS ,MECHANCIAL.PROVIDE PLANS",
+          "penality_imposed": "1250",
+          "amount_paid": "2500",
+          "balance_due": "-1250",
+          "infraction_code1": "210",
+          "section_law_description1": "28-104.2.2                                                                  FAIL TO PROVIDE APPRV/ACCEPTED PLANS ST JOB SITE AT TIME OF INSP",
+          "aggravated_level": "NO",
+          "hearing_status": "DEFAULT",
+          "certification_status": "CERTIFICATE ACCEPTED"
+        },
+        {
+          "isn_dob_bis_extract": "1226423",
+          "ecb_violation_number": "34870720Z",
+          "ecb_violation_status": "RESOLVE",
+          "dob_violation_number": "081910CSTFCS15",
+          "bin": "3071867",
+          "boro": "3",
+          "block": "03150",
+          "lot": "0002",
+          "hearing_date": "20101018",
+          "hearing_time": "830",
+          "served_date": "20100827",
+          "issue_date": "20100819",
+          "severity": "CLASS - 1",
+          "violation_type": "Construction",
+          "respondent_name": "921 BROADWAY REALTY L",
+          "respondent_house_number": "921",
+          "respondent_street": "BROADWAY",
+          "respondent_city": "BK",
+          "respondent_zip": "11206",
+          "violation_description": "FAILURE TO MAINTAIN BUILDING IN CODE-COMPLAINT MANNER. NO FIRE STOPPING PER BC 712.3;27-345. NOTE: AT CELLAR LEVEL OF ABOVE PREMISES SHEET ROCK CEILING IS MISSING AT VARIOUS LOCATIONS. REMEDY: PROVIDE/MAINTAIN",
+          "penality_imposed": "1000",
+          "amount_paid": "1252",
+          "balance_due": "0",
+          "infraction_code1": "139",
+          "section_law_description1": "28-301.1                                                                    FAILURE TO MAINTAIN BUILDING IN CODE-COMPLIANT MANNER: NO FIRE STOPPIN",
+          "aggravated_level": "NO",
+          "hearing_status": "IN VIOLATION",
+          "certification_status": "CERTIFICATE ACCEPTED"
+        }
+      ]
+    },
+    {
+      "portal": "data.cityofnewyork.us",
+      "dataset_id": "bs8b-p36w",
+      "name": "DOB Certificate Of Occupancy",
+      "total_columns": 25,
+      "contact_fields": [
+        {
+          "field": "street_name",
+          "name": "STREET",
+          "type": "text",
+          "description": "Street Name  where Property is located.\n",
+          "sample_values": [
+            "BAYCHESTER AVE",
+            "FOSTER AVENUE",
+            "CORBIN AVENUE"
+          ],
+          "populated_pct": 100
+        }
+      ],
+      "all_fields": [
+        "job_number",
+        "job_type",
+        "c_o_issue_date",
+        "bin_number",
+        "borough",
+        "house_number",
+        "street_name",
+        "block",
+        "lot",
+        "postcode",
+        "pr_dwelling_unit",
+        "ex_dwelling_unit",
+        "application_status_raw",
+        "filing_status_raw",
+        "item_number",
+        "issue_type",
+        "latitude",
+        "longitude",
+        "community_board",
+        "council_district",
+        "census_tract",
+        "bin",
+        "bbl",
+        "nta",
+        "location"
+      ],
+      "sample_records": [
+        {
+          "job_number": "220466350",
+          "job_type": "A1",
+          "c_o_issue_date": "2021-04-08T00:00:00.000",
+          "bin_number": "2102454",
+          "borough": "Bronx",
+          "house_number": "340",
+          "street_name": "BAYCHESTER AVE",
+          "block": "05141",
+          "lot": "00035",
+          "postcode": "10475",
+          "application_status_raw": "Issued",
+          "filing_status_raw": "New",
+          "item_number": "009",
+          "issue_type": "Final",
+          "latitude": "40.867780",
+          "longitude": "-73.831248",
+          "community_board": "10",
+          "council_district": "12",
+          "census_tract": "46201",
+          "bin": "2102454",
+          "bbl": "2051410035",
+          "nta": "Co-op City",
+          "location": {
+            "latitude": "40.86778",
+            "longitude": "-73.831248",
+            "human_address": "{\"address\": \"\", \"city\": \"\", \"state\": \"\", \"zip\": \"\"}"
+          },
+          ":@computed_region_efsh_h5xi": "12344",
+          ":@computed_region_f5dn_yrer": "43",
+          ":@computed_region_yeji_bk3q": "5",
+          ":@computed_region_92fq_4b7q": "2",
+          ":@computed_region_sbqj_enih": "28"
+        },
+        {
+          "job_number": "321383560",
+          "job_type": "NB",
+          "c_o_issue_date": "2021-04-08T00:00:00.000",
+          "bin_number": "3128179",
+          "borough": "Brooklyn",
+          "house_number": "639",
+          "street_name": "FOSTER AVENUE",
+          "block": "05428",
+          "lot": "00092",
+          "postcode": "11230",
+          "pr_dwelling_unit": "22",
+          "application_status_raw": "Issued",
+          "filing_status_raw": "New",
+          "item_number": "001",
+          "issue_type": "Final",
+          "latitude": "40.630684",
+          "longitude": "-73.970144",
+          "community_board": "14",
+          "council_district": "40",
+          "census_tract": "482",
+          "bin": "3128179",
+          "bbl": "3054280092",
+          "nta": "Flatbush",
+          "location": {
+            "latitude": "40.630684",
+            "longitude": "-73.970144",
+            "human_address": "{\"address\": \"\", \"city\": \"\", \"state\": \"\", \"zip\": \"\"}"
+          },
+          ":@computed_region_efsh_h5xi": "13513",
+          ":@computed_region_f5dn_yrer": "60",
+          ":@computed_region_yeji_bk3q": "2",
+          ":@computed_region_92fq_4b7q": "11",
+          ":@computed_region_sbqj_enih": "43"
+        },
+        {
+          "job_number": "520382988",
+          "job_type": "NB",
+          "c_o_issue_date": "2021-04-08T00:00:00.000",
+          "bin_number": "5061795",
+          "borough": "Staten Island",
+          "house_number": "435",
+          "street_name": "CORBIN AVENUE",
+          "block": "04583",
+          "lot": "00023",
+          "postcode": "10308",
+          "pr_dwelling_unit": "1",
+          "application_status_raw": "Issued",
+          "filing_status_raw": "New",
+          "item_number": "001",
+          "issue_type": "Final",
+          "latitude": "40.565772",
+          "longitude": "-74.151897",
+          "community_board": "3",
+          "council_district": "51",
+          "census_tract": "14606",
+          "bin": "5061795",
+          "bbl": "5045830023",
+          "nta": "Great Kills",
+          "location": {
+            "latitude": "40.565772",
+            "longitude": "-74.151897",
+            "human_address": "{\"address\": \"\", \"city\": \"\", \"state\": \"\", \"zip\": \"\"}"
+          },
+          ":@computed_region_efsh_h5xi": "10695",
+          ":@computed_region_f5dn_yrer": "15",
+          ":@computed_region_yeji_bk3q": "1",
+          ":@computed_region_92fq_4b7q": "9",
+          ":@computed_region_sbqj_enih": "76"
+        }
+      ]
+    },
+    {
+      "portal": "data.cityofnewyork.us",
+      "dataset_id": "rbx6-tga4",
+      "name": "DOB NOW: Build \u2013 Approved Permits",
+      "total_columns": 46,
+      "contact_fields": [
+        {
+          "field": "street_name",
+          "name": "Street Name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "PARSONS BOULEVARD",
+            "BROADWAY",
+            "BIVONA STREET"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "applicant_license",
+          "name": "Applicant License #",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "618334",
+            "613098",
+            "001941"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "applicant_first_name",
+          "name": "Applicant First Name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "JAMES",
+            "TAE JUN",
+            "NICHOLAS"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "applicant_middle_name",
+          "name": "Applicant Middle Name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "M",
+            null,
+            "M"
+          ],
+          "populated_pct": 67
+        },
+        {
+          "field": "applicant_last_name",
+          "name": "Applicant Last Name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "COSTELLO",
+            "KWON",
+            "NOTIAS"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "applicant_business_name",
+          "name": "Applicant Business Name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "COSTELLO CONSTRUCTION GRO",
+            "SITE ENTER INC",
+            "NEPTUNE MECHANICAL INC"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "applicant_business_address",
+          "name": "Applicant Business Address",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "19 ROLLING HILLS ROAD",
+            "13-20 B 131ST STREET",
+            "29-10 120TH STREET"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "filing_representative_first_name",
+          "name": "Filing Representative First Name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "MAJORIE",
+            "SUNGMIN/TAE JUN",
+            null
+          ],
+          "populated_pct": 67
+        },
+        {
+          "field": "filing_representative_last_name",
+          "name": "Filing Representative Last Name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "COSTELLO",
+            "MA/ KIM",
+            null
+          ],
+          "populated_pct": 67
+        },
+        {
+          "field": "filing_representative_business_name",
+          "name": "Filing Representative Business Name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "MERCURE CONSULTING LLC",
+            "K & M DOB CONSULTING CORP.",
+            null
+          ],
+          "populated_pct": 67
+        },
+        {
+          "field": "owner_business_name",
+          "name": "Owner Business Name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "FLUSHING HOSPITAL MEDICAL CENTER",
+            "ZAR GROUP",
+            "NEW YORK CITY HOUSING AUTHORITY"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "owner_name",
+          "name": "Owner Name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "NEIL PAPPAS",
+            "BRUNO CHAFE",
+            "Matthew Charney"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "owner_street_address",
+          "name": "Owner Street Address",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            null,
+            null,
+            null
+          ],
+          "populated_pct": 0
+        },
+        {
+          "field": "owner_city",
+          "name": "Owner City",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            null,
+            null,
+            null
+          ],
+          "populated_pct": 0
+        },
+        {
+          "field": "owner_state",
+          "name": "Owner State",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            null,
+            null,
+            null
+          ],
+          "populated_pct": 0
+        },
+        {
+          "field": "owner_zip_code",
+          "name": "Owner Zip Code",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            null,
+            null,
+            null
+          ],
+          "populated_pct": 0
+        }
+      ],
+      "all_fields": [
+        "job_filing_number",
+        "work_permit",
+        "sequence_number",
+        "filing_reason",
+        "house_no",
+        "street_name",
+        "borough",
+        "lot",
+        "bin",
+        "block",
+        "c_b_no",
+        "apt_condo_no_s",
+        "work_on_floor",
+        "work_type",
+        "permittee_s_license_type",
+        "applicant_license",
+        "applicant_first_name",
+        "applicant_middle_name",
+        "applicant_last_name",
+        "applicant_business_name",
+        "applicant_business_address",
+        "filing_representative_first_name",
+        "filing_representative_middle_initial",
+        "filing_representative_last_name",
+        "filing_representative_business_name",
+        "approved_date",
+        "issued_date",
+        "expired_date",
+        "job_description",
+        "estimated_job_costs",
+        "owner_business_name",
+        "owner_name",
+        "owner_street_address",
+        "owner_city",
+        "owner_state",
+        "owner_zip_code",
+        "permit_status",
+        "tracking_number",
+        "zip_code",
+        "latitude",
+        "longitude",
+        "community_board",
+        "council_district",
+        "bbl",
+        "census_tract",
+        "nta"
+      ],
+      "sample_records": [
+        {
+          "job_filing_number": "Permit is no",
+          "work_permit": "Permit is not yet issued",
+          "filing_reason": "Initial Permit",
+          "house_no": "43-30",
+          "street_name": "PARSONS BOULEVARD",
+          "borough": "QUEENS",
+          "lot": "21",
+          "bin": "4117367",
+          "block": "5198",
+          "c_b_no": "407",
+          "work_on_floor": "Open Space",
+          "work_type": "Construction Fence",
+          "permittee_s_license_type": "GC",
+          "applicant_license": "618334",
+          "applicant_first_name": "JAMES",
+          "applicant_middle_name": "M",
+          "applicant_last_name": "COSTELLO",
+          "applicant_business_name": "COSTELLO CONSTRUCTION GRO",
+          "applicant_business_address": "19 ROLLING HILLS ROAD",
+          "filing_representative_first_name": "MAJORIE",
+          "filing_representative_last_name": "COSTELLO",
+          "filing_representative_business_name": "MERCURE CONSULTING LLC",
+          "job_description": "Demolition of 3 story building",
+          "estimated_job_costs": "100",
+          "owner_business_name": "FLUSHING HOSPITAL MEDICAL CENTER",
+          "owner_name": "NEIL PAPPAS",
+          "permit_status": "Signed-off",
+          "tracking_number": "593832799",
+          "zip_code": "11355",
+          "latitude": "40.756514",
+          "longitude": "-73.817023",
+          "community_board": "407",
+          "council_district": "20",
+          "bbl": "4051980021",
+          "census_tract": "861",
+          "nta": "East Flushing"
+        },
+        {
+          "job_filing_number": "M00923249-I1",
+          "work_permit": "M00923249-I1-GC",
+          "sequence_number": "2",
+          "filing_reason": "Renewal Permit Without Changes",
+          "house_no": "836",
+          "street_name": "BROADWAY",
+          "borough": "MANHATTAN",
+          "lot": "39",
+          "bin": "1009209",
+          "block": "564",
+          "c_b_no": "102",
+          "work_on_floor": "Floor Number(s) 1 through 2",
+          "work_type": "General Construction",
+          "permittee_s_license_type": "GC",
+          "applicant_license": "613098",
+          "applicant_first_name": "TAE JUN",
+          "applicant_last_name": "KWON",
+          "applicant_business_name": "SITE ENTER INC",
+          "applicant_business_address": "13-20 B 131ST STREET",
+          "filing_representative_first_name": "SUNGMIN/TAE JUN",
+          "filing_representative_last_name": "MA/ KIM",
+          "filing_representative_business_name": "K & M DOB CONSULTING CORP.",
+          "approved_date": "2024-01-09T00:00:00.000",
+          "issued_date": "2024-05-16T00:00:00.000",
+          "expired_date": "2024-09-02T04:00:00.000",
+          "job_description": "EXTERIOR RENOVATION WORK INCLUDING REMOVAL OF EXISTING STOREFRONT AND INSTALLATION OF NEW STOREFRONT AT BROADWAY (WEST) AND 13TH STREET (NORTH) FACADES AND INSTALLATION OF EIFS AT THE 13TH STREET FACADE.",
+          "estimated_job_costs": "100000",
+          "owner_business_name": "ZAR GROUP",
+          "owner_name": "BRUNO CHAFE",
+          "permit_status": "Signed-off",
+          "tracking_number": "950357329",
+          "zip_code": "10003",
+          "latitude": "40.733707",
+          "longitude": "-73.990994",
+          "community_board": "102",
+          "council_district": "2",
+          "bbl": "1005640039",
+          "census_tract": "61",
+          "nta": "Greenwich Village"
+        },
+        {
+          "job_filing_number": "X00884363-S7",
+          "work_permit": "X00884363-S7-PL",
+          "sequence_number": "2",
+          "filing_reason": "Renewal Permit Without Changes",
+          "house_no": "3545",
+          "street_name": "BIVONA STREET",
+          "borough": "BRONX",
+          "lot": "40",
+          "bin": "2093875",
+          "block": "5263",
+          "c_b_no": "212",
+          "work_on_floor": "Cellar, Floor Number(s) 1 through 1",
+          "work_type": "Plumbing",
+          "permittee_s_license_type": "P",
+          "applicant_license": "001941",
+          "applicant_first_name": "NICHOLAS",
+          "applicant_middle_name": "M",
+          "applicant_last_name": "NOTIAS",
+          "applicant_business_name": "NEPTUNE MECHANICAL INC",
+          "applicant_business_address": "29-10 120TH STREET",
+          "approved_date": "2024-08-22T00:00:00.000",
+          "issued_date": "2025-10-23T00:00:00.000",
+          "expired_date": "2026-01-06T00:00:00.000",
+          "job_description": "PLUMBING WORK IN CONJUNCTION WITH RENOVATION OF 18-STORY NYCHA MULTIPLE DWELLING IN PUBLIC AREAS. NO CHANGE TO USE, EGRESS OR OCCUPANCY.",
+          "estimated_job_costs": "763200",
+          "owner_business_name": "NEW YORK CITY HOUSING AUTHORITY",
+          "owner_name": "Matthew Charney",
+          "permit_status": "Permit Issued",
+          "tracking_number": "509642822",
+          "zip_code": "10475",
+          "latitude": "40.883142",
+          "longitude": "-73.833284",
+          "community_board": "212",
+          "council_district": "12",
+          "bbl": "2052630040",
+          "census_tract": "46209",
+          "nta": "Eastchester-Edenwald-Baychester"
+        }
+      ]
+    },
+    {
+      "portal": "data.cityofnewyork.us",
+      "dataset_id": "w9ak-ipjd",
+      "name": "DOB NOW: Build \u2013 Job Application Filings",
+      "total_columns": 85,
+      "contact_fields": [
+        {
+          "field": "street_name",
+          "name": "Street Name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "DECATUR STREET",
+            "PACIFIC STREET",
+            "80 STREET"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "applicant_professional_title",
+          "name": "Applicant Professional Title",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "PE",
+            "PE",
+            "RA"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "applicant_license",
+          "name": "Applicant License #",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "072042",
+            "049434",
+            "020359"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "applicant_first_name",
+          "name": "Applicant First Name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "Eric",
+            "Victor",
+            null
+          ],
+          "populated_pct": 67
+        },
+        {
+          "field": "applicants_middle_initial",
+          "name": "Applicants Middle Initial",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "L",
+            null,
+            null
+          ],
+          "populated_pct": 33
+        },
+        {
+          "field": "applicant_last_name",
+          "name": "Applicant Last Name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "Foster",
+            "Suben",
+            null
+          ],
+          "populated_pct": 67
+        },
+        {
+          "field": "owner_s_business_name",
+          "name": "Owner's Business Name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "AT-SAF INC",
+            "ROYAL T&E LLC",
+            "N/A"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "owner_s_street_name",
+          "name": "Owner's Street Name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "85-75 SANTIAGO ST",
+            "7 ORBIT DRIVE",
+            "85 Sill Lane"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "filing_representative_first_name",
+          "name": "Filing Representative First Name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "KHEMRAJ",
+            "CHEE",
+            "MERCEDES"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "filing_representative_last_name",
+          "name": "Filing Representative Last Name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "ITWARIA",
+            "WONG",
+            "HERNANDEZ"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "filing_representative_business_name",
+          "name": "Filing Representative Business Name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "DANICO SERVICES INC",
+            "PREPARER",
+            "S&M EXPEDITING"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "filing_representative_street_name",
+          "name": "Filing Representative Street Name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "31 BRADFORD STREET",
+            "67-35 165TH STREET",
+            "P.O. BOX 7558"
+          ],
+          "populated_pct": 100
+        }
+      ],
+      "all_fields": [
+        "job_filing_number",
+        "filing_status",
+        "house_no",
+        "street_name",
+        "borough",
+        "block",
+        "lot",
+        "bin",
+        "commmunity_board",
+        "work_on_floor",
+        "apt_condo_no_s",
+        "applicant_professional_title",
+        "applicant_license",
+        "applicant_first_name",
+        "applicants_middle_initial",
+        "applicant_last_name",
+        "owner_s_business_name",
+        "owner_s_street_name",
+        "city",
+        "state",
+        "zip",
+        "filing_representative_first_name",
+        "filing_representative_middle_initial",
+        "filing_representative_last_name",
+        "filing_representative_business_name",
+        "filing_representative_street_name",
+        "filing_representative_city",
+        "filing_representative_state",
+        "filing_representative_zip",
+        "sprinkler_work_type",
+        "plumbing_work_type",
+        "initial_cost",
+        "total_construction_floor_area",
+        "review_building_code",
+        "little_e",
+        "unmapped_cco_street",
+        "request_legalization",
+        "includes_permanent_removal",
+        "in_compliance_with_nycecc",
+        "exempt_from_nycecc",
+        "building_type",
+        "existing_stories",
+        "existing_height",
+        "existing_dwelling_units",
+        "proposed_no_of_stories",
+        "proposed_height",
+        "proposed_dwelling_units",
+        "specialinspectionrequirement",
+        "special_inspection_agency_number",
+        "progressinspectionrequirement",
+        "built_1_information_value",
+        "built_2_information_value",
+        "built_2_a_information_value",
+        "built_2_b_information_value",
+        "standpipe",
+        "antenna",
+        "curb_cut",
+        "sign",
+        "fence",
+        "scaffold",
+        "shed",
+        "postcode",
+        "latitude",
+        "longitude",
+        "council_district",
+        "census_tract",
+        "bbl",
+        "nta",
+        "filing_date",
+        "current_status_date",
+        "first_permit_date",
+        "boiler_equipment_work_type_",
+        "earth_work_work_type_",
+        "foundation_work_type_",
+        "general_construction_work_type_",
+        "mechanical_systems_work_type_",
+        "place_of_assembly_work_type_",
+        "protection_mechanical_methods_work_type_",
+        "sidewalk_shed_work_type_",
+        "structural_work_type_",
+        "support_of_excavation_work_type_",
+        "temporary_place_of_assembly_work_type_",
+        "job_type",
+        "approved_date",
+        "signoff_date"
+      ],
+      "sample_records": [
+        {
+          "job_filing_number": "B00248426-I1",
+          "filing_status": "LOC Issued",
+          "house_no": "1086",
+          "street_name": "DECATUR STREET",
+          "borough": "BROOKLYN",
+          "block": "3433",
+          "lot": "128",
+          "bin": "3425862",
+          "commmunity_board": "304",
+          "work_on_floor": "Open Space",
+          "applicant_professional_title": "PE",
+          "applicant_license": "072042",
+          "applicant_first_name": "Eric",
+          "applicants_middle_initial": "L",
+          "applicant_last_name": "Foster",
+          "owner_s_business_name": "AT-SAF INC",
+          "owner_s_street_name": "85-75 SANTIAGO ST",
+          "city": "JAMAICA",
+          "state": "NY",
+          "zip": "11423",
+          "filing_representative_first_name": "KHEMRAJ",
+          "filing_representative_last_name": "ITWARIA",
+          "filing_representative_business_name": "DANICO SERVICES INC",
+          "filing_representative_street_name": "31 BRADFORD STREET",
+          "filing_representative_city": "BROOKLYN",
+          "filing_representative_state": "NY",
+          "filing_representative_zip": "11207",
+          "sprinkler_work_type": "0",
+          "plumbing_work_type": "0",
+          "initial_cost": "6000",
+          "total_construction_floor_area": "0",
+          "review_building_code": "2014",
+          "little_e": "No",
+          "unmapped_cco_street": "No",
+          "in_compliance_with_nycecc": "No",
+          "exempt_from_nycecc": "No",
+          "building_type": "Other",
+          "existing_dwelling_units": "7",
+          "proposed_dwelling_units": "7",
+          "progressinspectionrequirement": "Final",
+          "standpipe": "0",
+          "antenna": "0",
+          "curb_cut": "0",
+          "sign": "0",
+          "fence": "0",
+          "scaffold": "0",
+          "shed": "1",
+          "postcode": "11207",
+          "latitude": "40.686474",
+          "longitude": "-73.909788",
+          "council_district": "37",
+          "census_tract": "403",
+          "bbl": "3034337502",
+          "nta": "Bushwick (East)",
+          "filing_date": "2019-10-24T00:00:00.000",
+          "current_status_date": "2020-12-27T23:10:02.000",
+          "first_permit_date": "2019-10-28T07:55:58.000",
+          "boiler_equipment_work_type_": "0",
+          "earth_work_work_type_": "0",
+          "foundation_work_type_": "0",
+          "general_construction_work_type_": "0",
+          "mechanical_systems_work_type_": "0",
+          "place_of_assembly_work_type_": "0",
+          "protection_mechanical_methods_work_type_": "0",
+          "sidewalk_shed_work_type_": "1",
+          "structural_work_type_": "0",
+          "support_of_excavation_work_type_": "No",
+          "temporary_place_of_assembly_work_type_": "0",
+          "job_type": "Alteration",
+          "signoff_date": "2020-01-07T00:00:00.000"
+        },
+        {
+          "job_filing_number": "B00013978-I1",
+          "filing_status": "LOC Issued",
+          "house_no": "2317",
+          "street_name": "PACIFIC STREET",
+          "borough": "BROOKLYN",
+          "block": "1435",
+          "lot": "51",
+          "bin": "3418372",
+          "commmunity_board": "316",
+          "work_on_floor": "OG - On Grade",
+          "applicant_professional_title": "PE",
+          "applicant_license": "049434",
+          "applicant_first_name": "Victor",
+          "applicant_last_name": "Suben",
+          "owner_s_business_name": "ROYAL T&E LLC",
+          "owner_s_street_name": "7 ORBIT DRIVE",
+          "city": "STONY BROOK",
+          "state": "NY",
+          "zip": "11790",
+          "filing_representative_first_name": "CHEE",
+          "filing_representative_last_name": "WONG",
+          "filing_representative_business_name": "PREPARER",
+          "filing_representative_street_name": "67-35 165TH STREET",
+          "filing_representative_city": "FRESH MEADOWS",
+          "filing_representative_state": "NY",
+          "filing_representative_zip": "11365",
+          "sprinkler_work_type": "0",
+          "plumbing_work_type": "0",
+          "initial_cost": "1000",
+          "total_construction_floor_area": "0",
+          "review_building_code": "1968",
+          "little_e": "No",
+          "unmapped_cco_street": "No",
+          "in_compliance_with_nycecc": "No",
+          "exempt_from_nycecc": "Yes",
+          "building_type": "3 Family",
+          "standpipe": "0",
+          "antenna": "0",
+          "curb_cut": "1",
+          "sign": "0",
+          "fence": "0",
+          "scaffold": "0",
+          "shed": "0",
+          "postcode": "11233",
+          "latitude": "40.675444",
+          "longitude": "-73.909154",
+          "council_district": "37",
+          "census_tract": "36501",
+          "bbl": "3014350051",
+          "nta": "Ocean Hill",
+          "filing_date": "2018-01-25T12:10:39.000",
+          "current_status_date": "2022-03-07T18:30:11.000",
+          "first_permit_date": "2022-01-24T00:00:00.000",
+          "boiler_equipment_work_type_": "0",
+          "earth_work_work_type_": "0",
+          "foundation_work_type_": "0",
+          "general_construction_work_type_": "0",
+          "mechanical_systems_work_type_": "0",
+          "place_of_assembly_work_type_": "0",
+          "protection_mechanical_methods_work_type_": "0",
+          "sidewalk_shed_work_type_": "0",
+          "structural_work_type_": "0",
+          "support_of_excavation_work_type_": "No",
+          "temporary_place_of_assembly_work_type_": "0",
+          "job_type": "Alteration",
+          "approved_date": "2018-01-25T15:37:15.000",
+          "signoff_date": "2022-03-07T00:00:00.000"
+        },
+        {
+          "job_filing_number": "B00352175-P3",
+          "filing_status": "Approved",
+          "house_no": "1241",
+          "street_name": "80 STREET",
+          "borough": "BROOKLYN",
+          "block": "6267",
+          "lot": "62",
+          "bin": "3162524",
+          "commmunity_board": "310",
+          "work_on_floor": "Floor Number(s) 001 through 001",
+          "applicant_professional_title": "RA",
+          "applicant_license": "020359",
+          "owner_s_business_name": "N/A",
+          "owner_s_street_name": "85 Sill Lane",
+          "city": "Old Lyme",
+          "state": "CT",
+          "zip": "06371",
+          "filing_representative_first_name": "MERCEDES",
+          "filing_representative_last_name": "HERNANDEZ",
+          "filing_representative_business_name": "S&M EXPEDITING",
+          "filing_representative_street_name": "P.O. BOX 7558",
+          "filing_representative_city": "NEW YORK",
+          "filing_representative_state": "NY",
+          "filing_representative_zip": "10116",
+          "sprinkler_work_type": "0",
+          "plumbing_work_type": "1",
+          "initial_cost": "4000",
+          "total_construction_floor_area": "100",
+          "review_building_code": "2014",
+          "little_e": "No",
+          "in_compliance_with_nycecc": "Yes",
+          "exempt_from_nycecc": "No",
+          "building_type": "1 Family",
+          "existing_dwelling_units": "1",
+          "proposed_dwelling_units": "1",
+          "standpipe": "0",
+          "antenna": "0",
+          "curb_cut": "0",
+          "sign": "0",
+          "fence": "0",
+          "scaffold": "0",
+          "shed": "0",
+          "postcode": "11228",
+          "latitude": "40.618221",
+          "longitude": "-74.01162",
+          "council_district": "38",
+          "census_tract": "148",
+          "bbl": "3062670062",
+          "nta": "Dyker Heights",
+          "filing_date": "2023-08-23T00:00:00.000",
+          "current_status_date": "2023-08-24T13:19:35.000",
+          "boiler_equipment_work_type_": "0",
+          "earth_work_work_type_": "0",
+          "foundation_work_type_": "0",
+          "general_construction_work_type_": "0",
+          "mechanical_systems_work_type_": "0",
+          "place_of_assembly_work_type_": "0",
+          "protection_mechanical_methods_work_type_": "0",
+          "sidewalk_shed_work_type_": "0",
+          "structural_work_type_": "0",
+          "support_of_excavation_work_type_": "No",
+          "temporary_place_of_assembly_work_type_": "0",
+          "job_type": "Alteration",
+          "approved_date": "2023-08-24T09:19:30.000"
+        }
+      ]
+    },
+    {
+      "portal": "data.ny.gov",
+      "dataset_id": "k4vb-judh",
+      "name": "Daily Corporation and Other Entity Filing Data",
+      "total_columns": 66,
+      "contact_fields": [
+        {
+          "field": "corp_name",
+          "name": "Corp Name",
+          "type": "text",
+          "description": "The entity\u2019s name.  For assumed name filings, the assumed name appears instead",
+          "sample_values": [
+            "HVRETEAM LLC",
+            "GOLDEN ACRES MHP LLC",
+            "ALTAR PICTURES LLC"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "fictitious_name",
+          "name": "Fictitious Name",
+          "type": "text",
+          "description": "Fictitious name of a foreign entity, if any",
+          "sample_values": [
+            null,
+            null,
+            null
+          ],
+          "populated_pct": 0
+        },
+        {
+          "field": "pre_corp_name",
+          "name": "Prev Corp Name",
+          "type": "text",
+          "description": "Previous name of an entity",
+          "sample_values": [
+            null,
+            null,
+            null
+          ],
+          "populated_pct": 0
+        },
+        {
+          "field": "orig_lp_name",
+          "name": "Orig LP Name",
+          "type": "text",
+          "description": "Original name of a Limited Partnership that has filed a Certificate of Adoption",
+          "sample_values": [
+            null,
+            null,
+            null
+          ],
+          "populated_pct": 0
+        },
+        {
+          "field": "filer_name",
+          "name": "Filer Name",
+          "type": "text",
+          "description": "The name of the filer of the document",
+          "sample_values": [
+            "LEGALZOOM.COM, INC.",
+            "MICHAEL",
+            "YASAMAN KAVEH"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "sop_name",
+          "name": "SOP Name",
+          "type": "text",
+          "description": "The name in the address to which the Secretary of State will mail a copy of any process against the ",
+          "sample_values": [
+            "THE LLC",
+            "GOLDEN ACRES MHP LLC",
+            "COGENCY GLOBAL INC."
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "mrgr_const_name1",
+          "name": "Mrgr Const Name1",
+          "type": "text",
+          "description": "Name of constituent entity participating in a merger or consolidation ",
+          "sample_values": [
+            null,
+            null,
+            null
+          ],
+          "populated_pct": 0
+        },
+        {
+          "field": "mrgr_const_name2",
+          "name": "Mrgr Const Name2",
+          "type": "text",
+          "description": "Name constituent entity participating in a merger or consolidation",
+          "sample_values": [
+            null,
+            null,
+            null
+          ],
+          "populated_pct": 0
+        },
+        {
+          "field": "mrgr_const_name3",
+          "name": "Mrgr Const Name3",
+          "type": "text",
+          "description": "Name of constituent entity participating in a merger or consolidation",
+          "sample_values": [
+            null,
+            null,
+            null
+          ],
+          "populated_pct": 0
+        }
+      ],
+      "all_fields": [
+        "filing_type",
+        "mod_certcode",
+        "dos_id",
+        "approved_date",
+        "filing_date",
+        "entity_type",
+        "film_num",
+        "corp_name",
+        "fictitious_name",
+        "pre_corp_name",
+        "orig_lp_name",
+        "eff_date",
+        "dura_date",
+        "for_inc_date",
+        "law",
+        "nfp_type",
+        "cnty_prin_ofc",
+        "for_juris",
+        "filer_name",
+        "filer_addr1",
+        "filer_addr2",
+        "filer_city",
+        "filer_state",
+        "filer_zip5",
+        "filer_zip4",
+        "filer_country",
+        "sop_name",
+        "sop_addr1",
+        "sop_addr2",
+        "sop_city",
+        "sop_state",
+        "sop_zip5",
+        "sop_zip4",
+        "mrgr_const_name1",
+        "mrgr_const_name2",
+        "mrgr_const_name3",
+        "old_stock_num_shrs_1",
+        "old_stock_type_1",
+        "old_stock_val_shr_1",
+        "old_stock_num_shrs_2",
+        "old_stock_type_2",
+        "old_stock_val_shr_2",
+        "old_stock_num_shrs_3",
+        "old_stock_type_3",
+        "old_stock_val_shr_3",
+        "old_stock_num_shrs_4",
+        "old_stock_type_4",
+        "old_stock_val_shr_4",
+        "old_stock_num_shrs_5",
+        "old_stock_type_5",
+        "old_stock_val_shr_5",
+        "new_stock_num_shrs_1",
+        "new_stock_type_1",
+        "new_stock_val_shr_1",
+        "new_stock_num_shrs_2",
+        "new_stock_type_2",
+        "new_stock_val_shr_2",
+        "new_stock_num_shrs_3",
+        "new_stock_type_3",
+        "new_stock_val_shr_3",
+        "new_stock_num_shrs_4",
+        "new_stock_type_4",
+        "new_stock_val_shr_4",
+        "new_stock_num_shrs_5",
+        "new_stock_type_5",
+        "new_stock_val_shr_5"
+      ],
+      "sample_records": [
+        {
+          "filing_type": "ARTICLES OF ORGANIZATION",
+          "mod_certcode": "01DA A",
+          "dos_id": "7853150",
+          "approved_date": "2026-03-09T00:00:00.000",
+          "filing_date": "2026-03-09T00:00:00.000",
+          "entity_type": "DOMESTIC LIMITED LIABILITY COMPANY",
+          "film_num": "260309000001",
+          "corp_name": "HVRETEAM LLC",
+          "eff_date": "2026-03-09T00:00:00.000",
+          "dura_date": "PERPETUAL",
+          "law": "LIMITED LIABILITY COMPANY LAW - 203 LIMITED LIABILITY COMPANY LAW",
+          "cnty_prin_ofc": "New York",
+          "for_juris": "NY",
+          "filer_name": "LEGALZOOM.COM, INC.",
+          "filer_addr1": "101 N BRAND BLVD",
+          "filer_addr2": "11TH FLOOR",
+          "filer_city": "GLENDALE",
+          "filer_state": "CA",
+          "filer_zip5": "91203",
+          "filer_country": "USA",
+          "sop_name": "THE LLC",
+          "sop_addr1": "228 Park Ave S #381290",
+          "sop_city": "New York",
+          "sop_state": "NY",
+          "sop_zip5": "10003"
+        },
+        {
+          "filing_type": "BIENNIAL STATEMENT",
+          "mod_certcode": "32DA A",
+          "dos_id": "7283227",
+          "approved_date": "2026-03-09T00:00:00.000",
+          "filing_date": "2026-03-09T00:00:00.000",
+          "entity_type": "DOMESTIC LIMITED LIABILITY COMPANY",
+          "film_num": "260309000004",
+          "corp_name": "GOLDEN ACRES MHP LLC",
+          "eff_date": "2026-03-09T00:00:00.000",
+          "dura_date": "PERPETUAL",
+          "law": "LIMITED LIABILITY COMPANY LAW - 203 LIMITED LIABILITY COMPANY LAW",
+          "cnty_prin_ofc": "Albany",
+          "for_juris": "NY",
+          "filer_name": "MICHAEL",
+          "filer_addr1": "177 SUMMERTON DR",
+          "filer_addr2": "Suite A",
+          "filer_city": "BLUFFTON",
+          "filer_state": "SC",
+          "filer_zip5": "29910",
+          "filer_country": "USA",
+          "sop_name": "GOLDEN ACRES MHP LLC",
+          "sop_addr1": "606 N. Saginaw St.",
+          "sop_addr2": "Suite A",
+          "sop_city": "Lapeer",
+          "sop_state": "MI",
+          "sop_zip5": "48446"
+        },
+        {
+          "filing_type": "BIENNIAL STATEMENT",
+          "mod_certcode": "32FA",
+          "dos_id": "7285848",
+          "approved_date": "2026-03-09T00:00:00.000",
+          "filing_date": "2026-03-09T00:00:00.000",
+          "entity_type": "FOREIGN LIMITED LIABILITY COMPANY",
+          "film_num": "260309000005",
+          "corp_name": "ALTAR PICTURES LLC",
+          "eff_date": "2026-03-09T00:00:00.000",
+          "dura_date": "PERPETUAL",
+          "for_inc_date": "03/18/2024",
+          "law": "LIMITED LIABILITY COMPANY - 802 LIMITED LIABILITY COMPANY LAW",
+          "cnty_prin_ofc": "New York",
+          "for_juris": "DE",
+          "filer_name": "YASAMAN KAVEH",
+          "filer_addr1": "1245 BROADWAY FL 10",
+          "filer_city": "NEW YOR",
+          "filer_state": "NY",
+          "filer_zip5": "10001",
+          "filer_country": "USA",
+          "sop_name": "COGENCY GLOBAL INC.",
+          "sop_addr1": "122 EAST 42ND STREET",
+          "sop_addr2": "18TH FLOOR",
+          "sop_city": "NEW YORK",
+          "sop_state": "NY",
+          "sop_zip5": "10168"
+        }
+      ]
+    },
+    {
+      "portal": "data.ny.gov",
+      "dataset_id": "f8i8-k2gm",
+      "name": "Current SLA Pending Licenses",
+      "total_columns": 16,
+      "contact_fields": [
+        {
+          "field": "legalname",
+          "name": "LegalName",
+          "type": "text",
+          "description": "Corporate Name of Licensee",
+          "sample_values": [
+            "Roxbury Bottle Shop, Inc",
+            "El Mango Rico Inc.",
+            "Manaslu Group LLC"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "dba",
+          "name": "DBA",
+          "type": "text",
+          "description": "Doing Business As",
+          "sample_values": [
+            null,
+            null,
+            "Manaslu Cafe"
+          ],
+          "populated_pct": 33
+        },
+        {
+          "field": "state_name",
+          "name": "State Name",
+          "type": "text",
+          "description": "State of licensed premise",
+          "sample_values": [
+            "NY",
+            "NY",
+            "NY"
+          ],
+          "populated_pct": 100
+        }
+      ],
+      "all_fields": [
+        "application_id",
+        "premises_county",
+        "type",
+        "class",
+        "description",
+        "legalname",
+        "dba",
+        "actual_address_of_premises",
+        "additional_address_information",
+        "city",
+        "state_name",
+        "zip_code",
+        "received_date",
+        "status",
+        "aka_address",
+        "georeference"
+      ],
+      "sample_records": [
+        {
+          "application_id": "NA-0100-25-223661",
+          "premises_county": "Delaware",
+          "type": "1",
+          "class": "100",
+          "description": "Liquor Store",
+          "legalname": "Roxbury Bottle Shop, Inc",
+          "actual_address_of_premises": "53484 State Highway 30",
+          "city": "Roxbury",
+          "state_name": "NY",
+          "zip_code": "12474",
+          "received_date": "2025-08-05T13:27:00.000",
+          "status": "Under Review",
+          "georeference": {
+            "type": "Point",
+            "coordinates": [
+              -74.56498,
+              42.28374
+            ]
+          },
+          ":@computed_region_yamh_8v7k": "559",
+          ":@computed_region_wbg7_3whc": "266",
+          ":@computed_region_kjdx_g34t": "2039"
+        },
+        {
+          "application_id": "NA-0081-25-138495",
+          "premises_county": "Kings",
+          "type": "1",
+          "class": "81",
+          "description": "Grocery Store",
+          "legalname": "El Mango Rico Inc.",
+          "actual_address_of_premises": "4906 5th Ave",
+          "city": "Brooklyn",
+          "state_name": "NY",
+          "zip_code": "11220",
+          "received_date": "2025-12-11T13:02:00.000",
+          "status": "Under Review",
+          "georeference": {
+            "type": "Point",
+            "coordinates": [
+              -74.00987,
+              40.64553
+            ]
+          },
+          ":@computed_region_yamh_8v7k": "894",
+          ":@computed_region_wbg7_3whc": "899",
+          ":@computed_region_kjdx_g34t": "2090"
+        },
+        {
+          "application_id": "NA-0240-26-102827",
+          "premises_county": "Queens",
+          "type": "1",
+          "class": "240",
+          "description": "Restaurant",
+          "legalname": "Manaslu Group LLC",
+          "dba": "Manaslu Cafe",
+          "actual_address_of_premises": "3902 1/2 64th St",
+          "city": "Woodside",
+          "state_name": "NY",
+          "zip_code": "11377",
+          "received_date": "2026-02-09T14:58:00.000",
+          "status": "IntakeComplete"
+        }
+      ]
+    },
+    {
+      "portal": "data.ny.gov",
+      "dataset_id": "9s3h-dpkz",
+      "name": "Current Liquor Authority Active Licenses",
+      "total_columns": 20,
+      "contact_fields": [
+        {
+          "field": "legalname",
+          "name": "LegalName",
+          "type": "text",
+          "description": "Corporate Name of Licensee",
+          "sample_values": [
+            "JOE'S MINI MART LLC",
+            "VERONA OIL COMPANY INC",
+            "PAUMANOK VINEYARDS LTD"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "dba",
+          "name": "DBA",
+          "type": "text",
+          "description": "Doing Business As",
+          "sample_values": [
+            null,
+            "THE COUNTRY STORES",
+            null
+          ],
+          "populated_pct": 33
+        },
+        {
+          "field": "statename",
+          "name": "State Name",
+          "type": "text",
+          "description": "State of licensed premise",
+          "sample_values": [
+            "New York",
+            "New York",
+            "New York"
+          ],
+          "populated_pct": 100
+        }
+      ],
+      "all_fields": [
+        "licensepermitid",
+        "premisescounty",
+        "type",
+        "class",
+        "description",
+        "legalname",
+        "dba",
+        "actualaddressofpremises",
+        "additionaladdressinformation",
+        "city",
+        "statename",
+        "zipcode",
+        "originalissuedate",
+        "lastissuedate",
+        "effectivedate",
+        "expirationdate",
+        "parentlicenseid",
+        "legacyserialnumber",
+        "akaaddress",
+        "georeference"
+      ],
+      "sample_records": [
+        {
+          "licensepermitid": "0081-22-230803",
+          "premisescounty": "Warren",
+          "type": "1",
+          "class": "0081",
+          "description": "Grocery Store",
+          "legalname": "JOE'S MINI MART LLC",
+          "actualaddressofpremises": "96 LAKE AVE",
+          "city": "LAKE LUZERNE",
+          "statename": "New York",
+          "zipcode": "12846",
+          "originalissuedate": "2025-03-31T00:00:00.000",
+          "lastissuedate": "2025-03-31T00:00:00.000",
+          "effectivedate": "2025-04-01T00:00:00.000",
+          "expirationdate": "2028-03-31T00:00:00.000",
+          "legacyserialnumber": "2215149",
+          "georeference": {
+            "type": "Point",
+            "coordinates": [
+              -73.83439,
+              43.31167
+            ]
+          },
+          ":@computed_region_yamh_8v7k": "819",
+          ":@computed_region_wbg7_3whc": "129",
+          ":@computed_region_kjdx_g34t": "2141"
+        },
+        {
+          "licensepermitid": "0081-21-210278",
+          "premisescounty": "Sullivan",
+          "type": "1",
+          "class": "0081",
+          "description": "Grocery Store",
+          "legalname": "VERONA OIL COMPANY INC",
+          "dba": "THE COUNTRY STORES",
+          "actualaddressofpremises": "1926 S MAIN ST",
+          "city": "ROSCOE",
+          "statename": "New York",
+          "zipcode": "12776",
+          "originalissuedate": "2024-08-20T00:00:00.000",
+          "lastissuedate": "2024-08-20T00:00:00.000",
+          "effectivedate": "2024-09-01T00:00:00.000",
+          "expirationdate": "2027-08-31T00:00:00.000",
+          "legacyserialnumber": "2012556"
+        },
+        {
+          "licensepermitid": "0032-22-102244",
+          "premisescounty": "Suffolk",
+          "type": "1",
+          "class": "0032",
+          "description": "Farm winery",
+          "legalname": "PAUMANOK VINEYARDS LTD",
+          "actualaddressofpremises": "1074 MAIN RD",
+          "city": "AQUEBOGUE",
+          "statename": "New York",
+          "zipcode": "11931",
+          "originalissuedate": "2025-08-04T00:00:00.000",
+          "lastissuedate": "2025-08-04T00:00:00.000",
+          "effectivedate": "2025-09-01T00:00:00.000",
+          "expirationdate": "2028-08-31T00:00:00.000",
+          "legacyserialnumber": "1045792"
+        }
+      ]
+    },
+    {
+      "portal": "data.sccgov.org",
+      "dataset_id": "2u2d-8jej",
+      "name": "SCC_DEH_Food_Data_INSPECTIONS",
+      "total_columns": 8,
+      "contact_fields": [],
+      "all_fields": [
+        "business_id",
+        "inpsection_id",
+        "date",
+        "score",
+        "result",
+        "description",
+        "type",
+        "inspection_comment"
+      ],
+      "sample_records": [
+        {
+          "business_id": "PR0424413",
+          "inpsection_id": "DABGCWYTK",
+          "date": "20240715",
+          "score": "89",
+          "result": "G",
+          "type": "ROUTINE INSPECTION",
+          "inspection_comment": "OWNERSHIP CHANGE INFORMATION \n\nNEW OWNER: DYNASTY INTERNAIONAL TRADING INC.\nNEW FACILITY NAME: DYNASTY BBQ\n\nThe applicant has completed the change of ownership application process for an Environmental Health Permit. \n\nThe permit category for this facility is FP14. An invoice for the permit fee in the amount of  $1723.00 will be mailed to the billing address on the application. Payment must be submitted within 10 days of receipt of the invoice. The owner is responsible for contacting our department if an invoice is not received and remit payment within 30 days. \n\nThe Environmental Health Permit will be effective: 08/01/2024 - 07/31/2025. This report serves as a temporary permit. However, the permit will be deemed invalid if the permit fee is not paid in full within 30 days from the date of this report. Okay to Operate.\n\nPost permit in public view. \n\nStructural Review inspection conducted on 07/15/2024.\n \nObtain food safety manager certificate within 60 days. All other food employees must have valid food handler cards within 30 days from hire date.  Food Safety Manager Certificate and Food Handler cards shall be available for review.\n\nInformation on a Food Safety Certificate and Food Handler cards are available at https://www.sccgov.org/sites/cpd/programs/fsp/Pages/FSC.aspx. \n\nFacility shall notify district specialist should there be a change of number of employees or change in menu. District specialist shall be notified prior to the addition, replacement, or removal of any equipment. \nAny installation of new equipment, without prior notification to district specialist/Plan Check is subject to impound. Unapproved equipment will not be allowed for use.\n\nFacility is recommended to have professional pest control services. \n\nFacility shall have a procedure in place for cleaning meat slicer after every 4 hours during use."
+        },
+        {
+          "business_id": "PR0440795",
+          "inpsection_id": "DABGEVMXS",
+          "date": "20250106",
+          "score": "100",
+          "result": "G",
+          "type": "ROUTINE INSPECTION"
+        },
+        {
+          "business_id": "PR0418491",
+          "inpsection_id": "DABGGSHJX",
+          "date": "20240419",
+          "score": "88",
+          "result": "G",
+          "type": "ROUTINE INSPECTION"
+        }
+      ]
+    },
+    {
+      "portal": "data.sccgov.org",
+      "dataset_id": "vuw7-jmjk",
+      "name": "SCC_DEH_Food_Data_BUSINESS",
+      "total_columns": 10,
+      "contact_fields": [
+        {
+          "field": "name",
+          "name": "name",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "LUCKY LIQUORS",
+            "7-ELEVEN #14240E",
+            "GREAT INDIAN CUISINE"
+          ],
+          "populated_pct": 100
+        },
+        {
+          "field": "phone_number",
+          "name": "phone_number",
+          "type": "text",
+          "description": "",
+          "sample_values": [
+            "+14089468485",
+            "+14082628783",
+            "+14086432579"
+          ],
+          "populated_pct": 100
+        }
+      ],
+      "all_fields": [
+        "business_id",
+        "name",
+        "address",
+        "city",
+        "state",
+        "postal_code",
+        "latitude",
+        "longitude",
+        "phone_number",
+        "geo_address"
+      ],
+      "sample_records": [
+        {
+          "business_id": "PR0300002",
+          "name": "LUCKY LIQUORS",
+          "address": "63 S ABBOTT AV",
+          "city": "MILPITAS",
+          "state": "CA",
+          "postal_code": "95035",
+          "latitude": "37.4272880000",
+          "longitude": "-121.9136190000",
+          "phone_number": "+14089468485",
+          "geo_address": {
+            "type": "Point",
+            "coordinates": [
+              -121.913619,
+              37.427288
+            ]
+          }
+        },
+        {
+          "business_id": "PR0300004",
+          "name": "7-ELEVEN #14240E",
+          "address": "15 S ABBOTT AV",
+          "city": "MILPITAS",
+          "state": "CA",
+          "postal_code": "95035",
+          "latitude": "37.4280280000",
+          "longitude": "-121.9140700000",
+          "phone_number": "+14082628783",
+          "geo_address": {
+            "type": "Point",
+            "coordinates": [
+              -121.91407,
+              37.428028
+            ]
+          }
+        },
+        {
+          "business_id": "PR0300005",
+          "name": "GREAT INDIAN CUISINE",
+          "address": "2026 AGNEW RD",
+          "city": "SANTA CLARA",
+          "state": "CA",
+          "postal_code": "95054",
+          "latitude": "37.3942023000",
+          "longitude": "-121.9597311999",
+          "phone_number": "+14086432579",
+          "geo_address": {
+            "type": "Point",
+            "coordinates": [
+              -121.9597311999,
+              37.3942023
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "portal": "data.sccgov.org",
+      "dataset_id": "wkaa-4ccv",
+      "name": "SCC_DEH_Food_Data_VIOLATIONS",
+      "total_columns": 5,
+      "contact_fields": [],
+      "all_fields": [
+        "inspection_id",
+        "description",
+        "code",
+        "critical",
+        "violation_comment"
+      ],
+      "sample_records": [
+        {
+          "inspection_id": "DA6PKCAM7",
+          "description": "Proper reheating procedures for hot holding",
+          "code": "K11",
+          "critical": false,
+          "violation_comment": "Measured black beans in steam table between 50F steam table was used to reheat beans. [CA] Reheat beans on stove to 165F and hot hold at 135F and above. [COS] Beans were reheated to 165F and hot held at 135F and above."
+        },
+        {
+          "inspection_id": "DAMBUVO5J",
+          "description": "Returned and reservice of food",
+          "code": "K12",
+          "critical": false
+        },
+        {
+          "inspection_id": "DA583BDRL",
+          "description": "Proper reheating procedures for hot holding",
+          "code": "K11",
+          "critical": true,
+          "violation_comment": "Measured the following PHFs holding between 110F - 116F in warmer unit at front service line (left side): brisket and nacho cheese. Per operator, PHFs was previously reheated on cooks line for less than 1 hours. [CA] Reheating for hot holding shall be done rapidly, and the time the food is between 41\u00b0F and 165\u00b0F shall not exceed two hours. [COS] Operator directed to reheat PHFs to 165F."
+        }
+      ]
+    },
+    {
+      "portal": "data.sandiegocounty.gov",
+      "dataset_id": "nd4s-9r7d",
+      "error": "metadata fetch failed"
+    }
+  ]
+}

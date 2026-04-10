@@ -192,7 +192,12 @@
       "Bash(venv/Scripts/python.exe manage.py monitor_la_building_violations --days 30 --limit 5 --dry-run)",
       "Bash(venv/Scripts/python.exe manage.py monitor_sf_building_violations --days 7 --limit 5 --dry-run)",
       "Bash(venv/Scripts/python.exe manage.py monitor_sf_permits --days 7 --limit 5 --dry-run)",
-      "Bash(venv/Scripts/python.exe manage.py monitor_sf_permits --days 7 --limit 5 --min-cost 10000 --dry-run)"
+      "Bash(venv/Scripts/python.exe manage.py monitor_sf_permits --days 7 --limit 5 --min-cost 10000 --dry-run)",
+      "Bash(venv/Scripts/python.exe scripts/audit_soda_fields.py)",
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name data_sources)",
+      "Bash(ls c:/Users/aturs/Documents/AI_Engineering_Course/SalesSignalAI/core/migrations/004*.py)",
+      "Bash(venv/Scripts/python.exe -c ':*)",
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name data_sources_and_engagement)"
     ],
     "additionalDirectories": [
       "c:\\Users\\aturs\\Documents\\AI_Engineering_Course\\SalesSignalAI\\core"

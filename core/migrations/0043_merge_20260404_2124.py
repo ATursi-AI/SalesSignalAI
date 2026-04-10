@@ -7,7 +7,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('core', '0041_lead_intent_classification_curation'),
-        ('core', '0042_bookingpage_bookingsubmission_reviewcampaign_and_more'),
     ]
 
     operations = [

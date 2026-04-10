@@ -19,6 +19,7 @@ from .call_center import CallLog, SMSMessage, SMSOptOut
 from .service_pages import TradeCategory, ServiceArea, ServiceLandingPage, ServicePageSubmission
 from .blog import BlogPost
 from .workflows import WorkflowRule, WorkflowExecution
+from .data_sources import DatasetRegistry, ScrapeRun, DatasetCandidate
 from .engagement import (
     VoicemailDrop, VoicemailDropLog,
     BookingPage, BookingSubmission,
@@ -45,6 +46,7 @@ __all__ = [
     'TradeCategory', 'ServiceArea', 'ServiceLandingPage', 'ServicePageSubmission',
     'BlogPost',
     'WorkflowRule', 'WorkflowExecution',
+    'DatasetRegistry', 'ScrapeRun', 'DatasetCandidate',
     'VoicemailDrop', 'VoicemailDropLog',
     'BookingPage', 'BookingSubmission',
     'ReviewCampaign', 'ReviewRequest',

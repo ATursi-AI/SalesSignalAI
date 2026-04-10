@@ -12,6 +12,7 @@ from core.models import (
     LicensingBoardSource, CourtRecordSource,
     ProspectVideo,
     CallLog, SMSMessage, SMSOptOut,
+    DatasetRegistry, ScrapeRun, DatasetCandidate,
 )
 
 
@@ -234,3 +235,39 @@ class ProspectVideoAdmin(admin.ModelAdmin):
     search_fields = ['prospect_business_name', 'prospect_owner_name', 'slug']
     prepopulated_fields = {'slug': ('prospect_business_name',)}
     readonly_fields = ['created_at', 'page_views', 'video_plays', 'cta_clicks']
+
+
+@admin.register(DatasetRegistry)
+class DatasetRegistryAdmin(admin.ModelAdmin):
+    list_display = ['name', 'state', 'city', 'data_type', 'portal_domain', 'dataset_id', 'is_active', 'phone_field', 'last_checked']
+    list_filter = ['state', 'data_type', 'is_active']
+    search_fields = ['name', 'dataset_id', 'portal_domain']
+    readonly_fields = ['created_at', 'updated_at']
+
+
+@admin.register(ScrapeRun)
+class ScrapeRunAdmin(admin.ModelAdmin):
+    list_display = ['dataset', 'status', 'started_at', 'records_fetched', 'leads_created', 'duplicates', 'pct_with_phone']
+    list_filter = ['status', 'dataset__state']
+    search_fields = ['dataset__name']
+    readonly_fields = ['started_at', 'finished_at', 'duration_seconds']
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(DatasetCandidate)
+class DatasetCandidateAdmin(admin.ModelAdmin):
+    list_display = ['name', 'portal_domain', 'dataset_id', 'state', 'data_type', 'status', 'has_phone_field', 'relevance', 'created_at']
+    list_filter = ['status', 'state', 'has_phone_field', 'relevance']
+    search_fields = ['name', 'portal_domain', 'dataset_id']
+    readonly_fields = ['created_at', 'updated_at']
+    actions = ['approve_datasets', 'reject_datasets']
+
+    @admin.action(description='Approve selected datasets')
+    def approve_datasets(self, request, queryset):
+        queryset.update(status='approved')
+
+    @admin.action(description='Reject selected datasets')
+    def reject_datasets(self, request, queryset):
+        queryset.update(status='rejected')
