@@ -209,6 +209,7 @@ urlpatterns = [
     path('tools/agent-scout/api/', agent_scout.agent_scout_api, name='agent_scout_api'),
     path('tools/agent-scout/approve/', agent_scout.agent_scout_approve, name='agent_scout_approve'),
     path('tools/agent-scout/reject/', agent_scout.agent_scout_reject, name='agent_scout_reject'),
+    path('tools/agent-scout/status/', agent_scout.agent_scout_status, name='agent_scout_status'),
 
     # SignalWire Webhooks (called by SignalWire — no auth)
     path('api/signalwire/sms-webhook/', call_center.sms_webhook, name='signalwire_sms_webhook'),
