@@ -122,6 +122,12 @@ class DatasetCandidate(models.Model):
     discovered_by = models.CharField(max_length=100, blank=True, help_text='agent, manual, audit script')
     notes = models.TextField(blank=True)
 
+    # Gemini smart analysis fields
+    service_matches = models.JSONField(default=list, blank=True)
+    recommended_filters = models.JSONField(default=list, blank=True)
+    lead_value_signals = models.JSONField(default=list, blank=True)
+    gemini_analyzed = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

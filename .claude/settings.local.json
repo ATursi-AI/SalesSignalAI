@@ -198,7 +198,8 @@
       "Bash(ls c:/Users/aturs/Documents/AI_Engineering_Course/SalesSignalAI/core/migrations/004*.py)",
       "Bash(venv/Scripts/python.exe -c ':*)",
       "Bash(venv/Scripts/python.exe manage.py makemigrations core --name data_sources_and_engagement)",
-      "Bash(venv/Scripts/python.exe manage.py shell -c ':*)"
+      "Bash(venv/Scripts/python.exe manage.py shell -c ':*)",
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name scout_gemini_fields)"
     ],
     "additionalDirectories": [
       "c:\\Users\\aturs\\Documents\\AI_Engineering_Course\\SalesSignalAI\\core"
