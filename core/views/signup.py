@@ -20,10 +20,103 @@ from core.models import BusinessProfile
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
+# Package Bundle pricing with pre-generated Stripe payment links
+PACKAGE_BUNDLES = {
+    'starter_ai': {
+        'name': 'Starter — AI Automated',
+        'price': 599,
+        'description': 'Email drip + Social listings + Dashboard lead access',
+        'payment_link': 'https://buy.stripe.com/4gM3cpgt86hKd7Ac596oo0j',
+    },
+    'starter_human': {
+        'name': 'Starter — Human + AI',
+        'price': 999,
+        'description': 'Email drip + Social listings + Dashboard lead access',
+        'payment_link': 'https://buy.stripe.com/3cI00d4Kq21u4B40mr6oo0k',
+    },
+    'growth_ai': {
+        'name': 'Growth — AI Automated',
+        'price': 1199,
+        'description': '+ Video email + Appointment setting + Social (5 platforms)',
+        'payment_link': 'https://buy.stripe.com/14AfZba4Kay0d7A6KP6oo0l',
+    },
+    'growth_human': {
+        'name': 'Growth — Human + AI',
+        'price': 1999,
+        'description': '+ Video email + Appointment setting + Social (5 platforms)',
+        'payment_link': 'https://buy.stripe.com/eVq8wJ2CidKcaZs2uz6oo0m',
+    },
+    'dominate_ai': {
+        'name': 'Dominate — AI Automated',
+        'price': 1999,
+        'description': '+ Inbound call center + Landing page',
+        'payment_link': 'https://buy.stripe.com/14A3cp3Gm5dG9Vo2uz6oo0n',
+    },
+    'dominate_human': {
+        'name': 'Dominate — Human + AI',
+        'price': 3499,
+        'description': '+ Inbound call center + Landing page',
+        'payment_link': 'https://buy.stripe.com/bJe9ANel049CebEd9d6oo0o',
+    },
+    'closer_ai': {
+        'name': 'Closer — AI Automated',
+        'price': 3999,
+        'description': '+ Outbound call center + Appointment setting',
+        'payment_link': 'https://buy.stripe.com/cNieV7fp4bC42sW3yD6oo0p',
+    },
+    'closer_human': {
+        'name': 'Closer — Human + AI',
+        'price': 6499,
+        'description': '+ Outbound call center + Appointment setting',
+        'payment_link': 'https://buy.stripe.com/7sYeV7a4K8pS4B40mr6oo0q',
+    },
+    'full_service_ai': {
+        'name': 'Full Service — AI + Human',
+        'price': 7999,
+        'description': 'Everything + Outbound sales team + Account manager',
+        'payment_link': 'https://buy.stripe.com/4gMcMZ7WCbC44B41qv6oo0r',
+    },
+    'full_service_human': {
+        'name': 'Full Service — Full Human',
+        'price': 12999,
+        'description': 'Everything + Outbound sales team + Account manager',
+        'payment_link': 'https://buy.stripe.com/6oUfZbel00Xqd7Aedh6oo0s',
+    },
+}
+
+# A La Carte services with payment links
+ALACARTE_SERVICES = {
+    'email_drip_ai': {'name': 'Email Drip Campaign — AI', 'price': '$199/mo', 'link': 'https://buy.stripe.com/aFadR3a4K0XqaZs9X16oo00'},
+    'email_drip_human': {'name': 'Email Drip Campaign — Human+AI', 'price': '$399/mo', 'link': 'https://buy.stripe.com/dRm4gt7WC5dG8Rkedh6oo01'},
+    'video_drip_ai': {'name': 'Video Email Drip — AI', 'price': '$349/mo', 'link': 'https://buy.stripe.com/6oUdR3b8O0XqebE0mr6oo02'},
+    'video_drip_human': {'name': 'Video Email Drip — Human+AI', 'price': '$599/mo', 'link': 'https://buy.stripe.com/fZu7sF2Ci5dGebE8SX6oo03'},
+    'lead_access': {'name': 'Lead Access — Dashboard', 'price': '$299/mo', 'link': 'https://buy.stripe.com/fZu3cp5Ou6hKaZs4CH6oo04'},
+    'lead_qualified': {'name': 'Lead Access — Human-Qualified', 'price': '$125/lead', 'link': 'https://buy.stripe.com/aFabIV7WC49C2sW0mr6oo0w'},
+    'social_ai': {'name': 'Social Listings — AI (3 platforms)', 'price': '$349/mo', 'link': 'https://buy.stripe.com/eVqdR32CidKc5F8d9d6oo05'},
+    'social_human': {'name': 'Social Listings — Human+AI (5+ platforms)', 'price': '$699/mo', 'link': 'https://buy.stripe.com/3cIfZb0ua5dGaZsedh6oo06'},
+    'appt_ai': {'name': 'Appointment Setting — AI', 'price': 'Starting at $99/appt', 'link': 'https://buy.stripe.com/bJecMZel07lO2sWfhl6oo0x'},
+    'appt_human': {'name': 'Appointment Setting — Human', 'price': 'Starting at $175/appt', 'link': 'https://buy.stripe.com/cNi6oB90GeOggjM7OT6oo0y'},
+    'inbound_ai': {'name': 'Inbound Call Center — AI', 'price': 'Starting at $399/mo', 'link': 'https://buy.stripe.com/cNi4gt2Ci35y0kO8SX6oo07'},
+    'inbound_human': {'name': 'Inbound Call Center — Human', 'price': 'Starting at $699/mo', 'link': 'https://buy.stripe.com/5kQ8wJa4KgWod7Ab156oo08'},
+    'outbound_ai': {'name': 'Outbound Call Center — AI', 'price': 'Starting at $599/mo', 'link': 'https://buy.stripe.com/7sY9ANccS49C1oS6KP6oo09'},
+    'outbound_human': {'name': 'Outbound Call Center — Human', 'price': 'Starting at $1,199/mo', 'link': 'https://buy.stripe.com/14A6oBgt8eOg0kOb156oo0a'},
+    'landing_ai': {'name': 'Landing Page — AI', 'price': '$99/mo + $399 setup', 'link': 'https://buy.stripe.com/bJeaER6Sy9tW7Ngfhl6oo0b'},
+    'landing_human': {'name': 'Landing Page — Custom', 'price': '$149/mo + $999 setup', 'link': 'https://buy.stripe.com/7sY4gt5Ou35y6Jc7OT6oo0c'},
+    'sales_team_ai': {'name': 'Outbound Sales Team — AI', 'price': 'Starting at $3,999/mo', 'link': 'https://buy.stripe.com/8x2bIV0ua8pS3x06KP6oo0d'},
+    'sales_team_human': {'name': 'Outbound Sales Team — Human', 'price': 'Starting at $7,499/mo', 'link': 'https://buy.stripe.com/4gM8wJ0ua9tWd7A7OT6oo0e'},
+    'seo_ai': {'name': 'SEO + AEO — AI', 'price': 'Starting at $399/mo', 'link': 'https://buy.stripe.com/fZudR33Gmay02sW6KP6oo0f'},
+    'seo_human': {'name': 'SEO + AEO — Human+AI', 'price': 'Starting at $799/mo', 'link': 'https://buy.stripe.com/eVqbIV1ye9tW3x04CH6oo0g'},
+    'byo_standard': {'name': 'BYO Leads — Standard', 'price': '$199/mo + $99/appt', 'link': 'https://buy.stripe.com/3cI4gtdgWgWod7Afhl6oo0h'},
+    'byo_emergency': {'name': 'BYO Leads — Emergency', 'price': '$299/mo + $149/appt', 'link': 'https://buy.stripe.com/5kQeV7fp4ay05F88SX6oo0i'},
+}
+
+SETUP_FEE_LINK = 'https://buy.stripe.com/3cIcMZ3GmfSkaZs2uz6oo0t'
+
+# Keep PLAN_PRICES for backward compat with billing_page and create_checkout_session
 PLAN_PRICES = {
-    'outreach': {'name': 'Starter AI', 'price': 599, 'stripe_price': settings.STRIPE_PRICE_OUTREACH},
-    'growth': {'name': 'Growth AI', 'price': 1199, 'stripe_price': settings.STRIPE_PRICE_GROWTH},
-    'dominate': {'name': 'Dominate AI', 'price': 1999, 'stripe_price': settings.STRIPE_PRICE_DOMINATE},
+    'outreach': {'name': 'Starter AI (Legacy)', 'price': 599, 'stripe_price': getattr(settings, 'STRIPE_PRICE_OUTREACH', '')},
+    'growth': {'name': 'Growth AI (Legacy)', 'price': 1199, 'stripe_price': getattr(settings, 'STRIPE_PRICE_GROWTH', '')},
+    'dominate': {'name': 'Dominate AI (Legacy)', 'price': 1999, 'stripe_price': getattr(settings, 'STRIPE_PRICE_DOMINATE', '')},
 }
 
 
@@ -362,19 +455,24 @@ def sales_create_customer(request):
         trade = request.POST.get('trade', '').strip()
         city = request.POST.get('city', '').strip()
         state = request.POST.get('state', '').strip()
-        plan = request.POST.get('plan', 'growth')
-        payment_method = request.POST.get('payment_method', 'send_link')
+        plan = request.POST.get('plan', 'trial')
+        payment_method = request.POST.get('payment_method', 'no_payment')
+        selected_services = request.POST.getlist('alacarte_services')
 
         if not business_name or not email:
             return render(request, 'sales/create_customer.html', {
                 'error': 'Business name and email are required.',
                 'form_data': request.POST,
+                'package_bundles': PACKAGE_BUNDLES,
+                'alacarte_services': ALACARTE_SERVICES,
             })
 
         if User.objects.filter(email=email).exists():
             return render(request, 'sales/create_customer.html', {
                 'error': f'An account with {email} already exists.',
                 'form_data': request.POST,
+                'package_bundles': PACKAGE_BUNDLES,
+                'alacarte_services': ALACARTE_SERVICES,
             })
 
         temp_password = _generate_temp_password()
@@ -388,11 +486,16 @@ def sales_create_customer(request):
             last_name=' '.join(owner_name.split()[1:]) if len(owner_name.split()) > 1 else '',
         )
 
-        account_status = 'active'
-        if payment_method == 'send_link':
+        # Determine account status
+        if payment_method == 'no_payment' or plan == 'trial':
+            account_status = 'trial'
+        elif payment_method == 'send_link':
             account_status = 'pending_payment'
-        elif payment_method == 'invoice_later':
-            account_status = 'pending_plan' if plan in ('concierge', 'custom_outbound') else 'pending_payment'
+        else:
+            account_status = 'pending_payment'
+
+        # For a la carte, store 'custom' as tier
+        tier = plan if plan != 'alacarte' else 'custom'
 
         profile = BusinessProfile.objects.create(
             user=user,
@@ -402,7 +505,7 @@ def sales_create_customer(request):
             phone=phone,
             city=city,
             state=state,
-            subscription_tier=plan,
+            subscription_tier=tier,
             account_status=account_status,
             onboarding_complete=True,
             created_by_sales=True,
@@ -425,46 +528,52 @@ def sales_create_customer(request):
             fail_silently=True,
         )
 
-        # If sending payment link, create Stripe checkout
+        # Build payment link if applicable
         payment_link = ''
-        if payment_method == 'send_link' and plan in PLAN_PRICES:
-            plan_info = PLAN_PRICES[plan]
-            if plan_info['stripe_price']:
-                try:
-                    if not profile.stripe_customer_id:
-                        customer = stripe.Customer.create(
-                            email=email,
-                            name=owner_name,
-                            metadata={'user_id': user.id},
-                        )
-                        profile.stripe_customer_id = customer.id
-                        profile.save(update_fields=['stripe_customer_id'])
+        if payment_method == 'send_link':
+            if plan in PACKAGE_BUNDLES:
+                payment_link = PACKAGE_BUNDLES[plan]['payment_link']
 
-                    line_items = [{'price': plan_info['stripe_price'], 'quantity': 1}]
-                    if settings.STRIPE_SETUP_FEE_PRICE_ID:
-                        line_items.append({'price': settings.STRIPE_SETUP_FEE_PRICE_ID, 'quantity': 1})
+        # Build selected service details for a la carte
+        selected_service_details = []
+        if selected_services:
+            for svc_key in selected_services:
+                svc = ALACARTE_SERVICES.get(svc_key)
+                if svc:
+                    selected_service_details.append({
+                        'name': svc['name'],
+                        'price': svc['price'],
+                        'link': svc['link'],
+                    })
 
-                    session = stripe.checkout.Session.create(
-                        customer=profile.stripe_customer_id,
-                        payment_method_types=['card'],
-                        line_items=line_items,
-                        mode='subscription',
-                        success_url='https://salessignalai.com/auth/login/',
-                        cancel_url='https://salessignalai.com/',
-                        metadata={'user_id': user.id, 'plan': plan},
-                    )
-                    payment_link = session.url
-                except stripe.error.StripeError:
-                    pass
+        # Get plan display info
+        plan_display = ''
+        plan_price = ''
+        if plan in PACKAGE_BUNDLES:
+            plan_display = PACKAGE_BUNDLES[plan]['name']
+            plan_price = f"Starting at ${PACKAGE_BUNDLES[plan]['price']:,}/mo"
+        elif plan == 'trial':
+            plan_display = 'Free Trial'
+            plan_price = 'Full access — no payment'
+        elif plan in ('alacarte', 'custom'):
+            plan_display = 'Custom / A La Carte'
+            plan_price = 'See selected services'
 
         return render(request, 'sales/create_customer_success.html', {
             'profile': profile,
             'temp_password': temp_password,
             'payment_link': payment_link,
             'payment_method': payment_method,
+            'plan_display': plan_display,
+            'plan_price': plan_price,
+            'selected_services': selected_service_details,
+            'setup_fee_link': SETUP_FEE_LINK,
         })
 
-    return render(request, 'sales/create_customer.html')
+    return render(request, 'sales/create_customer.html', {
+        'package_bundles': PACKAGE_BUNDLES,
+        'alacarte_services': ALACARTE_SERVICES,
+    })
 
 
 # ─── Billing Page ─────────────────────────────────────────────────

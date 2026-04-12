@@ -67,11 +67,27 @@ class ServiceSubcategory(models.Model):
 class BusinessProfile(models.Model):
     TIER_CHOICES = [
         ('none', 'No Plan'),
-        ('outreach', 'Starter AI ($599/mo)'),
-        ('growth', 'Growth AI ($1,199/mo)'),
-        ('dominate', 'Dominate AI ($1,999/mo)'),
-        ('concierge', 'Concierge (Custom)'),
-        ('custom_outbound', 'Custom Outbound (Custom)'),
+        ('trial', 'Free Trial'),
+        # Package Bundles — AI Automated
+        ('starter_ai', 'Starter — AI Automated'),
+        ('growth_ai', 'Growth — AI Automated'),
+        ('dominate_ai', 'Dominate — AI Automated'),
+        ('closer_ai', 'Closer — AI Automated'),
+        ('full_service_ai', 'Full Service — AI + Human'),
+        # Package Bundles — Human + AI
+        ('starter_human', 'Starter — Human + AI'),
+        ('growth_human', 'Growth — Human + AI'),
+        ('dominate_human', 'Dominate — Human + AI'),
+        ('closer_human', 'Closer — Human + AI'),
+        ('full_service_human', 'Full Service — Full Human'),
+        # A La Carte / Custom
+        ('custom', 'Custom / A La Carte'),
+        # Legacy tiers (keep for existing accounts — do NOT remove)
+        ('outreach', 'Starter AI (Legacy)'),
+        ('growth', 'Growth AI (Legacy)'),
+        ('dominate', 'Dominate AI (Legacy)'),
+        ('concierge', 'Concierge (Legacy)'),
+        ('custom_outbound', 'Custom Outbound (Legacy)'),
     ]
 
     ACCOUNT_STATUS_CHOICES = [
