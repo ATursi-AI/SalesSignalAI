@@ -251,9 +251,23 @@
                     <i class="bi bi-buildings"></i>
                     <span>Customer Accounts</span>
                 </a>
+                <a href="{% url 'sales_create_customer' %}" class="sidebar-link {% if request.resolver_match.url_name == 'sales_create_customer' %}active{% endif %}">
+                    <i class="bi bi-person-plus-fill" style="color:#10b981;"></i>
+                    <span>Onboard Customer</span>
+                </a>
+    
                 <a href="{% url 'mission_control' %}" class="sidebar-link {% if request.resolver_match.url_name == 'mission_control' %}active{% endif %}">
                     <i class="bi bi-rocket-takeoff-fill"></i>
                     <span>Mission Control</span>
+                </a>
+                <div class="sidebar-section-label" style="margin-top:6px">Sales Tools</div>
+                <a href="{% url 'geo_audit_tool' %}" class="sidebar-link {% if request.resolver_match.url_name == 'geo_audit_tool' %}active{% endif %}">
+                    <i class="bi bi-robot"></i>
+                    <span>GEO Audit</span>
+                </a>
+                <a href="{% url 'agent_rep_tool' %}" class="sidebar-link {% if request.resolver_match.url_name == 'agent_rep_tool' %}active{% endif %}">
+                    <i class="bi bi-shield-exclamation" style="color:#EA580C;"></i>
+                    <span>Agent REP</span>
                 </a>
                 {% endif %}
 
@@ -267,14 +281,7 @@
                     <i class="bi bi-camera-video-fill"></i>
                     <span>Video Pages</span>
                 </a>
-                <a href="{% url 'geo_audit_tool' %}" class="sidebar-link {% if request.resolver_match.url_name == 'geo_audit_tool' %}active{% endif %}">
-                    <i class="bi bi-robot"></i>
-                    <span>GEO Audit</span>
-                </a>
-                <a href="{% url 'agent_rep_tool' %}" class="sidebar-link {% if request.resolver_match.url_name == 'agent_rep_tool' %}active{% endif %}">
-                    <i class="bi bi-shield-exclamation" style="color:#EA580C;"></i>
-                    <span>Agent REP</span>
-                </a>
+                
                 <a href="{% url 'agent_scout_tool' %}" class="sidebar-link {% if request.resolver_match.url_name == 'agent_scout_tool' %}active{% endif %}">
                     <i class="bi bi-binoculars" style="color:#0EA5E9;"></i>
                     <span>Agent SCOUT</span>
