@@ -25,6 +25,15 @@ from core.models import (
 logger = logging.getLogger(__name__)
 
 
+def _is_sales_user(request):
+    """Check if user is a salesperson, staff, or superuser."""
+    return (
+        hasattr(request.user, 'salesperson_profile') or
+        request.user.is_staff or
+        request.user.is_superuser
+    )
+
+
 # ═══════════════════════════════════════════════════════════════════
 # VOICEMAIL DROPS
 # ═══════════════════════════════════════════════════════════════════
@@ -33,16 +42,22 @@ logger = logging.getLogger(__name__)
 def voicemail_drops(request):
     """List voicemail drop templates and recent activity."""
     business = getattr(request.user, 'business_profile', None)
-    templates = VoicemailDrop.objects.filter(
-        Q(business=business) | Q(business__isnull=True)
-    ).filter(is_active=True)
-    recent_logs = VoicemailDropLog.objects.filter(
-        voicemail__in=templates
-    ).select_related('voicemail')[:50]
 
-    # Stats
-    total_drops = VoicemailDropLog.objects.filter(voicemail__in=templates).count()
-    delivered = VoicemailDropLog.objects.filter(voicemail__in=templates, status='delivered').count()
+    if _is_sales_user(request) and not business:
+        # Sales team sees all voicemail templates
+        templates = VoicemailDrop.objects.filter(is_active=True)
+        recent_logs = VoicemailDropLog.objects.select_related('voicemail')[:50]
+        total_drops = VoicemailDropLog.objects.count()
+        delivered = VoicemailDropLog.objects.filter(status='delivered').count()
+    else:
+        templates = VoicemailDrop.objects.filter(
+            Q(business=business) | Q(business__isnull=True)
+        ).filter(is_active=True)
+        recent_logs = VoicemailDropLog.objects.filter(
+            voicemail__in=templates
+        ).select_related('voicemail')[:50]
+        total_drops = VoicemailDropLog.objects.filter(voicemail__in=templates).count()
+        delivered = VoicemailDropLog.objects.filter(voicemail__in=templates, status='delivered').count()
 
     return render(request, 'engagement/voicemail_drops.html', {
         'templates': templates,
@@ -182,13 +197,12 @@ def voicemail_drop_delete(request, vm_id):
 # ═══════════════════════════════════════════════════════════════════
 
 @login_required
-@login_required
 def booking_page_list(request):
     """List booking pages for the business."""
     business = getattr(request.user, 'business_profile', None)
 
-    # Admin/staff users see all booking pages
-    if request.user.is_staff and not business:
+    # Admin/staff/sales users see all booking pages
+    if _is_sales_user(request) and not business:
         pages = BookingPage.objects.all()
         submissions = BookingSubmission.objects.select_related('booking_page')[:30]
     else:
@@ -450,7 +464,10 @@ def booking_submit(request, slug):
 def booking_submission_action(request, submission_id):
     """Update a booking submission status."""
     business = getattr(request.user, 'business_profile', None)
-    sub = get_object_or_404(BookingSubmission, id=submission_id, booking_page__business=business)
+    if _is_sales_user(request) and not business:
+        sub = get_object_or_404(BookingSubmission, id=submission_id)
+    else:
+        sub = get_object_or_404(BookingSubmission, id=submission_id, booking_page__business=business)
     new_status = request.POST.get('status')
     if new_status in dict(BookingSubmission.STATUS_CHOICES):
         sub.status = new_status
@@ -477,9 +494,16 @@ def booking_submission_action(request, submission_id):
 def review_campaigns(request):
     """List review campaigns for the business."""
     business = getattr(request.user, 'business_profile', None)
-    campaigns = ReviewCampaign.objects.filter(business=business).annotate(
-        request_count=Count('reviewrequest'),
-    )
+
+    if _is_sales_user(request) and not business:
+        campaigns = ReviewCampaign.objects.all().annotate(
+            request_count=Count('reviewrequest'),
+        )
+    else:
+        campaigns = ReviewCampaign.objects.filter(business=business).annotate(
+            request_count=Count('reviewrequest'),
+        )
+
     return render(request, 'engagement/review_campaigns.html', {
         'campaigns': campaigns,
     })
@@ -516,7 +540,10 @@ def review_campaign_send(request, campaign_id):
     from core.services.signalwire_service import send_sms
 
     business = getattr(request.user, 'business_profile', None)
-    campaign = get_object_or_404(ReviewCampaign, id=campaign_id, business=business)
+    if _is_sales_user(request) and not business:
+        campaign = get_object_or_404(ReviewCampaign, id=campaign_id)
+    else:
+        campaign = get_object_or_404(ReviewCampaign, id=campaign_id, business=business)
 
     data = json.loads(request.body) if request.content_type == 'application/json' else request.POST
     contact_ids = data.get('contact_ids', [])
@@ -524,10 +551,15 @@ def review_campaign_send(request, campaign_id):
     if not contact_ids:
         # Default: all "won" contacts not yet sent this campaign
         already_sent = ReviewRequest.objects.filter(campaign=campaign).values_list('contact_id', flat=True)
-        contacts = Contact.objects.filter(
-            business=business,
-            pipeline_stage='won',
-        ).exclude(id__in=already_sent).exclude(phone='')
+        if _is_sales_user(request) and not business:
+            contacts = Contact.objects.filter(
+                pipeline_stage='won',
+            ).exclude(id__in=already_sent).exclude(phone='')
+        else:
+            contacts = Contact.objects.filter(
+                business=business,
+                pipeline_stage='won',
+            ).exclude(id__in=already_sent).exclude(phone='')
     else:
         contacts = Contact.objects.filter(id__in=contact_ids, business=business).exclude(phone='')
 
@@ -581,7 +613,10 @@ def review_campaign_send(request, campaign_id):
 def review_campaign_toggle(request, campaign_id):
     """Pause or activate a review campaign."""
     business = getattr(request.user, 'business_profile', None)
-    campaign = get_object_or_404(ReviewCampaign, id=campaign_id, business=business)
+    if _is_sales_user(request) and not business:
+        campaign = get_object_or_404(ReviewCampaign, id=campaign_id)
+    else:
+        campaign = get_object_or_404(ReviewCampaign, id=campaign_id, business=business)
     if campaign.status == 'active':
         campaign.status = 'paused'
     elif campaign.status in ('paused', 'draft'):
@@ -594,15 +629,23 @@ def review_campaign_toggle(request, campaign_id):
 def review_campaign_detail(request, campaign_id):
     """Detail view for a review campaign with all requests."""
     business = getattr(request.user, 'business_profile', None)
-    campaign = get_object_or_404(ReviewCampaign, id=campaign_id, business=business)
+    if _is_sales_user(request) and not business:
+        campaign = get_object_or_404(ReviewCampaign, id=campaign_id)
+    else:
+        campaign = get_object_or_404(ReviewCampaign, id=campaign_id, business=business)
     requests_qs = ReviewRequest.objects.filter(campaign=campaign).select_related('contact')
 
     # Available contacts to send to (won, have phone, not yet sent)
     already_sent = requests_qs.values_list('contact_id', flat=True)
-    available_contacts = Contact.objects.filter(
-        business=business,
-        pipeline_stage='won',
-    ).exclude(id__in=already_sent).exclude(phone='')[:100]
+    if _is_sales_user(request) and not business:
+        available_contacts = Contact.objects.filter(
+            pipeline_stage='won',
+        ).exclude(id__in=already_sent).exclude(phone='')[:100]
+    else:
+        available_contacts = Contact.objects.filter(
+            business=business,
+            pipeline_stage='won',
+        ).exclude(id__in=already_sent).exclude(phone='')[:100]
 
     return render(request, 'engagement/review_campaign_detail.html', {
         'campaign': campaign,

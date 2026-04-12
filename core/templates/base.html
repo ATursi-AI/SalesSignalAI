@@ -90,7 +90,9 @@
                     <i class="bi bi-binoculars-fill"></i>
                     <span>Competitors</span>
                 </a>
+                {% endif %}
 
+                {% if user.business_profile or user.salesperson_profile or user.is_superuser %}
                 <div class="sidebar-section-label">Engagement</div>
                 <a href="{% url 'voicemail_drops' %}" class="sidebar-link {% if request.resolver_match.url_name == 'voicemail_drops' %}active{% endif %}">
                     <i class="bi bi-voicemail"></i>
@@ -104,7 +106,9 @@
                     <i class="bi bi-star-fill"></i>
                     <span>Reviews</span>
                 </a>
+                {% endif %}
 
+                {% if user.business_profile %}
                 <div class="sidebar-section-label">Outreach</div>
                 {% if user.is_staff or user.is_superuser %}
                 <a href="{% url 'compose_email' %}" class="sidebar-link {% if request.resolver_match.url_name == 'compose_email' %}active{% endif %}">

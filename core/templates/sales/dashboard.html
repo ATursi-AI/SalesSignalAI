@@ -61,9 +61,17 @@
 
 .sd-empty { text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.82rem; }
 
+/* Sequence section */
+.sd-seq-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.sd-seq-stat { font-size: 0.72rem; color: var(--text-muted); }
+.sd-seq-trade-pill { padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; background: #EDE9FE; color: #7C3AED; }
+.sd-seq-sentiment { padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; display: inline-block; }
+.sd-seq-due-badge { padding: 2px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 700; background: #FEF3C7; color: #B45309; }
+
 @media (max-width: 768px) {
     .sd-metrics { grid-template-columns: repeat(2, 1fr); }
     .sd-columns { grid-template-columns: 1fr; }
+    .sd-seq-row { grid-template-columns: 1fr; }
 }
 </style>
 {% endblock %}
@@ -178,6 +186,67 @@
         {% endfor %}
         {% else %}
         <div class="sd-empty">No activity yet today.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Sequences -->
+<div class="sd-seq-row">
+    <!-- Active Sequences -->
+    <div class="sd-card animate-fade-in-up" style="animation-delay:200ms; max-height:300px; overflow-y:auto;">
+        <div class="sd-card-title">
+            <i class="bi bi-arrow-repeat" style="color:#8B5CF6;"></i> Sequences
+            {% if due_enrollment_count > 0 %}<span class="sd-seq-due-badge">{{ due_enrollment_count }} due</span>{% endif %}
+        </div>
+        {% if active_sequences %}
+        {% for seq in active_sequences %}
+        <div class="sd-item" style="cursor:default;">
+            <div class="sd-item-info">
+                <div class="sd-item-name">{{ seq.name }}</div>
+                <div class="sd-item-meta">
+                    {% if seq.target_trade %}<span class="sd-seq-trade-pill">{{ seq.target_trade }}</span>{% endif %}
+                    <span>{{ seq.step_count }} steps</span>
+                    <span>{{ seq.active_count }} active &middot; {{ seq.replied_count }} replied</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% if due_enrollment_count > 0 %}
+        <div style="padding:8px 12px;font-size:0.72rem;color:var(--text-muted);border-top:1px solid var(--border-subtle);margin-top:4px;">
+            <i class="bi bi-clock" style="color:#F59E0B;"></i> {{ due_enrollment_count }} enrollment{{ due_enrollment_count|pluralize }} due today
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="sd-empty">No active sequences</div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Replies -->
+    <div class="sd-card animate-fade-in-up" style="animation-delay:250ms; max-height:300px; overflow-y:auto;">
+        <div class="sd-card-title"><i class="bi bi-reply-fill" style="color:#10B981;"></i> Recent Replies</div>
+        {% if recent_replies %}
+        {% for reply in recent_replies %}
+        <a href="{% url 'sales_prospect_detail' reply.prospect.id %}" class="sd-item" style="color:inherit;text-decoration:none;">
+            <div class="sd-item-info">
+                <div class="sd-item-name">{{ reply.prospect.business_name }}</div>
+                <div class="sd-item-meta">
+                    <span>{{ reply.sequence.name }}</span>
+                    {% if reply.reply_sentiment == 'interested' %}
+                    <span class="sd-seq-sentiment" style="background:#D1FAE5;color:#10B981;">{{ reply.get_reply_sentiment_display }}</span>
+                    {% elif reply.reply_sentiment == 'not_interested' %}
+                    <span class="sd-seq-sentiment" style="background:#FEE2E2;color:#EF4444;">{{ reply.get_reply_sentiment_display }}</span>
+                    {% elif reply.reply_sentiment == 'question' %}
+                    <span class="sd-seq-sentiment" style="background:#FEF3C7;color:#F59E0B;">{{ reply.get_reply_sentiment_display }}</span>
+                    {% elif reply.reply_sentiment == 'out_of_office' %}
+                    <span class="sd-seq-sentiment" style="background:#F1F5F9;color:#94A3B8;">{{ reply.get_reply_sentiment_display }}</span>
+                    {% endif %}
+                    <span>{{ reply.replied_at|time_ago }}</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+        {% else %}
+        <div class="sd-empty">No replies yet</div>
         {% endif %}
     </div>
 </div>

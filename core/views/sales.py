@@ -220,14 +220,58 @@ def prospect_detail(request, prospect_id):
 
         elif action == 'schedule_followup':
             followup_date = request.POST.get('followup_date')
+            followup_time = request.POST.get('followup_time', '').strip()
+            followup_type = request.POST.get('followup_type', 'follow_up')
+            followup_notes = request.POST.get('followup_notes', '').strip()
+
             if followup_date:
                 prospect.next_follow_up_date = followup_date
                 prospect.save(update_fields=['next_follow_up_date'])
+
+                # Build description
+                type_labels = {
+                    'follow_up': 'Follow-up call',
+                    'demo': 'Demo',
+                    'meeting': 'Meeting',
+                    'callback': 'Callback',
+                }
+                type_label = type_labels.get(followup_type, 'Follow-up')
+                time_str = ''
+                if followup_time:
+                    try:
+                        from datetime import datetime as dt
+                        t = dt.strptime(followup_time, '%H:%M').strftime('%I:%M %p')
+                        time_str = f' at {t}'
+                    except ValueError:
+                        time_str = f' at {followup_time}'
+
+                desc = f'{type_label} scheduled for {followup_date}{time_str}'
+                if followup_notes:
+                    desc += f'\n{followup_notes}'
+
+                # Map followup_type to activity_type
+                activity_type_map = {
+                    'follow_up': 'follow_up',
+                    'demo': 'demo',
+                    'meeting': 'demo',
+                    'callback': 'follow_up',
+                }
+                activity_type = activity_type_map.get(followup_type, 'follow_up')
+
+                # Create as a task so it shows on dashboard "Your Day"
                 SalesActivity.objects.create(
                     prospect=prospect, salesperson=log_sp,
-                    activity_type='follow_up',
-                    description=f'Follow-up scheduled for {followup_date}',
+                    activity_type=activity_type,
+                    description=desc,
+                    is_task=True,
+                    task_due_date=followup_date,
                 )
+
+                # Auto-advance pipeline for demos
+                if followup_type == 'demo' and prospect.pipeline_stage in ('new', 'contacted', 'callback'):
+                    prospect.pipeline_stage = 'demo_scheduled'
+                    prospect.save(update_fields=['pipeline_stage', 'updated_at'])
+
             return JsonResponse({'success': True})
 
         elif action == 'mark_won':
