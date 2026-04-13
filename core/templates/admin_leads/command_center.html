@@ -591,7 +591,7 @@
 <div class="stats-row">
     <span>Showing <span class="stat-pill" id="showingCount">0</span> of <span class="stat-pill" id="totalCount">0</span></span>
     <span>Page <span class="stat-pill" id="pageNum">1</span></span>
-    <button class="btn-delete-all" onclick="deleteAllLeads()" title="Delete all leads from database"><i class="bi bi-trash3-fill"></i> Delete All Leads</button>
+    {% if user.is_superuser %}<button class="btn-delete-all" onclick="deleteAllLeads()" title="Delete all leads from database"><i class="bi bi-trash3-fill"></i> Delete All Leads</button>{% endif %}
 </div>
 
 <!-- Lead Table -->

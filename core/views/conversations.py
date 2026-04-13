@@ -5,13 +5,16 @@ from django.shortcuts import render, redirect
 from django.utils import timezone
 
 from core.models import LeadAssignment, Lead
+from core.views.crm import _get_effective_business, _is_sales_user
 
 
 @login_required
 def conversations(request):
     """Unified inbox — all leads/contacts with their full interaction history."""
-    profile = getattr(request.user, 'business_profile', None)
+    profile = _get_effective_business(request)
     if not profile:
+        if _is_sales_user(request):
+            return redirect('customer_accounts')
         return redirect('sales_today')
 
     assignments = LeadAssignment.objects.filter(
@@ -45,7 +48,7 @@ def conversations(request):
 @login_required
 def conversation_detail_api(request, assignment_id):
     """Get full conversation thread for a lead via AJAX."""
-    profile = getattr(request.user, 'business_profile', None)
+    profile = _get_effective_business(request)
     if not profile:
         return JsonResponse({'error': 'No profile'}, status=403)
 
@@ -144,7 +147,7 @@ def conversation_update(request, assignment_id):
         return JsonResponse({'error': 'POST required'}, status=405)
 
     import json
-    profile = getattr(request.user, 'business_profile', None)
+    profile = _get_effective_business(request)
     if not profile:
         return JsonResponse({'error': 'No profile'}, status=403)
 

@@ -16,10 +16,25 @@ def _get_business(request):
     return None
 
 
+def _get_effective_business(request):
+    """Resolve effective business — own profile or salesperson's active customer."""
+    bp = getattr(request.user, 'business_profile', None)
+    if bp:
+        return bp
+    customer_id = request.session.get('active_customer_id')
+    if customer_id:
+        from core.models.business import BusinessProfile
+        try:
+            return BusinessProfile.objects.get(pk=customer_id)
+        except BusinessProfile.DoesNotExist:
+            pass
+    return None
+
+
 @login_required
 def workflow_list(request):
     """List all workflow rules."""
-    business = _get_business(request)
+    business = _get_effective_business(request)
     rules = WorkflowRule.objects.filter(business=business) if business else WorkflowRule.objects.all()
 
     trigger_filter = request.GET.get('trigger', '')
@@ -39,7 +54,7 @@ def workflow_list(request):
 @login_required
 def workflow_builder(request, rule_id=None):
     """Create or edit a workflow rule."""
-    business = _get_business(request)
+    business = _get_effective_business(request)
     rule = None
     if rule_id:
         rule = get_object_or_404(WorkflowRule, pk=rule_id)

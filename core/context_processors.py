@@ -1,6 +1,7 @@
 from django.db.models import Q
 
 from core.models.outreach import OutreachEmail, OutreachProspect
+from core.models.business import BusinessProfile
 
 
 def crm_counts(request):
@@ -68,3 +69,16 @@ def lead_sidebar_counts(request):
         'lead_urgency_counts': urgency_counts,
         'lead_total_unreviewed': sum(group_counts.values()),
     }
+
+
+def active_customer_context(request):
+    """Inject the salesperson's active customer context into all templates."""
+    active_customer = None
+    if hasattr(request, 'session') and request.user.is_authenticated:
+        customer_id = request.session.get('active_customer_id')
+        if customer_id:
+            try:
+                active_customer = BusinessProfile.objects.get(pk=customer_id)
+            except BusinessProfile.DoesNotExist:
+                del request.session['active_customer_id']
+    return {'active_customer': active_customer}

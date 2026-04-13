@@ -841,7 +841,9 @@ def lead_bulk_action(request):
 @staff_or_salesperson_required
 @require_POST
 def lead_delete_all(request):
-    """Delete ALL leads from the database. Requires confirmation token."""
+    """Delete ALL leads from the database. Requires confirmation token. Superuser only."""
+    if not request.user.is_superuser:
+        return JsonResponse({'error': 'Only administrators can delete all leads.'}, status=403)
     data = json.loads(request.body)
     confirm = data.get('confirm')
     if confirm != 'DELETE_ALL_LEADS':

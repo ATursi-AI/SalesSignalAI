@@ -43,8 +43,14 @@
                 {% endif %}
             </div>
             <div style="display:flex;gap:4px;">
-                <a href="{% url 'leads_feed' %}" class="btn-secondary btn-sm" style="font-size:0.7rem;padding:4px 8px;" title="View Leads"><i class="bi bi-broadcast"></i></a>
-                <a href="{% url 'crm_pipeline' %}" class="btn-secondary btn-sm" style="font-size:0.7rem;padding:4px 8px;" title="View Pipeline"><i class="bi bi-kanban"></i></a>
+                <form method="post" action="{% url 'set_customer_context' %}" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="customer_id" value="{{ a.profile.id }}">
+                    <input type="hidden" name="next" value="{% url 'crm_pipeline' %}">
+                    <button type="submit" class="btn-work-as">
+                        <i class="bi bi-box-arrow-in-right"></i> Work As
+                    </button>
+                </form>
             </div>
         </div>
         {% empty %}

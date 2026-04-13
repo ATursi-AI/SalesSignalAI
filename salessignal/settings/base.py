@@ -43,6 +43,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'core.context_processors.crm_counts',
                 'core.context_processors.lead_sidebar_counts',
+                'core.context_processors.active_customer_context',
             ],
         },
     },

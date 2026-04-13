@@ -49,6 +49,30 @@
             </a>
 
             <nav class="sidebar-nav">
+                {% if user.salesperson_profile or user.is_superuser %}
+                <!-- Customer Context Switcher -->
+                <div class="customer-context-switcher">
+                    {% if active_customer %}
+                    <div class="context-active">
+                        <div class="context-label">Working for</div>
+                        <div class="context-name">{{ active_customer.business_name|truncatechars:24 }}</div>
+                        <div class="context-tier">{{ active_customer.get_subscription_tier_display }}</div>
+                        <div class="context-actions">
+                            <a href="{% url 'clear_customer_context' %}" class="context-clear" title="Stop working for this customer">
+                                <i class="bi bi-x-circle"></i> Switch
+                            </a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <a href="{% url 'customer_accounts' %}" class="context-empty">
+                        <i class="bi bi-building"></i>
+                        <span>Select a customer</span>
+                        <i class="bi bi-chevron-right" style="margin-left:auto;opacity:0.5;"></i>
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+
                 {% if user.business_profile %}
                 <div class="sidebar-section-label">Main</div>
                 <a href="{% url 'dashboard_home' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard_home' %}active{% endif %}">
@@ -63,7 +87,9 @@
                     <i class="bi bi-geo-alt-fill"></i>
                     <span>Territory Map</span>
                 </a>
+                {% endif %}
 
+                {% if user.business_profile or active_customer %}
                 <div class="sidebar-section-label">CRM</div>
                 <a href="{% url 'conversations' %}" class="sidebar-link {% if request.resolver_match.url_name == 'conversations' %}active{% endif %}">
                     <i class="bi bi-chat-square-text-fill"></i>
@@ -108,7 +134,7 @@
                 </a>
                 {% endif %}
 
-                {% if user.business_profile %}
+                {% if user.business_profile or active_customer %}
                 <div class="sidebar-section-label">Outreach</div>
                 {% if user.is_staff or user.is_superuser %}
                 <a href="{% url 'compose_email' %}" class="sidebar-link {% if request.resolver_match.url_name == 'compose_email' %}active{% endif %}">
@@ -186,6 +212,9 @@
                     <i class="bi bi-box-arrow-in-right"></i>
                     <span>Assign Prospects</span>
                 </a>
+                {% endif %}
+
+                {% if user.is_superuser or user.salesperson_profile %}
                 <a href="{% url 'call_center_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'call_center_dashboard' %}active{% endif %}">
                     <i class="bi bi-headset"></i>
                     <span>Call Center</span>
@@ -352,7 +381,12 @@
                 </button>
                 <h1 class="topbar-title">{% block page_title %}Dashboard{% endblock %}</h1>
                 <div class="topbar-actions">
-                    {% if request.user.business_profile %}
+                    {% if active_customer %}
+                    <span class="topbar-customer-badge">
+                        <i class="bi bi-building"></i>
+                        {{ active_customer.business_name|truncatechars:20 }}
+                    </span>
+                    {% elif request.user.business_profile %}
                     <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-right: 4px;">
                         {{ request.user.business_profile.business_name }}
                     </span>

@@ -747,11 +747,13 @@
 </div>
 
 <!-- Delete All Bar -->
+{% if user.is_superuser %}
 <div style="display:flex; justify-content:flex-end; margin-bottom:8px;">
     <button onclick="deleteAllLeads()" style="background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.3);color:var(--accent-coral);border-radius:var(--radius-sm);padding:6px 14px;font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='rgba(255,71,87,0.2)'" onmouseout="this.style.background='rgba(255,71,87,0.1)'">
         <i class="bi bi-trash3-fill"></i> Delete All Leads
     </button>
 </div>
+{% endif %}
 
 <!-- Stats Row -->
 <div class="stats-row">

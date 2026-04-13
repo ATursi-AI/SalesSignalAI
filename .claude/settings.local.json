@@ -199,7 +199,10 @@
       "Bash(venv/Scripts/python.exe -c ':*)",
       "Bash(venv/Scripts/python.exe manage.py makemigrations core --name data_sources_and_engagement)",
       "Bash(venv/Scripts/python.exe manage.py shell -c ':*)",
-      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name scout_gemini_fields)"
+      "Bash(venv/Scripts/python.exe manage.py makemigrations core --name scout_gemini_fields)",
+      "Bash(python manage.py collectstatic --noinput)",
+      "Bash(sudo systemctl:*)",
+      "Bash(python -c ':*)"
     ],
     "additionalDirectories": [
       "c:\\Users\\aturs\\Documents\\AI_Engineering_Course\\SalesSignalAI\\core"

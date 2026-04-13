@@ -182,6 +182,8 @@ urlpatterns = [
     path('sales/calendar/reschedule/<int:prospect_id>/', sales.calendar_reschedule, name='calendar_reschedule'),
     path('sales/stats/', sales.stats, name='sales_stats'),
     path('sales/high-value/', sales.high_value_leads, name='sales_high_value_leads'),
+    path('sales/set-customer/', sales.set_customer_context, name='set_customer_context'),
+    path('sales/clear-customer/', sales.clear_customer_context, name='clear_customer_context'),
 
     # Prospect Video Pages
     path('demo/<slug:slug>/', prospect_videos.prospect_video_landing, name='prospect_video_landing'),

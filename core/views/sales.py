@@ -923,3 +923,38 @@ def high_value_leads(request):
         'sp': request.salesperson,
         'is_sales_admin': request.is_sales_admin,
     })
+
+
+# ─────────────────────────────────────────────────────────────
+# CUSTOMER CONTEXT (for salespeople working on behalf of customers)
+# ─────────────────────────────────────────────────────────────
+
+@login_required
+def set_customer_context(request):
+    """POST: Set the active customer context for a salesperson."""
+    if not (hasattr(request.user, 'salesperson_profile') or request.user.is_superuser):
+        return redirect('dashboard_home')
+
+    if request.method != 'POST':
+        return redirect('customer_accounts')
+
+    customer_id = request.POST.get('customer_id')
+    if not customer_id:
+        return redirect('customer_accounts')
+
+    try:
+        bp = BusinessProfile.objects.get(pk=customer_id, is_active=True)
+    except BusinessProfile.DoesNotExist:
+        return redirect('customer_accounts')
+
+    request.session['active_customer_id'] = bp.pk
+    next_url = request.POST.get('next', '') or 'crm_pipeline'
+    return redirect(next_url)
+
+
+@login_required
+def clear_customer_context(request):
+    """Clear the active customer context."""
+    if 'active_customer_id' in request.session:
+        del request.session['active_customer_id']
+    return redirect('sales_dashboard')

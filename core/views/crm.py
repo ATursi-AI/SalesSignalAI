@@ -6,6 +6,7 @@ import json
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Count, Q, F
 from django.http import JsonResponse
@@ -16,6 +17,7 @@ from django.views.decorators.http import require_POST
 from core.models.crm import Contact, Activity, Appointment
 from core.models.leads import LeadAssignment
 from core.models.outreach import OutreachEmail, OutreachProspect, GeneratedEmail
+from core.models.business import BusinessProfile
 from core.models.competitors import TrackedCompetitor, CompetitorReview
 
 
@@ -26,14 +28,42 @@ def _get_business(request):
     return None
 
 
+def _get_effective_business(request):
+    """
+    Resolve the 'effective' BusinessProfile for the current request.
+    Priority:
+    1. If user has a BusinessProfile (they're a customer) → return it
+    2. If user is a salesperson with an active customer context → return that customer's BP
+    3. Otherwise → return None
+    """
+    bp = getattr(request.user, 'business_profile', None)
+    if bp:
+        return bp
+    customer_id = request.session.get('active_customer_id')
+    if customer_id:
+        try:
+            return BusinessProfile.objects.get(pk=customer_id)
+        except BusinessProfile.DoesNotExist:
+            pass
+    return None
+
+
+def _is_sales_user(request):
+    """Check if the current user is a salesperson or admin."""
+    return hasattr(request.user, 'salesperson_profile') or request.user.is_superuser
+
+
 # ─────────────────────────────────────────────────────────────
 # PIPELINE (Kanban)
 # ─────────────────────────────────────────────────────────────
 
 @login_required
 def pipeline(request):
-    bp = _get_business(request)
+    bp = _get_effective_business(request)
     if not bp:
+        if _is_sales_user(request):
+            messages.warning(request, 'Select a customer first to access CRM tools.')
+            return redirect('customer_accounts')
         return redirect('onboarding')
 
     contacts = Contact.objects.filter(business=bp).select_related('source_lead')
@@ -64,7 +94,7 @@ def pipeline(request):
 @require_POST
 def pipeline_move(request):
     """AJAX: Move a contact to a different pipeline stage."""
-    bp = _get_business(request)
+    bp = _get_effective_business(request)
     if not bp:
         return JsonResponse({'error': 'No business profile'}, status=400)
 
@@ -114,8 +144,11 @@ def pipeline_move(request):
 
 @login_required
 def contact_list(request):
-    bp = _get_business(request)
+    bp = _get_effective_business(request)
     if not bp:
+        if _is_sales_user(request):
+            messages.warning(request, 'Select a customer first to access CRM tools.')
+            return redirect('customer_accounts')
         return redirect('onboarding')
 
     contacts = Contact.objects.filter(business=bp).select_related('source_lead')
@@ -155,8 +188,11 @@ def contact_list(request):
 
 @login_required
 def contact_detail(request, contact_id):
-    bp = _get_business(request)
+    bp = _get_effective_business(request)
     if not bp:
+        if _is_sales_user(request):
+            messages.warning(request, 'Select a customer first to access CRM tools.')
+            return redirect('customer_accounts')
         return redirect('onboarding')
 
     contact = get_object_or_404(Contact, id=contact_id, business=bp)
@@ -176,7 +212,7 @@ def contact_detail(request, contact_id):
 @require_POST
 def contact_add_note(request, contact_id):
     """Add a note/activity to a contact."""
-    bp = _get_business(request)
+    bp = _get_effective_business(request)
     contact = get_object_or_404(Contact, id=contact_id, business=bp)
 
     activity_type = request.POST.get('activity_type', 'note')
@@ -242,7 +278,7 @@ def contact_add_note(request, contact_id):
 @require_POST
 def contact_update(request, contact_id):
     """Update contact info (name, email, phone, address, stage, follow-up, value)."""
-    bp = _get_business(request)
+    bp = _get_effective_business(request)
     contact = get_object_or_404(Contact, id=contact_id, business=bp)
 
     fields_changed = []
@@ -312,7 +348,7 @@ def contact_update(request, contact_id):
 @require_POST
 def contact_create(request):
     """Manually create a new contact."""
-    bp = _get_business(request)
+    bp = _get_effective_business(request)
     if not bp:
         return JsonResponse({'error': 'No business profile'}, status=400)
 
@@ -347,8 +383,11 @@ def contact_create(request):
 
 @login_required
 def inbox(request):
-    bp = _get_business(request)
+    bp = _get_effective_business(request)
     if not bp:
+        if _is_sales_user(request):
+            messages.warning(request, 'Select a customer first to access CRM tools.')
+            return redirect('customer_accounts')
         return redirect('onboarding')
 
     # Legacy replied emails
@@ -377,8 +416,11 @@ def inbox(request):
 
 @login_required
 def appointment_list(request):
-    bp = _get_business(request)
+    bp = _get_effective_business(request)
     if not bp:
+        if _is_sales_user(request):
+            messages.warning(request, 'Select a customer first to access CRM tools.')
+            return redirect('customer_accounts')
         return redirect('onboarding')
 
     appointments = Appointment.objects.filter(
@@ -403,7 +445,7 @@ def appointment_list(request):
 @login_required
 @require_POST
 def appointment_create(request):
-    bp = _get_business(request)
+    bp = _get_effective_business(request)
     if not bp:
         return JsonResponse({'error': 'No business profile'}, status=400)
 
@@ -445,7 +487,7 @@ def appointment_create(request):
 @login_required
 @require_POST
 def appointment_update_status(request, appointment_id):
-    bp = _get_business(request)
+    bp = _get_effective_business(request)
     appt = get_object_or_404(Appointment, id=appointment_id, business=bp)
 
     status = request.POST.get('status')
@@ -465,8 +507,11 @@ def appointment_update_status(request, appointment_id):
 
 @login_required
 def competitor_dashboard(request):
-    bp = _get_business(request)
+    bp = _get_effective_business(request)
     if not bp:
+        if _is_sales_user(request):
+            messages.warning(request, 'Select a customer first to access CRM tools.')
+            return redirect('customer_accounts')
         return redirect('onboarding')
 
     competitors = TrackedCompetitor.objects.filter(
@@ -503,7 +548,7 @@ def competitor_dashboard(request):
 @login_required
 def revenue_data(request):
     """JSON endpoint for the revenue tracker widget."""
-    bp = _get_business(request)
+    bp = _get_effective_business(request)
     if not bp:
         return JsonResponse({'error': 'No business'}, status=400)
 

@@ -29,9 +29,24 @@ def _get_business(request):
     return bp
 
 
+def _get_effective_business(request):
+    """Resolve effective business — own profile or salesperson's active customer."""
+    bp = getattr(request.user, 'business_profile', None)
+    if bp:
+        return bp
+    customer_id = request.session.get('active_customer_id')
+    if customer_id:
+        from core.models.business import BusinessProfile
+        try:
+            return BusinessProfile.objects.get(pk=customer_id)
+        except BusinessProfile.DoesNotExist:
+            pass
+    return None
+
+
 @login_required
 def campaign_list(request):
-    profile = _get_business(request)
+    profile = _get_effective_business(request)
     if not profile:
         if request.user.is_staff:
             # Admin sees all campaigns
@@ -82,7 +97,7 @@ def campaign_wizard(request):
         from django.http import HttpResponseForbidden
         return HttpResponseForbidden('Campaign creation is managed by the SalesSignalAI team.')
 
-    profile = _get_business(request)
+    profile = _get_effective_business(request)
     if not profile:
         return redirect('onboarding')
 
@@ -260,7 +275,7 @@ def campaign_wizard(request):
 
 @login_required
 def campaign_detail(request, campaign_id):
-    profile = _get_business(request)
+    profile = _get_effective_business(request)
     if not profile:
         if request.user.is_staff:
             campaign = get_object_or_404(OutreachCampaign, id=campaign_id)
@@ -359,7 +374,7 @@ def campaign_action(request, campaign_id):
     if not (request.user.is_staff or request.user.is_superuser):
         return JsonResponse({'error': 'Campaign actions are managed by the SalesSignalAI team.'}, status=403)
 
-    profile = _get_business(request)
+    profile = _get_effective_business(request)
     if not profile:
         return JsonResponse({'error': 'No business profile'}, status=403)
 
@@ -395,7 +410,7 @@ def campaign_add_prospects(request, campaign_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
 
-    profile = _get_business(request)
+    profile = _get_effective_business(request)
     if not profile:
         return JsonResponse({'error': 'No business profile'}, status=403)
 
@@ -434,7 +449,7 @@ def campaign_add_prospects(request, campaign_id):
 @login_required
 def prospect_detail_api(request, campaign_id, prospect_id):
     """Get prospect details including generated emails and enrichment data."""
-    profile = _get_business(request)
+    profile = _get_effective_business(request)
     if not profile:
         return JsonResponse({'error': 'No business profile'}, status=403)
 
@@ -481,7 +496,7 @@ def prospect_mark_status(request, campaign_id, prospect_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
 
-    profile = _get_business(request)
+    profile = _get_effective_business(request)
     if not profile:
         return JsonResponse({'error': 'No business profile'}, status=403)
 
@@ -589,7 +604,7 @@ def quick_send_email(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
 
-    profile = _get_business(request)
+    profile = _get_effective_business(request)
     if not profile:
         return JsonResponse({'error': 'No business profile'}, status=403)
 
@@ -761,7 +776,7 @@ def campaign_import_leads(request, campaign_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
 
-    profile = _get_business(request)
+    profile = _get_effective_business(request)
     if not profile:
         return JsonResponse({'error': 'No business profile'}, status=403)
 
@@ -806,7 +821,7 @@ def campaign_import_leads(request, campaign_id):
 @login_required
 def campaign_contacts_api(request):
     """AJAX endpoint returning CRM contacts for campaign import."""
-    profile = _get_business(request)
+    profile = _get_effective_business(request)
     if not profile:
         return JsonResponse({'contacts': [], 'total': 0})
 
@@ -832,7 +847,7 @@ def campaign_import_contacts(request, campaign_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=405)
 
-    profile = _get_business(request)
+    profile = _get_effective_business(request)
     if not profile:
         return JsonResponse({'error': 'No business profile'}, status=403)
 
@@ -881,7 +896,7 @@ def campaign_import_csv(request, campaign_id):
     import csv
     import io
 
-    profile = _get_business(request)
+    profile = _get_effective_business(request)
     if not profile:
         return JsonResponse({'error': 'No business profile'}, status=403)
 
