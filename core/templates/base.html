@@ -83,18 +83,22 @@
                     <i class="bi bi-lightning-fill"></i>
                     <span>Lead Feed</span>
                 </a>
+                {% if user.is_staff or user.salesperson_profile or user.is_superuser %}
                 <a href="{% url 'territory_map' %}" class="sidebar-link {% if request.resolver_match.url_name == 'territory_map' %}active{% endif %}">
                     <i class="bi bi-geo-alt-fill"></i>
                     <span>Territory Map</span>
                 </a>
                 {% endif %}
+                {% endif %}
 
                 {% if user.business_profile or active_customer %}
                 <div class="sidebar-section-label">CRM</div>
+                {% if user.is_staff or user.salesperson_profile or user.is_superuser %}
                 <a href="{% url 'conversations' %}" class="sidebar-link {% if request.resolver_match.url_name == 'conversations' %}active{% endif %}">
                     <i class="bi bi-chat-square-text-fill"></i>
                     <span>Conversations</span>
                 </a>
+                {% endif %}
                 <a href="{% url 'crm_pipeline' %}" class="sidebar-link {% if request.resolver_match.url_name == 'crm_pipeline' %}active{% endif %}">
                     <i class="bi bi-kanban-fill"></i>
                     <span>Pipeline</span>
@@ -112,13 +116,15 @@
                     <i class="bi bi-calendar-check-fill"></i>
                     <span>Appointments</span>
                 </a>
+                {% if user.is_staff or user.salesperson_profile or user.is_superuser %}
                 <a href="{% url 'crm_competitors' %}" class="sidebar-link {% if request.resolver_match.url_name == 'crm_competitors' %}active{% endif %}">
                     <i class="bi bi-binoculars-fill"></i>
                     <span>Competitors</span>
                 </a>
                 {% endif %}
+                {% endif %}
 
-                {% if user.business_profile or user.salesperson_profile or user.is_superuser %}
+                {% if user.salesperson_profile or user.is_superuser %}
                 <div class="sidebar-section-label">Engagement</div>
                 <a href="{% url 'voicemail_drops' %}" class="sidebar-link {% if request.resolver_match.url_name == 'voicemail_drops' %}active{% endif %}">
                     <i class="bi bi-voicemail"></i>
@@ -320,7 +326,7 @@
                 </a>
                 {% endif %}
 
-                {% if user.business_profile %}
+                {% if user.is_staff or user.salesperson_profile or user.is_superuser %}
                 <div class="sidebar-section-label">Insights</div>
                 <a href="{% url 'analytics_dashboard' %}" class="sidebar-link {% if 'analytics' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-bar-chart-fill"></i>
@@ -330,6 +336,8 @@
                     <i class="bi bi-journal-text"></i>
                     <span>Blog</span>
                 </a>
+                {% endif %}
+                {% if user.business_profile %}
                 <a href="{% url 'settings_page' %}" class="sidebar-link {% if 'settings' in request.resolver_match.url_name or 'keyword' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-gear-fill"></i>
                     <span>Settings</span>
