@@ -8,7 +8,14 @@ from core.models import ServiceCategory, BusinessProfile, UserKeyword
 
 @login_required
 def onboarding_view(request):
-    profile = request.user.business_profile
+    profile = getattr(request.user, 'business_profile', None)
+    if not profile:
+        # Auto-create a BusinessProfile for users who don't have one
+        profile = BusinessProfile.objects.create(
+            user=request.user,
+            business_name=request.user.get_full_name() or request.user.username,
+            account_status='trial',
+        )
     if profile.onboarding_complete:
         return redirect('dashboard_home')
 

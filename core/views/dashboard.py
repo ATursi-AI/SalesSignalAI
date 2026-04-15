@@ -15,7 +15,7 @@ def dashboard_home(request):
     if not hasattr(request.user, 'business_profile') or not request.user.business_profile:
         if hasattr(request.user, 'salesperson_profile'):
             return redirect('sales_dashboard')
-        return redirect('landing')
+        return redirect('onboarding')
 
     profile = request.user.business_profile
     if not profile.onboarding_complete:

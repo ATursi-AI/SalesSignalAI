@@ -42,8 +42,8 @@ def _get_login_redirect(user):
             return 'onboarding'
         return 'dashboard_home'
 
-    # 4. Fallback
-    return 'dashboard_home'
+    # 4. No profile at all — send to onboarding to create one
+    return 'onboarding'
 
 
 def login_view(request):
