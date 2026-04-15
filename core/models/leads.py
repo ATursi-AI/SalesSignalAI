@@ -71,22 +71,52 @@ class Lead(models.Model):
     ]
 
     SOURCE_TYPE_CHOICES = [
-        # Public Records
+        # Public Records — Violations
         ('violations', 'DOB Violations'),
+        ('building_violations', 'Building Violations'),
+        ('hpd_violations', 'HPD Violations'),
+        ('ordinance_violations', 'Ordinance Violations'),
+        ('ecb_summonses', 'ECB Summonses'),
+        ('code_enforcement', 'Code Enforcement'),
+        ('code_complaints', 'Code Complaints'),
+        ('fire_violations', 'Fire Violations'),
+        ('housing_violations', 'Housing Violations'),
+        ('environmental_violations', 'Environmental Violations'),
+        ('environmental_remediation', 'Environmental Remediation'),
+        ('alcohol_violations', 'Alcohol Violations'),
+        ('repeat_offender_violations', 'Repeat Offenders'),
+        # Public Records — Permits
         ('permits', 'DOB Permits'),
         ('permits_now', 'DOB Permits (NOW)'),
+        ('building_permits', 'Building Permits'),
+        ('construction_permits', 'Construction Permits'),
+        ('electrical_permits', 'Electrical Permits'),
+        ('trade_permits', 'Trade Permits'),
+        ('boiler_permits', 'Boiler Permits'),
+        ('mc_permits', 'MC Permits'),
+        ('certificate_of_occupancy', 'Certificate of Occupancy'),
+        ('permit_contacts', 'Permit Contacts'),
+        # Public Records — Sales & Filings
         ('property_sales', 'Property Sales'),
-        ('health_inspections', 'Health Inspections'),
-        ('liquor_licenses', 'Liquor Licenses'),
         ('business_filings', 'Business Filings'),
+        ('license_expirations', 'License Expirations'),
+        ('liquor_licenses', 'Liquor Licenses'),
+        ('liquor_suspensions', 'Liquor Suspensions'),
+        ('storage_tanks', 'Storage Tanks'),
+        # Public Records — Health
+        ('health_inspections', 'Health Inspections'),
+        ('food_inspections', 'Food Inspections'),
+        ('pool_inspections', 'Pool Inspections'),
+        # Google / Reviews
+        ('google_reviews', 'Google Reviews'),
+        ('no_website', 'No Website Detected'),
+        ('closed_business', 'Closed Business'),
+        ('new_business', 'New Business'),
+        ('google_qa', 'Google Q&A'),
         # Social Media
         ('reddit', 'Reddit'),
         ('nextdoor', 'Nextdoor'),
         ('facebook', 'Facebook Groups'),
-        # Reviews
-        ('google_reviews', 'Google Reviews'),
-        ('no_website', 'No Website Detected'),
-        ('google_qa', 'Google Q&A'),
         # Weather
         ('noaa', 'NOAA Weather'),
         # Prospect Video
