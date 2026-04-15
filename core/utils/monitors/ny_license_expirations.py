@@ -558,6 +558,13 @@ def monitor_ny_license_expirations(days=30, dry_run=False, remote=False):
                     'detected_category': 'ORPHANED_CUSTOMER',
                     'data_source': record.get('source', ''),
                 },
+                state='NY',
+                source_group='public_records',
+                source_type='license_expirations',
+                contact_name=contractor_name,
+                contact_phone=phone,
+                contact_business=contractor_name,
+                contact_address=address,
             )
 
             if created:

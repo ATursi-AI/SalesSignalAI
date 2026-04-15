@@ -425,25 +425,11 @@ def _process_closed_business(place, category, city, dry_run, stats):
         })
         return
 
-    content_hash = hashlib.sha256(
-        f'google_maps|{place.get("id", "")}|orphaned'.encode()
-    ).hexdigest()
-
-    from core.models.leads import Lead
-    if Lead.objects.filter(content_hash=content_hash).exists():
-        stats['duplicates'] += 1
-        return
-
-    Lead.objects.create(
+    lead, created, num_assigned = process_lead(
         platform='google_maps',
         source_url=source_url,
-        source_content=content,
-        source_author=biz_name,
-        detected_location=address,
-        urgency_score=90,
-        urgency_level='hot',
-        confidence='high',
-        content_hash=content_hash,
+        content=content,
+        author=biz_name,
         raw_data={
             'business_name': biz_name,
             'category': category,
@@ -451,8 +437,16 @@ def _process_closed_business(place, category, city, dry_run, stats):
             'place_id': place.get('id', ''),
             'type': 'orphaned_customer',
         },
+        source_group='reviews',
+        source_type='closed_business',
+        contact_business=biz_name,
+        contact_address=address,
     )
-    stats['created'] += 1
+    if created:
+        stats['created'] += 1
+        stats['assigned'] += num_assigned
+    else:
+        stats['duplicates'] += 1
 
 
 def _process_new_business(place, category, city, dry_run, stats):
@@ -517,32 +511,27 @@ def _process_new_business(place, category, city, dry_run, stats):
         })
         return True
 
-    content_hash = hashlib.sha256(
-        f'google_maps|{place_id}|new_business'.encode()
-    ).hexdigest()
-
-    from core.models.leads import Lead
-    if not Lead.objects.filter(content_hash=content_hash).exists():
-        Lead.objects.create(
-            platform='google_maps',
-            source_url=source_url,
-            source_content=content,
-            source_author=biz_name,
-            detected_location=address,
-            urgency_score=70,
-            urgency_level='warm',
-            confidence='high',
-            content_hash=content_hash,
-            raw_data={
-                'business_name': biz_name,
-                'category': category,
-                'place_id': place_id,
-                'rating': rating,
-                'review_count': review_count,
-                'type': 'new_business',
-            },
-        )
+    lead, created, num_assigned = process_lead(
+        platform='google_maps',
+        source_url=source_url,
+        content=content,
+        author=biz_name,
+        raw_data={
+            'business_name': biz_name,
+            'category': category,
+            'place_id': place_id,
+            'rating': rating,
+            'review_count': review_count,
+            'type': 'new_business',
+        },
+        source_group='reviews',
+        source_type='new_business',
+        contact_business=biz_name,
+        contact_address=address,
+    )
+    if created:
         stats['created'] += 1
+        stats['assigned'] += num_assigned
     else:
         stats['duplicates'] += 1
 
@@ -666,27 +655,11 @@ def _process_no_website(place, place_detail, category, city, dry_run, stats):
         })
         return
 
-    content_hash = hashlib.sha256(
-        f'google_maps|{place_id}|no_website'.encode()
-    ).hexdigest()
-
-    from core.models.leads import Lead
-    if Lead.objects.filter(content_hash=content_hash).exists():
-        stats['duplicates'] += 1
-        return
-
-    Lead.objects.create(
+    lead, created, num_assigned = process_lead(
         platform='google_maps',
         source_url=source_url,
-        source_content=content,
-        source_author=biz_name,
-        detected_location=address,
-        urgency_score=80,
-        urgency_level='warm',
-        confidence='high',
-        content_hash=content_hash,
-        source_group='reviews',
-        source_type='no_website',
+        content=content,
+        author=biz_name,
         raw_data={
             'business_name': biz_name,
             'category': category,
@@ -699,8 +672,17 @@ def _process_no_website(place, place_detail, category, city, dry_run, stats):
             'type': 'no_website',
             'detected_category': 'NO_WEBSITE_PROSPECT',
         },
+        source_group='reviews',
+        source_type='no_website',
+        contact_business=biz_name,
+        contact_phone=phone,
+        contact_address=address,
     )
-    stats['created'] += 1
+    if created:
+        stats['created'] += 1
+        stats['assigned'] += num_assigned
+    else:
+        stats['duplicates'] += 1
 
 
 # -------------------------------------------------------------------

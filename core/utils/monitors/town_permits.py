@@ -597,6 +597,8 @@ def monitor_town_permits(town=None, all_towns=False, days=7,
                         'state': 'NY',
                         'services_mapped': services,
                     },
+                    contact_name=applicant,
+                    contact_address=address,
                 )
 
                 if created:

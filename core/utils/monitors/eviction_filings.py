@@ -378,6 +378,8 @@ def monitor_evictions(source_ids=None, max_age_days=30, dry_run=False):
                         'state': source.state,
                         'services_needed': EVICTION_SERVICES,
                     },
+                    contact_name=plaintiff,
+                    contact_address=address,
                 )
 
                 if created:

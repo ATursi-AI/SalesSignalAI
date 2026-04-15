@@ -398,6 +398,8 @@ def monitor_license_expirations(source_ids=None, max_age_days=90, dry_run=False)
                         'state': source.state,
                         'service_category': service,
                     },
+                    contact_name=name,
+                    contact_address=address,
                 )
 
                 if created:

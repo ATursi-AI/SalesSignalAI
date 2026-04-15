@@ -37,6 +37,15 @@ MONITOR_SCHEDULE = [
     # Business Filings — daily
     ('monitor_ny_business_filings', {'days': 7}, 24, 'NY Business Filings', 'public_records'),
 
+    # NYC DCWP Licensed Businesses — expired licenses (orphaned customers)
+    ('monitor_nyc_licensed_businesses', {'mode': 'expired', 'days': 30}, 24, 'NYC Licensed Biz — Expired', 'public_records'),
+    # NYC DCWP Licensed Businesses — new licenses (new businesses)
+    ('monitor_nyc_licensed_businesses', {'mode': 'new', 'days': 14}, 24, 'NYC Licensed Biz — New', 'public_records'),
+    # NYC DCWP License Applications — businesses opening up
+    ('monitor_nyc_license_applications', {'days': 14}, 24, 'NYC License Applications', 'public_records'),
+    # NY State Health Inspections — outside NYC
+    ('monitor_nys_health_inspections', {'days': 14}, 24, 'NYS Health Inspections (Statewide)', 'health'),
+
     # California — general
     ('monitor_ca_contractors', {'days': 7}, 24, 'CA Contractor Licenses', 'public_records'),
     ('monitor_ca_violations', {'days': 7}, 24, 'CA OSHA Violations', 'public_records'),

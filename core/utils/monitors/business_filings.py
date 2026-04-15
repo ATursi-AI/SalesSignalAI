@@ -383,6 +383,7 @@ def monitor_business_filings(source_ids=None, max_age_days=30, dry_run=False):
                     region=source.state_name or '',
                     source_group='public_records',
                     source_type='business_filings',
+                    contact_name=agent,
                     contact_business=name,
                     contact_address=address,
                 )
