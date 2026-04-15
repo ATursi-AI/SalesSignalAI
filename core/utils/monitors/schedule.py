@@ -46,6 +46,13 @@ MONITOR_SCHEDULE = [
     # NY State Health Inspections — outside NYC
     ('monitor_nys_health_inspections', {'days': 14}, 24, 'NYS Health Inspections (Statewide)', 'health'),
 
+    # King County / Seattle — health inspections with phone numbers
+    ('monitor_kingcounty_health', {'days': 14}, 24, 'King County (Seattle) Health Inspections', 'health'),
+
+    # Hawaii — food establishments with phone numbers + owner names
+    ('monitor_hawaii_establishments', {'mode': 'expired'}, 168, 'Hawaii Expired Permits', 'health'),
+    ('monitor_hawaii_establishments', {'mode': 'high_risk'}, 168, 'Hawaii High-Risk Facilities', 'health'),
+
     # California — general
     ('monitor_ca_contractors', {'days': 7}, 24, 'CA Contractor Licenses', 'public_records'),
     ('monitor_ca_violations', {'days': 7}, 24, 'CA OSHA Violations', 'public_records'),
