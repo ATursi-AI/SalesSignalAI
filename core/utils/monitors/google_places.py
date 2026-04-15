@@ -36,22 +36,54 @@ PLACES_BASE = 'https://places.googleapis.com/v1'
 
 # Category slug -> Google Places type(s) for Nearby Search
 # https://developers.google.com/maps/documentation/places/web-service/place-types
+# If a category maps to a Google type, Nearby Search is used (faster, cheaper).
+# If not found here, Text Search is used with the category as free-text query
+# (works for ANY profession — "commercial cleaning", "pest control", etc.)
 CATEGORY_PLACE_TYPES = {
+    # Trades
     'plumber': ['plumber'],
     'electrician': ['electrician'],
-    'hvac': ['electrician'],
+    'hvac': ['hvac_contractor'],
     'roofer': ['roofing_contractor'],
     'painter': ['painter'],
     'locksmith': ['locksmith'],
     'moving': ['moving_company'],
+    'general-contractor': ['general_contractor'],
+    # Home Services
+    'landscaper': ['landscaper'],
+    'pest-control': ['pest_control_service'],
+    'carpet-cleaning': ['carpet_cleaning_service'],
+    'flooring': ['flooring_store'],
+    'garage-door': ['garage_door_supplier'],
+    'pool-service': ['swimming_pool_contractor'],
+    'tree-service': ['tree_service'],
+    'window-cleaning': ['window_cleaning_service'],
+    'handyman': ['handyman'],
+    # Auto
+    'auto-repair': ['auto_repair'],
+    'car-wash': ['car_wash'],
+    'towing': ['towing_service'],
+    'auto-body': ['auto_body_shop'],
+    # Professional
     'dentist': ['dentist'],
     'lawyer': ['lawyer'],
     'insurance': ['insurance_agency'],
     'real-estate': ['real_estate_agency'],
+    'accountant': ['accounting'],
     'veterinarian': ['veterinary_care'],
     'chiropractor': ['chiropractor'],
+    'pharmacy': ['pharmacy'],
+    'physical-therapy': ['physical_therapy_clinic'],
+    # Personal Services
     'barber': ['barber_shop'],
     'beauty-salon': ['beauty_salon'],
+    'gym': ['gym'],
+    'spa': ['spa'],
+    'laundromat': ['laundromat'],
+    # Food & Hospitality
+    'restaurant': ['restaurant'],
+    'hotel': ['hotel'],
+    'catering': ['caterer'],
 }
 
 # Chain/franchise exclusion — skip these from all lead types
@@ -217,6 +249,55 @@ def _nearby_search(api_key, lat, lng, radius, place_types, tracker,
     if resp.status_code != 200:
         logger.warning(
             f'[GooglePlaces] Nearby Search returned {resp.status_code}: '
+            f'{resp.text[:300]}'
+        )
+        return []
+
+    data = resp.json()
+    return data.get('places', [])
+
+
+def _text_search(api_key, query, lat, lng, radius, tracker, max_results=20):
+    """
+    Google Places Text Search (New).
+    Accepts any free-text query like "commercial cleaning near Queens NY".
+    Used as fallback when category doesn't map to a Google Place type.
+    """
+    url = f'{PLACES_BASE}/places:searchText'
+    headers = {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': api_key,
+        'X-Goog-FieldMask': (
+            'places.id,places.displayName,places.formattedAddress,'
+            'places.location,places.types,places.rating,'
+            'places.userRatingCount,places.businessStatus,'
+            'places.googleMapsUri'
+        ),
+    }
+    body = {
+        'textQuery': query,
+        'locationBias': {
+            'circle': {
+                'center': {'latitude': lat, 'longitude': lng},
+                'radius': radius,
+            }
+        },
+        'maxResultCount': min(max_results, 20),
+        'languageCode': 'en',
+    }
+
+    tracker.log('nearby_search')  # same billing tier
+    logger.debug(f'[GooglePlaces] Text Search: "{query}" at ({lat},{lng}) r={radius}')
+
+    try:
+        resp = requests.post(url, json=body, headers=headers, timeout=15)
+    except requests.RequestException as e:
+        logger.error(f'[GooglePlaces] Text Search request failed: {e}')
+        return []
+
+    if resp.status_code != 200:
+        logger.warning(
+            f'[GooglePlaces] Text Search returned {resp.status_code}: '
             f'{resp.text[:300]}'
         )
         return []
@@ -781,17 +862,22 @@ def monitor_google_places(
 
     for category in categories:
         place_types = CATEGORY_PLACE_TYPES.get(category)
-        if not place_types:
-            logger.warning(f'[GooglePlaces] No place types for category "{category}", skipping')
-            continue
 
         stats['categories_searched'] += 1
-        logger.info(f'[GooglePlaces] Searching "{category}" ({place_types}) near {city}')
 
-        # Nearby Search
-        places = _nearby_search(
-            api_key, lat, lng, radius, place_types, tracker,
-        )
+        if place_types:
+            # Known Google type — use Nearby Search (faster, cheaper)
+            logger.info(f'[GooglePlaces] Nearby Search "{category}" ({place_types}) near {city}')
+            places = _nearby_search(
+                api_key, lat, lng, radius, place_types, tracker,
+            )
+        else:
+            # Free-text query — use Text Search (any profession works)
+            query = f'{category} near {city}'
+            logger.info(f'[GooglePlaces] Text Search "{query}"')
+            places = _text_search(
+                api_key, query, lat, lng, radius, tracker,
+            )
 
         if not places:
             logger.info(f'[GooglePlaces] No results for "{category}"')
