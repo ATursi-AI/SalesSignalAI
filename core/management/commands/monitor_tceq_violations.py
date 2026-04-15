@@ -153,7 +153,7 @@ class Command(BaseCommand):
                 if viol_status_dt:
                     try:
                         dt = datetime.fromisoformat(viol_status_dt.replace('Z', '+00:00'))
-                        posted_at = timezone.make_aware(dt.replace(tzinfo=None))
+                        posted_at = dt if dt.tzinfo else timezone.make_aware(dt)
                     except Exception:
                         pass
 

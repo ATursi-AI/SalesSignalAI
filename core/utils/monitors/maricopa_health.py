@@ -19,7 +19,10 @@ import re
 from datetime import datetime, timedelta
 
 import requests
+import urllib3
 from bs4 import BeautifulSoup
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from django.utils import timezone
 
 from .lead_processor import process_lead
@@ -113,7 +116,7 @@ def monitor_maricopa_health(days=7, dry_run=False):
 
     # Fetch weekly listing page
     try:
-        resp = requests.get(WEEKLY_LISTING_URL, headers=headers, timeout=30)
+        resp = requests.get(WEEKLY_LISTING_URL, headers=headers, timeout=30, verify=False)
         if resp.status_code != 200:
             logger.error(f'[maricopa] Weekly listing returned {resp.status_code}')
             stats['errors'] += 1

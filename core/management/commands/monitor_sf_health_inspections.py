@@ -20,7 +20,7 @@ from core.utils.monitors.lead_processor import process_lead
 
 logger = logging.getLogger('monitors')
 
-SODA_URL = 'https://data.sfgov.org/resource/tvy3-wexg.json'
+SODA_URL = 'https://data.sfgov.org/resource/pyih-qa8i.json'
 
 VIOLATION_SERVICE_MAP = {
     'plumbing': ['plumber'],
@@ -98,16 +98,17 @@ class Command(BaseCommand):
 
         since = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%dT00:00:00')
 
-        # Focus on non-passing facilities
+        # Focus on low-scoring facilities (score < 90)
         params = {
             '$where': (
                 f"inspection_date >= '{since}' AND "
-                f"facility_rating_status != 'Pass'"
+                f"inspection_score < 90 AND inspection_score > 0"
             ),
             '$select': (
-                'inspection_date,dba,permit_number,permit_type,street_address,'
-                'inspection_type,facility_rating_status,violation_count,'
-                'violation_codes,analysis_neighborhood,latitude,longitude'
+                'business_id,business_name,business_address,business_city,'
+                'business_state,business_postal_code,business_phone_number,'
+                'inspection_id,inspection_date,inspection_score,inspection_type,'
+                'business_latitude,business_longitude'
             ),
             '$limit': limit,
             '$order': 'inspection_date DESC',
@@ -128,44 +129,47 @@ class Command(BaseCommand):
             self.stdout.write(f"Fetched {len(records)} non-passing inspections from SF Health")
 
             for rec in records:
-                dba = (rec.get('dba', '') or '').strip()
-                permit_num = (rec.get('permit_number', '') or '').strip()
-                street_address = (rec.get('street_address', '') or '').strip()
-                neighborhood = (rec.get('analysis_neighborhood', '') or '').strip()
-                permit_type = (rec.get('permit_type', '') or '').strip()
+                biz_name = (rec.get('business_name', '') or '').strip()
+                biz_id = (rec.get('business_id', '') or '').strip()
+                biz_address = (rec.get('business_address', '') or '').strip()
+                biz_city = (rec.get('business_city', '') or 'San Francisco').strip()
+                biz_state = (rec.get('business_state', '') or 'CA').strip()
+                biz_zip = (rec.get('business_postal_code', '') or '').strip()
+                biz_phone = (rec.get('business_phone_number', '') or '').strip()
                 inspection_type = (rec.get('inspection_type', '') or '').strip()
-                facility_rating = (rec.get('facility_rating_status', '') or '').strip()
-                violation_count = rec.get('violation_count', 0)
-                violation_codes = (rec.get('violation_codes', '') or '').strip()
                 inspection_date = rec.get('inspection_date', '')
 
-                if not street_address:
+                # Score
+                try:
+                    score = int(float(rec.get('inspection_score', 0) or 0))
+                except (ValueError, TypeError):
+                    score = 0
+
+                if not biz_address or not biz_name:
                     continue
 
-                full_addr = f"{street_address}, San Francisco, CA"
-                display_name = dba or street_address
+                full_addr = f"{biz_address}, {biz_city}, {biz_state} {biz_zip}".strip()
 
-                # Determine urgency based on facility rating status
-                rating_lower = facility_rating.lower()
-                if rating_lower == 'closure':
+                # Urgency based on score
+                if score < 70:
                     urgency = 'hot'
-                    urgency_note = 'CLOSURE ORDER — Facility must close'
-                elif rating_lower == 'conditional pass' and violation_count and int(violation_count) >= 5:
-                    urgency = 'hot'
-                    urgency_note = f'Conditional Pass with {violation_count} violations'
-                elif rating_lower == 'conditional pass':
+                    urgency_note = f'Critical — Score {score}/100, facility risks closure'
+                elif score < 80:
                     urgency = 'warm'
-                    urgency_note = 'Conditional Pass — remediation needed'
+                    urgency_note = f'Needs improvement — Score {score}/100'
                 else:
                     urgency = 'new'
-                    urgency_note = f'{facility_rating} status'
+                    urgency_note = f'Minor issues — Score {score}/100'
 
                 # Parse inspection date
                 posted_at = None
                 if inspection_date:
                     try:
                         dt = datetime.fromisoformat(inspection_date.replace('Z', '+00:00'))
-                        posted_at = timezone.make_aware(dt.replace(tzinfo=None))
+                        if dt.tzinfo:
+                            posted_at = dt
+                        else:
+                            posted_at = timezone.make_aware(dt)
                     except Exception:
                         pass
 
@@ -173,68 +177,46 @@ class Command(BaseCommand):
                 if posted_at:
                     days_ago = f'{(timezone.now() - posted_at).days} days ago'
 
+                services = _detect_services(inspection_type)
+
                 # Build rich content
-                content_parts = [f'SF HEALTH INSPECTION: {display_name}']
-                content_parts.append(f'Business: {display_name}')
+                content_parts = [f'SF HEALTH INSPECTION: {biz_name}']
+                content_parts.append(f'Business: {biz_name}')
                 content_parts.append(f'Address: {full_addr}')
-                if neighborhood:
-                    content_parts.append(f'Neighborhood: {neighborhood}')
-                if permit_num:
-                    content_parts.append(f'Permit: {permit_num}')
-                if permit_type:
-                    content_parts.append(f'Type: {permit_type}')
-                content_parts.append(f'Facility Status: {facility_rating}')
+                if biz_phone:
+                    content_parts.append(f'Phone: {biz_phone}')
+                content_parts.append(f'Score: {score}/100')
                 if inspection_type:
-                    content_parts.append(f'Inspection: {inspection_type}')
+                    content_parts.append(f'Inspection Type: {inspection_type}')
                 if days_ago:
-                    content_parts.append(f'Date: {days_ago}')
-
-                if violation_count:
-                    try:
-                        v_count = int(violation_count)
-                        content_parts.append(f'Violations: {v_count}')
-                    except (ValueError, TypeError):
-                        pass
-
-                if violation_codes:
-                    content_parts.append(f'\nViolation Codes:')
-                    codes = violation_codes.split(',')[:10]
-                    for code in codes:
-                        code_str = code.strip()
-                        if code_str:
-                            content_parts.append(f'  - {code_str}')
-
-                content_parts.append(f'\nUrgency: {urgency_note}')
-
-                # Detect services from violation codes
-                services = _detect_services(violation_codes)
+                    content_parts.append(f'Inspected: {days_ago}')
+                content_parts.append(f'Urgency: {urgency_note}')
                 content_parts.append(f'Services needed: {", ".join(services[:6])}')
 
                 content = '\n'.join(content_parts)
 
                 if dry_run:
-                    self.stdout.write(f"  [DRY] {display_name} @ {street_address} — {facility_rating} — {urgency.upper()}")
-                    if violation_count:
-                        self.stdout.write(f"         - {violation_count} violations")
+                    self.stdout.write(f"  [DRY] {biz_name} @ {biz_address} — Score {score} — {urgency.upper()}")
+                    if biz_phone:
+                        self.stdout.write(f"         Phone: {biz_phone}")
                     stats['created'] += 1
                     continue
 
                 try:
                     lead, created, num_assigned = process_lead(
                         platform='public_records',
-                        source_url=f'{SODA_URL}?permit_number={permit_num}',
+                        source_url=f'{SODA_URL}?business_id={biz_id}',
                         content=content,
-                        author=display_name,
+                        author='',
                         posted_at=posted_at,
                         raw_data={
                             'data_source': 'sf_health_inspections',
-                            'business_name': display_name,
-                            'permit_number': permit_num,
+                            'business_id': biz_id,
+                            'business_name': biz_name,
                             'address': full_addr,
-                            'permit_type': permit_type,
-                            'facility_rating': facility_rating,
-                            'violation_count': violation_count,
-                            'violation_codes': violation_codes,
+                            'phone': biz_phone,
+                            'score': score,
+                            'inspection_type': inspection_type,
                             'urgency': urgency,
                             'services_mapped': services,
                         },
@@ -242,8 +224,8 @@ class Command(BaseCommand):
                         region='San Francisco',
                         source_group='health',
                         source_type='health_inspections',
-                        contact_name=display_name,
-                        contact_business=display_name,
+                        contact_business=biz_name,
+                        contact_phone=biz_phone,
                         contact_address=full_addr,
                     )
                     if created:
@@ -251,7 +233,7 @@ class Command(BaseCommand):
                     else:
                         stats['duplicates'] += 1
                 except Exception as e:
-                    logger.error(f"SF health inspection error for {display_name}: {e}")
+                    logger.error(f"SF health inspection error for {biz_name}: {e}")
                     stats['errors'] += 1
 
         except Exception as e:

@@ -131,7 +131,7 @@ class Command(BaseCommand):
 
                 # Score
                 try:
-                    score = int(rec.get('score', 0) or 0)
+                    score = int(float(rec.get('score', 0) or 0))
                 except (ValueError, TypeError):
                     score = 0
 
@@ -159,7 +159,10 @@ class Command(BaseCommand):
                 if inspection_date:
                     try:
                         dt = datetime.fromisoformat(inspection_date.replace('Z', '+00:00'))
-                        posted_at = timezone.make_aware(dt.replace(tzinfo=None))
+                        if dt.tzinfo:
+                            posted_at = dt
+                        else:
+                            posted_at = timezone.make_aware(dt)
                     except Exception:
                         pass
 

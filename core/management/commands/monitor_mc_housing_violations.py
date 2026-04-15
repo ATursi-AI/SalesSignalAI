@@ -214,7 +214,7 @@ class Command(BaseCommand):
                 if date_filed:
                     try:
                         dt = datetime.fromisoformat(date_filed.replace('Z', '+00:00'))
-                        posted_at = timezone.make_aware(dt.replace(tzinfo=None))
+                        posted_at = dt if dt.tzinfo else timezone.make_aware(dt)
                     except Exception:
                         pass
 

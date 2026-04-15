@@ -16,7 +16,9 @@ from core.utils.monitors.lead_processor import process_lead
 logger = logging.getLogger('monitors')
 
 # Federal OSHA enforcement data — covers all states including CA
-OSHA_API = 'https://enforcedata.dol.gov/api/osha_enforcement'
+# NOTE: enforcedata.dol.gov was decommissioned (301 redirect to data.dol.gov).
+# This monitor is non-functional until a replacement OSHA data source is found.
+OSHA_API = 'https://enforcedata.dol.gov/api/osha_enforcement'  # DEFUNCT
 
 
 class Command(BaseCommand):
@@ -55,15 +57,23 @@ class Command(BaseCommand):
             }
 
             self.stdout.write(f"Fetching OSHA enforcement data for CA since {cutoff}...")
-            resp = requests.get(OSHA_API, params=params, timeout=30)
 
-            if resp.status_code != 200:
+            # Check if API is still defunct before making request
+            resp = requests.get(OSHA_API, params=params, timeout=30, allow_redirects=False)
+
+            if resp.status_code in (301, 302):
+                self.stdout.write(self.style.WARNING(
+                    f"OSHA API at enforcedata.dol.gov has been decommissioned "
+                    f"(HTTP {resp.status_code} redirect).\n"
+                    "This monitor is non-functional until a replacement data "
+                    "source is configured."
+                ))
+                stats['errors'] += 1
+            elif resp.status_code != 200:
                 self.stdout.write(self.style.WARNING(
                     f"OSHA API returned {resp.status_code}.\n"
-                    "This API may require different parameters or may be rate-limited.\n"
                     "Trying alternative endpoint..."
                 ))
-                # Try the inspection-level API
                 self._try_inspection_api(days, limit, dry_run, stats, county)
             else:
                 raw = resp.json()
@@ -134,10 +144,12 @@ class Command(BaseCommand):
         self.stdout.write(f"\nResults: {stats['created']} created, {stats['duplicates']} dupes, {stats['errors']} errors")
 
     def _try_inspection_api(self, days, limit, dry_run, stats, county):
-        """Alternative OSHA inspection endpoint."""
+        """Alternative OSHA inspection endpoint.
+        NOTE: Also decommissioned along with enforcedata.dol.gov.
+        """
         try:
             cutoff = (datetime.now() - timedelta(days=days)).strftime('%Y%m%d')
-            url = 'https://enforcedata.dol.gov/api/osha_inspection'
+            url = 'https://enforcedata.dol.gov/api/osha_inspection'  # DEFUNCT
             resp = requests.get(url, params={
                 'p_state': 'CA',
                 'p_start_date': cutoff,

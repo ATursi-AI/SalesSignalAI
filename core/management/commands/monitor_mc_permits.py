@@ -170,17 +170,17 @@ class Command(BaseCommand):
                 for rec in records:
                     try:
                         # Extract permit identifier
-                        permit_no = (rec.get('permitno') or rec.get('permit_number') or '').strip()
+                        permit_no = (rec.get('permitno') or rec.get('permit_number') or rec.get('permit_no') or '').strip()
                         if not permit_no:
                             continue
 
                         # Extract address components (handle field name variations)
-                        street_num = (rec.get('stno') or rec.get('street_number') or '').strip()
-                        street_name = (rec.get('stname') or rec.get('street_name') or '').strip()
+                        street_num = (rec.get('stno') or rec.get('street_number') or rec.get('st_no') or '').strip()
+                        street_name = (rec.get('stname') or rec.get('street_name') or rec.get('st_name') or '').strip()
                         street_suffix = (rec.get('suffix') or rec.get('street_suffix') or '').strip()
                         city = (rec.get('city') or '').strip()
                         state = rec.get('state', 'MD')
-                        zipcode = (rec.get('zip') or '').strip()
+                        zipcode = (rec.get('zip') or rec.get('zip_code') or '').strip()
 
                         # Build full address
                         addr_parts = [street_num, street_name, street_suffix]
@@ -203,7 +203,7 @@ class Command(BaseCommand):
                             except (ValueError, AttributeError):
                                 declared_value = 0
 
-                        issued_date_str = rec.get('issueddate') or rec.get('issue_date') or ''
+                        issued_date_str = rec.get('issueddate') or rec.get('issue_date') or rec.get('issued_date') or ''
                         added_date_str = rec.get(date_field) or ''
 
                         # Parse posted_at from added/issued date
@@ -213,9 +213,9 @@ class Command(BaseCommand):
                                 try:
                                     dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
                                     if dt.tzinfo:
-                                        posted_at = dt.replace(tzinfo=None)
-                                    else:
                                         posted_at = dt
+                                    else:
+                                        posted_at = timezone.make_aware(dt)
                                     break
                                 except Exception:
                                     pass

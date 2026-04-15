@@ -20,6 +20,9 @@ logger = logging.getLogger('monitors')
 CA_SOS_API = 'https://data.ca.gov/api/3/action/datastore_search'
 CA_SOS_RESOURCE = ''  # Placeholder — needs actual resource ID from data.ca.gov
 
+# NOTE: The former OSHA fallback at enforcedata.dol.gov was decommissioned
+# (returns 301 redirect to data.dol.gov). A working CA data source is needed.
+
 
 class Command(BaseCommand):
     help = 'Monitor CA new contractor licenses / business filings'
@@ -130,68 +133,13 @@ class Command(BaseCommand):
             stats['errors'] += 1
 
     def _fetch_from_osha_establishments(self, days, limit, dry_run, stats, region):
-        """Fallback: fetch CA establishments from federal OSHA inspection data."""
-        try:
-            # OSHA Inspection data — public API
-            url = 'https://enforcedata.dol.gov/api/osha_inspection'
-            cutoff = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
-            params = {
-                'p_state': 'CA',
-                'p_start_date': cutoff,
-                'p_page_size': str(min(limit, 100)),
-            }
-
-            self.stdout.write(f"Trying OSHA inspections API for CA (last {days} days)...")
-            resp = requests.get(url, params=params, timeout=30)
-
-            if resp.status_code != 200:
-                self.stdout.write(f"OSHA API returned {resp.status_code}. CA monitor needs configuration.")
-                self.stdout.write("Once a data.ca.gov resource ID is added, this monitor will work automatically.")
-                return
-
-            records = resp.json() if isinstance(resp.json(), list) else resp.json().get('results', [])
-            self.stdout.write(f"Fetched {len(records)} OSHA inspection records for CA")
-
-            for rec in records:
-                biz = rec.get('estab_name', '') or rec.get('establishment_name', '')
-                city = rec.get('site_city', '')
-                addr = rec.get('site_address', '')
-
-                if not biz:
-                    continue
-                if region and region.lower() not in city.lower():
-                    stats['skipped'] += 1
-                    continue
-
-                content = (
-                    f"CA Business (OSHA Inspection): {biz}\n"
-                    f"Address: {addr}, {city}, CA\n"
-                    f"This business had a recent OSHA inspection."
-                )
-
-                if dry_run:
-                    self.stdout.write(f"  [DRY] {biz} | {city}")
-                    stats['created'] += 1
-                    continue
-
-                lead, created, _ = process_lead(
-                    platform='public_records',
-                    source_url='https://enforcedata.dol.gov/',
-                    content=content,
-                    author=biz,
-                    raw_data=rec,
-                    state='CA',
-                    region=city,
-                    source_group='public_records',
-                    source_type='business_filings',
-                    contact_business=biz,
-                    contact_address=f"{addr}, {city}, CA" if addr else f"{city}, CA",
-                )
-                if created:
-                    stats['created'] += 1
-                else:
-                    stats['duplicates'] += 1
-
-        except Exception as e:
-            logger.error(f"OSHA fallback error: {e}")
-            stats['errors'] += 1
+        """Fallback: formerly used federal OSHA inspection data.
+        The enforcedata.dol.gov API was decommissioned (301 to data.dol.gov).
+        This fallback is disabled until a replacement data source is configured.
+        """
+        self.stdout.write(self.style.WARNING(
+            "OSHA fallback disabled — enforcedata.dol.gov API decommissioned.\n"
+            "CA contractor monitor requires a data.ca.gov resource ID to function.\n"
+            "Set CA_SOS_RESOURCE in monitor_ca_contractors.py to enable."
+        ))
+        stats['errors'] += 1

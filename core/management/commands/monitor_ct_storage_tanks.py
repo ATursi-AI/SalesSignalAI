@@ -78,7 +78,7 @@ class Command(BaseCommand):
         params = {
             '$where': "tankstatuscd = 'Currently In Use'",
             '$select': (
-                'facilityid,facilitynm,facilityaddr,facilitycity,facilityzip,'
+                'agencyfacilityid,facilitynm,facilityaddr,facilitycity,facilityzip,'
                 'agencytankid,tankstatuscd,capacitygalsnum,substancecd,'
                 'closuretypecd,tankconstructioncd,installationdt,tanklat,tanklon'
             ),
@@ -101,7 +101,7 @@ class Command(BaseCommand):
             self.stdout.write(f"Fetched {len(records)} active storage tanks from Connecticut")
 
             for rec in records:
-                facilityid = (rec.get('facilityid', '') or '').strip()
+                facilityid = (rec.get('agencyfacilityid', '') or '').strip()
                 facilitynm = (rec.get('facilitynm', '') or '').strip()
                 facilityaddr = (rec.get('facilityaddr', '') or '').strip()
                 facilitycity = (rec.get('facilitycity', '') or '').strip()
@@ -141,7 +141,7 @@ class Command(BaseCommand):
                 if installationdt:
                     try:
                         dt = datetime.fromisoformat(installationdt.replace('Z', '+00:00'))
-                        posted_at = timezone.make_aware(dt.replace(tzinfo=None))
+                        posted_at = dt if dt.tzinfo else timezone.make_aware(dt)
                     except Exception:
                         pass
 
