@@ -123,21 +123,25 @@ class Command(BaseCommand):
             printed = 0
 
             for rec in records:
-                name = (rec.get('Establishment') or '').strip()
-                permit_holder = (rec.get('Permit Holder') or '').strip()
-                phone = (rec.get('Telephone') or '').strip()
-                biz_status = (rec.get('Business Status') or '').strip()
-                facility_type = (rec.get('Facility Type') or '').strip()
-                risk_category = (rec.get('Risk Category') or '').strip()
-                permit_expire = (rec.get('Permit Expire Date') or '').strip()
+                # CKAN returns ints for numeric fields — str() everything
+                def s(val, default=''):
+                    return str(val).strip() if val is not None else default
+
+                name = s(rec.get('Establishment'))
+                permit_holder = s(rec.get('Permit Holder'))
+                phone = s(rec.get('Telephone'))
+                biz_status = s(rec.get('Business Status'))
+                facility_type = s(rec.get('Facility Type'))
+                risk_category = s(rec.get('Risk Category'))
+                permit_expire = s(rec.get('Permit Expire Date'))
 
                 # Address fields
-                street_num = (rec.get('Establishment Address Street #') or '').strip()
-                street_name = (rec.get('Establishment Address Street Name') or '').strip()
-                unit = (rec.get('Establishment Address Unit #') or '').strip()
-                city = (rec.get('Establishment Address City') or '').strip()
-                state = (rec.get('Establishment Address State') or 'Hawaii').strip()
-                zipcode = (rec.get('Establishment Address Zip Code') or '').strip()
+                street_num = s(rec.get('Establishment Address Street #'))
+                street_name = s(rec.get('Establishment Address Street Name'))
+                unit = s(rec.get('Establishment Address Unit #'))
+                city = s(rec.get('Establishment Address City'))
+                state = s(rec.get('Establishment Address State'), 'Hawaii')
+                zipcode = s(rec.get('Establishment Address Zip Code'))
 
                 if not name:
                     continue
