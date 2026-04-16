@@ -104,10 +104,10 @@ class Command(BaseCommand):
 
         since = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%dT00:00:00')
 
-        # Query for inspections with violations (non-passing or low scores)
+        # Query for inspections with violations
         where_parts = [
             f"inspection_date >= '{since}'",
-            "violation_type IS NOT NULL",
+            "violation_points > 0",
         ]
         if city_filter:
             where_parts.append(f"upper(city) = '{city_filter.upper()}'")
