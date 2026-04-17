@@ -88,7 +88,7 @@ class Command(BaseCommand):
                     state='CA',
                     region='Los Angeles',
                     source_group='public_records',
-                    source_type='violations',
+                    source_type='building_violations',
                     contact_address=f"{address}, Los Angeles, CA {zipcode}",
                 )
                 if created:

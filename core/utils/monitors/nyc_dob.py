@@ -708,7 +708,7 @@ def _monitor_violations(scraper, borough, days, dry_run, remote, stats,
                 state='NY',
                 region=borough_name,
                 source_group='public_records',
-                source_type='violations',
+                source_type='building_violations',
                 contact_name=respondent,
                 contact_address=contact_addr,
             )

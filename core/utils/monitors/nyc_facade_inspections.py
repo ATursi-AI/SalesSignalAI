@@ -552,7 +552,7 @@ def monitor_nyc_facade_inspections(borough=None, dry_run=False, remote=False):
                 state='NY',
                 region=borough_name,
                 source_group='public_records',
-                source_type='violations',
+                source_type='building_violations',
                 contact_name=owner,
                 contact_address=address,
             )

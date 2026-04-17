@@ -387,7 +387,7 @@ def monitor_code_violations(source_ids=None, max_age_days=30, dry_run=False):
                     state=source.state or '',
                     region=source.municipality or '',
                     source_group='public_records',
-                    source_type='violations',
+                    source_type='code_enforcement',
                     contact_name=owner,
                     contact_address=address,
                 )
