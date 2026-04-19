@@ -168,3 +168,8 @@ GOOGLE_OAUTH_CLIENT_SECRET = config('GOOGLE_OAUTH_CLIENT_SECRET', default='')
 # AI email generation
 GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
 DEEPSEEK_API_KEY = config('DEEPSEEK_API_KEY', default='')
+
+# NYC Open Data SODA app token (optional — raises rate limits on ACRIS,
+# DOB, HPD, 311 etc. endpoints). Get one free at
+# https://data.cityofnewyork.us/profile/edit/developer_settings
+NYC_SODA_APP_TOKEN = config('NYC_SODA_APP_TOKEN', default='')
