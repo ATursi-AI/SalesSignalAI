@@ -39,6 +39,7 @@ from django.db import connection
 from django.db.utils import OperationalError
 
 from core.models.leads import Lead
+from core.utils.severity import compute_health_grade_flag
 
 logger = logging.getLogger(__name__)
 
@@ -63,47 +64,17 @@ def _soda_headers():
 def _compute_flags(raw):
     """
     Given a raw_data dict, return (urgency_level, urgency_score, grade_flag, note).
-    Mirrors the priority logic in ny_health_violations.py so the backfill and
-    the live monitor stay in sync.
+    Delegates to the shared severity helper so backfill and the live monitor
+    are guaranteed to stay in sync.
     """
-    grade = str(raw.get('grade') or '').strip().upper()
-    action = str(raw.get('action') or '').strip()
-    action_lower = action.lower()
-    has_critical = bool(raw.get('has_critical'))
-    try:
-        score = int(raw.get('score') or 0)
-    except (ValueError, TypeError):
-        score = 0
-
-    is_closed = 'closed' in action_lower
-
-    # --- grade_flag ---
-    grade_flag = ''
-    if is_closed:
-        grade_flag = 'closed'
-    elif grade in ('Z', 'P'):
-        grade_flag = 'pending_closure'
-    elif grade == 'C':
-        grade_flag = 'grade_c'
-    elif grade == 'B':
-        grade_flag = 'grade_b'
-    elif has_critical and not grade:
-        grade_flag = 'critical_ungraded'
-
-    # --- urgency ---
-    if is_closed:
-        return 'hot', 95, grade_flag, (
-            f'DOHMH CLOSURE — {action}' if action else 'DOHMH closure'
-        )
-    if grade in ('Z', 'P'):
-        return 'hot', 90, grade_flag, f'Grade {grade} — pending closure / re-inspection'
-    if grade == 'C':
-        return 'hot', 85, grade_flag, 'Grade C — failing, must improve before re-inspection'
-    if has_critical or score >= 28:
-        return 'hot', 80, grade_flag, 'CRITICAL violation or score >= 28 — restaurant risks closure'
-    if score >= 14:
-        return 'warm', 65, grade_flag, f'Score {score} — must fix before follow-up inspection'
-    return 'new', 40, grade_flag, 'Minor violations'
+    return compute_health_grade_flag(
+        grade=raw.get('grade'),
+        action=raw.get('action'),
+        score=raw.get('score'),
+        has_critical=bool(raw.get('has_critical')),
+        jurisdiction='nyc_dohmh',
+        source_label='DOHMH',
+    )
 
 
 def _fetch_latest_by_camis(camis):

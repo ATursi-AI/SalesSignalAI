@@ -25,6 +25,7 @@ import requests
 from django.conf import settings
 from django.utils import timezone
 
+from core.utils.severity import compute_health_grade_flag
 from .lead_processor import process_lead
 
 logger = logging.getLogger(__name__)
@@ -270,52 +271,21 @@ def monitor_ny_health_violations(days=30, borough=None, dry_run=False):
         except (ValueError, TypeError):
             score = 0
 
-        # Grade flag — used for highlighting in the UI.
-        # Priority order: closure > pending closure > grade C > critical ungraded.
-        # DOHMH 'action' field values that indicate closure include variants of
-        # "Establishment Closed by DOHMH" and "Closed by DOHMH".
-        is_closed = 'closed' in action_lower
-        grade_flag = ''
-        if is_closed:
-            grade_flag = 'closed'
-        elif grade in ('Z', 'P'):
-            # Z = Grade Pending (issued at re-inspection); P = Grade Pending
-            # issued on inspection at re-opening following a closure.
-            grade_flag = 'pending_closure'
-        elif grade == 'C':
-            grade_flag = 'grade_c'
-        elif grade == 'B':
-            grade_flag = 'grade_b'
-        elif has_critical and not grade:
-            grade_flag = 'critical_ungraded'
-
-        # Urgency — bypass post-age-based staleness for this monitor entirely.
-        # Health violations remain hot as long as they're unresolved; a 3-day-old
-        # closure is more urgent than a 1-hour-old Reddit post.
-        if is_closed:
-            urgency = 'hot'
-            urgency_score_val = 95
-            urgency_note = f'DOHMH CLOSURE — {action}' if action else 'DOHMH closure'
-        elif grade in ('Z', 'P'):
-            urgency = 'hot'
-            urgency_score_val = 90
-            urgency_note = f'Grade {grade} — pending closure / re-inspection'
-        elif grade == 'C':
-            urgency = 'hot'
-            urgency_score_val = 85
-            urgency_note = 'Grade C — failing, must improve before re-inspection'
-        elif has_critical or score >= 28:
-            urgency = 'hot'
-            urgency_score_val = 80
-            urgency_note = 'CRITICAL violation or score >= 28 — restaurant risks closure'
-        elif score >= 14:
-            urgency = 'warm'
-            urgency_score_val = 65
-            urgency_note = f'Score {score} — must fix before follow-up inspection'
-        else:
-            urgency = 'new'
-            urgency_score_val = 40
-            urgency_note = 'Minor violations'
+        # Score urgency + grade_flag via shared severity helper so that
+        # backfill command and live monitor stay in sync, and so that new
+        # health monitors (Vegas SNHD, Arizona, CA, etc.) can reuse the
+        # exact same logic without copy-paste drift.
+        # Urgency bypasses post-age-based staleness for this monitor entirely —
+        # health violations stay hot until resolved; a 3-day-old closure is
+        # more urgent than a 1-hour-old Reddit post.
+        urgency, urgency_score_val, grade_flag, urgency_note = compute_health_grade_flag(
+            grade=grade,
+            action=action,
+            score=score,
+            has_critical=has_critical,
+            jurisdiction='nyc_dohmh',
+            source_label='DOHMH',
+        )
 
         critical_count = sum(1 for v in violations if v.get('critical'))
         total_violations = len(violations)
