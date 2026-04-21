@@ -167,7 +167,17 @@ class Command(BaseCommand):
                 days_expired = 0
                 if permit_expire:
                     try:
-                        for fmt in ['%B %d, %Y', '%m/%d/%Y', '%Y-%m-%d']:
+                        # CKAN returns ISO-8601 (e.g. "2013-06-04T00:00:00" or
+                        # "2013-06-04T00:00:00.000"); older exports used long
+                        # or slash formats. Try most-specific ISO first so the
+                        # microsecond variant matches before the shorter one.
+                        for fmt in [
+                            '%Y-%m-%dT%H:%M:%S.%f',
+                            '%Y-%m-%dT%H:%M:%S',
+                            '%Y-%m-%d',
+                            '%B %d, %Y',
+                            '%m/%d/%Y',
+                        ]:
                             try:
                                 exp_dt = datetime.strptime(permit_expire, fmt)
                                 exp_dt = timezone.make_aware(exp_dt)
