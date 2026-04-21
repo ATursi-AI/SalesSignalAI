@@ -264,7 +264,7 @@ class Command(BaseCommand):
                         state='HI',
                         region='Honolulu',
                         source_group='public_records',
-                        source_type='health_inspections',
+                        source_type='business_registry',
                         contact_name=permit_holder,
                         contact_business=name,
                         contact_phone=phone,
