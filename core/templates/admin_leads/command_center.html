@@ -365,6 +365,11 @@
 .btn-delete-detail { background: rgba(255,71,87,0.12); color: var(--accent-coral); border: 1px solid rgba(255,71,87,0.25); }
 .btn-delete-row { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 3px 5px; border-radius: var(--radius-sm); font-size: 0.85rem; }
 .btn-delete-row:hover { color: var(--accent-coral); background: rgba(255,71,87,0.12); }
+.badge-grade-closed { background: rgba(255, 71, 87, 0.25); color: #FF4757; border: 1px solid rgba(255, 71, 87, 0.5); font-weight: 700; }
+.badge-grade-pending { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); border: 1px solid rgba(245, 158, 11, 0.45); font-weight: 700; }
+.badge-grade-c { background: rgba(245, 158, 11, 0.18); color: var(--accent-amber); border: 1px solid rgba(245, 158, 11, 0.4); font-weight: 700; }
+.badge-grade-b { background: rgba(250, 204, 21, 0.12); color: #FACC15; border: 1px solid rgba(250, 204, 21, 0.3); }
+.badge-grade-critical { background: rgba(250, 204, 21, 0.15); color: #FACC15; border: 1px solid rgba(250, 204, 21, 0.3); }
 .source-card-sub-row { display: flex; align-items: stretch; gap: 4px; }
 .source-card-sub-row .source-card-sub { flex: 1; }
 .btn-delete-source { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.85rem; opacity: 0.25; transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease; }
@@ -772,7 +777,7 @@ function renderLeadRow(lead) {
             </td>
             <td style="font-size:0.78rem;color:var(--text-secondary)">${escHtml(lead.location) || '-'}</td>
             <td class="contact-cell">${escHtml(contact)}${phone}</td>
-            <td><span class="badge badge-${lead.urgency}">${lead.urgency.toUpperCase()}</span></td>
+            <td><span class="badge badge-${lead.urgency}">${lead.urgency.toUpperCase()}</span>${renderGradeFlag(lead)}</td>
             <td style="white-space:nowrap;font-size:0.78rem;color:var(--text-secondary)">${lead.time_ago}</td>
             <td><span class="badge badge-${lead.review_status}">${lead.review_status}</span></td>
             <td class="cb-cell" onclick="event.stopPropagation()">
@@ -843,7 +848,7 @@ function buildDetailPanel(lead) {
             <div class="detail-meta-grid">
                 <div class="detail-meta-item"><div class="meta-label">Platform</div><div class="meta-value">${escHtml(lead.platform_display)}</div></div>
                 <div class="detail-meta-item"><div class="meta-label">Source Type</div><div class="meta-value">${escHtml(lead.source_type||'-')}</div></div>
-                <div class="detail-meta-item"><div class="meta-label">Urgency</div><div class="meta-value"><span class="badge badge-${lead.urgency_level}">${lead.urgency_level.toUpperCase()}</span> (${lead.urgency_score})</div></div>
+                <div class="detail-meta-item"><div class="meta-label">Urgency</div><div class="meta-value"><span class="badge badge-${lead.urgency_level}">${lead.urgency_level.toUpperCase()}</span> (${lead.urgency_score})${renderGradeFlag(lead)}</div></div>
                 <div class="detail-meta-item"><div class="meta-label">Confidence</div><div class="meta-value"><span class="badge badge-${lead.confidence}">${lead.confidence}</span></div></div>
                 <div class="detail-meta-item"><div class="meta-label">State</div><div class="meta-value">${escHtml(lead.state||'-')}</div></div>
                 <div class="detail-meta-item"><div class="meta-label">Region</div><div class="meta-value">${escHtml(lead.region||lead.detected_location||'-')}</div></div>
@@ -1085,6 +1090,41 @@ async function deleteAllLeads() {
         else { alert(d.error || 'Failed to delete.'); }
     } catch(e){ console.error(e); alert('Error deleting leads.'); }
 }
+/**
+ * Render a small pill next to the urgency badge that flags health-inspection
+ * grades needing attention. Called from renderLeadRow and buildDetailPanel.
+ * grade_flag is populated by the ny_health_violations monitor; other leads
+ * have '' and render nothing.
+ */
+function renderGradeFlag(lead) {
+    if (!lead) return '';
+    // List API exposes grade_flag at top level; detail API exposes raw_data
+    const raw = lead.raw_data || {};
+    const flag = lead.grade_flag || raw.grade_flag || '';
+    if (!flag) return '';
+    const grade = lead.grade || raw.grade || '';
+    let cls = '', label = '';
+    if (flag === 'closed') {
+        cls = 'badge-grade-closed';
+        label = 'CLOSED';
+    } else if (flag === 'pending_closure') {
+        cls = 'badge-grade-pending';
+        label = grade ? `GRADE ${grade}` : 'PENDING';
+    } else if (flag === 'grade_c') {
+        cls = 'badge-grade-c';
+        label = 'GRADE C';
+    } else if (flag === 'grade_b') {
+        cls = 'badge-grade-b';
+        label = 'GRADE B';
+    } else if (flag === 'critical_ungraded') {
+        cls = 'badge-grade-critical';
+        label = 'CRITICAL';
+    } else {
+        return '';
+    }
+    return ` <span class="badge ${cls}" title="Health inspection flag">${label}</span>`;
+}
+
 async function deleteBySource(sourceType, label) {
     const state = document.getElementById('stateFilter').value;
     const stateDesc = state ? `in state ${state}` : 'across ALL states';
