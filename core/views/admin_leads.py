@@ -860,6 +860,81 @@ def lead_delete_all(request):
     return JsonResponse({'ok': True, 'deleted': deleted_count})
 
 
+@staff_or_salesperson_required
+@require_POST
+def lead_delete_by_source(request):
+    """
+    Delete leads from a specific scraper category.
+
+    Payload (JSON):
+        source_type:  required — e.g. 'health_inspections', 'building_violations'
+        state:        optional — e.g. 'NY', 'CA' (narrows scope)
+        data_source:  optional — e.g. 'nyc_dohmh' (matches raw_data.data_source)
+        confirm:      required — must equal 'DELETE'
+
+    Superuser only. Returns deleted count.
+    """
+    if not request.user.is_superuser:
+        return JsonResponse(
+            {'error': 'Only administrators can delete leads.'}, status=403
+        )
+    try:
+        data = json.loads(request.body)
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    source_type = (data.get('source_type') or '').strip()
+    if not source_type:
+        return JsonResponse({'error': 'source_type is required'}, status=400)
+    if data.get('confirm') != 'DELETE':
+        return JsonResponse({'error': 'Confirmation required'}, status=400)
+
+    qs = Lead.objects.filter(source_type=source_type)
+
+    state = (data.get('state') or '').strip()
+    if state:
+        qs = qs.filter(state=state)
+
+    data_source = (data.get('data_source') or '').strip()
+    if data_source:
+        qs = qs.filter(raw_data__data_source=data_source)
+
+    matched = qs.count()
+    deleted_count, _ = qs.delete()
+    return JsonResponse({
+        'ok': True,
+        'deleted': deleted_count,
+        'matched': matched,
+        'source_type': source_type,
+        'state': state,
+        'data_source': data_source,
+    })
+
+
+@staff_or_salesperson_required
+def lead_source_count(request):
+    """
+    Return count of leads for a (source_type, state, data_source) combo
+    so the UI can show the exact number before asking for delete confirmation.
+    """
+    source_type = (request.GET.get('source_type') or '').strip()
+    if not source_type:
+        return JsonResponse({'error': 'source_type is required'}, status=400)
+    qs = Lead.objects.filter(source_type=source_type)
+    state = (request.GET.get('state') or '').strip()
+    if state:
+        qs = qs.filter(state=state)
+    data_source = (request.GET.get('data_source') or '').strip()
+    if data_source:
+        qs = qs.filter(raw_data__data_source=data_source)
+    return JsonResponse({
+        'count': qs.count(),
+        'source_type': source_type,
+        'state': state,
+        'data_source': data_source,
+    })
+
+
 # ─── Customer Accounts ────────────────────────────────────────────────
 
 @staff_or_salesperson_required

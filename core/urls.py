@@ -150,6 +150,8 @@ urlpatterns = [
     path('admin-leads/detail/<int:lead_id>/action/', admin_leads.lead_action, name='admin_lead_action'),
     path('admin-leads/bulk/', admin_leads.lead_bulk_action, name='admin_lead_bulk_action'),
     path('admin-leads/delete-all/', admin_leads.lead_delete_all, name='admin_lead_delete_all'),
+    path('admin-leads/delete-by-source/', admin_leads.lead_delete_by_source, name='admin_lead_delete_by_source'),
+    path('admin-leads/source-count/', admin_leads.lead_source_count, name='admin_lead_source_count'),
     path('admin-leads/<str:group>/', admin_leads.source_group_page, name='leads_source_group'),
 
     # Monitor Health (staff only)

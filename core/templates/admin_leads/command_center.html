@@ -365,6 +365,11 @@
 .btn-delete-detail { background: rgba(255,71,87,0.12); color: var(--accent-coral); border: 1px solid rgba(255,71,87,0.25); }
 .btn-delete-row { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 3px 5px; border-radius: var(--radius-sm); font-size: 0.85rem; }
 .btn-delete-row:hover { color: var(--accent-coral); background: rgba(255,71,87,0.12); }
+.source-card-sub-row { display: flex; align-items: stretch; gap: 4px; }
+.source-card-sub-row .source-card-sub { flex: 1; }
+.btn-delete-source { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.85rem; opacity: 0.25; transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease; }
+.source-card-sub-row:hover .btn-delete-source { opacity: 1; }
+.btn-delete-source:hover { color: var(--accent-coral); background: rgba(255,71,87,0.12); }
 .assign-row { display: flex; gap: 6px; align-items: center; }
 .assign-row select { flex: 1; background: var(--bg-base); border: 1px solid var(--border-light); color: var(--text-primary); border-radius: var(--radius-sm); padding: 5px 8px; font-size: 0.78rem; }
 .assign-row button { background: rgba(139,92,246,0.15); color: #A78BFA; border: 1px solid rgba(139,92,246,0.3); border-radius: var(--radius-sm); padding: 5px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
@@ -509,10 +514,17 @@
         </div>
         <div class="source-card-subs">
             {% for sub in src.sub_types %}
-            <a href="/admin-leads/{{ src.slug }}/?type={{ sub.key }}" class="source-card-sub" onclick="event.stopPropagation(); var s=document.getElementById('stateFilter').value; if(s) this.href+='&state='+s;">
-                <span>{{ sub.label }}</span>
-                <span class="sub-count">{{ sub.count }}</span>
-            </a>
+            <div class="source-card-sub-row">
+                <a href="/admin-leads/{{ src.slug }}/?type={{ sub.key }}" class="source-card-sub" onclick="event.stopPropagation(); var s=document.getElementById('stateFilter').value; if(s) this.href+='&state='+s;">
+                    <span>{{ sub.label }}</span>
+                    <span class="sub-count">{{ sub.count }}</span>
+                </a>
+                {% if user.is_superuser %}
+                <button type="button" class="btn-delete-source" onclick="event.stopPropagation(); deleteBySource('{{ sub.key }}', '{{ sub.label|escapejs }}')" title="Delete all {{ sub.label }} leads in current state">
+                    <i class="bi bi-trash3"></i>
+                </button>
+                {% endif %}
+            </div>
             {% endfor %}
         </div>
     </div>
@@ -1072,6 +1084,46 @@ async function deleteAllLeads() {
         if(d.ok){ alert(`Deleted ${d.deleted} leads.`); clearSelection(); fetchLeads(); }
         else { alert(d.error || 'Failed to delete.'); }
     } catch(e){ console.error(e); alert('Error deleting leads.'); }
+}
+async function deleteBySource(sourceType, label) {
+    const state = document.getElementById('stateFilter').value;
+    const stateDesc = state ? `in state ${state}` : 'across ALL states';
+
+    // Get exact count first so the user knows what they're nuking
+    let count = 0;
+    try {
+        const params = new URLSearchParams({source_type: sourceType});
+        if (state) params.append('state', state);
+        const r = await fetch(`/admin-leads/source-count/?${params}`);
+        const d = await r.json();
+        count = d.count || 0;
+    } catch(e) {
+        alert('Failed to get count. Aborting.');
+        return;
+    }
+
+    if (count === 0) { alert(`No "${label}" leads found ${stateDesc}.`); return; }
+
+    if (!confirm(`Delete ${count} "${label}" leads ${stateDesc}?\n\nThis cannot be undone.`)) return;
+    if (!confirm(`Are you absolutely sure?\n\n${count} "${label}" leads ${stateDesc} will be permanently deleted.`)) return;
+
+    try {
+        const r = await fetch('/admin-leads/delete-by-source/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()},
+            body: JSON.stringify({source_type: sourceType, state: state, confirm: 'DELETE'})
+        });
+        const d = await r.json();
+        if (d.ok) {
+            alert(`Deleted ${d.deleted} "${label}" leads ${stateDesc}.`);
+            window.location.reload();
+        } else {
+            alert(d.error || 'Failed to delete.');
+        }
+    } catch(e) {
+        console.error(e);
+        alert('Error deleting leads.');
+    }
 }
 
 function toggleSelect(id, cb) { if(cb.checked) selectedLeads.add(id); else selectedLeads.delete(id); updateBulkBar(); }
