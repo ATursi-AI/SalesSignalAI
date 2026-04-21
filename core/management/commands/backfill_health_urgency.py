@@ -35,6 +35,8 @@ import time
 import requests
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.db import connection
+from django.db.utils import OperationalError
 
 from core.models.leads import Lead
 
@@ -162,7 +164,37 @@ class Command(BaseCommand):
         parser.add_argument('--sleep', type=float, default=0.1,
                             help='Seconds to sleep between SODA calls when --enrich')
 
+    def _save_with_retry(self, lead, attempts=5, base_delay=0.5):
+        """
+        Save a lead, retrying on SQLite 'database is locked' errors.
+        Exponential backoff: 0.5s, 1s, 2s, 4s, 8s.
+        """
+        for i in range(attempts):
+            try:
+                lead.save(update_fields=['urgency_level', 'urgency_score', 'raw_data'])
+                return True
+            except OperationalError as e:
+                msg = str(e).lower()
+                if 'locked' not in msg:
+                    raise
+                if i == attempts - 1:
+                    self.stderr.write(self.style.WARNING(
+                        f'  LOCKED after {attempts} attempts — skipping lead #{lead.id}'
+                    ))
+                    return False
+                delay = base_delay * (2 ** i)
+                time.sleep(delay)
+        return False
+
     def handle(self, *args, **options):
+        # Wait up to 30s for the DB instead of failing immediately when
+        # gunicorn/uwsgi is holding a write lock. SQLite-safe; no-op on
+        # other backends.
+        try:
+            connection.cursor().execute('PRAGMA busy_timeout = 30000')
+        except Exception:
+            pass
+
         qs = Lead.objects.filter(source_type='health_inspections').order_by('id')
         if options['camis']:
             qs = qs.filter(raw_data__camis=options['camis'])
@@ -235,7 +267,10 @@ class Command(BaseCommand):
                 lead.urgency_level = new_level
                 lead.urgency_score = new_score
                 lead.raw_data = raw
-                lead.save(update_fields=['urgency_level', 'urgency_score', 'raw_data'])
+                saved = self._save_with_retry(lead)
+                if not saved:
+                    stats['lock_failed'] = stats.get('lock_failed', 0) + 1
+                    continue
 
             stats['changed'] += 1
             if new_level in stats:
@@ -250,6 +285,10 @@ class Command(BaseCommand):
             f'skipped_empty {stats["skipped_empty"]}, '
             f'skipped_wrong_source {stats["skipped_wrong_source"]}'
         ))
+        if stats.get('lock_failed'):
+            self.stdout.write(self.style.WARNING(
+                f'  lock_failed: {stats["lock_failed"]} (re-run the command to retry these)'
+            ))
         if options['enrich']:
             self.stdout.write(
                 f'  enrich: success {stats["enriched"]}, failed {stats["enrich_failed"]}'
