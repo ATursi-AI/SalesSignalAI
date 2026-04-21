@@ -393,19 +393,24 @@ def calculate_urgency(posted_at):
 
 
 def process_lead(platform, source_url, content, author='', posted_at=None,
-                  raw_data=None, **extra_fields):
+                  raw_data=None, urgency_override=None, **extra_fields):
     """
     Full lead processing pipeline:
     1. Deduplicate via content hash
     2. Extract location
     3. Match keywords to detect service category
-    4. Calculate urgency
+    4. Calculate urgency (or use urgency_override if provided)
     5. Create Lead record
     6. Assign to matching businesses
 
     Optional extra_fields kwargs are set directly on the Lead after creation.
     Supported: state, region, source_group, source_type, contact_name,
     contact_phone, contact_email, contact_business, contact_address.
+
+    urgency_override: optional tuple of (level, score) — monitors working with
+    data whose freshness is not tied to post age (e.g. public records,
+    health violations, code enforcement) should pass their own urgency
+    to bypass the post-age-based staleness calc.
 
     Returns (lead, created, num_assignments) or (None, False, 0) if duplicate.
     """
@@ -445,8 +450,12 @@ def process_lead(platform, source_url, content, author='', posted_at=None,
     if keyword_matches:
         best_category, matched_keywords, _, confidence = keyword_matches[0]
 
-    # Calculate urgency
-    urgency_level, urgency_score = calculate_urgency(posted_at)
+    # Calculate urgency — honor override from monitors whose data isn't
+    # time-sensitive the way social posts are (public records, etc.)
+    if urgency_override is not None:
+        urgency_level, urgency_score = urgency_override
+    else:
+        urgency_level, urgency_score = calculate_urgency(posted_at)
 
     # Separate known Lead fields from extra_fields
     lead_kwargs = {}

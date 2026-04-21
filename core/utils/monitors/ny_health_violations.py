@@ -149,7 +149,10 @@ def monitor_ny_health_violations(days=30, borough=None, dry_run=False):
         '$select': (
             'camis,dba,boro,building,street,zipcode,phone,'
             'cuisine_description,inspection_date,violation_code,'
-            'violation_description,critical_flag,score,grade'
+            'violation_description,critical_flag,score,grade,'
+            'action,inspection_type,grade_date,record_date,'
+            'latitude,longitude,bin,bbl,'
+            'council_district,community_board,census_tract'
         ),
         '$limit': 5000,
         '$order': 'inspection_date DESC',
@@ -212,6 +215,17 @@ def monitor_ny_health_violations(days=30, borough=None, dry_run=False):
                 'inspection_date': record.get('inspection_date', ''),
                 'score': record.get('score', ''),
                 'grade': record.get('grade', ''),
+                'action': record.get('action', '').strip(),
+                'inspection_type': record.get('inspection_type', '').strip(),
+                'grade_date': record.get('grade_date', ''),
+                'record_date': record.get('record_date', ''),
+                'latitude': record.get('latitude', ''),
+                'longitude': record.get('longitude', ''),
+                'bin': record.get('bin', ''),
+                'bbl': record.get('bbl', ''),
+                'council_district': record.get('council_district', ''),
+                'community_board': record.get('community_board', ''),
+                'census_tract': record.get('census_tract', ''),
                 'violations': [],
                 'has_critical': False,
             }
@@ -242,11 +256,13 @@ def monitor_ny_health_violations(days=30, borough=None, dry_run=False):
         address = rest['address']
         inspection_date = _parse_date(rest['inspection_date'])
         score_str = rest['score']
-        grade = rest['grade']
+        grade = (rest['grade'] or '').strip().upper()
         cuisine = rest['cuisine']
         phone = rest['phone']
         has_critical = rest['has_critical']
         violations = rest['violations']
+        action = (rest.get('action') or '').strip()
+        action_lower = action.lower()
 
         # Parse score for urgency
         try:
@@ -254,15 +270,51 @@ def monitor_ny_health_violations(days=30, borough=None, dry_run=False):
         except (ValueError, TypeError):
             score = 0
 
-        # Urgency scoring
-        if has_critical or score >= 28:
+        # Grade flag — used for highlighting in the UI.
+        # Priority order: closure > pending closure > grade C > critical ungraded.
+        # DOHMH 'action' field values that indicate closure include variants of
+        # "Establishment Closed by DOHMH" and "Closed by DOHMH".
+        is_closed = 'closed' in action_lower
+        grade_flag = ''
+        if is_closed:
+            grade_flag = 'closed'
+        elif grade in ('Z', 'P'):
+            # Z = Grade Pending (issued at re-inspection); P = Grade Pending
+            # issued on inspection at re-opening following a closure.
+            grade_flag = 'pending_closure'
+        elif grade == 'C':
+            grade_flag = 'grade_c'
+        elif grade == 'B':
+            grade_flag = 'grade_b'
+        elif has_critical and not grade:
+            grade_flag = 'critical_ungraded'
+
+        # Urgency — bypass post-age-based staleness for this monitor entirely.
+        # Health violations remain hot as long as they're unresolved; a 3-day-old
+        # closure is more urgent than a 1-hour-old Reddit post.
+        if is_closed:
             urgency = 'hot'
+            urgency_score_val = 95
+            urgency_note = f'DOHMH CLOSURE — {action}' if action else 'DOHMH closure'
+        elif grade in ('Z', 'P'):
+            urgency = 'hot'
+            urgency_score_val = 90
+            urgency_note = f'Grade {grade} — pending closure / re-inspection'
+        elif grade == 'C':
+            urgency = 'hot'
+            urgency_score_val = 85
+            urgency_note = 'Grade C — failing, must improve before re-inspection'
+        elif has_critical or score >= 28:
+            urgency = 'hot'
+            urgency_score_val = 80
             urgency_note = 'CRITICAL violation or score >= 28 — restaurant risks closure'
         elif score >= 14:
             urgency = 'warm'
+            urgency_score_val = 65
             urgency_note = f'Score {score} — must fix before follow-up inspection'
         else:
             urgency = 'new'
+            urgency_score_val = 40
             urgency_note = 'Minor violations'
 
         critical_count = sum(1 for v in violations if v.get('critical'))
@@ -284,6 +336,10 @@ def monitor_ny_health_violations(days=30, borough=None, dry_run=False):
             content_parts.append(f'Score: {score_str}')
         if grade:
             content_parts.append(f'Grade: {grade}')
+        if action:
+            content_parts.append(f'DOHMH Action: {action}')
+        if rest.get('inspection_type'):
+            content_parts.append(f'Inspection Type: {rest["inspection_type"]}')
         if inspection_date:
             days_ago = (timezone.now() - inspection_date).days
             content_parts.append(f'Inspected: {days_ago} days ago')
@@ -319,6 +375,7 @@ def monitor_ny_health_violations(days=30, borough=None, dry_run=False):
                 content=content,
                 author='',
                 posted_at=inspection_date,
+                urgency_override=(urgency, urgency_score_val),
                 raw_data={
                     'data_source': 'nyc_dohmh',
                     'camis': camis,
@@ -327,10 +384,23 @@ def monitor_ny_health_violations(days=30, borough=None, dry_run=False):
                     'cuisine': cuisine,
                     'score': score_str,
                     'grade': grade,
+                    'grade_flag': grade_flag,
+                    'action': action,
+                    'inspection_type': rest.get('inspection_type', ''),
+                    'grade_date': rest.get('grade_date', ''),
+                    'record_date': rest.get('record_date', ''),
+                    'latitude': rest.get('latitude', ''),
+                    'longitude': rest.get('longitude', ''),
+                    'bin': rest.get('bin', ''),
+                    'bbl': rest.get('bbl', ''),
+                    'council_district': rest.get('council_district', ''),
+                    'community_board': rest.get('community_board', ''),
+                    'census_tract': rest.get('census_tract', ''),
                     'critical_count': critical_count,
                     'total_violations': total_violations,
                     'has_critical': has_critical,
                     'urgency': urgency,
+                    'urgency_note': urgency_note,
                     'phone': phone,
                     'services_mapped': services,
                 },

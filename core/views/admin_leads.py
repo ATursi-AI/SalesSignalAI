@@ -137,6 +137,8 @@ def _serialize_lead(lead, now, platform_display):
     if '\n' in title:
         title = title.split('\n')[0]
 
+    raw = lead.raw_data if isinstance(lead.raw_data, dict) else {}
+
     return {
         'id': lead.id,
         'platform': lead.platform,
@@ -172,6 +174,9 @@ def _serialize_lead(lead, now, platform_display):
         # Curation
         'is_curated': lead.is_curated,
         'reach_score': lead.reach_score,
+        # Health-inspection specific flag surfaced for UI highlighting
+        'grade_flag': raw.get('grade_flag', ''),
+        'grade': raw.get('grade', ''),
     }
 
 
