@@ -53,6 +53,24 @@ JURISDICTIONS = {
         'state': 'HI',
         'region': 'Honolulu',
     },
+    'orange_county': {
+        'name': 'Orange County / OC Health Care Agency',
+        'path': 'orange-county',
+        'state': 'CA',
+        'region': 'Orange County',
+    },
+    'sacramento': {
+        'name': 'Sacramento County EMD',
+        'path': 'sacramento',
+        'state': 'CA',
+        'region': 'Sacramento County',
+    },
+    'san_francisco': {
+        'name': 'San Francisco DPH',
+        'path': 'san-francisco',
+        'state': 'CA',
+        'region': 'San Francisco',
+    },
 }
 
 API_URL = 'https://inspections.myhealthdepartment.com/'
