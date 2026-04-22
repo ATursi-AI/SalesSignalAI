@@ -154,78 +154,105 @@ def _parse_date(date_str):
     return None
 
 
-def _fetch_inspections(path, days, dry_run=False):
+def _fetch_inspections(path, days, dry_run=False, max_pages=20, page_size=100):
     """
     Fetch inspections via the myhealthdepartment.com POST API.
 
-    The API caps results at 25 per request with no working pagination params.
-    Workaround: request one day at a time so each day's 25-cap is independent.
+    The API caps results at 25 per request by default, but recently-observed
+    Vue frontend calls include `page` and `rows` params (see OC closures page).
+    Strategy:
+      * Day-by-day requests (handles jurisdictions that don't strictly filter
+        by date — each day gets its own top-N).
+      * Within each day, paginate 1..max_pages until the response is empty
+        or returns no new records (handles jurisdictions like Orange County
+        that otherwise return only the latest 25).
     """
     all_records = []
     seen_ids = set()  # dedup by inspectionID or name+date
 
     if dry_run:
         print(f'  POST {API_URL}')
-        print(f'  Strategy: day-by-day requests over {days} days')
+        print(f'  Strategy: day-by-day × pagination (rows={page_size}, max_pages={max_pages})')
 
     for day_offset in range(days):
         day = datetime.now() - timedelta(days=day_offset)
         day_str = day.strftime('%Y-%m-%d')
 
-        payload = {
-            'task': 'searchInspections',
-            'data': {
-                'path': path,
-                'programName': '',
-                'filters': {
-                    'date': f'{day_str} to {day_str}',
+        day_total = 0
+        day_new = 0
+
+        for page in range(1, max_pages + 1):
+            payload = {
+                'task': 'searchInspections',
+                'data': {
+                    'path': path,
+                    'programName': '',
+                    'filters': {
+                        'date': f'{day_str} to {day_str}',
+                    },
+                    # Pagination params — if API ignores them, we get the same
+                    # 25 on page 2 which the dedup below will catch, and we'll
+                    # break out on 0 new.
+                    'page': page,
+                    'rows': page_size,
                 },
-            },
-        }
+            }
 
-        try:
-            resp = requests.post(API_URL, json=payload, headers=HEADERS, timeout=60)
-            if resp.status_code != 200:
-                if dry_run:
-                    print(f'  {day_str}: HTTP {resp.status_code}')
-                logger.warning(f'[myhealthdept] HTTP {resp.status_code} for {path} on {day_str}')
-                continue
-
-            data = resp.json()
-            records = []
-
-            if isinstance(data, list):
-                records = data
-            elif isinstance(data, dict):
-                if data.get('error'):
+            try:
+                resp = requests.post(API_URL, json=payload, headers=HEADERS, timeout=60)
+                if resp.status_code != 200:
                     if dry_run:
-                        print(f'  {day_str}: API error: {data.get("msg", "")}')
-                    continue
-                records = data.get('data', data.get('results', data.get('items', [])))
-                if not isinstance(records, list):
-                    records = []
+                        print(f'  {day_str} p{page}: HTTP {resp.status_code}')
+                    logger.warning(f'[myhealthdept] HTTP {resp.status_code} for {path} on {day_str} p{page}')
+                    break
 
-            # Dedup across days (some records may span date boundaries)
-            new_count = 0
-            for rec in records:
-                if not isinstance(rec, dict):
-                    continue
-                rec_id = rec.get('inspectionID', '')
-                if not rec_id:
-                    rec_id = f"{rec.get('establishmentName', '')}|{rec.get('inspectionDate', '')}"
-                if rec_id not in seen_ids:
-                    seen_ids.add(rec_id)
-                    all_records.append(rec)
-                    new_count += 1
+                data = resp.json()
+                records = []
 
-            if dry_run:
-                print(f'  {day_str}: {len(records)} returned, {new_count} new (total: {len(all_records)})')
+                if isinstance(data, list):
+                    records = data
+                elif isinstance(data, dict):
+                    if data.get('error'):
+                        if dry_run:
+                            print(f'  {day_str} p{page}: API error: {data.get("msg", "")}')
+                        break
+                    records = data.get('data', data.get('results', data.get('items', [])))
+                    if not isinstance(records, list):
+                        records = []
 
-        except Exception as e:
-            if dry_run:
-                print(f'  {day_str}: Request error: {e}')
-            logger.error(f'[myhealthdept] Request error for {path} on {day_str}: {e}')
-            continue
+                if not records:
+                    # No more pages for this day
+                    break
+
+                # Dedup across days/pages
+                new_this_page = 0
+                for rec in records:
+                    if not isinstance(rec, dict):
+                        continue
+                    rec_id = rec.get('inspectionID', '')
+                    if not rec_id:
+                        rec_id = f"{rec.get('establishmentName', '')}|{rec.get('inspectionDate', '')}"
+                    if rec_id not in seen_ids:
+                        seen_ids.add(rec_id)
+                        all_records.append(rec)
+                        new_this_page += 1
+
+                day_total += len(records)
+                day_new += new_this_page
+
+                # If every record on this page is a dup, the API is ignoring
+                # `page` and returning the same slice — no point hammering.
+                if new_this_page == 0:
+                    break
+
+            except Exception as e:
+                if dry_run:
+                    print(f'  {day_str} p{page}: Request error: {e}')
+                logger.error(f'[myhealthdept] Request error for {path} on {day_str} p{page}: {e}')
+                break
+
+        if dry_run:
+            print(f'  {day_str}: {day_total} returned across pages, {day_new} new (total: {len(all_records)})')
 
     if dry_run:
         print(f'  Total unique records: {len(all_records)}')
