@@ -95,8 +95,14 @@ class Command(BaseCommand):
             grand_totals['errors'] += stats['errors']
 
             self.stdout.write(f"\n  Closures scraped: {stats['items_scraped']}")
-            self.stdout.write(f"  Leads created:    {stats['created']}")
-            self.stdout.write(f"  Duplicates:       {stats['duplicates']}")
+            if options['dry_run']:
+                would = stats.get('would_create', 0)
+                self.stdout.write(self.style.WARNING(
+                    f"  Would create:     {would}  (dry-run — nothing saved)"
+                ))
+            else:
+                self.stdout.write(f"  Leads created:    {stats['created']}")
+                self.stdout.write(f"  Duplicates:       {stats['duplicates']}")
             if stats.get('errors'):
                 self.stdout.write(self.style.WARNING(
                     f"  Errors:           {stats['errors']}"

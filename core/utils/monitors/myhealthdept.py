@@ -644,6 +644,30 @@ def monitor_myhealthdept_closures(jurisdiction='orange_county', days=60, dry_run
         logger.warning(f'[closures] No closures for {config["name"]}')
         return stats
 
+    # CLIENT-SIDE DATE FILTER: the platform's `[days, 0]` date filter is
+    # unreliable when we paginate deep — it silently returns records far
+    # outside the window (we observed 2018 closures coming back on a 60-day
+    # ask). Hard-drop anything older than the cutoff ourselves so those
+    # historical records with no ReasonforClosure never pollute the DB.
+    cutoff = timezone.now() - timedelta(days=days)
+    filtered = []
+    dropped_old = 0
+    for rec in records:
+        rec_date = _parse_date(str(rec.get('inspectionDate') or ''))
+        if rec_date and rec_date < cutoff:
+            dropped_old += 1
+            continue
+        filtered.append(rec)
+    if dry_run and dropped_old:
+        print(f'  Dropped {dropped_old} records older than {days} days '
+              f'(cutoff {cutoff.date()})')
+    records = filtered
+
+    if not records:
+        logger.warning(f'[closures] All {len(filtered) + dropped_old} records '
+                       f'were outside the {days}-day window for {config["name"]}')
+        return stats
+
     stats['items_scraped'] = len(records)
     source_url = f'https://inspections.myhealthdepartment.com/{path}/restaurant-closures'
     printed = 0
@@ -684,17 +708,26 @@ def monitor_myhealthdept_closures(jurisdiction='orange_county', days=60, dry_run
             score = 70
         else:
             urgency = 'hot'
-            urgency_note = f'CLOSED — {reason}' if reason else f'CLOSED ({result})'
+            urgency_note = f'CLOSED — {reason}' if reason else 'CLOSED (reason not specified)'
             score = 95
 
-        content_parts = [f'RESTAURANT CLOSURE: {name}']
+        # Headline includes reason when available so it's visible in the
+        # Command Center list view without expanding the lead.
+        headline_parts = [f'RESTAURANT CLOSURE: {name}']
+        if reason:
+            headline_parts.append(reason)
+        headline = ' — '.join(headline_parts)
+
+        content_parts = [headline]
         if permit_name and permit_name != name:
             content_parts.append(f'Permit Name: {permit_name}')
         content_parts.append(f'Address: {full_addr}')
         if closure_date_raw:
             content_parts.append(f'Closed: {str(closure_date_raw)[:10]}')
         if reason:
-            content_parts.append(f'Reason: {reason}')
+            content_parts.append(f'Reason for Closure: {reason}')
+        else:
+            content_parts.append('Reason for Closure: (not specified)')
         content_parts.append(f'Status: {result}')
         if is_reopened:
             content_parts.append(f'Reopened: {reopened[:10]}')
@@ -711,7 +744,10 @@ def monitor_myhealthdept_closures(jurisdiction='orange_county', days=60, dry_run
                 print(f'    Status: {result}  Reopened: {reopened[:10] if reopened else "(not reopened)"}')
                 print(f'    Urgency: {urgency.upper()}')
                 printed += 1
-            stats['created'] += 1
+            # Dry-run: count as "would-create" so the total reflects what a
+            # real run would do, but don't claim it was actually saved.
+            stats.setdefault('would_create', 0)
+            stats['would_create'] += 1
             continue
 
         try:
