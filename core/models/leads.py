@@ -105,6 +105,7 @@ class Lead(models.Model):
         ('storage_tanks', 'Storage Tanks'),
         # Public Records — Health
         ('health_inspections', 'Health Inspections'),
+        ('health_closures', 'Restaurant Closures'),
         ('food_inspections', 'Food Inspections'),
         ('pool_inspections', 'Pool Inspections'),
         # Google / Reviews

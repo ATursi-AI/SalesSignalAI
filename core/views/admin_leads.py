@@ -69,6 +69,7 @@ GROUP_SOURCE_TYPES = {
         ('liquor_suspensions', 'Liquor Suspensions'),
         ('storage_tanks', 'Storage Tanks'),
         ('health_inspections', 'Health Inspections'),
+        ('health_closures', 'Restaurant Closures'),
         ('food_inspections', 'Food Inspections'),
         ('pool_inspections', 'Pool Inspections'),
     ],
