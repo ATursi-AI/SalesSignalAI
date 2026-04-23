@@ -138,13 +138,24 @@ def _detect_services(text):
 
 
 def _parse_date(date_str):
-    """Parse ISO date from API (e.g., '2026-03-31T00:00:00.000Z')."""
+    """
+    Parse any of the date shapes this platform emits. Observed variants:
+      - '2026-03-31T00:00:00.000Z'      (ISO, UTC)
+      - '2026-03-31T00:00:00'           (ISO, naive)
+      - '2018-05-11 00:00:00.0'         (space separator, no TZ)  <-- closures
+      - '2022-05-31'                    (date only)
+      - '5/31/2022' / '5/31/22'         (US short)
+    """
     if not date_str:
         return None
     date_str = str(date_str).strip()
     for fmt in [
+        # ISO-T variants
         '%Y-%m-%dT%H:%M:%S.%fZ', '%Y-%m-%dT%H:%M:%SZ',
         '%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S',
+        # Space-separator variants (closures endpoint uses these)
+        '%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S',
+        # Date only / US short
         '%Y-%m-%d', '%m/%d/%Y', '%m/%d/%y',
     ]:
         try:
