@@ -15,6 +15,7 @@ Active jurisdictions:
   - Colorado Springs:      path = "epcph"
   - Honolulu (Hawaii DOH): path = "soh"
 """
+import json
 import logging
 from datetime import datetime, timedelta
 
@@ -463,4 +464,293 @@ def monitor_myhealthdept(jurisdiction='denver', days=7, dry_run=False):
             stats['errors'] += 1
 
     logger.info(f'myhealthdept {config["name"]} monitor complete: {stats}')
+    return stats
+
+
+# ──────────────────────────────────────────────
+# Restaurant closures — via /genericEndpoint
+# (separate endpoint from /search used above;
+#  returns shut-down facilities with reason codes)
+# ──────────────────────────────────────────────
+GENERIC_ENDPOINT_URL = 'https://inspections.myhealthdepartment.com/genericEndpoint'
+
+CLOSURE_REASON_SERVICE_MAP = {
+    'cockroach': ['pest control', 'exterminator', 'commercial cleaning', 'deep cleaning'],
+    'rodent':    ['pest control', 'exterminator', 'commercial cleaning', 'deep cleaning'],
+    'rat':       ['pest control', 'exterminator', 'commercial cleaning'],
+    'mice':      ['pest control', 'exterminator', 'commercial cleaning'],
+    'mouse':     ['pest control', 'exterminator', 'commercial cleaning'],
+    'vermin':    ['pest control', 'exterminator', 'commercial cleaning'],
+    'insect':    ['pest control', 'exterminator'],
+    'pest':      ['pest control', 'exterminator'],
+    'sewage':    ['plumber', 'commercial cleaning', 'sewer service'],
+    'sewer':     ['plumber', 'sewer service'],
+    'water':     ['plumber'],
+    'restroom':  ['plumber', 'commercial cleaning'],
+    'handwash':  ['plumber', 'commercial cleaning'],
+    'fire':      ['fire safety', 'general contractor'],
+    'power':     ['electrician'],
+    'electrical': ['electrician'],
+    'foodborne': ['commercial cleaning', 'deep cleaning'],
+    'illness':   ['commercial cleaning', 'deep cleaning'],
+}
+
+DEFAULT_CLOSURE_SERVICES = ['commercial cleaning', 'pest control', 'deep cleaning']
+
+
+def _detect_closure_services(reason):
+    """Map a closure reason string to service categories."""
+    if not reason:
+        return DEFAULT_CLOSURE_SERVICES
+    text = str(reason).lower()
+    services = set()
+    for key, svc_list in CLOSURE_REASON_SERVICE_MAP.items():
+        if key in text:
+            services.update(svc_list)
+    return list(services) if services else DEFAULT_CLOSURE_SERVICES
+
+
+def _fetch_closures(jurisdiction_path, days_back=60, dry_run=False,
+                    max_pages=50, page_size=100):
+    """
+    Fetch restaurant closures via POST /genericEndpoint with
+    requestType="inspclosures". The payload mirrors the exact shape
+    the OC Vue frontend sends — confirmed reverse-engineered in April 2026.
+
+    Returns a list of closure records (dicts).
+    """
+    all_records = []
+    seen_ids = set()
+
+    inspection_purposes = [
+        "Inspection (Non-Routine)",
+        "Notice of Violation Reinspection",
+        "Reinspection",
+        "Routine Inspection",
+    ]
+
+    filter_by_val = json.dumps([
+        ["CLOSED", "CLOSED-OPERATOR INITIATED"],
+        [str(days_back), "0"],
+        ["Retail Food Facility Inspection"],
+        inspection_purposes,
+    ])
+
+    if dry_run:
+        print(f'  POST {GENERIC_ENDPOINT_URL}')
+        print(f'  jurisdictionPath={jurisdiction_path} days_back={days_back} page_size={page_size}')
+
+    for page in range(1, max_pages + 1):
+        payload = {
+            "jurisdictionPath": jurisdiction_path,
+            "requestType": "inspclosures",
+            "rows": page_size,
+            "page": page,
+            "searchTerm": "",
+            "filterBySrc": json.dumps(["This_Form", "This_Form", "Inspection_Type", "This_Form"]),
+            "filterByAct": json.dumps(["EQUAL", "BETWEEN", "EQUAL", "EQUAL"]),
+            "filterByCol": json.dumps(["result", "inspectionDate", "type", "InspectionTypeMRS"]),
+            "filterByVal": filter_by_val,
+            "sort": "This_Form.inspectionDate|DESC",
+        }
+
+        try:
+            resp = requests.post(GENERIC_ENDPOINT_URL, json=payload,
+                                 headers=HEADERS, timeout=60)
+            if resp.status_code != 200:
+                if dry_run:
+                    print(f'  p{page}: HTTP {resp.status_code}')
+                logger.warning(f'[closures] HTTP {resp.status_code} for {jurisdiction_path} p{page}')
+                break
+
+            data = resp.json()
+            body = data.get('data') if isinstance(data, dict) else None
+            records = (body or {}).get('DATA') or []
+            available = (body or {}).get('availableRows', 0) or 0
+
+            if not isinstance(records, list) or not records:
+                if dry_run:
+                    print(f'  p{page}: empty, stopping (availableRows={available})')
+                break
+
+            new_count = 0
+            for rec in records:
+                if not isinstance(rec, dict):
+                    continue
+                rec_id = (
+                    rec.get('permitID')
+                    or rec.get('inspectionID')
+                    or f"{rec.get('FacilityName') or rec.get('name', '')}|{rec.get('inspectionDate', '')}"
+                )
+                if rec_id in seen_ids:
+                    continue
+                seen_ids.add(rec_id)
+                all_records.append(rec)
+                new_count += 1
+
+            if dry_run:
+                print(f'  p{page}: {len(records)} returned ({new_count} new), '
+                      f'availableRows={available}, total={len(all_records)}')
+
+            # Done if we've pulled everything the API reports
+            if available and len(all_records) >= available:
+                break
+
+            # API ignoring pagination → no new rows appearing
+            if new_count == 0:
+                break
+
+        except Exception as e:
+            logger.error(f'[closures] Request error for {jurisdiction_path} p{page}: {e}')
+            if dry_run:
+                print(f'  p{page}: error {e}')
+            break
+
+    if dry_run:
+        print(f'  Total unique closure records: {len(all_records)}')
+
+    return all_records
+
+
+def monitor_myhealthdept_closures(jurisdiction='orange_county', days=60, dry_run=False):
+    """
+    Pull restaurant closures for a jurisdiction. Every closure is a HOT lead —
+    by definition they're shut down, usually with cockroach/rodent/sewage
+    reasons attached. Reopened facilities drop to WARM (prevention pitch).
+    """
+    config = JURISDICTIONS.get(jurisdiction)
+    if not config:
+        logger.error(f'[closures] Unknown jurisdiction: {jurisdiction}')
+        return {'sources_checked': 0, 'items_scraped': 0, 'created': 0,
+                'duplicates': 0, 'assigned': 0, 'errors': 0}
+
+    stats = {'sources_checked': 1, 'items_scraped': 0, 'created': 0,
+             'duplicates': 0, 'assigned': 0, 'errors': 0}
+
+    path = config['path']
+    state = config['state']
+    region = config['region']
+
+    logger.info(f'[closures] Monitoring {config["name"]} closures, days={days}')
+
+    records = _fetch_closures(path, days_back=days, dry_run=dry_run)
+
+    if dry_run:
+        print(f'  Records returned: {len(records)}')
+        if records and isinstance(records[0], dict):
+            print(f'  Sample fields: {list(records[0].keys())}')
+
+    if not records:
+        logger.warning(f'[closures] No closures for {config["name"]}')
+        return stats
+
+    stats['items_scraped'] = len(records)
+    source_url = f'https://inspections.myhealthdepartment.com/{path}/restaurant-closures'
+    printed = 0
+
+    for rec in records:
+        name = (rec.get('FacilityName') or rec.get('name') or '').strip()
+        if not name:
+            continue
+
+        permit_name = (rec.get('permitName') or '').strip()
+        address1 = (rec.get('addressLine1') or '').strip()
+        address2 = (rec.get('addressLine2') or '').strip()
+        city = (rec.get('city') or '').strip()
+        zipcode = (rec.get('zip') or '').strip()
+        result = (rec.get('result') or '').strip()
+        reason = (rec.get('ReasonforClosure') or '').strip()
+        reopened_raw = rec.get('reopenedDate') or ''
+        reopened = str(reopened_raw).strip() if reopened_raw else ''
+        closure_date_raw = rec.get('inspectionDate') or ''
+
+        insp_date = _parse_date(str(closure_date_raw))
+
+        addr_parts = [address1]
+        if address2:
+            addr_parts.append(address2)
+        addr_parts.append(f'{city}, {state} {zipcode}'.strip())
+        full_addr = ', '.join(p for p in addr_parts if p)
+
+        services = _detect_closure_services(reason)
+
+        is_reopened = bool(reopened and reopened.lower() not in ('', 'null', 'none'))
+        if is_reopened:
+            urgency = 'warm'
+            urgency_note = (
+                f'Previously closed for {reason}; reopened on {reopened[:10]} — '
+                f'offer prevention services'
+            ) if reason else f'Previously closed; reopened {reopened[:10]}'
+            score = 70
+        else:
+            urgency = 'hot'
+            urgency_note = f'CLOSED — {reason}' if reason else f'CLOSED ({result})'
+            score = 95
+
+        content_parts = [f'RESTAURANT CLOSURE: {name}']
+        if permit_name and permit_name != name:
+            content_parts.append(f'Permit Name: {permit_name}')
+        content_parts.append(f'Address: {full_addr}')
+        if closure_date_raw:
+            content_parts.append(f'Closed: {str(closure_date_raw)[:10]}')
+        if reason:
+            content_parts.append(f'Reason: {reason}')
+        content_parts.append(f'Status: {result}')
+        if is_reopened:
+            content_parts.append(f'Reopened: {reopened[:10]}')
+        content_parts.append(f'Jurisdiction: {config["name"]}')
+        content_parts.append(f'Urgency: {urgency_note}')
+        content_parts.append(f'Services needed: {", ".join(services[:6])}')
+        content = '\n'.join(content_parts)
+
+        if dry_run:
+            if printed < 10:
+                print(f'\n  [{config["name"]}] {name}')
+                print(f'    {full_addr}')
+                print(f'    Closed: {str(closure_date_raw)[:10]}  Reason: {reason}')
+                print(f'    Status: {result}  Reopened: {reopened[:10] if reopened else "(not reopened)"}')
+                print(f'    Urgency: {urgency.upper()}')
+                printed += 1
+            stats['created'] += 1
+            continue
+
+        try:
+            lead, created, num_assigned = process_lead(
+                platform='public_records',
+                source_url=source_url,
+                content=content,
+                author='',
+                posted_at=insp_date,
+                raw_data={
+                    'data_source': f'myhealthdept_closures_{jurisdiction}',
+                    'business_name': name,
+                    'permit_name': permit_name,
+                    'address': full_addr,
+                    'closure_date': str(closure_date_raw),
+                    'reopened_date': reopened,
+                    'reason': reason,
+                    'result': result,
+                    'urgency': urgency,
+                    'urgency_score': score,
+                    'services_mapped': services,
+                    'jurisdiction_path': path,
+                    'raw_record': rec,
+                },
+                state=state,
+                region=region,
+                source_group='public_records',
+                source_type='health_closures',
+                contact_business=name,
+                contact_address=full_addr,
+            )
+            if created:
+                stats['created'] += 1
+                stats['assigned'] += num_assigned
+            else:
+                stats['duplicates'] += 1
+        except Exception as e:
+            logger.error(f'[closures] Error processing {name}: {e}')
+            stats['errors'] += 1
+
+    logger.info(f'[closures] {config["name"]} complete: {stats}')
     return stats
